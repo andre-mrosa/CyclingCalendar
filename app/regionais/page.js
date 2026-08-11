@@ -6,6 +6,8 @@ export default function Regionais() {
             pageTitle="Provas Regionais" 
             pageSubtitle="Competições organizadas pelas Associações Regionais"
             forceAmbito="Regional"
+            activeFilters={['search', 'year', 'month', 'escalao', 'regiao']}
+            applyDefaultRegiao={true}
         />
     );
 }

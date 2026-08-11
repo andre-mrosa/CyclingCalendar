@@ -85,6 +85,10 @@ export function SettingsProvider({ children }) {
         setSelectedSources(newSources);
         localStorage.setItem('selectedSources', JSON.stringify(newSources));
     };
+    const reorderSources = (newOrder) => {
+        setSelectedSources(newOrder);
+        localStorage.setItem('selectedSources', JSON.stringify(newOrder));
+    };
 
     return (
         <SettingsContext.Provider value={{ 
@@ -92,7 +96,7 @@ export function SettingsProvider({ children }) {
             defaultEscalao, updateDefaultEscalao,
             defaultRegiao, updateDefaultRegiao,
             useCurrentMonth, toggleUseCurrentMonth,
-            selectedSources, toggleSource
+            selectedSources, toggleSource, reorderSources
         }}>
             {!mounted ? <div style={{ visibility: 'hidden' }}>{children}</div> : children}
         </SettingsContext.Provider>

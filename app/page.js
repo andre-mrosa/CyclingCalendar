@@ -5,6 +5,7 @@ export default function Home() {
         <CalendarView 
             pageTitle="Geral" 
             pageSubtitle="Todos os eventos oficiais em Portugal"
+            activeFilters={['search', 'year', 'month', 'escalao', 'distrito']}
         />
     );
 }

@@ -1,12 +1,15 @@
 "use client";
 import { useState, useEffect, useContext } from 'react';
 import { SettingsContext } from '../SettingsContext';
+import CustomSelect from './CustomSelect';
 
 export default function CalendarView({ 
     pageTitle = "Calendário FPC & Cabreira", 
     pageSubtitle = "Agregador oficial de ciclismo em Portugal",
     forceAmbito = null,
-    forceLicenca = null
+    forceLicenca = null,
+    activeFilters = ['search', 'year', 'month', 'escalao', 'ambito', 'licenca', 'regiao'],
+    applyDefaultRegiao = false
 }) {
     const { 
         defaultEscalao, 
@@ -24,20 +27,21 @@ export default function CalendarView({
     const [selectedAmbito, setSelectedAmbito] = useState(forceAmbito || 'Todos');
     const [selectedLicenca, setSelectedLicenca] = useState(forceLicenca || 'Todas');
     const [selectedRegiao, setSelectedRegiao] = useState('Todas');
+    const [selectedDistrito, setSelectedDistrito] = useState('Todos');
     const [selectedYear, setSelectedYear] = useState('2026');
     const [monthFrom, setMonthFrom] = useState(1);
     const [monthTo, setMonthTo] = useState(12);
     const [selectedTags, setSelectedTags] = useState([]);
     const [showFilters, setShowFilters] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(9);
+    const [itemsPerPage, setItemsPerPage] = useState(8);
 
     // Sync settings on mount
     useEffect(() => {
         if (defaultEscalao) {
             setSelectedEscalao(defaultEscalao);
         }
-        if (defaultRegiao) {
+        if (defaultRegiao && applyDefaultRegiao) {
             setSelectedRegiao(defaultRegiao);
         }
         if (useCurrentMonth) {
@@ -148,13 +152,11 @@ export default function CalendarView({
         }
 
         if (selectedRegiao !== 'Todas') {
-            filtered = filtered.filter(event => 
-                event.regiao === selectedRegiao || 
-                event.ambito === 'Nacional' || 
-                event.ambito === 'Taça de Portugal' ||
-                event.ambito === 'Internacional' ||
-                event.source === 'Cabreira'
-            );
+            filtered = filtered.filter(event => event.regiao === selectedRegiao);
+        }
+        
+        if (selectedDistrito !== 'Todos') {
+            filtered = filtered.filter(event => event.distrito === selectedDistrito);
         }
 
         const monthMap = {'JAN':1, 'FEV':2, 'MAR':3, 'ABR':4, 'MAI':5, 'JUN':6, 'JUL':7, 'AGO':8, 'SET':9, 'OUT':10, 'NOV':11, 'DEZ':12};
@@ -175,7 +177,7 @@ export default function CalendarView({
 
         setFilteredEvents(filtered);
         setCurrentPage(1); // Reset page on filter change
-    }, [events, searchTerm, selectedEscalao, selectedAmbito, selectedLicenca, selectedRegiao, monthFrom, monthTo, selectedTags]);
+    }, [events, searchTerm, selectedEscalao, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags]);
 
     const uniqueEscaloes = ['Todos', 'Elite Amador / Individual', ...new Set(events.map(e => e.escalao))].filter((value, index, self) => self.indexOf(value) === index);
     const uniqueAmbitos = ['Todos', ...new Set(events.map(e => e.ambito))];
@@ -186,6 +188,8 @@ export default function CalendarView({
         'AC Beira Interior', 'AC Santarém', 'AC Setúbal', 'AC Algarve', 'AC Madeira', 'AC Açores'
     ];
     const uniqueRegioes = ['Todas', ...new Set([...TODAS_AS_REGIOES, ...events.map(e => e.regiao).filter(r => r)])];
+    const distritosList = [...new Set(events.map(e => e.distrito).filter(d => d))].sort();
+    const uniqueDistritos = ['Todos', ...distritosList];
     const availableTags = [...new Set(events.map(e => e.tag))];
 
     const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
@@ -216,10 +220,7 @@ export default function CalendarView({
         <div className="app-container">
             <header className="app-header">
                 <div className="header-content" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    <div>
-                        <h1>{pageTitle}</h1>
-                        <p>{pageSubtitle}</p>
-                    </div>
+                    {/* Header title removed as requested */}
                     <button 
                         onClick={() => setShowFilters(!showFilters)}
                         style={{
@@ -246,120 +247,169 @@ export default function CalendarView({
                 
                 {showFilters && (
                     <div className="filters-container" style={{ 
-                        marginTop: '1.5rem', 
+                        marginTop: '1rem', 
                         background: 'var(--bg-secondary)', 
-                        padding: '1.5rem', 
+                        padding: '1.25rem', 
                         borderRadius: 'var(--radius-lg)',
-                        border: '1px solid var(--card-border)'
+                        border: '1px solid var(--card-border)',
+                        width: '100%'
                     }}>
                         <div className="controls" style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', 
+                            display: 'flex', 
+                            flexWrap: 'wrap', 
                             gap: '1.25rem', 
                             width: '100%' 
                         }}>
+                            <style>{`
+                                .controls > div { flex: 1 1 180px; }
+                                .search-block { flex-basis: 100% !important; }
+                            `}</style>
+                            {activeFilters.includes('year') && (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                    <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold' }}>Ano</label>
+                                    <CustomSelect 
+                                        value={selectedYear} 
+                                        onChange={(val) => onYearChange({target:{value:val}})} 
+                                        options={['2024', '2025', '2026']} 
+                                        maxHeight="400px" 
+                                    />
+                                </div>
+                            )}
                             
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                                <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold' }}>Ano</label>
-                                <select className="searchInput" value={selectedYear} onChange={onYearChange} style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-primary)' }}>
-                                    <option value="2024">2024</option>
-                                    <option value="2025">2025</option>
-                                    <option value="2026">2026</option>
-                                </select>
-                            </div>
+                            {activeFilters.includes('month') && (
+                                <>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                        <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold' }}>Mês Inicial</label>
+                                        <CustomSelect 
+                                            value={`${monthFrom} - ${monthNames[monthFrom - 1]}`} 
+                                            onChange={(val) => onMonthFromChange({target:{value: parseInt(val.split(' - ')[0])}})} 
+                                            options={monthNames.map((mName, i) => `${i+1} - ${mName}`)} 
+                                            maxHeight="400px" 
+                                        />
+                                    </div>
+                                    
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                        <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold' }}>Mês Final</label>
+                                        <CustomSelect 
+                                            value={`${monthTo} - ${monthNames[monthTo - 1]}`} 
+                                            onChange={(val) => onMonthToChange({target:{value: parseInt(val.split(' - ')[0])}})} 
+                                            options={monthNames.map((mName, i) => `${i+1} - ${mName}`)} 
+                                            maxHeight="400px" 
+                                        />
+                                    </div>
+                                </>
+                            )}
                             
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                                <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold' }}>Mês Inicial</label>
-                                <select className="searchInput" value={monthFrom} onChange={onMonthFromChange} style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-primary)' }}>
-                                    {monthNames.map((mName, i) => <option key={i+1} value={i+1}>{i+1} - {mName}</option>)}
-                                </select>
-                            </div>
+                            {activeFilters.includes('escalao') && (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                    <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold' }}>Escalão</label>
+                                    <CustomSelect 
+                                        value={selectedEscalao} 
+                                        onChange={setSelectedEscalao} 
+                                        options={uniqueEscaloes} 
+                                        maxHeight="400px" 
+                                    />
+                                </div>
+                            )}
                             
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                                <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold' }}>Mês Final</label>
-                                <select className="searchInput" value={monthTo} onChange={onMonthToChange} style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-primary)' }}>
-                                    {monthNames.map((mName, i) => <option key={i+1} value={i+1}>{i+1} - {mName}</option>)}
-                                </select>
-                            </div>
-                            
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                                <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold' }}>Escalão</label>
-                                <select className="searchInput" value={selectedEscalao} onChange={(e) => setSelectedEscalao(e.target.value)} style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-primary)' }}>
-                                    {uniqueEscaloes.map(e => <option key={e} value={e}>{e}</option>)}
-                                </select>
-                            </div>
-                            
-                            {!forceAmbito && (
+                            {activeFilters.includes('ambito') && !forceAmbito && (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                                     <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold' }}>Âmbito</label>
-                                    <select className="searchInput" value={selectedAmbito} onChange={(e) => setSelectedAmbito(e.target.value)} style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-primary)' }}>
-                                        {uniqueAmbitos.map(a => <option key={a} value={a}>{a}</option>)}
-                                    </select>
+                                    <CustomSelect 
+                                        value={selectedAmbito} 
+                                        onChange={setSelectedAmbito} 
+                                        options={uniqueAmbitos} 
+                                        maxHeight="400px" 
+                                    />
                                 </div>
                             )}
                             
-                            {!forceLicenca && (
+                            {activeFilters.includes('licenca') && !forceLicenca && (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                                     <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold' }}>Licença</label>
-                                    <select className="searchInput" value={selectedLicenca} onChange={(e) => setSelectedLicenca(e.target.value)} style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-primary)' }}>
-                                        {uniqueLicencas.map(l => <option key={l} value={l}>{l}</option>)}
-                                    </select>
+                                    <CustomSelect 
+                                        value={selectedLicenca} 
+                                        onChange={setSelectedLicenca} 
+                                        options={uniqueLicencas} 
+                                        maxHeight="400px" 
+                                    />
                                 </div>
                             )}
                             
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                                <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold' }}>Região</label>
-                                <select className="searchInput" value={selectedRegiao} onChange={(e) => setSelectedRegiao(e.target.value)} style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-primary)' }}>
-                                    {uniqueRegioes.map(r => <option key={r} value={r}>{r}</option>)}
-                                </select>
-                            </div>
+                            {activeFilters.includes('regiao') && (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                    <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold' }}>Região</label>
+                                    <CustomSelect 
+                                        value={selectedRegiao} 
+                                        onChange={setSelectedRegiao} 
+                                        options={uniqueRegioes} 
+                                        maxHeight="400px" 
+                                    />
+                                </div>
+                            )}
                             
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', gridColumn: '1 / -1' }}>
-                                <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold' }}>Pesquisa Livre</label>
-                                <input 
-                                    type="text" 
-                                    placeholder="Pesquisar por nome de prova ou localidade..." 
-                                    value={searchTerm} 
-                                    onChange={onSearchChange} 
-                                    style={{ 
-                                        width: '100%', 
-                                        padding: '0.75rem', 
-                                        borderRadius: '8px', 
-                                        border: '1px solid var(--accent-primary)', 
-                                        background: 'var(--card-bg)', 
-                                        color: 'var(--text-primary)',
-                                        fontSize: '1rem'
-                                    }}
-                                />
-                            </div>
+                            {activeFilters.includes('distrito') && (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                    <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold' }}>Distrito</label>
+                                    <CustomSelect 
+                                        value={selectedDistrito} 
+                                        onChange={setSelectedDistrito} 
+                                        options={uniqueDistritos} 
+                                        maxHeight="600px"
+                                    />
+                                </div>
+                            )}
+                            
+                            {activeFilters.includes('search') && (
+                                <div className="search-block" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                    <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold' }}>Pesquisa Livre</label>
+                                    <input 
+                                        type="text" 
+                                        placeholder="Pesquisar por nome de prova ou localidade..." 
+                                        value={searchTerm} 
+                                        onChange={onSearchChange} 
+                                        style={{ 
+                                            width: '100%', 
+                                            padding: '0.75rem', 
+                                            borderRadius: '8px', 
+                                            border: '1px solid var(--accent-primary)', 
+                                            background: 'var(--card-bg)', 
+                                            color: 'var(--text-primary)',
+                                            fontSize: '1rem'
+                                        }}
+                                    />
+                                </div>
+                            )}
                         </div>
                         
-                        <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--card-border)' }}>
-                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold', display: 'block', marginBottom: '0.75rem' }}>
-                                Modalidades
-                            </span>
-                            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                            {availableTags.map(tag => (
-                                <button 
-                                    key={tag} 
-                                    onClick={() => onTagToggle(tag)} 
-                                    style={{ 
-                                        padding: '0.4rem 1rem',
-                                        borderRadius: 'var(--radius-full)',
-                                        border: '1px solid var(--card-border)',
-                                        background: selectedTags.includes(tag) ? 'var(--accent-primary)' : 'var(--card-bg)', 
-                                        color: selectedTags.includes(tag) ? 'white' : 'var(--text-primary)',
-                                        cursor: 'pointer',
-                                        fontSize: '0.85rem',
-                                        fontWeight: '500',
-                                        transition: 'var(--transition)'
-                                    }}
-                                >
-                                    {tag}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+                        {activeFilters.includes('modalidade') && (
+                            <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--card-border)' }}>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold', display: 'block', marginBottom: '0.75rem' }}>
+                                    Modalidades
+                                </span>
+                                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                {availableTags.map(tag => (
+                                    <button 
+                                        key={tag} 
+                                        onClick={() => onTagToggle(tag)} 
+                                        style={{ 
+                                            padding: '0.4rem 1rem',
+                                            borderRadius: 'var(--radius-full)',
+                                            border: '1px solid var(--card-border)',
+                                            background: selectedTags.includes(tag) ? 'var(--accent-primary)' : 'var(--card-bg)', 
+                                            color: selectedTags.includes(tag) ? 'white' : 'var(--text-primary)',
+                                            cursor: 'pointer',
+                                            fontSize: '0.85rem',
+                                            fontWeight: '500',
+                                            transition: 'var(--transition)'
+                                        }}
+                                    >
+                                        {tag}
+                                    </button>
+                                ))}
+                                </div>
+                            </div>
+                        )}
                 </div>
             )}
             </header>
@@ -452,82 +502,54 @@ export default function CalendarView({
 
                 {!loading && !error && filteredEvents.length > 0 && (
                     <>
-                        <div className="events-grid">
-                            {filteredEvents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(event => (
-                                <div key={event.id} className="event-card">
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                                        <span className="event-date">📅 {event.date}</span>
+                        <div className="events-list">
+                            {filteredEvents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(event => {
+                                const parts = event.details ? event.details.split('|') : [];
+                                const location = parts.length > 0 && parts[0].trim() !== '' ? parts[0].trim() : "A definir";
+                                const extraDetails = parts.length > 1 ? parts.slice(1).join('|').trim() : "";
+
+                                return (
+                                <div key={event.id} className="event-list-item">
+                                    <div className="event-list-main">
+                                        <span className="event-list-date">📅 {event.date}</span>
+                                        
+                                        <div className="event-list-info">
+                                            <h3 className="event-list-title">{event.title}</h3>
+                                            <div className="event-list-details">
+                                                <div className="event-list-detail-item" style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                    </svg>
+                                                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                        {event.escalao} {extraDetails ? `(${extraDetails})` : ''}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="event-list-location">
+                                            📍 {location}
+                                        </div>
+                                    </div>
+
+                                    <div className="event-list-meta">
+                                        <span className="event-list-tag">{event.ambito}</span>
+                                        {event.licenca && <span className="event-list-tag">{event.licenca}</span>}
+                                        
                                         {event.source === 'Cabreira' ? (
-                                            <img 
-                                                src="/logo-cabreira.png" 
-                                                alt="Cabreira Solutions"
-                                                style={{ height: '24px', objectFit: 'contain' }}
-                                            />
+                                            <img src="/logo-cabreira.png" alt="Cabreira Solutions" className="logo-cabreira" />
                                         ) : (
-                                            <img 
-                                                src="/logo-fpc.png" 
-                                                alt="FPC"
-                                                style={{ height: '24px', objectFit: 'contain' }}
-                                            />
+                                            <img src="/logo-fpc.png" alt="FPC" className="logo-fpc" />
                                         )}
                                     </div>
-                                    
-                                    <h3 className="event-title">{event.title}</h3>
-                                    
-                                    <div className="event-details">
-                                        <div className="detail-item">
-                                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                            </svg>
-                                            {event.escalao} ({event.details})
-                                        </div>
-                                        <div className="detail-item" style={{ marginTop: '0.25rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                            <span className="event-tag" style={{ background: 'transparent', color: 'var(--text-secondary)', border: '1px solid var(--card-border)' }}>
-                                                {event.ambito}
-                                            </span>
-                                            {event.licenca && (
-                                                <span className="event-tag" style={{ background: 'transparent', color: 'var(--text-secondary)', border: '1px solid var(--card-border)' }}>
-                                                    {event.licenca}
-                                                </span>
-                                            )}
-                                            {event.regiao && (
-                                                <span className="event-tag" style={{ background: 'transparent', color: 'var(--text-secondary)', border: '1px solid var(--card-border)' }}>
-                                                    📍 {event.regiao}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                         
-                        <div className="pagination" style={{ display: 'flex', width: '100%', alignItems: 'center', marginTop: '2rem', paddingBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-                            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: '200px' }}>
-                                <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Provas por página:</span>
-                                <select 
-                                    value={itemsPerPage} 
-                                    onChange={(e) => {
-                                        setItemsPerPage(Number(e.target.value));
-                                        setCurrentPage(1);
-                                    }}
-                                    style={{
-                                        background: 'var(--card-bg)',
-                                        color: 'var(--text-primary)',
-                                        border: '1px solid var(--card-border)',
-                                        borderRadius: '4px',
-                                        padding: '0.2rem 0.5rem',
-                                        fontSize: '0.85rem'
-                                    }}
-                                >
-                                    <option value={9}>9</option>
-                                    <option value={18}>18</option>
-                                    <option value={30}>30</option>
-                                    <option value={10000}>Todas</option>
-                                </select>
-                            </div>
-
-                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem' }}>
+                        <div className="pagination" style={{ display: 'flex', width: '100%', alignItems: 'center', marginTop: '1.5rem', paddingBottom: '1rem', flexWrap: 'wrap', gap: '1rem', justifyContent: 'center' }}>
+                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', flex: 1, minWidth: '250px' }}>
                                 <button 
                                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                     disabled={currentPage === 1}
@@ -542,8 +564,37 @@ export default function CalendarView({
                                 >
                                     ← Anterior
                                 </button>
-                                <span style={{ color: 'var(--text-secondary)' }}>
-                                    Página {currentPage} de {Math.max(1, Math.ceil(filteredEvents.length / itemsPerPage))}
+                                <span style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    Página 
+                                    <input 
+                                        type="number" 
+                                        defaultValue={currentPage}
+                                        key={currentPage} 
+                                        onBlur={(e) => {
+                                            let val = parseInt(e.target.value);
+                                            const maxPage = Math.max(1, Math.ceil(filteredEvents.length / itemsPerPage));
+                                            if (isNaN(val) || val < 1) val = 1;
+                                            if (val > maxPage) val = maxPage;
+                                            setCurrentPage(val);
+                                            e.target.value = val;
+                                        }}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.target.blur();
+                                            }
+                                        }}
+                                        style={{
+                                            width: '50px',
+                                            background: 'var(--card-bg)',
+                                            color: 'var(--text-primary)',
+                                            border: '1px solid var(--card-border)',
+                                            borderRadius: '4px',
+                                            padding: '0.2rem',
+                                            textAlign: 'center',
+                                            fontSize: '0.9rem'
+                                        }}
+                                    /> 
+                                    de {Math.max(1, Math.ceil(filteredEvents.length / itemsPerPage))}
                                 </span>
                                 <button 
                                     onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredEvents.length / itemsPerPage), p + 1))}
@@ -560,8 +611,30 @@ export default function CalendarView({
                                     Próxima →
                                 </button>
                             </div>
-                            
-                            <div style={{ flex: 1, minWidth: '200px' }}></div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', minWidth: '200px' }}>
+                                <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Provas por página:</span>
+                                <select 
+                                    value={itemsPerPage} 
+                                    onChange={(e) => {
+                                        setItemsPerPage(Number(e.target.value));
+                                        setCurrentPage(1);
+                                    }}
+                                    style={{
+                                        background: 'var(--card-bg)',
+                                        color: 'var(--text-primary)',
+                                        border: '1px solid var(--card-border)',
+                                        borderRadius: '4px',
+                                        padding: '0.2rem 0.5rem',
+                                        fontSize: '0.85rem'
+                                    }}
+                                >
+                                    <option value={8}>8</option>
+                                    <option value={16}>16</option>
+                                    <option value={32}>32</option>
+                                    <option value={10000}>Todas</option>
+                                </select>
+                            </div>
                         </div>
                     </>
                 )}

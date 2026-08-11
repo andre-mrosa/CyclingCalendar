@@ -6,6 +6,7 @@ export default function Lazer() {
             pageTitle="Passeios e Lazer" 
             pageSubtitle="Granfondos e Provas Abertas"
             forceLicenca="CPT / Lazer"
+            activeFilters={['search', 'year', 'month', 'distrito', 'modalidade']}
         />
     );
 }

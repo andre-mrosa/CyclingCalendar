@@ -6,6 +6,7 @@ export default function Nacionais() {
             pageTitle="Campeonatos Nacionais" 
             pageSubtitle="Apenas a elite e campeonatos nacionais"
             forceAmbito="Nacional"
+            activeFilters={['search', 'year', 'month', 'escalao', 'distrito']}
         />
     );
 }

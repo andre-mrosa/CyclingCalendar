@@ -6,6 +6,7 @@ export default function Tacas() {
             pageTitle="Taças de Portugal" 
             pageSubtitle="Competições a pontuar para a Taça"
             forceAmbito="Taça de Portugal"
+            activeFilters={['search', 'year', 'month', 'escalao', 'distrito']}
         />
     );
 }
