@@ -44,9 +44,9 @@ export default function CalendarView({
     const [monthTo, setMonthTo] = useState(12);
     const [selectedTags, setSelectedTags] = useState([]);
     const [showFilters, setShowFilters] = useState(false);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(8);
+    const [visibleCount, setVisibleCount] = useState(16);
     const [selectedEvent, setSelectedEvent] = useState(null);
+    const loaderRef = useRef(null);
 
     const { favorites, toggleFavorite, isSignedIn } = useFavorites();
 
@@ -99,7 +99,7 @@ export default function CalendarView({
         });
 
         setFilteredEvents(filtered);
-        setCurrentPage(1); // Reset page on filter change
+        setVisibleCount(16); // Reset visible count on filter change
     }, [events, searchTerm, selectedEscalao, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, filterByFavorites, favorites, forceEscalao, forceAmbito, forceLicenca]);
 
     const uniqueEscaloes = ['Todos', 'Elite Amador / Individual', ...new Set(events.map(e => e.escalao))].filter((value, index, self) => self.indexOf(value) === index);
@@ -128,7 +128,7 @@ export default function CalendarView({
 
     const handleFilterChange = (key, value) => {
         setFilters(prev => ({ ...prev, [key]: value }));
-        setCurrentPage(1);
+        setVisibleCount(16);
     };
     
     const onMonthToChange = (e) => {
@@ -143,6 +143,28 @@ export default function CalendarView({
             : [...selectedTags, tag];
         setSelectedTags(newTags);
     };
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && filteredEvents.length > visibleCount) {
+                    setVisibleCount((prev) => Math.min(prev + 16, filteredEvents.length));
+                }
+            },
+            { threshold: 0.1 }
+        );
+
+        const currentLoader = loaderRef.current;
+        if (currentLoader) {
+            observer.observe(currentLoader);
+        }
+
+        return () => {
+            if (currentLoader) {
+                observer.unobserve(currentLoader);
+            }
+        };
+    }, [filteredEvents.length, visibleCount]);
 
     return (
         <div className="app-container">
@@ -454,7 +476,7 @@ export default function CalendarView({
                 {!loading && !error && filteredEvents.length > 0 && (
                     <>
                         <div className="events-list">
-                            {filteredEvents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(event => {
+                            {filteredEvents.slice(0, visibleCount).map(event => {
                                 const parts = event.details ? event.details.split('|') : [];
                                 const location = parts.length > 0 && parts[0].trim() !== '' ? parts[0].trim() : "A definir";
                                 const extraDetails = parts.length > 1 ? parts.slice(1).join('|').trim() : "";
@@ -500,65 +522,12 @@ export default function CalendarView({
                             })}
                         </div>
                         
-                        <div className="pagination-container">
-                            <div className="pagination-items-per-page">
-                                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Provas por página:</span>
-                                <select 
-                                    value={itemsPerPage} 
-                                    onChange={(e) => {
-                                        setItemsPerPage(Number(e.target.value));
-                                        setCurrentPage(1); 
-                                    }}
-                                    style={{ background: 'var(--bg-color)', color: 'var(--text-primary)', border: '1px solid var(--card-border)', padding: '0.2rem 0.5rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.85rem' }}
-                                >
-                                    <option value={8}>8</option>
-                                    <option value={16}>16</option>
-                                    <option value={24}>24</option>
-                                </select>
+                        {filteredEvents.length > visibleCount && (
+                            <div ref={loaderRef} style={{ height: '40px', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '2rem 0' }}>
+                                <div className="spinner" style={{ width: '30px', height: '30px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--accent-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+                                <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
                             </div>
-
-                            <div className="pagination-controls">
-                                <button 
-                                    className="modal-btn" 
-                                    style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--text-primary)', border: 'none', padding: '0.4rem 1rem', fontSize: '0.85rem', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', opacity: currentPage === 1 ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                    disabled={currentPage === 1}
-                                >
-                                    <ChevronLeft size={16} />
-                                    <span className="pagination-btn-text">Anterior</span>
-                                </button>
-                            
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                                    <span>Página</span>
-                                    <input 
-                                        type="number" 
-                                        min="1" 
-                                        max={Math.max(1, Math.ceil(filteredEvents.length / itemsPerPage))}
-                                        value={currentPage}
-                                        onChange={(e) => {
-                                            let p = parseInt(e.target.value);
-                                            const m = Math.ceil(filteredEvents.length / itemsPerPage);
-                                            if (p >= 1 && p <= m) {
-                                                setCurrentPage(p);
-                                            }
-                                        }}
-                                        style={{ width: '45px', padding: '0.3rem', textAlign: 'center', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--card-border)', color: 'var(--text-primary)', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
-                                    />
-                                    <span>de {Math.max(1, Math.ceil(filteredEvents.length / itemsPerPage))}</span>
-                                </div>
-                                
-                                <button 
-                                    className="modal-btn" 
-                                    style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--text-primary)', border: 'none', padding: '0.4rem 1rem', fontSize: '0.85rem', cursor: currentPage >= Math.ceil(filteredEvents.length / itemsPerPage) ? 'not-allowed' : 'pointer', opacity: currentPage >= Math.ceil(filteredEvents.length / itemsPerPage) ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-                                    onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredEvents.length / itemsPerPage), p + 1))}
-                                    disabled={currentPage >= Math.ceil(filteredEvents.length / itemsPerPage)}
-                                >
-                                    <span className="pagination-btn-text">Próxima</span>
-                                    <ChevronRight size={16} />
-                                </button>
-                            </div>
-                            <div className="pagination-spacer"></div>
-                        </div>
+                        )}
                     </>
                 )}
 
