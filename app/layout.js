@@ -3,6 +3,7 @@ import "./globals.css";
 import Navigation from "./components/Navigation";
 import { ThemeProvider } from "./components/ThemeProvider";
 import ThemeClerkProvider from "./components/ThemeClerkProvider";
+import Footer from "./components/Footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,7 +41,10 @@ export default function RootLayout({ children }) {
         <ThemeProvider attribute="class" defaultTheme="dark" value={{ light: 'light-mode', dark: 'dark' }}>
           <ThemeClerkProvider>
             <Navigation />
-            {children}
+            <main style={{ minHeight: 'calc(100vh - 120px)' }}>
+              {children}
+            </main>
+            <Footer />
             <WelcomeModal />
             <Analytics />
             <SpeedInsights />
