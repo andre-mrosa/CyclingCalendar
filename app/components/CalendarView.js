@@ -52,9 +52,16 @@ export default function CalendarView({
 
     // Sync settings on mount
     useEffect(() => {
-        if (defaultEscalao) {
-            setSelectedEscalao(defaultEscalao);
-        }
+        if (forceEscalao) setSelectedEscalao(forceEscalao);
+        else if (defaultEscalao) setSelectedEscalao(defaultEscalao);
+        else setSelectedEscalao('Todos');
+
+        if (forceAmbito) setSelectedAmbito(forceAmbito);
+        else setSelectedAmbito('Todos');
+
+        if (forceLicenca) setSelectedLicenca(forceLicenca);
+        else setSelectedLicenca('Todas');
+
         if (defaultRegiao && applyDefaultRegiao) {
             setSelectedRegiao(defaultRegiao);
         }
@@ -62,7 +69,7 @@ export default function CalendarView({
             const currentMonth = new Date().getMonth() + 1;
             setMonthFrom(currentMonth);
         }
-    }, [defaultEscalao, defaultRegiao, useCurrentMonth]);
+    }, [defaultEscalao, defaultRegiao, useCurrentMonth, forceEscalao, forceAmbito, forceLicenca, applyDefaultRegiao]);
 
     const { data: fetchedEvents, error, isLoading: loading, mutate } = useSWR(
         selectedSources && selectedSources.length > 0 
@@ -81,9 +88,9 @@ export default function CalendarView({
         const filtered = filterEvents(events, {
             filterByFavorites, favorites,
             searchTerm,
-            selectedEscalao,
-            selectedAmbito,
-            selectedLicenca,
+            selectedEscalao: forceEscalao || selectedEscalao,
+            selectedAmbito: forceAmbito || selectedAmbito,
+            selectedLicenca: forceLicenca || selectedLicenca,
             selectedRegiao,
             selectedDistrito,
             monthFrom,
@@ -93,7 +100,7 @@ export default function CalendarView({
 
         setFilteredEvents(filtered);
         setCurrentPage(1); // Reset page on filter change
-    }, [events, searchTerm, selectedEscalao, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, filterByFavorites, favorites]);
+    }, [events, searchTerm, selectedEscalao, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, filterByFavorites, favorites, forceEscalao, forceAmbito, forceLicenca]);
 
     const uniqueEscaloes = ['Todos', 'Elite Amador / Individual', ...new Set(events.map(e => e.escalao))].filter((value, index, self) => self.indexOf(value) === index);
     const uniqueAmbitos = ['Todos', ...new Set(events.map(e => e.ambito))];
