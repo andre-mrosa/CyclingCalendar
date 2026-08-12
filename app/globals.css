@@ -172,8 +172,6 @@ body {
     to { transform: rotate(360deg); }
 }
 
-
-
 .error-state {
     text-align: center;
     padding: 3rem;
@@ -189,40 +187,27 @@ body {
     gap: 0.75rem;
 }
 
-
-
 .event-list-item:hover {
     transform: translateX(4px);
     box-shadow: var(--shadow-sm);
     border-color: rgba(255, 255, 255, 0.1);
 }
 
-.event-list-item:hover::before {
-    opacity: 1;
+.event-list-item.favorite-item {
+    border-color: rgba(234, 179, 8, 0.6); /* Yellow border */
+    background: linear-gradient(90deg, rgba(234, 179, 8, 0.03) 0%, transparent 100%), var(--card-bg);
 }
 
-
-
-
-
-
-
-
-
-
+.event-list-item.favorite-item:hover {
+    border-color: rgba(234, 179, 8, 1);
+    box-shadow: 0 0 10px rgba(234, 179, 8, 0.2);
+}
 
 /* Utility for hiding scrollbars but keeping scroll functionality */
 .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
-.no-scrollbar::-webkit-scrollbar {
-    display: none;
-}
-
-
-/* Mobile Menu */
-.mobile-menu-btn { display: none; background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-primary); padding: 0.5rem; }
 .desktop-links { display: flex; align-items: center; gap: 1.5rem; width: 100%; }
 .mobile-sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100vh; background: var(--card-bg); backdrop-filter: blur(20px); border-right: 1px solid var(--card-border); transition: left 0.3s ease; z-index: 1001; display: flex; flex-direction: column; padding: 2rem 1rem; }
 .mobile-sidebar.open { left: 0; }
@@ -487,6 +472,15 @@ body {
     width: auto;
     object-fit: contain;
     flex-shrink: 0;
+    transition: filter 0.3s ease;
+}
+
+html.dark .logo-fpc {
+    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.7)) drop-shadow(0 0 8px rgba(255, 255, 255, 0.4));
+}
+
+html.light-mode .logo-cabreira {
+    filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 8px rgba(0, 0, 0, 0.3));
 }
 
 @media (max-width: 1024px) {

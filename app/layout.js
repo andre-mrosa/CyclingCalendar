@@ -1,6 +1,5 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { SettingsProvider } from "./SettingsContext";
 import Navigation from "./components/Navigation";
 import { ThemeProvider } from "./components/ThemeProvider";
 import ThemeClerkProvider from "./components/ThemeClerkProvider";
@@ -36,10 +35,8 @@ export default function RootLayout({ children }) {
       <body className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="dark" value={{ light: 'light-mode', dark: 'dark' }}>
           <ThemeClerkProvider>
-            <SettingsProvider>
-              <Navigation />
-              {children}
-            </SettingsProvider>
+            <Navigation />
+            {children}
           </ThemeClerkProvider>
         </ThemeProvider>
       </body>

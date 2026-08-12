@@ -1,18 +1,17 @@
 "use client";
 
-import { useContext } from 'react';
-import { SettingsContext } from '../SettingsContext';
+import { useSettingsStore } from '../store/useSettingsStore';
 import RegionAssistant from '../components/RegionAssistant';
 import EscalaoAssistant from '../components/EscalaoAssistant';
 
 export default function Ajuda() {
-    const { updateDefaultRegiao, updateDefaultEscalao } = useContext(SettingsContext);
+    const { setDefaultRegiao, setDefaultEscalao } = useSettingsStore();
 
     const handleApply = (type, val) => {
         if (type === 'regiao') {
-            updateDefaultRegiao(val);
+            setDefaultRegiao(val);
         } else {
-            updateDefaultEscalao(val);
+            setDefaultEscalao(val);
         }
     };
 

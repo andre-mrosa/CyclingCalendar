@@ -1,17 +1,18 @@
 "use client";
 
-import { useContext, useState } from 'react';
-import { SettingsContext } from '../SettingsContext';
+import { useState } from 'react';
+import { useSettingsStore } from '../store/useSettingsStore';
+import { HelpCircle, ChevronUp, ChevronDown, Check, X } from 'lucide-react';
 import RegionAssistant from '../components/RegionAssistant';
 import EscalaoAssistant from '../components/EscalaoAssistant';
 
 export default function Conta() {
     const { 
-        defaultEscalao, updateDefaultEscalao,
-        defaultRegiao, updateDefaultRegiao,
+        defaultEscalao, setDefaultEscalao,
+        defaultRegiao, setDefaultRegiao,
         useCurrentMonth, toggleUseCurrentMonth,
         selectedSources, toggleSource, reorderSources
-    } = useContext(SettingsContext);
+    } = useSettingsStore();
 
     const [activeModal, setActiveModal] = useState(null); // 'regiao' or 'escalao'
 
@@ -93,7 +94,7 @@ export default function Conta() {
                                     onMouseOver={e => e.currentTarget.style.opacity = 1}
                                     onMouseOut={e => e.currentTarget.style.opacity = 0.7}
                                 >
-                                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    <HelpCircle size={18} />
                                 </button>
                             </div>
                             <p style={{ margin: '0.25rem 0 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
@@ -103,7 +104,7 @@ export default function Conta() {
                         
                         <select 
                             value={defaultRegiao}
-                            onChange={(e) => updateDefaultRegiao(e.target.value)}
+                            onChange={(e) => setDefaultRegiao(e.target.value)}
                             style={selectStyle}
                         >
                             <option value="Todas">Nenhuma (Todas as Regiões)</option>
@@ -132,7 +133,7 @@ export default function Conta() {
                                     onMouseOver={e => e.currentTarget.style.opacity = 1}
                                     onMouseOut={e => e.currentTarget.style.opacity = 0.7}
                                 >
-                                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    <HelpCircle size={18} />
                                 </button>
                             </div>
                             <p style={{ margin: '0.25rem 0 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
@@ -142,7 +143,7 @@ export default function Conta() {
                         
                         <select 
                             value={defaultEscalao}
-                            onChange={(e) => updateDefaultEscalao(e.target.value)}
+                            onChange={(e) => setDefaultEscalao(e.target.value)}
                             style={selectStyle}
                         >
                             <option value="Todos">Nenhum (Todos)</option>
@@ -174,7 +175,7 @@ export default function Conta() {
                                 color: useCurrentMonth ? 'white' : 'var(--text-primary)'
                             }}
                         >
-                            {useCurrentMonth ? '✓ Ativado' : '✗ Desativado'}
+                            {useCurrentMonth ? <><Check size={16} /> Ativado</> : <><X size={16} /> Desativado</>}
                         </button>
                     </div>
 
@@ -209,7 +210,7 @@ export default function Conta() {
                                             style={{ background: 'none', border: 'none', cursor: index === 0 ? 'not-allowed' : 'pointer', opacity: index === 0 ? 0.3 : 1, color: 'var(--text-primary)', padding: '0.2rem' }}
                                             title="Mover para cima (Maior Prioridade)"
                                         >
-                                            🔼
+                                            <ChevronUp size={16} />
                                         </button>
                                         <button 
                                             onClick={() => {
@@ -221,7 +222,7 @@ export default function Conta() {
                                             style={{ background: 'none', border: 'none', cursor: index === selectedSources.length - 1 ? 'not-allowed' : 'pointer', opacity: index === selectedSources.length - 1 ? 0.3 : 1, color: 'var(--text-primary)', padding: '0.2rem' }}
                                             title="Mover para baixo (Menor Prioridade)"
                                         >
-                                            🔽
+                                            <ChevronDown size={16} />
                                         </button>
                                     </div>
                                 </div>
@@ -288,14 +289,14 @@ export default function Conta() {
                         <div style={{ maxHeight: '90vh', overflowY: 'auto' }}>
                             {activeModal === 'regiao' && (
                                 <RegionAssistant onApply={(val) => {
-                                    updateDefaultRegiao(val);
+                                    setDefaultRegiao(val);
                                     setTimeout(() => setActiveModal(null), 1000);
                                 }} />
                             )}
                             
                             {activeModal === 'escalao' && (
                                 <EscalaoAssistant onApply={(val) => {
-                                    updateDefaultEscalao(val);
+                                    setDefaultEscalao(val);
                                     setTimeout(() => setActiveModal(null), 1000);
                                 }} />
                             )}

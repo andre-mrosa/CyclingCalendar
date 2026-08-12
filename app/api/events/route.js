@@ -240,9 +240,12 @@ const fetchFPC = async (year) => {
                 const lowerName = nameText.toLowerCase();
                 
                 const codes = det.match(/\.\d{2}/g) || [];
+                const uciCodes = det.match(/\b([12]\.(1|Pro|HC))\b/i);
                 
                 if (det.toLowerCase().includes('cpt') || lowerName.includes('aberta') || lowerName.includes('amador')) {
                     escalao = 'Todos (Aberto)';
+                } else if (uciCodes || lowerName.includes('volta a portugal em bicicleta') || lowerName.includes('volta ao algarve') || lowerName.includes('volta ao alentejo')) {
+                    escalao = 'Profissional (UCI)';
                 } else if (codes.length > 1) {
                     escalao = 'Geral / Vários';
                 } else if (det.includes('.12') || lowerName.includes('elite')) {
