@@ -179,7 +179,7 @@ const toTitleCase = (str) => {
 
 const fetchFPC = async (year) => {
     const formData = new URLSearchParams();
-    formData.append('epoca_site2', year);
+    formData.append('epoca_site', year);
     formData.append('mes_de_new', '01');
     formData.append('mes_ate_new', '12');
 
@@ -213,6 +213,7 @@ const fetchFPC = async (year) => {
         const cols = $(element).find('td');
         if (ths.length >= 1 && cols.length >= 3) {
             let dateText = $(ths[0]).text().trim();
+            let endDateText = ths.length > 1 ? $(ths[1]).text().trim() : '';
             const nameText = $(cols[0]).text().trim();
             let locText = $(cols[1]).text().trim();
             locText = toTitleCase(locText);
@@ -220,9 +221,18 @@ const fetchFPC = async (year) => {
             
             if (nameText && dateText && dateText.length > 2 && !nameText.toLowerCase().includes('evento')) {
                 const parts = dateText.split('-');
+                const months = {'01':'JAN', '02':'FEV', '03':'MAR', '04':'ABR', '05':'MAI', '06':'JUN', '07':'JUL', '08':'AGO', '09':'SET', '10':'OUT', '11':'NOV', '12':'DEZ'};
                 if (parts.length === 3) {
-                    const months = {'01':'JAN', '02':'FEV', '03':'MAR', '04':'ABR', '05':'MAI', '06':'JUN', '07':'JUL', '08':'AGO', '09':'SET', '10':'OUT', '11':'NOV', '12':'DEZ'};
                     dateText = `${parts[0]} ${months[parts[1]] || parts[1]} ${parts[2]}`;
+                }
+                
+                if (endDateText && endDateText !== $(ths[0]).text().trim()) {
+                    const eParts = endDateText.split('-');
+                    if (eParts.length === 3) {
+                        endDateText = `${eParts[0]} ${months[eParts[1]] || eParts[1]} ${eParts[2]}`;
+                    }
+                } else {
+                    endDateText = null;
                 }
 
                 let escalao = 'Geral / Vários';
@@ -256,9 +266,35 @@ const fetchFPC = async (year) => {
                 const ambitoVal = getAmbito(nameText, det);
                 const regiaoVal = getRegiao(nameText, `${det} ${locText}`);
 
+                let fpcLinks = [];
+                $(element).find('a').each((i, a) => {
+                    const href = $(a).attr('href') || '';
+                    const onclick = $(a).attr('onclick') || '';
+                    const title = $(a).attr('title') || $(a).find('img').attr('title') || $(a).find('img').attr('alt') || '';
+                    let extracted = '';
+                    
+                    if (onclick.includes('pagina_ver(')) {
+                        const match = onclick.match(/'([^']+)'/);
+                        if (match) extracted = match[1];
+                    } else if (href.startsWith('http') && !href.endsWith('fpciclismo.pt') && !href.endsWith('fpciclismo.pt/')) {
+                        extracted = href;
+                    }
+                    
+                    if (extracted && !fpcLinks.some(l => l.link === extracted)) {
+                        let label = 'Mais Info (FPC)';
+                        if (title.toLowerCase().includes('inscrever') || extracted.includes('inscrever')) label = 'Inscrever (FPC)';
+                        else if (title.toLowerCase().includes('classifica') || extracted.includes('classifica')) label = 'Resultados (FPC)';
+                        else if (title.toLowerCase().includes('site') || title.toLowerCase().includes('página')) label = 'Website Oficial';
+                        else if (title) label = `${title} (FPC)`;
+                        
+                        fpcLinks.push({ label, link: extracted });
+                    }
+                });
+
                 events.push({
                     id: Math.random().toString(36).substr(2, 9),
                     date: dateText,
+                    endDate: endDateText,
                     sortDate: parseSortDate(dateText, year),
                     title: nameText,
                     details: `${locText} | ${extraText}`,
@@ -269,7 +305,8 @@ const fetchFPC = async (year) => {
                     regiao: regiaoVal,
                     distrito: getDistrito(nameText, `${det} ${locText}`),
                     source: 'FPC',
-                    link: 'https://www.fpciclismo.pt/'
+                    link: fpcLinks.length > 0 ? fpcLinks[0].link : 'https://www.fpciclismo.pt/',
+                    extraLinks: fpcLinks
                 });
             }
         }
@@ -328,7 +365,8 @@ const fetchCabreira = async (year) => {
                 regiao: getRegiao(title, locText),
                 distrito: getDistrito(title, locText),
                 source: 'Cabreira',
-                link: href || 'https://cabreirasolutions.com/eventos/'
+                link: href || 'https://cabreirasolutions.com/eventos/',
+                extraLinks: href ? [{ label: 'Ver na Cabreira Solutions', link: href }] : []
             });
         }
     });
@@ -387,18 +425,24 @@ export async function GET(request) {
             } else {
                 const existing = deduplicatedEvents[duplicateIdx];
                 
-                // Merge sourcesInfo
-                if (!existing.sourcesInfo.some(s => s.source === event.source)) {
-                    existing.sourcesInfo.push({ source: event.source, link: event.link });
+                // Merge extraLinks
+                if (event.extraLinks && event.extraLinks.length > 0) {
+                    const existingLinks = existing.extraLinks || [];
+                    for (const elink of event.extraLinks) {
+                        if (!existingLinks.some(l => l.link === elink.link)) {
+                            existingLinks.push(elink);
+                        }
+                    }
+                    existing.extraLinks = existingLinks;
                 }
                 
                 const currentSourceIndex = activeSources.indexOf(event.source);
                 const existingSourceIndex = activeSources.indexOf(existing.source);
                 
                 if (currentSourceIndex !== -1 && (existingSourceIndex === -1 || currentSourceIndex < existingSourceIndex)) {
-                    // Update main event data but preserve merged sources
-                    const mergedSources = existing.sourcesInfo;
-                    deduplicatedEvents[duplicateIdx] = { ...event, sourcesInfo: mergedSources };
+                    // Update main event data but preserve merged links
+                    const mergedLinks = existing.extraLinks;
+                    deduplicatedEvents[duplicateIdx] = { ...event, extraLinks: mergedLinks };
                 }
             }
         }

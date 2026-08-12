@@ -36,6 +36,7 @@ export default function CalendarView({
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(8);
     const [selectedEvent, setSelectedEvent] = useState(null);
+    const [programaData, setProgramaData] = useState({ loading: false, html: null, error: null, additionalLinks: [] });
 
     // Sync settings on mount
     useEffect(() => {
@@ -203,6 +204,59 @@ export default function CalendarView({
         setMonthFrom(val);
         if (monthTo < val) setMonthTo(val);
     };
+
+    // Fetch Programa on Modal open
+    useEffect(() => {
+        if (!selectedEvent) {
+            setProgramaData({ loading: false, html: null, error: null, additionalLinks: [] });
+            return;
+        }
+
+        const fetchPrograma = async () => {
+            // Find a valid URL to extract from (prefer Cabreira, then FPC)
+            let targetUrl = null;
+            if (selectedEvent.extraLinks && selectedEvent.extraLinks.length > 0) {
+                const cabreiraLink = selectedEvent.extraLinks.find(l => l.link.includes('cabreira'));
+                const fpcLink = selectedEvent.extraLinks.find(l => l.link.includes('fpciclismo') && !l.link.includes('inscrever'));
+                if (cabreiraLink) targetUrl = cabreiraLink.link;
+                else if (fpcLink) targetUrl = fpcLink.link;
+            }
+            if (!targetUrl) {
+                if (selectedEvent.link && !selectedEvent.link.includes('fpciclismo.pt/calendario')) {
+                    targetUrl = selectedEvent.link;
+                }
+            }
+
+            if (!targetUrl || targetUrl === 'https://www.fpciclismo.pt/' || targetUrl === 'https://cabreirasolutions.com/eventos/') {
+                return; // No specific event page to scrape
+            }
+
+            setProgramaData({ loading: true, html: null, error: null, additionalLinks: [] });
+            try {
+                const res = await fetch(`/api/programa?url=${encodeURIComponent(targetUrl)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setProgramaData({ 
+                        loading: false, 
+                        html: data.programa || null, 
+                        error: !data.programa ? 'O programa detalhado não foi encontrado. Por favor verifique o Website Oficial.' : null,
+                        additionalLinks: data.additionalLinks || []
+                    });
+                } else {
+                    setProgramaData({ loading: false, html: null, error: 'Falha ao aceder à página oficial.', additionalLinks: [] });
+                }
+            } catch (err) {
+                setProgramaData({ loading: false, html: null, error: 'Erro de ligação.', additionalLinks: [] });
+            }
+        };
+
+        fetchPrograma();
+    }, [selectedEvent]);
+
+    const handleFilterChange = (key, value) => {
+        setFilters(prev => ({ ...prev, [key]: value }));
+        setCurrentPage(1);
+    };
     
     const onMonthToChange = (e) => {
         const val = parseInt(e.target.value);
@@ -220,7 +274,7 @@ export default function CalendarView({
     return (
         <div className="app-container">
             <header className="app-header">
-                <div className="header-content" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div className="header-content" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '1rem', flexWrap: 'wrap' }}>
                     {/* Header title removed as requested */}
                     <button 
                         onClick={() => setShowFilters(!showFilters)}
@@ -235,8 +289,7 @@ export default function CalendarView({
                             alignItems: 'center',
                             gap: '0.4rem',
                             transition: 'var(--transition)',
-                            fontSize: '0.95rem',
-                            alignSelf: 'flex-start'
+                            fontSize: '0.95rem'
                         }}
                     >
                         <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -244,6 +297,51 @@ export default function CalendarView({
                         </svg>
                         {showFilters ? 'Esconder Filtros' : 'Filtrar Calendário'}
                     </button>
+                    
+                    <div style={{ position: 'relative', flex: '0 1 300px', width: '100%' }}>
+                        <input 
+                            type="text" 
+                            placeholder="Pesquisar por nome ou localidade..." 
+                            value={searchTerm} 
+                            onChange={onSearchChange} 
+                            style={{ 
+                                width: '100%',
+                                padding: '0.6rem 2.5rem 0.6rem 1.25rem', 
+                                borderRadius: '20px', 
+                                border: '1px solid var(--card-border)', 
+                                background: 'rgba(255, 255, 255, 0.03)', 
+                                color: 'var(--text-primary)',
+                                fontSize: '0.9rem',
+                                outline: 'none',
+                                transition: 'var(--transition)'
+                            }}
+                            onFocus={(e) => { e.target.style.borderColor = 'var(--accent-primary)'; e.target.style.background = 'rgba(255, 255, 255, 0.05)'; }}
+                            onBlur={(e) => { e.target.style.borderColor = 'var(--card-border)'; e.target.style.background = 'rgba(255, 255, 255, 0.03)'; }}
+                        />
+                        {searchTerm && (
+                            <button
+                                onClick={() => setSearchTerm('')}
+                                style={{
+                                    position: 'absolute',
+                                    right: '0.6rem',
+                                    top: '50%',
+                                    transform: 'translateY(-50%)',
+                                    background: 'none',
+                                    border: 'none',
+                                    color: 'var(--text-secondary)',
+                                    cursor: 'pointer',
+                                    padding: '0.2rem',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    borderRadius: '50%'
+                                }}
+                                title="Limpar pesquisa"
+                            >
+                                ✕
+                            </button>
+                        )}
+                    </div>
                 </div>
                 
                 {showFilters && (
@@ -361,26 +459,7 @@ export default function CalendarView({
                                 </div>
                             )}
                             
-                            {activeFilters.includes('search') && (
-                                <div className="search-block" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                                    <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold' }}>Pesquisa Livre</label>
-                                    <input 
-                                        type="text" 
-                                        placeholder="Pesquisar por nome de prova ou localidade..." 
-                                        value={searchTerm} 
-                                        onChange={onSearchChange} 
-                                        style={{ 
-                                            width: '100%', 
-                                            padding: '0.75rem', 
-                                            borderRadius: '8px', 
-                                            border: '1px solid var(--accent-primary)', 
-                                            background: 'var(--card-bg)', 
-                                            color: 'var(--text-primary)',
-                                            fontSize: '1rem'
-                                        }}
-                                    />
-                                </div>
-                            )}
+
                         </div>
                         
                         {activeFilters.includes('modalidade') && (
@@ -510,9 +589,12 @@ export default function CalendarView({
                                 const extraDetails = parts.length > 1 ? parts.slice(1).join('|').trim() : "";
 
                                 return (
-                                <div key={event.id} className="event-list-item" onClick={() => setSelectedEvent(event)} style={{ cursor: 'pointer' }}>
+                                <div key={event.id} className="event-list-item" onClick={() => setSelectedEvent(event)} style={{ cursor: 'pointer', padding: '0.75rem 1rem' }}>
                                     <div className="event-list-main">
-                                        <span className="event-list-date">📅 {event.date}</span>
+                                        <div className="event-list-date" style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', background: 'none', padding: '0', flex: '0 0 130px' }}>
+                                            <span style={{ lineHeight: '1.2' }}>📅 {event.date}</span>
+                                            {event.endDate && <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.2', marginTop: '0.2rem' }}>a {event.endDate}</span>}
+                                        </div>
                                         
                                         <div className="event-list-info">
                                             <h3 className="event-list-title">{event.title}</h3>
@@ -530,7 +612,8 @@ export default function CalendarView({
                                         </div>
                                         
                                         <div className="event-list-location">
-                                            📍 {location}
+                                            <span style={{ flexShrink: 0, marginTop: '1px' }}>📍</span>
+                                            <span style={{ flex: 1, minWidth: 0, wordBreak: 'break-word', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{location}</span>
                                         </div>
                                     </div>
 
@@ -549,95 +632,64 @@ export default function CalendarView({
                             })}
                         </div>
                         
-                        <div className="pagination-container">
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '0.5rem' }}>
-                                <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Provas por página:</span>
+                        <div className="pagination-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', gap: '2rem', marginTop: '0.5rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Provas por página:</span>
                                 <select 
                                     value={itemsPerPage} 
                                     onChange={(e) => {
                                         setItemsPerPage(Number(e.target.value));
                                         setCurrentPage(1); 
                                     }}
-                                    style={{
-                                        background: 'var(--bg-color)',
-                                        color: 'var(--text-primary)',
-                                        border: '1px solid var(--card-border)',
-                                        padding: '0.2rem 0.5rem',
-                                        borderRadius: '4px',
-                                        cursor: 'pointer'
-                                    }}
+                                    style={{ background: 'var(--bg-color)', color: 'var(--text-primary)', border: '1px solid var(--card-border)', padding: '0.2rem 0.5rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.85rem' }}
                                 >
                                     <option value={8}>8</option>
                                     <option value={16}>16</option>
-                                    <option value={32}>32</option>
-                                    <option value={64}>64</option>
+                                    <option value={24}>24</option>
                                 </select>
                             </div>
 
-                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', flex: 1 }}>
                                 <button 
+                                    className="modal-btn" 
+                                    style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--text-primary)', border: 'none', padding: '0.4rem 1rem', fontSize: '0.85rem', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', opacity: currentPage === 1 ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '0.4rem' }}
                                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                     disabled={currentPage === 1}
-                                    style={{
-                                        padding: '0.5rem 1rem',
-                                        borderRadius: 'var(--radius-md)',
-                                        border: '1px solid var(--card-border)',
-                                        background: 'var(--card-bg)',
-                                        color: currentPage === 1 ? 'var(--text-secondary)' : 'var(--text-primary)',
-                                        cursor: currentPage === 1 ? 'not-allowed' : 'pointer'
-                                    }}
                                 >
-                                    ← Anterior
+                                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg>
+                                    Anterior
                                 </button>
-                                <span style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    Página 
+                            
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                                    <span>Página</span>
                                     <input 
                                         type="number" 
-                                        defaultValue={currentPage}
-                                        key={currentPage} 
-                                        onBlur={(e) => {
-                                            let val = parseInt(e.target.value);
-                                            const maxPage = Math.max(1, Math.ceil(filteredEvents.length / itemsPerPage));
-                                            if (isNaN(val) || val < 1) val = 1;
-                                            if (val > maxPage) val = maxPage;
-                                            setCurrentPage(val);
-                                            e.target.value = val;
-                                        }}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
-                                                e.target.blur();
+                                        min="1" 
+                                        max={Math.max(1, Math.ceil(filteredEvents.length / itemsPerPage))}
+                                        value={currentPage}
+                                        onChange={(e) => {
+                                            let p = parseInt(e.target.value);
+                                            const m = Math.ceil(filteredEvents.length / itemsPerPage);
+                                            if (p >= 1 && p <= m) {
+                                                setCurrentPage(p);
                                             }
                                         }}
-                                        style={{
-                                            width: '50px',
-                                            background: 'var(--card-bg)',
-                                            color: 'var(--text-primary)',
-                                            border: '1px solid var(--card-border)',
-                                            borderRadius: '4px',
-                                            padding: '0.2rem',
-                                            textAlign: 'center',
-                                            fontSize: '0.9rem'
-                                        }}
-                                    /> 
-                                    de {Math.max(1, Math.ceil(filteredEvents.length / itemsPerPage))}
-                                </span>
+                                        style={{ width: '45px', padding: '0.3rem', textAlign: 'center', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--card-border)', color: 'var(--text-primary)', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                                    />
+                                    <span>de {Math.max(1, Math.ceil(filteredEvents.length / itemsPerPage))}</span>
+                                </div>
+                                
                                 <button 
+                                    className="modal-btn" 
+                                    style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--text-primary)', border: 'none', padding: '0.4rem 1rem', fontSize: '0.85rem', cursor: currentPage >= Math.ceil(filteredEvents.length / itemsPerPage) ? 'not-allowed' : 'pointer', opacity: currentPage >= Math.ceil(filteredEvents.length / itemsPerPage) ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '0.4rem' }}
                                     onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredEvents.length / itemsPerPage), p + 1))}
                                     disabled={currentPage >= Math.ceil(filteredEvents.length / itemsPerPage)}
-                                    style={{
-                                        padding: '0.5rem 1rem',
-                                        borderRadius: 'var(--radius-md)',
-                                        border: '1px solid var(--card-border)',
-                                        background: 'var(--card-bg)',
-                                        color: currentPage >= Math.ceil(filteredEvents.length / itemsPerPage) ? 'var(--text-secondary)' : 'var(--text-primary)',
-                                        cursor: currentPage >= Math.ceil(filteredEvents.length / itemsPerPage) ? 'not-allowed' : 'pointer'
-                                    }}
                                 >
-                                    Próxima →
+                                    Próxima
+                                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
                                 </button>
                             </div>
-
-                            <div style={{ display: 'block' }}>{/* Empty space to keep grid symmetrical for absolute centering */}</div>
+                            <div style={{ width: '130px' }}></div>
                         </div>
                     </>
                 )}
@@ -647,37 +699,107 @@ export default function CalendarView({
                         <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                             <button className="modal-close" onClick={() => setSelectedEvent(null)}>✕</button>
                             <h2 className="modal-title">{selectedEvent.title}</h2>
-                            <p className="modal-date" style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>📅 {selectedEvent.date}</p>
+                            <p className="modal-date" style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '1.1rem' }}>
+                                📅 {selectedEvent.date}{selectedEvent.endDate ? ` a ${selectedEvent.endDate}` : ''}
+                            </p>
                             
-                            <div className="modal-tags" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
-                                <span className="event-list-tag">{selectedEvent.escalao}</span>
-                                <span className="event-list-tag">{selectedEvent.ambito}</span>
-                                {selectedEvent.licenca && <span className="event-list-tag">{selectedEvent.licenca}</span>}
+                            <div className="modal-tags" style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
+                                <span className="event-list-tag" style={{ fontSize: '0.9rem', padding: '0.3rem 0.8rem' }}>{selectedEvent.escalao}</span>
+                                <span className="event-list-tag" style={{ fontSize: '0.9rem', padding: '0.3rem 0.8rem' }}>{selectedEvent.ambito}</span>
+                                {selectedEvent.licenca && <span className="event-list-tag" style={{ fontSize: '0.9rem', padding: '0.3rem 0.8rem' }}>{selectedEvent.licenca}</span>}
                             </div>
                             
-                            {selectedEvent.details && selectedEvent.details !== 'A definir' && (
-                                <div className="modal-map">
-                                    <iframe 
-                                        width="100%" 
-                                        height="250" 
-                                        style={{ border: 0, borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', background: 'var(--bg-color)' }}
-                                        loading="lazy" 
-                                        allowFullScreen 
-                                        src={`https://maps.google.com/maps?q=${encodeURIComponent(selectedEvent.details.split('|')[0] + ', Portugal')}&output=embed`}
-                                    ></iframe>
+                            <div className="modal-two-cols">
+                                <div className="modal-programa-section">
+                                    <h3 style={{ marginBottom: '1rem', color: 'var(--text-primary)', borderBottom: '2px solid var(--primary-color)', display: 'inline-block', paddingBottom: '0.25rem' }}>Programa & Horários</h3>
+                                    
+                                    {programaData.loading ? (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
+                                            <div className="spinner"></div>
+                                            <span>A procurar programa oficial...</span>
+                                        </div>
+                                    ) : programaData.html ? (
+                                        <div className="programa-content" dangerouslySetInnerHTML={{ __html: programaData.html }} />
+                                    ) : programaData.error && selectedEvent.extraLinks && selectedEvent.extraLinks.length > 0 ? (
+                                        <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)' }}>
+                                            <em>{programaData.error}</em>
+                                        </div>
+                                    ) : null}
                                 </div>
-                            )}
-
-                            <div className="modal-actions" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                                {selectedEvent.sourcesInfo ? selectedEvent.sourcesInfo.map(src => (
-                                    <a key={src.source} href={src.link} target="_blank" rel="noopener noreferrer" className={`modal-btn ${src.source.toLowerCase()}`}>
-                                        Visitar {src.source}
-                                    </a>
-                                )) : (
-                                    <a href={selectedEvent.link || (selectedEvent.source === 'FPC' ? 'https://www.fpciclismo.pt/' : 'https://cabreirasolutions.com/eventos/')} target="_blank" rel="noopener noreferrer" className={`modal-btn ${selectedEvent.source.toLowerCase()}`}>
-                                        Visitar {selectedEvent.source}
-                                    </a>
+                                
+                                {selectedEvent.details && selectedEvent.details !== 'A definir' && (
+                                    <div className="modal-map" style={{ height: '100%', minHeight: '400px' }}>
+                                        <iframe 
+                                            style={{ border: 0, borderRadius: 'var(--radius-md)', background: 'var(--bg-color)', width: '100%', height: '100%' }}
+                                            loading="lazy" 
+                                            allowFullScreen 
+                                            src={`https://maps.google.com/maps?q=${encodeURIComponent(selectedEvent.details.split('|')[0] + ', Portugal')}&output=embed`}
+                                        ></iframe>
+                                    </div>
                                 )}
+                            </div>
+
+                            <div className="modal-actions" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'stretch' }}>
+                                {programaData.loading ? (
+                                    <div style={{ padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
+                                        <div className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }}></div>
+                                        <span>A carregar links...</span>
+                                    </div>
+                                ) : (() => {
+                                    const allLinks = [];
+                                    if (programaData.additionalLinks) allLinks.push(...programaData.additionalLinks);
+                                    if (selectedEvent.extraLinks && selectedEvent.extraLinks.length > 0) allLinks.push(...selectedEvent.extraLinks);
+                                    if (allLinks.length === 0) {
+                                        allLinks.push({ label: `Visitar ${selectedEvent.source}`, link: selectedEvent.link || (selectedEvent.source === 'FPC' ? 'https://www.fpciclismo.pt/' : 'https://cabreirasolutions.com/eventos/') });
+                                    }
+                                    
+                                    const uniqueLinks = Array.from(new Map(allLinks.map(item => [item.link, item])).values());
+                                    const isInscrever = l => l.label.toLowerCase().includes('inscrev') || l.label.toLowerCase().includes('inscriç') || l.label.toLowerCase().includes('inscric');
+                                    const inscricaoLinks = uniqueLinks.filter(isInscrever);
+                                    const outrosLinks = uniqueLinks.filter(l => !isInscrever(l));
+
+                                    return (
+                                        <>
+                                            {outrosLinks.map((src, idx) => (
+                                                <a key={`outros-${idx}`} href={src.link} target="_blank" rel="noopener noreferrer" className="modal-btn secondary">
+                                                    {src.label}
+                                                </a>
+                                            ))}
+                                            
+                                            {inscricaoLinks.length === 1 && (
+                                                <a href={inscricaoLinks[0].link} target="_blank" rel="noopener noreferrer" className="modal-btn primary">
+                                                    {inscricaoLinks[0].label}
+                                                </a>
+                                            )}
+                                            
+                                            {inscricaoLinks.length > 1 && (
+                                                <div className="dropdown-container">
+                                                    <button className="modal-btn primary">
+                                                        Inscrever <span style={{ fontSize: '0.7em' }}>▼</span>
+                                                    </button>
+                                                    <div className="dropdown-menu">
+                                                        <div className="dropdown-item-container">
+                                                            {inscricaoLinks.map((src, idx) => {
+                                                                let plat = "Plataforma";
+                                                                const sLabel = src.label.toLowerCase();
+                                                                const sLink = src.link.toLowerCase();
+                                                                if (sLink.includes('cabreira') || sLabel.includes('cabreira')) plat = "Cabreira";
+                                                                else if (sLink.includes('fpc') || sLabel.includes('fpc')) plat = "FPC";
+                                                                else plat = src.label.replace(/inscrever|inscrição|inscricao|visitar|em|na|no/ig, '').replace(/\s+/g, ' ').trim() || "Plataforma";
+                                                                
+                                                                return (
+                                                                    <a key={`inscr-${idx}`} href={src.link} target="_blank" rel="noopener noreferrer" className="dropdown-item">
+                                                                        Inscrever ({plat})
+                                                                    </a>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </>
+                                    );
+                                })()}
                             </div>
                         </div>
                     </div>
