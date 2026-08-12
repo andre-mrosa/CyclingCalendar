@@ -500,7 +500,7 @@ export default function CalendarView({
                             })}
                         </div>
                         
-                        <div className="pagination-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', gap: '2rem', marginTop: '0.5rem' }}>
+                        <div className="pagination-container">
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Provas por página:</span>
                                 <select 
@@ -557,7 +557,7 @@ export default function CalendarView({
                                     <ChevronRight size={16} />
                                 </button>
                             </div>
-                            <div style={{ width: '130px' }}></div>
+                            <div className="pagination-spacer"></div>
                         </div>
                     </>
                 )}

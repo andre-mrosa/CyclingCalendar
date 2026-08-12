@@ -100,7 +100,15 @@ body {
         display: flex;
         flex-direction: column-reverse;
         justify-content: center;
+        gap: 1.5rem;
     }
+    .pagination-spacer {
+        display: none;
+    }
+}
+
+.pagination-spacer {
+    width: 130px;
 }
 
 /* Header */
