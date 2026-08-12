@@ -5,7 +5,6 @@ import { createContext, useState, useEffect } from 'react';
 export const SettingsContext = createContext();
 
 export function SettingsProvider({ children }) {
-    const [isDarkMode, setIsDarkMode] = useState(true);
     const [defaultEscalao, setDefaultEscalao] = useState('Todos');
     const [defaultRegiao, setDefaultRegiao] = useState('Todas');
     const [useCurrentMonth, setUseCurrentMonth] = useState(false);
@@ -14,18 +13,7 @@ export function SettingsProvider({ children }) {
 
     useEffect(() => {
         setMounted(true);
-        // Load Settings from Local Storage
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme) {
-            const isDark = savedTheme === 'dark';
-            setIsDarkMode(isDark);
-            applyTheme(isDark);
-        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
-            setIsDarkMode(false);
-            applyTheme(false);
-        } else {
-            applyTheme(true);
-        }
+        // next-themes handles the theme now, we only load other settings
 
         const savedEscalao = localStorage.getItem('defaultEscalao');
         if (savedEscalao) setDefaultEscalao(savedEscalao);
@@ -43,21 +31,6 @@ export function SettingsProvider({ children }) {
             } catch(e) {}
         }
     }, []);
-
-    const applyTheme = (isDark) => {
-        if (isDark) {
-            document.documentElement.classList.remove('light-mode');
-        } else {
-            document.documentElement.classList.add('light-mode');
-        }
-    };
-
-    const toggleTheme = () => {
-        const newMode = !isDarkMode;
-        setIsDarkMode(newMode);
-        applyTheme(newMode);
-        localStorage.setItem('theme', newMode ? 'dark' : 'light');
-    };
 
     const updateDefaultEscalao = (val) => {
         setDefaultEscalao(val);
@@ -92,7 +65,6 @@ export function SettingsProvider({ children }) {
 
     return (
         <SettingsContext.Provider value={{ 
-            isDarkMode, toggleTheme,
             defaultEscalao, updateDefaultEscalao,
             defaultRegiao, updateDefaultRegiao,
             useCurrentMonth, toggleUseCurrentMonth,

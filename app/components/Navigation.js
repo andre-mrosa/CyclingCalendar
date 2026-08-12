@@ -2,12 +2,19 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useContext, useState, useEffect } from 'react';
+import { useTheme } from 'next-themes';
 import { SettingsContext } from '../SettingsContext';
+import { SignInButton, Show, UserButton } from '@clerk/nextjs';
+import SettingsPage from '../definicoes/page';
+import HelpPage from '../ajuda/page';
 
 export default function Navigation() {
     const pathname = usePathname();
-    const { isDarkMode, toggleTheme } = useContext(SettingsContext);
+    const { theme, setTheme } = useTheme();
+    const isDarkMode = theme === 'dark';
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+    const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
     useEffect(() => {
         setIsMobileMenuOpen(false);
@@ -83,7 +90,7 @@ export default function Navigation() {
                     
                     <div style={{ marginLeft: 'auto', display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
                         <button 
-                            onClick={toggleTheme}
+                            onClick={() => setTheme(isDarkMode ? 'light' : 'dark')}
                             style={{
                                 position: 'relative',
                                 width: '36px',
@@ -117,14 +124,70 @@ export default function Navigation() {
                                 <span style={{ fontSize: '10px', lineHeight: 1 }}>{isDarkMode ? '🌙' : '☀️'}</span>
                             </div>
                         </button>
-                        {rightLinks.map(renderLink)}
+                        <Show when="signed-out">
+                            {rightLinks.map(renderLink)}
+                            <SignInButton mode="modal">
+                                <button style={{
+                                    background: 'var(--accent-primary)',
+                                    color: 'white',
+                                    border: 'none',
+                                    padding: '0.4rem 1rem',
+                                    borderRadius: 'var(--radius-md)',
+                                    fontWeight: 'bold',
+                                    cursor: 'pointer',
+                                    transition: 'var(--transition)',
+                                    marginLeft: '1rem'
+                                }}>
+                                    Entrar
+                                </button>
+                            </SignInButton>
+                        </Show>
+                        <Show when="signed-in">
+                            <UserButton 
+                                appearance={{
+                                    elements: {
+                                        avatarBox: {
+                                            width: '32px',
+                                            height: '32px'
+                                        },
+                                        userPreviewAvatarContainer: {
+                                            display: 'none'
+                                        }
+                                    }
+                                }}
+                            >
+                                <UserButton.MenuItems>
+                                    <UserButton.Action 
+                                        label="Definições"
+                                        labelIcon={
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: '0.5rem'}}>
+                                                <circle cx="12" cy="12" r="3"></circle>
+                                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                                            </svg>
+                                        }
+                                        onClick={() => setIsSettingsModalOpen(true)}
+                                    />
+                                    <UserButton.Action 
+                                        label="Ajuda"
+                                        labelIcon={
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: '0.5rem'}}>
+                                                <circle cx="12" cy="12" r="10"></circle>
+                                                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                            </svg>
+                                        }
+                                        onClick={() => setIsHelpModalOpen(true)}
+                                    />
+                                </UserButton.MenuItems>
+                            </UserButton>
+                        </Show>
                     </div>
                 </div>
                 
                 {/* Mobile specific toggle that shows only when menu is closed */}
                 <div style={{ marginLeft: 'auto' }} className="mobile-menu-btn">
                     <button 
-                        onClick={toggleTheme}
+                        onClick={() => setTheme(isDarkMode ? 'light' : 'dark')}
                         style={{
                             position: 'relative',
                             width: '36px',
@@ -176,10 +239,104 @@ export default function Navigation() {
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     {links.map(renderLink)}
-                    <hr style={{ border: 'none', borderTop: '1px solid var(--card-border)', margin: '1rem 0' }} />
-                    {rightLinks.map(renderLink)}
+                    <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--card-border)' }}>
+                        <Show when="signed-out">
+                            {rightLinks.map(renderLink)}
+                            <div style={{ marginTop: '1rem' }}>
+                                <SignInButton mode="modal">
+                                    <button style={{
+                                        background: 'var(--accent-primary)',
+                                        color: 'white',
+                                        border: 'none',
+                                        padding: '0.75rem 1rem',
+                                        borderRadius: 'var(--radius-md)',
+                                        fontWeight: 'bold',
+                                        cursor: 'pointer',
+                                        width: '100%',
+                                        transition: 'var(--transition)'
+                                    }}>
+                                        Entrar
+                                    </button>
+                                </SignInButton>
+                            </div>
+                        </Show>
+                        <Show when="signed-in">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0' }}>
+                                <UserButton />
+                                <span style={{ fontWeight: '500' }}>A minha conta</span>
+                            </div>
+                        </Show>
+                    </div>
                 </div>
             </div>
+
+            {/* Custom Full Pages inside Modals */}
+            {(isSettingsModalOpen || isHelpModalOpen) && (
+                <div 
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                        backdropFilter: 'blur(4px)',
+                        zIndex: 9999,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '1rem'
+                    }}
+                    onClick={() => {
+                        setIsSettingsModalOpen(false);
+                        setIsHelpModalOpen(false);
+                    }}
+                >
+                    <div 
+                        style={{
+                            background: 'var(--bg-primary)',
+                            borderRadius: 'var(--radius-lg)',
+                            width: '100%',
+                            maxWidth: '900px',
+                            maxHeight: '90vh',
+                            overflowY: 'auto',
+                            boxShadow: 'var(--shadow-lg)',
+                            position: 'relative'
+                        }}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <button 
+                            onClick={() => {
+                                setIsSettingsModalOpen(false);
+                                setIsHelpModalOpen(false);
+                            }}
+                            style={{
+                                position: 'absolute',
+                                top: '15px',
+                                right: '20px',
+                                background: 'rgba(255,255,255,0.1)',
+                                border: 'none',
+                                color: 'var(--text-primary)',
+                                fontSize: '1.5rem',
+                                width: '36px', height: '36px',
+                                borderRadius: '50%',
+                                cursor: 'pointer',
+                                zIndex: 10,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}
+                        >
+                            ✕
+                        </button>
+                        
+                        <div style={{ marginTop: '2rem' }}>
+                            {isSettingsModalOpen && <SettingsPage />}
+                            {isHelpModalOpen && <HelpPage />}
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }
