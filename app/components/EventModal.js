@@ -1,16 +1,24 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Star, X } from 'lucide-react';
+import { Calendar, Star, X, CalendarPlus, Check } from 'lucide-react';
 
 export default function EventModal({ selectedEvent, setSelectedEvent, favorites, toggleFavorite, isSignedIn }) {
     const [programaData, setProgramaData] = useState({ loading: false, html: null, error: null, additionalLinks: [] });
     const [fullscreenImage, setFullscreenImage] = useState(null);
+    const [isAddingToCalendar, setIsAddingToCalendar] = useState(false);
+    const [calendarStatus, setCalendarStatus] = useState(null); // 'success', 'exists', 'error'
+    const [calendarMsg, setCalendarMsg] = useState('');
 
     // Fetch Programa on Modal open
     useEffect(() => {
         if (!selectedEvent) {
             setProgramaData({ loading: false, html: null, error: null, additionalLinks: [] });
+            setCalendarStatus(null);
+            setCalendarMsg('');
             return;
         }
+
+        setCalendarStatus(null);
+        setCalendarMsg('');
 
         const fetchPrograma = async () => {
             // Find a valid URL to extract from (prefer Cabreira, then FPC)
@@ -56,6 +64,40 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
     const handleHtmlClick = (e) => {
         if (e.target.tagName === 'IMG') {
             setFullscreenImage(e.target.src);
+        }
+    };
+
+    const handleAddToCalendar = async () => {
+        if (!isSignedIn || !selectedEvent) return;
+        setIsAddingToCalendar(true);
+        setCalendarStatus(null);
+        setCalendarMsg('');
+        try {
+            const res = await fetch('/api/calendar/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ event: selectedEvent })
+            });
+            const data = await res.json();
+            
+            if (res.ok) {
+                if (data.message === 'exists') {
+                    setCalendarStatus('exists');
+                    setCalendarMsg('Já existe no calendário!');
+                } else {
+                    setCalendarStatus('success');
+                    setCalendarMsg('Adicionado com sucesso!');
+                }
+            } else {
+                setCalendarStatus('error');
+                setCalendarMsg(data.error || 'Erro ao adicionar ao calendário');
+            }
+        } catch (error) {
+            console.error("Error adding to calendar:", error);
+            setCalendarStatus('error');
+            setCalendarMsg('Erro de rede');
+        } finally {
+            setIsAddingToCalendar(false);
         }
     };
 
@@ -201,6 +243,31 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             </>
                         );
                     })()}
+
+                    {isSignedIn && (
+                        <button 
+                            onClick={handleAddToCalendar}
+                            disabled={isAddingToCalendar || calendarStatus === 'success' || calendarStatus === 'exists'}
+                            className="modal-btn"
+                            style={{ 
+                                display: 'flex', alignItems: 'center', gap: '0.5rem', 
+                                backgroundColor: calendarStatus === 'success' || calendarStatus === 'exists' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255, 255, 255, 0.05)',
+                                color: calendarStatus === 'success' || calendarStatus === 'exists' ? '#22c55e' : 'var(--text-primary)',
+                                border: `1px solid ${calendarStatus === 'success' || calendarStatus === 'exists' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255, 255, 255, 0.1)'}`,
+                                opacity: isAddingToCalendar ? 0.7 : 1,
+                                cursor: (isAddingToCalendar || calendarStatus === 'success' || calendarStatus === 'exists') ? 'default' : 'pointer'
+                            }}
+                        >
+                            {isAddingToCalendar ? (
+                                <div className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }}></div>
+                            ) : calendarStatus === 'success' || calendarStatus === 'exists' ? (
+                                <Check size={18} />
+                            ) : (
+                                <CalendarPlus size={18} />
+                            )}
+                            {calendarMsg || 'Marcar no calendário'}
+                        </button>
+                    )}
                 </div>
             </div>
 

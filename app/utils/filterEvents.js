@@ -43,15 +43,20 @@ export function filterEvents(events, filters) {
             });
         } else {
             filtered = filtered.filter(event => {
-                if (event.escalao === 'Todos (Aberto)' || event.escalao === 'Geral / Vários') return true;
-                if (event.escalao === selectedEscalao) return true;
-                
                 const detLow = event.details.toLowerCase();
                 const titleLow = event.title.toLowerCase();
                 
+                // UCI races are exclusive. If they selected UCI, ONLY show UCI races. 
+                // Do not show "Todos (Aberto)" or "Geral" because UCI races are never open.
                 if (selectedEscalao === 'Profissional (UCI)') {
-                    return detLow.match(/\b[12]\.(1|pro|hc)\b/) || titleLow.includes('volta a portugal') || titleLow.includes('volta ao algarve');
+                    return event.escalao === 'Profissional (UCI)' || detLow.match(/\b[12]\.(1|pro|hc)\b/) || titleLow.includes('volta a portugal') || titleLow.includes('volta ao algarve');
                 }
+                
+                // For other categories (like Sub-23, Masters), they can participate in Open events, 
+                // so we include 'Todos (Aberto)' and 'Geral / Vários'
+                if (event.escalao === 'Todos (Aberto)' || event.escalao === 'Geral / Vários') return true;
+                if (event.escalao === selectedEscalao) return true;
+                
                 if (selectedEscalao === 'Elite / Sub-23') {
                     return detLow.includes('.12') || detLow.includes('.13') || titleLow.includes('elite') || titleLow.includes('sub-23') || titleLow.includes('sub23');
                 }
