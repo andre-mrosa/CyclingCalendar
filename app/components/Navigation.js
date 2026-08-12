@@ -11,10 +11,16 @@ import HelpPage from '../ajuda/page';
 export default function Navigation() {
     const pathname = usePathname();
     const { theme, setTheme } = useTheme();
-    const isDarkMode = theme === 'dark';
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
     const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    const isDarkMode = mounted ? theme === 'dark' : true; // Default to dark for SSR to match defaultTheme
 
     useEffect(() => {
         setIsMobileMenuOpen(false);
@@ -123,7 +129,7 @@ export default function Navigation() {
                                 boxShadow: '0 1px 2px rgba(0,0,0,0.3)'
                             }}>
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    {isDarkMode ? <Moon size={10} color="#cbd5e1" /> : <Sun size={10} color="#eab308" />}
+                                    {mounted && (isDarkMode ? <Moon size={10} color="#cbd5e1" /> : <Sun size={10} color="#eab308" />)}
                                 </div>
                             </div>
                         </button>
@@ -208,7 +214,7 @@ export default function Navigation() {
                             boxShadow: '0 1px 2px rgba(0,0,0,0.3)'
                         }}>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                {isDarkMode ? <Moon size={10} color="#cbd5e1" /> : <Sun size={10} color="#eab308" />}
+                                {mounted && (isDarkMode ? <Moon size={10} color="#cbd5e1" /> : <Sun size={10} color="#eab308" />)}
                             </div>
                         </div>
                     </button>
