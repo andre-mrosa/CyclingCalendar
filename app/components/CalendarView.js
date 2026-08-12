@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSettingsStore } from '../store/useSettingsStore';
 import useSWR from 'swr';
 import CustomSelect from './CustomSelect';
