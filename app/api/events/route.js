@@ -195,15 +195,7 @@ const fetchFPC = async (year) => {
 
     if (!response.ok) return [];
 
-    const buffer = await response.arrayBuffer();
-    const decoder = new TextDecoder('utf-8');
-    let html = decoder.decode(buffer);
-    
-    // Fallback if utf-8 fails to parse accented chars correctly and leaves replacement characters
-    if (html.includes('\uFFFD')) {
-        const isoDecoder = new TextDecoder('iso-8859-1');
-        html = isoDecoder.decode(buffer);
-    }
+    const html = await response.text();
     
     const $ = cheerio.load(html);
     const events = [];

@@ -22,11 +22,7 @@ export async function GET(request) {
             return NextResponse.json({ error: `Failed to fetch: ${response.status}` }, { status: 502 });
         }
 
-        const buffer = await response.arrayBuffer();
-        let html = new TextDecoder('utf-8').decode(buffer);
-        if (html.includes('')) {
-            html = new TextDecoder('iso-8859-1').decode(buffer);
-        }
+        const html = await response.text();
         const $ = cheerio.load(html);
         
         let programaHtml = '';
