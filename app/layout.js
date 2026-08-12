@@ -15,13 +15,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Calendário FPC",
+  title: "Calendário Ciclismo Portugal",
   description: "Eventos da Federação Portuguesa de Ciclismo e Cabreira Solutions",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Calendário FPC",
+    title: "Calendário Ciclismo Portugal",
   },
 };
 
@@ -31,6 +31,7 @@ export const viewport = {
 
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import WelcomeModal from "./components/WelcomeModal";
 
 export default function RootLayout({ children }) {
   return (
@@ -40,6 +41,7 @@ export default function RootLayout({ children }) {
           <ThemeClerkProvider>
             <Navigation />
             {children}
+            <WelcomeModal />
             <Analytics />
             <SpeedInsights />
           </ThemeClerkProvider>

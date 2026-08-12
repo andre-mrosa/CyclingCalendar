@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
-import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
+import { SignInButton, Show, UserButton } from '@clerk/nextjs';
 import { Home, Trophy, MapPin, Bike, HelpCircle, Settings, Menu, X, Moon, Sun, Flag, Star } from 'lucide-react';
 import SettingsPage from '../definicoes/page';
 import HelpPage from '../ajuda/page';
@@ -86,9 +86,14 @@ export default function Navigation() {
                     className="mobile-menu-btn" 
                     onClick={() => setIsMobileMenuOpen(true)}
                     title="Menu"
+                    style={{ marginRight: '1rem' }}
                 >
                     <Menu size={24} />
                 </button>
+
+                <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none', marginRight: '1.5rem' }}>
+                    <img src="/icon.jpg" alt="Calendário Ciclismo Logo" style={{ width: '36px', height: '36px', borderRadius: '8px', objectFit: 'cover' }} />
+                </Link>
 
                 <div className="desktop-links">
                     <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
@@ -133,7 +138,7 @@ export default function Navigation() {
                                 </div>
                             </div>
                         </button>
-                        <SignedOut>
+                        <Show when="signed-out">
                             {rightLinks.map(renderLink)}
                             <SignInButton mode="modal">
                                 <button style={{
@@ -150,8 +155,8 @@ export default function Navigation() {
                                     Entrar
                                 </button>
                             </SignInButton>
-                        </SignedOut>
-                        <SignedIn>
+                        </Show>
+                        <Show when="signed-in">
                             <UserButton 
                                 appearance={{
                                     elements: {
@@ -178,7 +183,7 @@ export default function Navigation() {
                                     />
                                 </UserButton.MenuItems>
                             </UserButton>
-                        </SignedIn>
+                        </Show>
                     </div>
                 </div>
                 
@@ -240,7 +245,7 @@ export default function Navigation() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     {links.map(renderLink)}
                     <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--card-border)' }}>
-                        <SignedOut>
+                        <Show when="signed-out">
                             {rightLinks.map(renderLink)}
                             <div style={{ marginTop: '1rem' }}>
                                 <SignInButton mode="modal">
@@ -259,13 +264,13 @@ export default function Navigation() {
                                     </button>
                                 </SignInButton>
                             </div>
-                        </SignedOut>
-                        <SignedIn>
+                        </Show>
+                        <Show when="signed-in">
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0' }}>
                                 <UserButton />
                                 <span style={{ fontWeight: '500' }}>A minha conta</span>
                             </div>
-                        </SignedIn>
+                        </Show>
                     </div>
                 </div>
             </div>
