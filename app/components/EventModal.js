@@ -149,8 +149,24 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         
                         const uniqueLinks = Array.from(new Map(allLinks.map(item => [item.link, item])).values());
                         const isInscrever = l => l.label.toLowerCase().includes('inscrev') || l.label.toLowerCase().includes('inscriç') || l.label.toLowerCase().includes('inscric');
-                        const inscricaoLinks = uniqueLinks.filter(isInscrever);
+                        const inscricaoLinksRaw = uniqueLinks.filter(isInscrever);
                         const outrosLinks = uniqueLinks.filter(l => !isInscrever(l));
+                        
+                        const inscricaoLinks = [];
+                        const seenPlats = new Set();
+                        for (const src of inscricaoLinksRaw) {
+                            let plat = "Plataforma";
+                            const sLabel = src.label.toLowerCase();
+                            const sLink = src.link.toLowerCase();
+                            if (sLink.includes('cabreira') || sLabel.includes('cabreira')) plat = "Cabreira";
+                            else if (sLink.includes('fpc') || sLabel.includes('fpc')) plat = "FPC";
+                            else plat = src.label.replace(/inscrever|inscrição|inscricao|visitar|em|na|no/ig, '').replace(/\s+/g, ' ').trim() || "Plataforma";
+                            
+                            if (!seenPlats.has(plat)) {
+                                seenPlats.add(plat);
+                                inscricaoLinks.push({ ...src, _plat: plat });
+                            }
+                        }
 
                         return (
                             <>
@@ -162,7 +178,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 
                                 {inscricaoLinks.length === 1 && (
                                     <a href={inscricaoLinks[0].link} target="_blank" rel="noopener noreferrer" className="modal-btn primary">
-                                        {inscricaoLinks[0].label}
+                                        Inscrever
                                     </a>
                                 )}
                                 
@@ -173,20 +189,11 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                         </button>
                                         <div className="dropdown-menu">
                                             <div className="dropdown-item-container">
-                                                {inscricaoLinks.map((src, idx) => {
-                                                    let plat = "Plataforma";
-                                                    const sLabel = src.label.toLowerCase();
-                                                    const sLink = src.link.toLowerCase();
-                                                    if (sLink.includes('cabreira') || sLabel.includes('cabreira')) plat = "Cabreira";
-                                                    else if (sLink.includes('fpc') || sLabel.includes('fpc')) plat = "FPC";
-                                                    else plat = src.label.replace(/inscrever|inscrição|inscricao|visitar|em|na|no/ig, '').replace(/\s+/g, ' ').trim() || "Plataforma";
-                                                    
-                                                    return (
-                                                        <a key={`inscr-${idx}`} href={src.link} target="_blank" rel="noopener noreferrer" className="dropdown-item">
-                                                            Inscrever ({plat})
-                                                        </a>
-                                                    );
-                                                })}
+                                                {inscricaoLinks.map((src, idx) => (
+                                                    <a key={`inscr-${idx}`} href={src.link} target="_blank" rel="noopener noreferrer" className="dropdown-item">
+                                                        Inscrever ({src._plat})
+                                                    </a>
+                                                ))}
                                             </div>
                                         </div>
                                     </div>

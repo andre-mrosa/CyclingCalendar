@@ -416,7 +416,7 @@ body {
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 0.2rem;
-    white-space: nowrap;
+    
     overflow: hidden;
     text-overflow: ellipsis;
 }
@@ -427,7 +427,7 @@ body {
     gap: 1.5rem;
     color: var(--text-secondary);
     font-size: 0.8rem;
-    white-space: nowrap;
+    
     overflow: hidden;
     text-overflow: ellipsis;
 }
@@ -464,7 +464,7 @@ body {
     border-radius: 20px;
     font-size: 0.75rem;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    white-space: nowrap;
+    
 }
 
 .logo-fpc, .logo-cabreira {
@@ -638,3 +638,37 @@ html.light-mode .logo-cabreira {
     cursor: zoom-in;
     display: block;
 }
+
+
+/* Responsive Tables for Event Modal */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    margin: 1rem 0;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--card-border);
+    background: var(--bg-secondary);
+    scrollbar-width: thin;
+}
+.extracted-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+}
+.extracted-table th {
+    background: rgba(255, 255, 255, 0.05);
+    font-weight: 600;
+}
+.extracted-table th, .extracted-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--card-border);
+    text-align: left;
+    
+}
+.extracted-table tr:last-child td {
+    border-bottom: none;
+}
+
+.modal-programa-section, .modal-map { min-width: 0; }
+

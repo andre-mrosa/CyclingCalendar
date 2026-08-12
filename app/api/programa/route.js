@@ -22,7 +22,11 @@ export async function GET(request) {
             return NextResponse.json({ error: `Failed to fetch: ${response.status}` }, { status: 502 });
         }
 
-        const html = await response.text();
+        const buffer = await response.arrayBuffer();
+        let html = new TextDecoder('utf-8').decode(buffer);
+        if (html.includes('')) {
+            html = new TextDecoder('iso-8859-1').decode(buffer);
+        }
         const $ = cheerio.load(html);
         
         let programaHtml = '';
@@ -156,8 +160,9 @@ export async function GET(request) {
             
             // Also simplify tables for better display in mobile modal
             $clean('table').addClass('extracted-table');
-            $clean('table').removeAttr('style').removeAttr('width').removeAttr('height');
-            $clean('td, th').removeAttr('style').removeAttr('width');
+            $clean('table').removeAttr('style').removeAttr('width').removeAttr('height').removeAttr('border');
+            $clean('td, th, tr, tbody, thead').removeAttr('style').removeAttr('width').removeAttr('height');
+            $clean('table').wrap('<div class="table-responsive"></div>');
             
             programaHtml = $clean.html();
         }
