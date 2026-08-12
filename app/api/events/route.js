@@ -195,7 +195,8 @@ const fetchFPC = async (year) => {
 
     if (!response.ok) return [];
 
-    const html = await response.text();
+    const buffer = await response.arrayBuffer();
+    const html = new TextDecoder('iso-8859-1').decode(buffer);
     
     const $ = cheerio.load(html);
     const events = [];

@@ -22,7 +22,13 @@ export async function GET(request) {
             return NextResponse.json({ error: `Failed to fetch: ${response.status}` }, { status: 502 });
         }
 
-        const html = await response.text();
+        const buffer = await response.arrayBuffer();
+        let html;
+        if (targetUrl.includes('fpciclismo')) {
+            html = new TextDecoder('iso-8859-1').decode(buffer);
+        } else {
+            html = new TextDecoder('utf-8').decode(buffer);
+        }
         const $ = cheerio.load(html);
         
         let programaHtml = '';
