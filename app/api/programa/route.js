@@ -158,11 +158,47 @@ export async function GET(request) {
             const $clean = cheerio.load(programaHtml);
             $clean('script, style').remove();
             
-            // Also simplify tables for better display in mobile modal
-            $clean('table').addClass('extracted-table');
-            $clean('table').removeAttr('style').removeAttr('width').removeAttr('height').removeAttr('border');
-            $clean('td, th, tr, tbody, thead').removeAttr('style').removeAttr('width').removeAttr('height');
-            $clean('table').wrap('<div class="table-responsive"></div>');
+            // Convert tables to vertical lists for better mobile display
+            $clean('table').each((i, table) => {
+                const $t = $clean(table);
+                const headers = [];
+                $t.find('th').each((j, th) => {
+                    // Extract text, replacing <br> with space if any, or just get text
+                    headers.push($clean(th).text().replace(/\s+/g, ' ').trim());
+                });
+                
+                const $newList = $clean('<div class="vertical-programa-list"></div>');
+                
+                $t.find('tr').each((j, tr) => {
+                    // Skip header row
+                    if ($clean(tr).find('th').length > 0) return;
+                    
+                    const $item = $clean('<div class="programa-item"></div>');
+                    let hasData = false;
+                    
+                    $clean(tr).find('td').each((k, td) => {
+                        const val = $clean(td).html().trim();
+                        // Ignore empty cells or placeholder dashes
+                        if (val && val !== '-' && val !== '&nbsp;' && $clean(td).text().trim() !== '') {
+                            hasData = true;
+                            const label = headers[k] || '';
+                            $item.append(`<div class="programa-row"><span class="programa-label">${label}</span><span class="programa-val">${val}</span></div>`);
+                        }
+                    });
+                    
+                    if (hasData) $newList.append($item);
+                });
+                
+                if ($newList.children().length > 0) {
+                    $t.replaceWith($newList);
+                } else {
+                    // Fallback if conversion failed or no data
+                    $t.addClass('extracted-table');
+                    $t.removeAttr('style').removeAttr('width').removeAttr('height').removeAttr('border');
+                    $t.find('td, th, tr, tbody, thead').removeAttr('style').removeAttr('width').removeAttr('height');
+                    $t.wrap('<div class="table-responsive"></div>');
+                }
+            });
             
             programaHtml = $clean.html();
         }
