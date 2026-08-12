@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
-import { SignInButton, Show, UserButton } from '@clerk/nextjs';
+import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
 import { Home, Trophy, MapPin, Bike, HelpCircle, Settings, Menu, X, Moon, Sun, Flag, Star } from 'lucide-react';
 import SettingsPage from '../definicoes/page';
 import HelpPage from '../ajuda/page';
@@ -133,7 +133,7 @@ export default function Navigation() {
                                 </div>
                             </div>
                         </button>
-                        <Show when="signed-out">
+                        <SignedOut>
                             {rightLinks.map(renderLink)}
                             <SignInButton mode="modal">
                                 <button style={{
@@ -150,8 +150,8 @@ export default function Navigation() {
                                     Entrar
                                 </button>
                             </SignInButton>
-                        </Show>
-                        <Show when="signed-in">
+                        </SignedOut>
+                        <SignedIn>
                             <UserButton 
                                 appearance={{
                                     elements: {
@@ -178,7 +178,7 @@ export default function Navigation() {
                                     />
                                 </UserButton.MenuItems>
                             </UserButton>
-                        </Show>
+                        </SignedIn>
                     </div>
                 </div>
                 
@@ -240,7 +240,7 @@ export default function Navigation() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     {links.map(renderLink)}
                     <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--card-border)' }}>
-                        <Show when="signed-out">
+                        <SignedOut>
                             {rightLinks.map(renderLink)}
                             <div style={{ marginTop: '1rem' }}>
                                 <SignInButton mode="modal">
@@ -259,13 +259,13 @@ export default function Navigation() {
                                     </button>
                                 </SignInButton>
                             </div>
-                        </Show>
-                        <Show when="signed-in">
+                        </SignedOut>
+                        <SignedIn>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0' }}>
                                 <UserButton />
                                 <span style={{ fontWeight: '500' }}>A minha conta</span>
                             </div>
-                        </Show>
+                        </SignedIn>
                     </div>
                 </div>
             </div>

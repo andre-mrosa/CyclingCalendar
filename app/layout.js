@@ -29,6 +29,9 @@ export const viewport = {
   themeColor: "#121212",
 };
 
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+
 export default function RootLayout({ children }) {
   return (
     <html lang="pt" suppressHydrationWarning>
@@ -37,6 +40,8 @@ export default function RootLayout({ children }) {
           <ThemeClerkProvider>
             <Navigation />
             {children}
+            <Analytics />
+            <SpeedInsights />
           </ThemeClerkProvider>
         </ThemeProvider>
       </body>
