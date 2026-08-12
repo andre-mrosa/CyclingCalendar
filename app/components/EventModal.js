@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Star } from 'lucide-react';
+import { Calendar, Star, X } from 'lucide-react';
 
 export default function EventModal({ selectedEvent, setSelectedEvent, favorites, toggleFavorite, isSignedIn }) {
     const [programaData, setProgramaData] = useState({ loading: false, html: null, error: null, additionalLinks: [] });
+    const [fullscreenImage, setFullscreenImage] = useState(null);
 
     // Fetch Programa on Modal open
     useEffect(() => {
@@ -51,6 +52,12 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
         fetchPrograma();
     }, [selectedEvent]);
+
+    const handleHtmlClick = (e) => {
+        if (e.target.tagName === 'IMG') {
+            setFullscreenImage(e.target.src);
+        }
+    };
 
     if (!selectedEvent) return null;
 
@@ -106,7 +113,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 <span>A procurar programa oficial...</span>
                             </div>
                         ) : programaData.html ? (
-                            <div className="programa-content" dangerouslySetInnerHTML={{ __html: programaData.html }} />
+                            <div className="programa-content" dangerouslySetInnerHTML={{ __html: programaData.html }} onClick={handleHtmlClick} />
                         ) : programaData.error && selectedEvent.extraLinks && selectedEvent.extraLinks.length > 0 ? (
                             <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)' }}>
                                 <em>{programaData.error}</em>
@@ -189,6 +196,15 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                     })()}
                 </div>
             </div>
+
+            {fullscreenImage && (
+                <div className="fullscreen-image-overlay" onClick={() => setFullscreenImage(null)}>
+                    <button className="modal-close" style={{ top: '2rem', right: '2rem', background: 'rgba(0,0,0,0.5)', zIndex: 10000 }} onClick={() => setFullscreenImage(null)}>
+                        <X size={24} />
+                    </button>
+                    <img src={fullscreenImage} alt="Programa Detalhado" onClick={(e) => e.stopPropagation()} />
+                </div>
+            )}
         </div>
     );
 }

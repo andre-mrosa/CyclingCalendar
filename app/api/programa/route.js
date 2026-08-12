@@ -152,7 +152,7 @@ export async function GET(request) {
         if (programaHtml) {
             // Strip out scripts and styles just in case
             const $clean = cheerio.load(programaHtml);
-            $clean('script, style, img').remove();
+            $clean('script, style').remove();
             
             // Also simplify tables for better display in mobile modal
             $clean('table').addClass('extracted-table');
