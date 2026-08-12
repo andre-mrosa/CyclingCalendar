@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
 import { SignInButton, Show, UserButton } from '@clerk/nextjs';
-import { Home, Trophy, MapPin, Bike, HelpCircle, Settings, Menu, X, Moon, Sun, Flag, Star } from 'lucide-react';
+import { Home, Trophy, MapPin, Bike, HelpCircle, Settings, Menu, X, Moon, Sun, Flag, Star, LogIn } from 'lucide-react';
 import SettingsPage from '../definicoes/page';
 import HelpPage from '../ajuda/page';
 
@@ -141,17 +141,8 @@ export default function Navigation() {
                         <Show when="signed-out">
                             {rightLinks.map(renderLink)}
                             <SignInButton mode="modal">
-                                <button style={{
-                                    background: 'var(--accent-primary)',
-                                    color: 'white',
-                                    border: 'none',
-                                    padding: '0.4rem 1rem',
-                                    borderRadius: 'var(--radius-md)',
-                                    fontWeight: 'bold',
-                                    cursor: 'pointer',
-                                    transition: 'var(--transition)',
-                                    marginLeft: '1rem'
-                                }}>
+                                <button className="btn-entrar">
+                                    <LogIn size={16} />
                                     Entrar
                                 </button>
                             </SignInButton>
@@ -249,17 +240,8 @@ export default function Navigation() {
                             {rightLinks.map(renderLink)}
                             <div style={{ marginTop: '1rem' }}>
                                 <SignInButton mode="modal">
-                                    <button style={{
-                                        background: 'var(--accent-primary)',
-                                        color: 'white',
-                                        border: 'none',
-                                        padding: '0.75rem 1rem',
-                                        borderRadius: 'var(--radius-md)',
-                                        fontWeight: 'bold',
-                                        cursor: 'pointer',
-                                        width: '100%',
-                                        transition: 'var(--transition)'
-                                    }}>
+                                    <button className="btn-entrar btn-entrar-mobile">
+                                        <LogIn size={18} />
                                         Entrar
                                     </button>
                                 </SignInButton>
