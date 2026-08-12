@@ -20,6 +20,7 @@ export default function CalendarView({
     pageSubtitle = "Agregador oficial de ciclismo em Portugal",
     forceAmbito = null,
     forceLicenca = null,
+    forceEscalao = null,
     filterByFavorites = false,
     activeFilters = ['search', 'year', 'month', 'escalao', 'ambito', 'licenca', 'regiao'],
     applyDefaultRegiao = false
@@ -33,7 +34,7 @@ export default function CalendarView({
     
     const [filteredEvents, setFilteredEvents] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedEscalao, setSelectedEscalao] = useState('Todos');
+    const [selectedEscalao, setSelectedEscalao] = useState(forceEscalao || 'Todos');
     const [selectedAmbito, setSelectedAmbito] = useState(forceAmbito || 'Todos');
     const [selectedLicenca, setSelectedLicenca] = useState(forceLicenca || 'Todas');
     const [selectedRegiao, setSelectedRegiao] = useState('Todas');
@@ -262,7 +263,7 @@ export default function CalendarView({
                                 </>
                             )}
                             
-                            {activeFilters.includes('escalao') && (
+                            {activeFilters.includes('escalao') && !forceEscalao && (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                                     <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold' }}>Escalão</label>
                                     <CustomSelect 
