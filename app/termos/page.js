@@ -36,13 +36,18 @@ export default function TermsOfService() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-white mt-8 mb-3">3. Precisão da Informação</h2>
-            <p>
+            <h2 className="text-xl font-semibold text-white mt-8 mb-3">3. Precisão da Informação e Mapas</h2>
+            <p className="mb-2">
               Os dados dos eventos presentes na nossa plataforma são extraídos e agregados de fontes públicas (como a 
               Federação Portuguesa de Ciclismo e Cabreira Solutions). Embora façamos os possíveis para manter a 
-              informação atualizada, <strong>não nos responsabilizamos</strong> por alterações de datas, cancelamentos, 
-              ou informações incorretas fornecidas pelas entidades organizadoras. Verifique sempre os detalhes no site 
-              oficial do evento antes de realizar inscrições ou viagens.
+              informação atualizada, <strong>não nos responsabilizamos</strong> por:
+            </p>
+            <ul className="list-disc pl-5 space-y-2">
+              <li>Alterações de datas, cancelamentos, ou informações incorretas fornecidas pelas entidades organizadoras.</li>
+              <li><strong>Localizações dos Mapas:</strong> As pré-visualizações de mapas e coordenadas geradas na nossa plataforma servem apenas como referência aproximada. Não garantimos a sua exatidão e não assumimos qualquer responsabilidade caso a localização apresentada no mapa não corresponda ao local exato do evento.</li>
+            </ul>
+            <p className="mt-3">
+              Recomendamos sempre a verificação dos detalhes e moradas no site oficial do evento antes de realizar inscrições ou viagens.
             </p>
           </section>
 
