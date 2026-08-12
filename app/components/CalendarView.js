@@ -501,7 +501,7 @@ export default function CalendarView({
                         </div>
                         
                         <div className="pagination-container">
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <div className="pagination-items-per-page">
                                 <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Provas por página:</span>
                                 <select 
                                     value={itemsPerPage} 
@@ -517,7 +517,7 @@ export default function CalendarView({
                                 </select>
                             </div>
 
-                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', flex: 1 }}>
+                            <div className="pagination-controls">
                                 <button 
                                     className="modal-btn" 
                                     style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--text-primary)', border: 'none', padding: '0.4rem 1rem', fontSize: '0.85rem', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', opacity: currentPage === 1 ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '0.4rem' }}
@@ -525,7 +525,7 @@ export default function CalendarView({
                                     disabled={currentPage === 1}
                                 >
                                     <ChevronLeft size={16} />
-                                    Anterior
+                                    <span className="pagination-btn-text">Anterior</span>
                                 </button>
                             
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
@@ -553,7 +553,7 @@ export default function CalendarView({
                                     onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredEvents.length / itemsPerPage), p + 1))}
                                     disabled={currentPage >= Math.ceil(filteredEvents.length / itemsPerPage)}
                                 >
-                                    Próxima
+                                    <span className="pagination-btn-text">Próxima</span>
                                     <ChevronRight size={16} />
                                 </button>
                             </div>

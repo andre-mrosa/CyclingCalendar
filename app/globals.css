@@ -100,11 +100,40 @@ body {
         display: flex;
         flex-direction: column-reverse;
         justify-content: center;
-        gap: 1.5rem;
+        gap: 1rem;
     }
     .pagination-spacer {
         display: none;
     }
+    .pagination-btn-text {
+        display: none;
+    }
+    .pagination-controls {
+        gap: 0.5rem !important;
+        width: 100%;
+        justify-content: space-between !important;
+    }
+    .pagination-items-per-page {
+        display: none !important;
+    }
+}
+
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+}
+
+.pagination-btn-text {
+    display: inline;
+}
+
+.pagination-items-per-page {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .pagination-spacer {
