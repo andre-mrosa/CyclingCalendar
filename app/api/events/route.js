@@ -268,7 +268,8 @@ const fetchFPC = async (year) => {
                     licenca: getLicenca(nameText, det, ambitoVal),
                     regiao: regiaoVal,
                     distrito: getDistrito(nameText, `${det} ${locText}`),
-                    source: 'FPC'
+                    source: 'FPC',
+                    link: 'https://www.fpciclismo.pt/'
                 });
             }
         }
@@ -326,7 +327,8 @@ const fetchCabreira = async (year) => {
                 licenca: 'CPT / Lazer', // Cabreira events are generally open
                 regiao: getRegiao(title, locText),
                 distrito: getDistrito(title, locText),
-                source: 'Cabreira'
+                source: 'Cabreira',
+                link: href || 'https://cabreirasolutions.com/eventos/'
             });
         }
     });
@@ -358,6 +360,7 @@ export async function GET(request) {
         };
 
         for (const event of allEvents) {
+            event.sourcesInfo = [{ source: event.source, link: event.link }];
             const eventWords = getWords(event.title);
             let duplicateIdx = -1;
             
@@ -383,11 +386,19 @@ export async function GET(request) {
                 deduplicatedEvents.push(event);
             } else {
                 const existing = deduplicatedEvents[duplicateIdx];
+                
+                // Merge sourcesInfo
+                if (!existing.sourcesInfo.some(s => s.source === event.source)) {
+                    existing.sourcesInfo.push({ source: event.source, link: event.link });
+                }
+                
                 const currentSourceIndex = activeSources.indexOf(event.source);
                 const existingSourceIndex = activeSources.indexOf(existing.source);
                 
                 if (currentSourceIndex !== -1 && (existingSourceIndex === -1 || currentSourceIndex < existingSourceIndex)) {
-                    deduplicatedEvents[duplicateIdx] = event;
+                    // Update main event data but preserve merged sources
+                    const mergedSources = existing.sourcesInfo;
+                    deduplicatedEvents[duplicateIdx] = { ...event, sourcesInfo: mergedSources };
                 }
             }
         }
