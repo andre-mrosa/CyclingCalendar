@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useSettingsStore } from '../store/useSettingsStore';
 import useSWR from 'swr';
 import CustomSelect from './CustomSelect';
-import { Calendar, MapPin, Search, X, ChevronLeft, ChevronRight, Users, Heart, Star, LayoutGrid, List, HelpCircle } from 'lucide-react';
+import { Calendar, MapPin, Search, X, ChevronLeft, ChevronRight, Users, Heart, Star, LayoutGrid, List, HelpCircle, Filter } from 'lucide-react';
 import { useFavorites } from '../hooks/useFavorites';
 import { filterEvents } from '../utils/filterEvents';
 import EventModal from './EventModal';
@@ -42,7 +42,7 @@ export default function CalendarView({
     const [selectedLicenca, setSelectedLicenca] = useState(forceLicenca || 'Todas');
     const [selectedRegiao, setSelectedRegiao] = useState('Todas');
     const [selectedDistrito, setSelectedDistrito] = useState('Todos');
-    const [selectedYear, setSelectedYear] = useState('2026');
+    const [selectedYears, setSelectedYears] = useState([new Date().getFullYear().toString()]);
     const [monthFrom, setMonthFrom] = useState(1);
     const [monthTo, setMonthTo] = useState(12);
     const [selectedTags, setSelectedTags] = useState([]);
@@ -76,7 +76,7 @@ export default function CalendarView({
 
     const { data: fetchedEvents, error, isLoading: loading, mutate } = useSWR(
         selectedSources && selectedSources.length > 0 
-            ? `/api/events?year=${selectedYear}&sources=${selectedSources.join(',')}` 
+            ? `/api/events?years=${selectedYears.join(',')}&sources=${selectedSources.join(',')}` 
             : null,
         fetcher,
         {
@@ -154,6 +154,19 @@ export default function CalendarView({
         setSelectedEscaloes(newEsc);
     };
 
+    const clearAllFilters = () => {
+        setSelectedEscaloes([]);
+        setSelectedAmbito('Todos');
+        setSelectedLicenca('Todas');
+        setSelectedRegiao('Todas');
+        setSelectedDistrito('Todos');
+        setSelectedYears([new Date().getFullYear().toString()]);
+        setMonthFrom(1);
+        setMonthTo(12);
+        setSelectedTags([]);
+        setSearchTerm('');
+    };
+
     useEffect(() => {
         const observer = new IntersectionObserver(
             (entries) => {
@@ -180,26 +193,49 @@ export default function CalendarView({
         <div className="app-container">
             <header className="app-header">
                 <div className="header-content" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '1rem', flexWrap: 'wrap' }}>
-                    {/* Header title removed as requested */}
-                    <button 
-                        onClick={() => setShowFilters(!showFilters)}
-                        style={{
-                            background: 'transparent',
-                            color: showFilters ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                            border: 'none',
-                            padding: '0',
-                            cursor: 'pointer',
-                            fontWeight: '600',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.4rem',
-                            transition: 'var(--transition)',
-                            fontSize: '0.95rem'
-                        }}
-                    >
-                        <Search size={18} />
-                        {showFilters ? 'Esconder Filtros' : 'Filtrar Calendário'}
-                    </button>
+                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                        <button 
+                            onClick={() => setShowFilters(!showFilters)}
+                            style={{
+                                background: 'transparent',
+                                color: showFilters ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                                border: 'none',
+                                padding: '0',
+                                cursor: 'pointer',
+                                fontWeight: '600',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.4rem',
+                                transition: 'var(--transition)',
+                                fontSize: '0.95rem'
+                            }}
+                        >
+                            <Filter size={18} />
+                            {showFilters ? 'Esconder Filtros' : 'Filtrar Calendário'}
+                        </button>
+                        
+                        {(selectedEscaloes.length > 0 || selectedDistrito !== 'Todos' || selectedRegiao !== 'Todas' || selectedTags.length > 0 || monthFrom !== 1 || monthTo !== 12 || searchTerm !== '') && (
+                            <button 
+                                onClick={clearAllFilters}
+                                title="Repor todos os filtros"
+                                style={{
+                                    background: 'transparent',
+                                    color: 'var(--text-secondary)',
+                                    border: 'none',
+                                    padding: '0',
+                                    cursor: 'pointer',
+                                    fontWeight: '500',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.3rem',
+                                    transition: 'var(--transition)',
+                                    fontSize: '0.85rem'
+                                }}
+                            >
+                                <X size={14} /> Limpar
+                            </button>
+                        )}
+                    </div>
                     
                     <div style={{ position: 'relative', flex: '0 1 300px', width: '100%' }}>
                         <input 
@@ -267,14 +303,40 @@ export default function CalendarView({
                                 .search-block { flex-basis: 100% !important; }
                             `}</style>
                             {activeFilters.includes('year') && (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                                    <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold' }}>Ano</label>
-                                    <CustomSelect 
-                                        value={selectedYear} 
-                                        onChange={(val) => onYearChange({target:{value:val}})} 
-                                        options={['2024', '2025', '2026']} 
-                                        maxHeight="400px" 
-                                    />
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flexBasis: '100%' }}>
+                                    <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold' }}>Anos</label>
+                                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                        {[
+                                            (new Date().getFullYear() - 2).toString(),
+                                            (new Date().getFullYear() - 1).toString(),
+                                            new Date().getFullYear().toString(),
+                                            (new Date().getFullYear() + 1).toString()
+                                        ].map(y => (
+                                            <button 
+                                                key={y} 
+                                                onClick={() => {
+                                                    const newYears = selectedYears.includes(y) 
+                                                        ? selectedYears.filter(yr => yr !== y) 
+                                                        : [...selectedYears, y];
+                                                    // Ensure at least one year is selected
+                                                    if (newYears.length > 0) setSelectedYears(newYears);
+                                                }} 
+                                                style={{ 
+                                                    padding: '0.4rem 0.8rem',
+                                                    borderRadius: 'var(--radius-full)',
+                                                    border: '1px solid var(--card-border)',
+                                                    background: selectedYears.includes(y) ? 'var(--accent-primary)' : 'var(--card-bg)', 
+                                                    color: selectedYears.includes(y) ? 'white' : 'var(--text-primary)',
+                                                    cursor: 'pointer',
+                                                    fontSize: '0.8rem',
+                                                    fontWeight: '500',
+                                                    transition: 'var(--transition)'
+                                                }}
+                                            >
+                                                {y}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
                             
@@ -283,9 +345,9 @@ export default function CalendarView({
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                                         <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold' }}>Mês Inicial</label>
                                         <CustomSelect 
-                                            value={`${monthFrom} - ${monthNames[monthFrom - 1]}`} 
-                                            onChange={(val) => onMonthFromChange({target:{value: parseInt(val.split(' - ')[0])}})} 
-                                            options={monthNames.map((mName, i) => `${i+1} - ${mName}`)} 
+                                            value={monthNames[monthFrom - 1]} 
+                                            onChange={(val) => onMonthFromChange({target:{value: monthNames.indexOf(val) + 1}})} 
+                                            options={monthNames} 
                                             maxHeight="400px" 
                                         />
                                     </div>
@@ -293,9 +355,9 @@ export default function CalendarView({
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                                         <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold' }}>Mês Final</label>
                                         <CustomSelect 
-                                            value={`${monthTo} - ${monthNames[monthTo - 1]}`} 
-                                            onChange={(val) => onMonthToChange({target:{value: parseInt(val.split(' - ')[0])}})} 
-                                            options={monthNames.map((mName, i) => `${i+1} - ${mName}`)} 
+                                            value={monthNames[monthTo - 1]} 
+                                            onChange={(val) => onMonthToChange({target:{value: monthNames.indexOf(val) + 1}})} 
+                                            options={monthNames} 
                                             maxHeight="400px" 
                                         />
                                     </div>
@@ -388,7 +450,28 @@ export default function CalendarView({
                             
                             {activeFilters.includes('distrito') && (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                                    <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold' }}>Distrito</label>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.2rem' }}>
+                                        <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold', lineHeight: 1, display: 'flex', alignItems: 'center' }}>Distrito</label>
+                                        {selectedDistrito !== 'Todos' && (
+                                            <button 
+                                                onClick={() => setSelectedDistrito('Todos')}
+                                                title="Limpar Distrito"
+                                                style={{
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    color: 'var(--accent-primary)',
+                                                    cursor: 'pointer',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    padding: '0',
+                                                    marginTop: '-2px'
+                                                }}
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        )}
+                                    </div>
                                     <CustomSelect 
                                         value={selectedDistrito} 
                                         onChange={setSelectedDistrito} 
@@ -531,7 +614,10 @@ export default function CalendarView({
                                 <div key={event.id} className={`event-list-item ${favorites.includes(event.id) ? 'favorite-item' : ''}`} onClick={() => setSelectedEvent(event)} style={{ cursor: 'pointer', padding: '0.75rem 1rem' }}>
                                     <div className="event-list-main">
                                         <div className="event-list-date" style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', background: 'none', padding: '0', flex: '0 0 130px' }}>
-                                            <span style={{ lineHeight: '1.2', display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Calendar size={14} style={{ color: 'var(--text-secondary)' }} /> {event.date}</span>
+                                            <span style={{ lineHeight: '1.2', display: 'flex', alignItems: 'center', gap: '0.4rem', wordBreak: 'break-word' }}>
+                                                <Calendar size={14} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} /> 
+                                                <span>{event.date}</span>
+                                            </span>
                                             {event.endDate && <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.2', marginTop: '0.2rem' }}>a {event.endDate}</span>}
                                         </div>
                                         

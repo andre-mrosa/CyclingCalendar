@@ -159,7 +159,8 @@ const formatDateStr = (dateStr, year) => {
     
     str = str.replace(/\bDE\b/g, '').replace(/\s+/g, ' ').trim();
     
-    if (year && !str.includes(year)) {
+    const hasYear = /\b202\d\b/.test(str);
+    if (year && !hasYear) {
         str = `${str} ${year}`;
     }
     
@@ -374,13 +375,17 @@ const fetchCabreira = async (year) => {
 export async function GET(request) {
     try {
         const { searchParams } = new URL(request.url);
-        const year = searchParams.get('year') || new Date().getFullYear().toString();
+        const yearsParam = searchParams.get('years') || searchParams.get('year') || new Date().getFullYear().toString();
+        const years = yearsParam.split(',').filter(Boolean).map(y => y.trim());
+        
         const sourcesParam = searchParams.get('sources') || 'FPC,Cabreira';
         const activeSources = sourcesParam.split(',');
 
         let promises = [];
-        if (activeSources.includes('FPC')) promises.push(fetchFPC(year));
-        if (activeSources.includes('Cabreira')) promises.push(fetchCabreira(year));
+        for (const y of years) {
+            if (activeSources.includes('FPC')) promises.push(fetchFPC(y));
+            if (activeSources.includes('Cabreira')) promises.push(fetchCabreira(y));
+        }
 
         const results = await Promise.all(promises);
         
