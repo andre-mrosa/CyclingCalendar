@@ -1,0 +1,40 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Event {
+  id                   String    @id
+  title                String
+  date                 String
+  sortDate             DateTime
+  details              String?
+  tag                  String?
+  ambito               String?
+  escaloes             String?
+  licenca              String?
+  regiao               String?
+  distrito             String?
+  source               String
+  link                 String?
+  extraLinks           String?
+  
+  // Deep Scraping Details
+  registrationOpensAt  DateTime?
+  registrationClosesAt DateTime?
+  prices               String?
+  description          String?
+  insurance            String?
+  prizes               String?
+  programa             String?
+  
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+}
+

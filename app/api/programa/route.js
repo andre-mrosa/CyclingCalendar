@@ -36,41 +36,30 @@ export async function GET(request) {
 
         // Strategy for Cabreira Solutions
         if (targetUrl.includes('cabreirasolutions')) {
-            // Find an h2/h3 that contains "Programa"
-            let found = false;
-            $('h2, h3, h4, .elementor-heading-title').each((i, el) => {
-                if (found) return;
-                const text = $(el).text().toLowerCase();
-                if (text.includes('programa')) {
-                    found = true;
-                    // Usually the schedule is in the next sibling elements, or a table nearby
-                    const parent = $(el).parent();
-                    
-                    // Cabreira usually uses Elementor, so we might need to look at the next widget
-                    const widget = $(el).closest('.elementor-widget');
-                    if (widget.length) {
-                        let nextWidget = widget.next();
-                        while (nextWidget.length && nextWidget.find('h2, h3, h4').length === 0) {
-                            programaHtml += nextWidget.html() + '<br/>';
-                            nextWidget = nextWidget.next();
-                        }
-                    } else {
-                        // generic fallback
+            // Look for specific Cabreira schedule widgets
+            const programItems = $('.evento-programa-atividades-item');
+            if (programItems.length > 0) {
+                let container = programItems.first().closest('.single-evento-programa');
+                if (!container.length) container = programItems.first().closest('.row');
+                if (!container.length) container = programItems.first().closest('.elementor-container');
+                if (!container.length) container = programItems.first().closest('.elementor-widget-wrap');
+                if (!container.length) container = programItems.first().parent().parent(); // Go up to row if possible
+                programaHtml = container.html();
+            } else {
+                // Find an h2/h3 that contains "Programa"
+                let found = false;
+                $('h2, h3, h4, .elementor-heading-title').each((i, el) => {
+                    if (found) return;
+                    const text = $(el).text().toLowerCase();
+                    if (text.includes('programa')) {
+                        found = true;
                         let next = $(el).next();
-                        while (next.length && !['H2', 'H3', 'H4'].includes(next[0].tagName)) {
+                        while (next.length && !['H2', 'H3', 'H4'].includes(next[0].tagName) && !next.text().toUpperCase().includes('A PROVA') && !next.text().toUpperCase().includes('REGULAMENTO')) {
                             programaHtml += next.html() + '<br/>';
                             next = next.next();
                         }
                     }
-                }
-            });
-            
-            // Fallback for Cabreira: look for any table if "Programa" heading isn't found
-            if (!programaHtml) {
-                const tables = $('table');
-                if (tables.length > 0) {
-                    programaHtml = $.html(tables.first());
-                }
+                });
             }
             
             // Extract Cabreira links

@@ -7,6 +7,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
     const [isAddingToCalendar, setIsAddingToCalendar] = useState(false);
     const [calendarStatus, setCalendarStatus] = useState(null); // 'success', 'exists', 'error'
     const [calendarMsg, setCalendarMsg] = useState('');
+    const [activeTab, setActiveTab] = useState('info');
 
     // Fetch Programa on Modal open
     useEffect(() => {
@@ -14,13 +15,18 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
             setProgramaData({ loading: false, html: null, error: null, additionalLinks: [] });
             setCalendarStatus(null);
             setCalendarMsg('');
+            setActiveTab('info');
             return;
         }
 
-        setCalendarStatus(null);
         setCalendarMsg('');
 
         const fetchPrograma = async () => {
+            if (selectedEvent.programa && selectedEvent.programa.trim().length > 0) {
+                setProgramaData({ loading: false, html: selectedEvent.programa, error: null, additionalLinks: [] });
+                return;
+            }
+
             // Find a valid URL to extract from (prefer Cabreira, then FPC)
             let targetUrl = null;
             if (selectedEvent.extraLinks && selectedEvent.extraLinks.length > 0) {
@@ -139,45 +145,174 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                     <Calendar size={18} /> {selectedEvent.date}{selectedEvent.endDate ? ` a ${selectedEvent.endDate}` : ''}
                 </p>
                 
-                <div className="modal-tags" style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
-                    {(selectedEvent.escaloes || []).map((esc, idx) => (
-                        <span key={`esc-${idx}`} className="event-list-tag" style={{ fontSize: '0.9rem', padding: '0.3rem 0.8rem' }}>{esc}</span>
-                    ))}
-                    <span className="event-list-tag" style={{ fontSize: '0.9rem', padding: '0.3rem 0.8rem' }}>{selectedEvent.ambito}</span>
-                    {selectedEvent.licenca && <span className="event-list-tag" style={{ fontSize: '0.9rem', padding: '0.3rem 0.8rem' }}>{selectedEvent.licenca}</span>}
+                {/* Tabs Navigation */}
+                <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '1rem', marginBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }} className="hide-scrollbar custom-scrollbar">
+                    {['info', 'escaloes', 'programa', 'inscricao', 'premios', 'localizacao'].map(tab => {
+                        const labels = {
+                            info: 'Info do Evento',
+                            escaloes: 'Escalões Elegíveis',
+                            programa: 'Programa',
+                            inscricao: 'Inscrição & Preços',
+                            premios: 'Prémios & Seguro',
+                            localizacao: 'Localização'
+                        };
+                        return (
+                            <button 
+                                key={tab}
+                                onClick={() => setActiveTab(tab)}
+                                style={{
+                                    background: activeTab === tab ? 'var(--accent-primary)' : 'rgba(255,255,255,0.05)',
+                                    color: activeTab === tab ? 'white' : 'var(--text-secondary)',
+                                    border: 'none',
+                                    padding: '0.5rem 1rem',
+                                    borderRadius: 'var(--radius-full)',
+                                    cursor: 'pointer',
+                                    fontWeight: activeTab === tab ? '600' : '400',
+                                    whiteSpace: 'nowrap',
+                                    transition: 'var(--transition)',
+                                    boxShadow: activeTab === tab ? 'var(--shadow-glow)' : 'none'
+                                }}
+                            >
+                                {labels[tab]}
+                            </button>
+                        );
+                    })}
                 </div>
-                
-                <div className="modal-two-cols">
-                    <div className="modal-programa-section">
-                        <h3 style={{ marginBottom: '1rem', color: 'var(--text-primary)', borderBottom: '2px solid var(--primary-color)', display: 'inline-block', paddingBottom: '0.25rem' }}>Programa & Horários</h3>
-                        
-                        {programaData.loading ? (
+
+                {/* Tab: INFO */}
+                {activeTab === 'info' && (
+                    <div className="tab-content fade-in">
+                        <h3 style={{ marginBottom: '1rem', color: 'var(--accent-primary)' }}>Informação do Evento</h3>
+                        {selectedEvent.description ? (
+                            <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.6', whiteSpace: 'pre-line', maxHeight: '300px', overflowY: 'auto', paddingRight: '0.5rem' }} className="custom-scrollbar">
+                                {selectedEvent.description}
+                            </div>
+                        ) : (
+                            <p style={{ color: 'var(--text-secondary)' }}>Descrição não disponível.</p>
+                        )}
+                        <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem' }}>
+                            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: 'var(--radius-md)', flex: 1 }}>
+                                <strong style={{ display: 'block', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>Âmbito</strong>
+                                <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{selectedEvent.ambito}</span>
+                            </div>
+                            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: 'var(--radius-md)', flex: 1 }}>
+                                <strong style={{ display: 'block', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>Organização</strong>
+                                <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{selectedEvent.source}</span>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Tab: ESCALOES */}
+                {activeTab === 'escaloes' && (
+                    <div className="tab-content fade-in">
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                            {(selectedEvent.escaloes || []).map((esc, idx) => (
+                                <span key={`esc-${idx}`} style={{ background: 'rgba(255,255,255,0.05)', padding: '0.5rem 1rem', borderRadius: 'var(--radius-full)', fontSize: '0.9rem' }}>{esc}</span>
+                            ))}
+                            {(!selectedEvent.escaloes || selectedEvent.escaloes.length === 0) && (
+                                <p style={{ color: 'var(--text-secondary)' }}>Informação de escalões não disponível.</p>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* Tab: PROGRAMA */}
+                {activeTab === 'programa' && (
+                    <div className="tab-content fade-in">
+                        {selectedEvent.programa ? (
+                            <div className="programa-content custom-scrollbar" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', whiteSpace: 'pre-line', maxHeight: '350px', overflowY: 'auto', paddingRight: '0.5rem' }} dangerouslySetInnerHTML={{ __html: selectedEvent.programa }} onClick={handleHtmlClick} />
+                        ) : programaData.loading ? (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
                                 <div className="spinner"></div>
                                 <span>A procurar programa oficial...</span>
                             </div>
                         ) : programaData.html ? (
-                            <div className="programa-content" dangerouslySetInnerHTML={{ __html: programaData.html }} onClick={handleHtmlClick} />
+                            <div className="programa-content custom-scrollbar" style={{ maxHeight: '350px', overflowY: 'auto', paddingRight: '0.5rem' }} dangerouslySetInnerHTML={{ __html: programaData.html }} onClick={handleHtmlClick} />
                         ) : programaData.error && selectedEvent.extraLinks && selectedEvent.extraLinks.length > 0 ? (
                             <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)' }}>
                                 <em>{programaData.error}</em>
                             </div>
-                        ) : null}
+                        ) : (
+                            <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)' }}>
+                                <em>Programa não disponível na Base de Dados. A aguardar recolha do sistema.</em>
+                            </div>
+                        )}
                     </div>
-                    
-                    {selectedEvent.details && selectedEvent.details !== 'A definir' && (
-                        <div className="modal-map" style={{ height: '100%', minHeight: '400px' }}>
-                            <iframe 
-                                style={{ border: 0, borderRadius: 'var(--radius-md)', background: 'var(--bg-color)', width: '100%', height: '100%' }}
-                                loading="lazy" 
-                                allowFullScreen 
-                                src={`https://maps.google.com/maps?q=${encodeURIComponent(selectedEvent.details.split('|')[0] + ', Portugal')}&output=embed`}
-                            ></iframe>
-                        </div>
-                    )}
-                </div>
+                )}
 
-                <div className="modal-actions" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'stretch' }}>
+                {/* Tab: INSCRIÇÃO & PREÇOS */}
+                {activeTab === 'inscricao' && (
+                    <div className="tab-content fade-in">
+                        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+                            <div style={{ flex: '1 1 200px', background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
+                                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Datas</h4>
+                                {selectedEvent.registrationOpensAt ? (
+                                    <>
+                                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.3rem' }}><strong>Abre:</strong> {new Date(selectedEvent.registrationOpensAt).toLocaleString('pt-PT')}</p>
+                                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}><strong>Fecha:</strong> {selectedEvent.registrationClosesAt ? new Date(selectedEvent.registrationClosesAt).toLocaleString('pt-PT') : 'A definir'}</p>
+                                    </>
+                                ) : (
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Datas não extraídas ou a definir.</p>
+                                )}
+                            </div>
+                            
+                            <div style={{ flex: '1 1 300px', background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
+                                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Preços</h4>
+                                {selectedEvent.prices ? (
+                                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', whiteSpace: 'pre-line', maxHeight: '250px', overflowY: 'auto', paddingRight: '0.5rem' }} className="custom-scrollbar">{selectedEvent.prices}</div>
+                                ) : (
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Informação não disponível.</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Tab: PREMIOS E SEGURO */}
+                {activeTab === 'premios' && (
+                    <div className="tab-content fade-in">
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem' }}>
+                            <div style={{ flex: '1 1 300px', background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
+                                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>🏆 Prémios</h4>
+                                {selectedEvent.prizes ? (
+                                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', whiteSpace: 'pre-line', maxHeight: '250px', overflowY: 'auto', paddingRight: '0.5rem' }} className="custom-scrollbar">{selectedEvent.prizes}</div>
+                                ) : (
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Informação não disponível.</p>
+                                )}
+                            </div>
+                            <div style={{ flex: '1 1 300px', background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
+                                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>🛡️ Seguro</h4>
+                                {selectedEvent.insurance ? (
+                                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', whiteSpace: 'pre-line', maxHeight: '250px', overflowY: 'auto', paddingRight: '0.5rem' }} className="custom-scrollbar">{selectedEvent.insurance}</div>
+                                ) : (
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Informação não disponível.</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Tab: LOCALIZACAO */}
+                {activeTab === 'localizacao' && (
+                    <div className="tab-content fade-in">
+                        <h3 style={{ marginBottom: '1rem', color: 'var(--accent-primary)' }}>Localização</h3>
+                        {selectedEvent.details && selectedEvent.details !== 'A definir' ? (
+                            <div className="modal-map" style={{ height: '400px' }}>
+                                <iframe 
+                                    style={{ border: 0, borderRadius: 'var(--radius-md)', background: 'var(--bg-color)', width: '100%', height: '100%' }}
+                                    loading="lazy" 
+                                    allowFullScreen 
+                                    src={`https://maps.google.com/maps?q=${encodeURIComponent(selectedEvent.details.split('|')[0] + ', Portugal')}&output=embed`}
+                                ></iframe>
+                            </div>
+                        ) : (
+                            <p style={{ color: 'var(--text-secondary)' }}>Localização a definir.</p>
+                        )}
+                    </div>
+                )}
+
+                <div className="modal-actions" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'stretch', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
                     {programaData.loading ? (
                         <div style={{ padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
                             <div className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }}></div>

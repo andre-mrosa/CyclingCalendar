@@ -16,13 +16,33 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Calendário Ciclismo Portugal",
-  description: "Eventos da Federação Portuguesa de Ciclismo e Cabreira Solutions",
+  title: "Calendário de Ciclismo Portugal | FPC & Cabreira Solutions",
+  description: "O calendário unificado de ciclismo em Portugal. Descobre todas as provas de Estrada, BTT, XCO, XCM, Enduro e Granfondos. Filtra por escalões, distritos e mais.",
+  keywords: ["ciclismo", "portugal", "calendário ciclismo", "fpc", "federação portuguesa de ciclismo", "cabreira solutions", "btt", "granfondo", "xco", "xcm", "provas de ciclismo"],
+  authors: [{ name: "CyclingCalendar" }],
+  creator: "CyclingCalendar",
+  openGraph: {
+    title: "Calendário de Ciclismo Portugal",
+    description: "O calendário unificado de ciclismo em Portugal. Descobre todas as provas de Estrada, BTT e Granfondos.",
+    url: "https://cyclingcalendar.vercel.app",
+    siteName: "Calendário de Ciclismo Portugal",
+    locale: "pt_PT",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Calendário de Ciclismo Portugal",
+    description: "O calendário unificado de ciclismo em Portugal. Descobre todas as provas de Estrada, BTT e Granfondos.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Calendário Ciclismo Portugal",
+    title: "Calendário Ciclismo",
   },
 };
 
