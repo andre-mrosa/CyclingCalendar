@@ -30,21 +30,21 @@ export default function EscalaoAssistant({ onApply }) {
         if (gender === 'F') {
             result = 'Femininas';
         } else if (licenseType === 'CPT') {
-            result = 'Todos'; 
+            result = 'Todos (Aberto)'; 
         } else {
             if (age <= 14) result = 'Escolas';
             else if (age <= 16) result = 'Sub-17 (Cadetes)';
             else if (age <= 18) result = 'Sub-19 (Juniores)';
             else if (age <= 22) {
-                if (teamLevel === 'Individual') result = 'Elite Amador / Individual';
+                if (teamLevel === 'Individual') result = 'Elite Amador';
                 else result = 'Sub-23';
             }
             else if (age <= 29) {
-                if (teamLevel === 'Individual') result = 'Elite Amador / Individual';
-                else result = 'Elite / Sub-23'; 
+                if (teamLevel === 'Individual') result = 'Elite Amador';
+                else result = 'Elite'; 
             }
             else {
-                if (teamLevel === 'Profissional') result = 'Elite / Sub-23';
+                if (teamLevel === 'Profissional') result = 'Elite';
                 else result = 'Masters / Veteranos';
             }
         }

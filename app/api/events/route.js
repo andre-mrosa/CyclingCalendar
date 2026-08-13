@@ -228,36 +228,37 @@ const fetchFPC = async (year) => {
                     endDateText = null;
                 }
 
-                let escalao = 'Geral / Vários';
+                let escaloes = [];
                 const det = extraText.trim();
                 const lowerName = nameText.toLowerCase();
                 
                 const codes = det.match(/\.\d{2}/g) || [];
                 const uciCodes = det.match(/\b([12]\.(1|Pro|HC))\b/i);
                 
-                if (det.toLowerCase().includes('cpt') || lowerName.includes('aberta') || lowerName.includes('amador')) {
-                    escalao = 'Todos (Aberto)';
-                } else if (uciCodes || lowerName.includes('volta a portugal em bicicleta') || lowerName.includes('volta ao algarve') || lowerName.includes('volta ao alentejo')) {
-                    escalao = 'Profissional (UCI)';
-                } else if (codes.length > 1) {
-                    escalao = 'Geral / Vários';
-                } else if (det.includes('.12') || lowerName.includes('elite')) {
-                    escalao = 'Elite / Sub-23';
-                } else if (det.includes('.13') || lowerName.includes('sub23') || lowerName.includes('sub-23')) {
-                    escalao = 'Sub-23';
-                } else if (det.includes('.14') || lowerName.includes('sub19') || lowerName.includes('sub-19') || lowerName.includes('juniores')) {
-                    escalao = 'Sub-19 (Juniores)';
-                } else if (det.includes('.15') || lowerName.includes('sub17') || lowerName.includes('sub-17') || lowerName.includes('cadetes')) {
-                    escalao = 'Sub-17 (Cadetes)';
-                } else if (det.includes('.16') || lowerName.includes('sub15') || lowerName.includes('sub-15') || lowerName.includes('juvenis')) {
-                    escalao = 'Sub-15 (Juvenis)';
-                } else if (det.includes('.17') || lowerName.includes('master') || lowerName.includes('veteranos')) {
-                    escalao = 'Masters / Veteranos';
-                } else if (det.includes('.18') || lowerName.includes('feminin')) {
-                    escalao = 'Femininas';
-                } else if (det.toLowerCase().includes('escolas') || lowerName.includes('escolas')) {
-                    escalao = 'Escolas';
+                if (det.toLowerCase().includes('cpt') || lowerName.includes('aberta') || lowerName.includes('amador') || lowerName.includes('passeio') || lowerName.includes('granfondo')) {
+                    escaloes.push('Todos (Aberto)');
                 }
+                if (uciCodes || lowerName.includes('volta a portugal em bicicleta') || lowerName.includes('volta ao algarve') || lowerName.includes('volta ao alentejo')) {
+                    escaloes.push('Profissional (UCI)');
+                }
+                
+                // Mapeamento exato dos códigos FPC
+                if (codes.includes('.12') || lowerName.includes('elite')) escaloes.push('Elite');
+                if (codes.includes('.13') || lowerName.includes('sub23') || lowerName.includes('sub-23')) escaloes.push('Sub-23');
+                if (codes.includes('.14') || lowerName.includes('sub19') || lowerName.includes('sub-19') || lowerName.includes('juniores')) escaloes.push('Sub-19 (Juniores)');
+                if (codes.includes('.15') || lowerName.includes('sub17') || lowerName.includes('sub-17') || lowerName.includes('cadetes')) escaloes.push('Sub-17 (Cadetes)');
+                if (codes.includes('.16') || lowerName.includes('sub15') || lowerName.includes('sub-15') || lowerName.includes('juvenis')) escaloes.push('Sub-15 (Juvenis)');
+                if (codes.includes('.17') || lowerName.includes('master') || lowerName.includes('veteranos')) escaloes.push('Masters / Veteranos');
+                if (codes.includes('.18') || lowerName.includes('feminin')) escaloes.push('Femininas');
+                if (det.toLowerCase().includes('escolas') || lowerName.includes('escolas')) escaloes.push('Escolas');
+
+                // Fallback se não for CPT nem UCI nem tiver códigos detetados
+                if (escaloes.length === 0) {
+                    escaloes.push('Geral / Vários');
+                }
+                
+                // Remover duplicados por segurança
+                escaloes = [...new Set(escaloes)];
 
                 const ambitoVal = getAmbito(nameText, det);
                 const regiaoVal = getRegiao(nameText, `${det} ${locText}`);
@@ -294,7 +295,7 @@ const fetchFPC = async (year) => {
                     sortDate: parseSortDate(dateText, year),
                     title: nameText,
                     details: `${locText} | ${extraText}`,
-                    escalao: escalao,
+                    escaloes: escaloes,
                     tag: getTag(nameText, det),
                     ambito: ambitoVal,
                     licenca: getLicenca(nameText, det, ambitoVal),
@@ -354,7 +355,7 @@ const fetchCabreira = async (year) => {
                 sortDate: parseSortDate(rawDateForSort, year),
                 title: title,
                 details: locText,
-                escalao: 'Todos (Aberto)', 
+                escaloes: ['Todos (Aberto)'], 
                 tag: getTag(title),
                 ambito: ambitoVal,
                 licenca: 'CPT / Lazer', // Cabreira events are generally open
@@ -430,6 +431,15 @@ export async function GET(request) {
                         }
                     }
                     existing.extraLinks = existingLinks;
+                }
+                
+                // Merge escaloes
+                if (event.escaloes && event.escaloes.length > 0) {
+                    const existingEscaloes = existing.escaloes || [];
+                    const mergedEscaloes = [...new Set([...existingEscaloes, ...event.escaloes])];
+                    // Remove "Geral / Vários" if we have other specific categories
+                    const cleanEscaloes = mergedEscaloes.length > 1 ? mergedEscaloes.filter(e => e !== 'Geral / Vários') : mergedEscaloes;
+                    existing.escaloes = cleanEscaloes;
                 }
                 
                 const currentSourceIndex = activeSources.indexOf(event.source);

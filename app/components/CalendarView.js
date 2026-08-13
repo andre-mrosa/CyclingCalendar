@@ -3,10 +3,11 @@ import { useState, useEffect, useRef } from 'react';
 import { useSettingsStore } from '../store/useSettingsStore';
 import useSWR from 'swr';
 import CustomSelect from './CustomSelect';
-import { Calendar, MapPin, Search, X, ChevronLeft, ChevronRight, Users } from 'lucide-react';
+import { Calendar, MapPin, Search, X, ChevronLeft, ChevronRight, Users, Heart, Star, LayoutGrid, List, HelpCircle } from 'lucide-react';
 import { useFavorites } from '../hooks/useFavorites';
 import { filterEvents } from '../utils/filterEvents';
 import EventModal from './EventModal';
+import EscalaoAssistant from './EscalaoAssistant';
 
 const fetcher = (url) => fetch(url).then((res) => res.json()).then((data) => {
     if (!data.success) throw new Error(data.error || 'Failed to load events');
@@ -34,7 +35,9 @@ export default function CalendarView({
     
     const [filteredEvents, setFilteredEvents] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedEscalao, setSelectedEscalao] = useState(forceEscalao || 'Todos');
+    const [viewMode, setViewMode] = useState('grid');
+    const [showEscalaoHelp, setShowEscalaoHelp] = useState(false);
+    const [selectedEscaloes, setSelectedEscaloes] = useState(forceEscalao ? [forceEscalao] : []);
     const [selectedAmbito, setSelectedAmbito] = useState(forceAmbito || 'Todos');
     const [selectedLicenca, setSelectedLicenca] = useState(forceLicenca || 'Todas');
     const [selectedRegiao, setSelectedRegiao] = useState('Todas');
@@ -52,9 +55,9 @@ export default function CalendarView({
 
     // Sync settings on mount
     useEffect(() => {
-        if (forceEscalao) setSelectedEscalao(forceEscalao);
-        else if (defaultEscalao) setSelectedEscalao(defaultEscalao);
-        else setSelectedEscalao('Todos');
+        if (forceEscalao) setSelectedEscaloes([forceEscalao]);
+        else if (defaultEscalao && defaultEscalao !== 'Todos') setSelectedEscaloes([defaultEscalao]);
+        else setSelectedEscaloes([]);
 
         if (forceAmbito) setSelectedAmbito(forceAmbito);
         else setSelectedAmbito('Todos');
@@ -88,7 +91,7 @@ export default function CalendarView({
         const filtered = filterEvents(events, {
             filterByFavorites, favorites,
             searchTerm,
-            selectedEscalao: forceEscalao || selectedEscalao,
+            selectedEscaloes: forceEscalao ? [forceEscalao] : selectedEscaloes,
             selectedAmbito: forceAmbito || selectedAmbito,
             selectedLicenca: forceLicenca || selectedLicenca,
             selectedRegiao,
@@ -100,9 +103,9 @@ export default function CalendarView({
 
         setFilteredEvents(filtered);
         setVisibleCount(16); // Reset visible count on filter change
-    }, [events, searchTerm, selectedEscalao, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, filterByFavorites, favorites, forceEscalao, forceAmbito, forceLicenca]);
+    }, [events, searchTerm, selectedEscaloes, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, filterByFavorites, favorites, forceEscalao, forceAmbito, forceLicenca]);
 
-    const uniqueEscaloes = ['Todos', 'Elite Amador / Individual', ...new Set(events.map(e => e.escalao))].filter((value, index, self) => self.indexOf(value) === index);
+    const uniqueEscaloes = ['Elite', 'Elite Amador', 'Sub-23', 'Sub-19 (Juniores)', 'Sub-17 (Cadetes)', 'Sub-15 (Juvenis)', 'Masters / Veteranos', 'Femininas', 'Escolas', 'Profissional (UCI)', 'Todos (Aberto)', 'Geral / Vários'];
     const uniqueAmbitos = ['Todos', ...new Set(events.map(e => e.ambito))];
     const uniqueLicencas = ['Todas', ...new Set(events.filter(e => e.licenca).map(e => e.licenca))];
     
@@ -142,6 +145,13 @@ export default function CalendarView({
             ? selectedTags.filter(t => t !== tag) 
             : [...selectedTags, tag];
         setSelectedTags(newTags);
+    };
+
+    const onEscalaoToggle = (esc) => {
+        const newEsc = selectedEscaloes.includes(esc)
+            ? selectedEscaloes.filter(e => e !== esc)
+            : [...selectedEscaloes, esc];
+        setSelectedEscaloes(newEsc);
     };
 
     useEffect(() => {
@@ -293,14 +303,50 @@ export default function CalendarView({
                             )}
                             
                             {activeFilters.includes('escalao') && !forceEscalao && (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                                    <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold' }}>Escalão</label>
-                                    <CustomSelect 
-                                        value={selectedEscalao} 
-                                        onChange={setSelectedEscalao} 
-                                        options={uniqueEscaloes} 
-                                        maxHeight="400px" 
-                                    />
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flexBasis: '100%' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', marginBottom: '0.2rem' }}>
+                                        <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold', lineHeight: 1, display: 'flex', alignItems: 'center' }}>Escalões</label>
+                                        <button 
+                                            onClick={() => setShowEscalaoHelp(true)}
+                                            title="Não tens a certeza do teu escalão? Clica aqui para descobrir."
+                                            style={{
+                                                background: 'none',
+                                                border: 'none',
+                                                color: 'var(--accent-primary)',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                padding: '0',
+                                                marginTop: '-2px'
+                                            }}
+                                        >
+                                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                        {uniqueEscaloes.map(esc => (
+                                            <button 
+                                                key={esc} 
+                                                onClick={() => onEscalaoToggle(esc)} 
+                                                style={{ 
+                                                    padding: '0.4rem 0.8rem',
+                                                    borderRadius: 'var(--radius-full)',
+                                                    border: '1px solid var(--card-border)',
+                                                    background: selectedEscaloes.includes(esc) ? 'var(--accent-primary)' : 'var(--card-bg)', 
+                                                    color: selectedEscaloes.includes(esc) ? 'white' : 'var(--text-primary)',
+                                                    cursor: 'pointer',
+                                                    fontSize: '0.8rem',
+                                                    fontWeight: '500',
+                                                    transition: 'var(--transition)'
+                                                }}
+                                            >
+                                                {esc}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
                             
@@ -495,7 +541,7 @@ export default function CalendarView({
                                                 <div className="event-list-detail-item" style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                                     <Users size={14} style={{ flexShrink: 0, color: 'var(--text-secondary)' }} />
                                                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                        {event.escalao} {extraDetails ? `(${extraDetails})` : ''}
+                                                        {(event.escaloes || []).join(' • ')} {extraDetails ? `(${extraDetails})` : ''}
                                                     </span>
                                                 </div>
                                             </div>
@@ -539,6 +585,19 @@ export default function CalendarView({
                     isSignedIn={isSignedIn} 
                 />
             </main>
+            {showEscalaoHelp && (
+                <div className="modal-overlay" onClick={() => setShowEscalaoHelp(false)} style={{ zIndex: 1100 }}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px', padding: 0, background: 'none' }}>
+                        <button className="modal-close" onClick={() => setShowEscalaoHelp(false)} style={{ top: '1rem', right: '1rem', zIndex: 10 }}>✕</button>
+                        <EscalaoAssistant onApply={(esc) => {
+                            if (!selectedEscaloes.includes(esc)) {
+                                setSelectedEscaloes([...selectedEscaloes, esc]);
+                            }
+                            setShowEscalaoHelp(false);
+                        }} />
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

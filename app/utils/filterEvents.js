@@ -3,7 +3,7 @@ export function filterEvents(events, filters) {
     const {
         filterByFavorites, favorites,
         searchTerm,
-        selectedEscalao,
+        selectedEscaloes,
         selectedAmbito,
         selectedLicenca,
         selectedRegiao,
@@ -24,66 +24,40 @@ export function filterEvents(events, filters) {
         );
     }
 
-    if (selectedEscalao && selectedEscalao !== 'Todos') {
-        if (selectedEscalao === 'Elite Amador / Individual') {
-            filtered = filtered.filter(event => {
-                const e = event.escalao;
-                if (e === 'Profissional (UCI)' || e === 'Sub-19 (Juniores)' || e === 'Sub-17 (Cadetes)' || e === 'Sub-15 (Juvenis)' || e === 'Escolas' || e === 'Femininas' || e === 'Masters / Veteranos') {
-                    return false;
-                }
+    if (selectedEscaloes && selectedEscaloes.length > 0) {
+        filtered = filtered.filter(event => {
+            const evEscaloes = event.escaloes || [];
+            const ambito = event.ambito;
+            
+            // Se o único escalão selecionado for Profissional UCI, apenas mostrar eventos UCI
+            if (selectedEscaloes.length === 1 && selectedEscaloes[0] === 'Profissional (UCI)') {
+                return evEscaloes.includes('Profissional (UCI)');
+            }
+            
+            // Verificar interseção normal (excluindo Elite Amador)
+            const standardEscaloes = selectedEscaloes.filter(e => e !== 'Elite Amador');
+            let hasIntersection = standardEscaloes.some(esc => evEscaloes.includes(esc));
+            
+            // Regra especial para Elite Amador
+            if (selectedEscaloes.includes('Elite Amador')) {
+                // Elite Amador pode ir a provas Elite (incluindo Taças e Nacionais)
+                // DESDE QUE a prova não seja estritamente Profissional (UCI)
+                const isElite = evEscaloes.includes('Elite');
+                const isUCI = evEscaloes.includes('Profissional (UCI)');
                 
-                return (
-                    e === 'Todos (Aberto)' || 
-                    e === 'Geral / Vários' ||
-                    e === 'Elite / Sub-23' ||
-                    e === 'Elite Amador / Individual' ||
-                    event.details.toLowerCase().includes('granfondo') ||
-                    event.title.toLowerCase().includes('granfondo')
-                );
-            });
-        } else {
-            filtered = filtered.filter(event => {
-                const detLow = event.details.toLowerCase();
-                const titleLow = event.title.toLowerCase();
-                
-                // UCI races are exclusive. If they selected UCI, ONLY show UCI races. 
-                // Do not show "Todos (Aberto)" or "Geral" because UCI races are never open.
-                if (selectedEscalao === 'Profissional (UCI)') {
-                    return event.escalao === 'Profissional (UCI)' || detLow.match(/\b[12]\.(1|pro|hc)\b/) || titleLow.includes('volta a portugal') || titleLow.includes('volta ao algarve');
+                if (isElite && !isUCI) {
+                    hasIntersection = true;
                 }
-                
-                // For other categories (like Sub-23, Masters), they can participate in Open events, 
-                // so we include 'Todos (Aberto)' and 'Geral / Vários'
-                if (event.escalao === 'Todos (Aberto)' || event.escalao === 'Geral / Vários') return true;
-                if (event.escalao === selectedEscalao) return true;
-                
-                if (selectedEscalao === 'Elite / Sub-23') {
-                    return detLow.includes('.12') || detLow.includes('.13') || titleLow.includes('elite') || titleLow.includes('sub-23') || titleLow.includes('sub23');
-                }
-                if (selectedEscalao === 'Sub-23') {
-                    return detLow.includes('.13') || titleLow.includes('sub-23') || titleLow.includes('sub23');
-                }
-                if (selectedEscalao === 'Sub-19 (Juniores)') {
-                    return detLow.includes('.14') || titleLow.includes('sub-19') || titleLow.includes('sub19') || titleLow.includes('juniores');
-                }
-                if (selectedEscalao === 'Sub-17 (Cadetes)') {
-                    return detLow.includes('.15') || titleLow.includes('sub-17') || titleLow.includes('sub17') || titleLow.includes('cadetes');
-                }
-                if (selectedEscalao === 'Sub-15 (Juvenis)') {
-                    return detLow.includes('.16') || titleLow.includes('sub-15') || titleLow.includes('sub15') || titleLow.includes('juvenis');
-                }
-                if (selectedEscalao === 'Masters / Veteranos') {
-                    return detLow.includes('.17') || titleLow.includes('master') || titleLow.includes('veteranos');
-                }
-                if (selectedEscalao === 'Femininas') {
-                    return detLow.includes('.18') || titleLow.includes('feminin');
-                }
-                if (selectedEscalao === 'Escolas') {
-                    return detLow.includes('escolas') || titleLow.includes('escolas');
-                }
-                return false;
-            });
-        }
+            }
+            
+            if (hasIntersection) return true;
+            
+            // Se o utilizador procura algo amador e o evento é 'Todos (Aberto)' ou 'Geral'
+            const isOpenEvent = evEscaloes.includes('Todos (Aberto)') || evEscaloes.includes('Geral / Vários');
+            
+            // Se o utilizador selecionou apenas UCI, não cai no isOpenEvent porque já foi tratado acima.
+            return isOpenEvent;
+        });
     }
 
     if (selectedAmbito && selectedAmbito !== 'Todos') {

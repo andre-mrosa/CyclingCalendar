@@ -140,7 +140,9 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 </p>
                 
                 <div className="modal-tags" style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
-                    <span className="event-list-tag" style={{ fontSize: '0.9rem', padding: '0.3rem 0.8rem' }}>{selectedEvent.escalao}</span>
+                    {(selectedEvent.escaloes || []).map((esc, idx) => (
+                        <span key={`esc-${idx}`} className="event-list-tag" style={{ fontSize: '0.9rem', padding: '0.3rem 0.8rem' }}>{esc}</span>
+                    ))}
                     <span className="event-list-tag" style={{ fontSize: '0.9rem', padding: '0.3rem 0.8rem' }}>{selectedEvent.ambito}</span>
                     {selectedEvent.licenca && <span className="event-list-tag" style={{ fontSize: '0.9rem', padding: '0.3rem 0.8rem' }}>{selectedEvent.licenca}</span>}
                 </div>
