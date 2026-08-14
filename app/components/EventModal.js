@@ -219,7 +219,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 {activeTab === 'programa' && (
                     <div className="tab-content fade-in">
                         {selectedEvent.programa ? (
-                            <div className="programa-content custom-scrollbar" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', whiteSpace: 'pre-line', maxHeight: '350px', overflowY: 'auto', paddingRight: '0.5rem' }} dangerouslySetInnerHTML={{ __html: selectedEvent.programa }} onClick={handleHtmlClick} />
+                            <div className="programa-content custom-scrollbar" dangerouslySetInnerHTML={{ __html: selectedEvent.programa }} onClick={handleHtmlClick} />
                         ) : programaData.loading ? (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
                                 <div className="spinner"></div>

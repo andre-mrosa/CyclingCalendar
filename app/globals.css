@@ -283,6 +283,7 @@ body {
     padding: 2.5rem;
     width: 100%;
     max-width: 1100px;
+    min-height: 80vh;
     max-height: 90vh;
     overflow-y: auto;
     position: relative;
@@ -670,6 +671,73 @@ html.light-mode .logo-cabreira {
 .programa-content::-webkit-scrollbar-thumb:hover {
     background: rgba(255,255,255,0.3);
 }
+
+/* --- Cabreira Programa Visual Schedule Styles --- */
+/* Day header row */
+.programa-content > div > div {
+    margin-bottom: 1.5rem;
+}
+
+/* Each day block: date header */
+.programa-content > div > div > div:first-child {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--accent-primary, #60a5fa);
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    margin-bottom: 0.75rem;
+    text-transform: capitalize;
+    letter-spacing: 0.02em;
+}
+
+/* Activity list container (second child div of each day block) */
+.programa-content > div > div > div:last-child {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* Each individual activity row */
+.programa-content > div > div > div:last-child > div {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 0.5rem 1rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.03);
+    border-left: 2px solid rgba(255,255,255,0.08);
+    align-items: start;
+}
+
+/* Time (p tag inside activity) */
+.programa-content > div > div > div:last-child > div > p {
+    color: var(--text-muted, rgba(255,255,255,0.45));
+    font-size: 0.78rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    margin: 0;
+    padding-top: 0.1rem;
+    white-space: nowrap;
+}
+
+/* Activity title (h6 inside activity) */
+.programa-content > div > div > div:last-child > div > h6 {
+    color: var(--text-primary);
+    font-size: 0.88rem;
+    font-weight: 600;
+    margin: 0 0 0.15rem 0;
+}
+
+/* Description / location div inside activity */
+.programa-content > div > div > div:last-child > div > div {
+    grid-column: 2;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+
+/* Hide HTML comments shown as text */
+.programa-content comment { display: none; }
 
 @media (max-width: 800px) {
     .modal-two-cols {

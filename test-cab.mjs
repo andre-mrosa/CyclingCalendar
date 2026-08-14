@@ -1,9 +1,8 @@
 import * as cheerio from 'cheerio';
-import { prisma } from '../db';
 import { 
     formatDateStr, parseSortDate, getAmbito, getTag, getRegiao, 
     getDistrito, toTitleCase, parsePTDateToISO, sanitizeHtml 
-} from './utils';
+} from './app/lib/scrapers/utils.js';
 
 export const deepScrapeCabreira = async (link) => {
     if (!link) return { opensAt: null, closesAt: null, description: null, prices: null, insurance: null, prizes: null, programa: null };
@@ -71,61 +70,10 @@ export const deepScrapeCabreira = async (link) => {
             });
         }
 
-        // 2. Extrair Programa — navegar estrutura: .single-evento-programa > h2 + div(dias) > div(dia) > div(header) + div(actividades) > div(actividade)
-        // Filtrar divs de actividade anormalmente grandes (> 5000 chars) que esconde regulamento
-        const MAX_ACTIVITY_SIZE = 5000;
+        // 2. Extrair Programa da div específica (pode estar na página default)
         const progContainer = $('.single-evento-programa').first();
         if (progContainer.length > 0) {
-            // Reconstruir a estrutura limpando actividades com regulamento embutido
-            let programaHtml = '';
-            
-            // Iterar filhos directos do container: <h2> e <div> wrapper de dias
-            progContainer.children().each((i, topEl) => {
-                const topTag = (topEl.tagName || topEl.name || '').toLowerCase();
-                if (topTag === 'h2') {
-                    programaHtml += $.html(topEl);
-                    return;
-                }
-                if (topTag !== 'div') return;
-                
-                // Este é o wrapper com os dias
-                let daysHtml = '';
-                $(topEl).children().each((j, dayEl) => {
-                    const dayTag = (dayEl.tagName || dayEl.name || '').toLowerCase();
-                    if (dayTag !== 'div') return;
-                    
-                    // Cada dia tem: div(header com data) + div(lista de actividades)
-                    let dayHtml = '';
-                    $(dayEl).children().each((k, dayChild) => {
-                        const childTag = (dayChild.tagName || dayChild.name || '').toLowerCase();
-                        if (childTag !== 'div') {
-                            dayHtml += $.html(dayChild);
-                            return;
-                        }
-                        const childHtmlSize = $(dayChild).html()?.length || 0;
-                        
-                        // Se for a lista de actividades (grande), filtrar actividade a actividade
-                        if (childHtmlSize > MAX_ACTIVITY_SIZE) {
-                            let activitiesHtml = '';
-                            $(dayChild).children().each((l, actEl) => {
-                                const actHtmlSize = $(actEl).html()?.length || 0;
-                                // Ignorar actividades com conteúdo anormalmente grande (têm regulamento dentro)
-                                if (actHtmlSize > MAX_ACTIVITY_SIZE) return;
-                                activitiesHtml += $.html(actEl);
-                            });
-                            dayHtml += `<div>${activitiesHtml}</div>`;
-                        } else {
-                            dayHtml += $.html(dayChild);
-                        }
-                    });
-                    if (dayHtml) daysHtml += `<div>${dayHtml}</div>`;
-                });
-                if (daysHtml) programaHtml += `<div>${daysHtml}</div>`;
-            });
-            
-            if (programaHtml.length > 20) {
-                programa = sanitizeHtml(programaHtml);
-            }
+            programa = sanitizeHtml(progContainer.html());
         }
 
         // Parse phase dates da página default
@@ -152,12 +100,10 @@ export const deepScrapeCabreira = async (link) => {
                 const $reg = cheerio.load(regHtml);
                 
                 let regSection = null;
+                // Normalmente o regulamento está numa .wpb_wrapper (ou div principal)
                 let wrapper = $reg('.wpb_text_column .wpb_wrapper').first();
                 if (wrapper.length === 0) {
                     wrapper = $reg('#page-content .col-12').first();
-                }
-                if (wrapper.length === 0) {
-                    wrapper = $reg('.event-desc').first();
                 }
                 
                 if (wrapper.length) {
@@ -178,6 +124,7 @@ export const deepScrapeCabreira = async (link) => {
                             }
                         } else if (tagName === 'ul' || tagName === 'ol') {
                             const lis = $el.find('> li');
+                            // Muitos regulamentos usam <ol><li><strong> para titulos
                             if (lis.length === 1 && lis.find('strong').length > 0) {
                                 isHeader = true;
                             } else if (lis.length > 0 && $el.find('strong').length > 0 && text.length < 100) {
@@ -192,16 +139,21 @@ export const deepScrapeCabreira = async (link) => {
                                 regSection = 'prices';
                             } else if (text.match(/SEGURO/)) {
                                 regSection = 'insurance';
-                            } else if (text.match(/CONDI|PARTICIPA|KITS|CANCEL|ESPECIFICA|OBRIGA|PENALIZA|RECLAMA|SEGURAN|TERMO|MECAN|SAN|SECRETARIADO|FRONTAIS|ABASTECIMENTO|DOPING|CIVISMO|RESPEITO|IMAGEM|RGPD|OUTROS|CATEGORIA|CONTROLO/)) {
+                            } else if (text.match(/CONDIÇÕES|PARTICIPAÇÃO|KITS|CANCELAMENTO|ESPECIFICAÇÕES|OBRIGAÇÕES|PENALIZAÇÕES|RECLAMAÇÕES/)) {
                                 regSection = null;
                             } else if (text.match(/^[0-9]+\.\s/)) {
                                 regSection = null;
                             }
+                            console.log('>>> HEADER:', text.trim(), '-> section:', regSection);
                             return; 
                         }
                         
                         const htmlBlock = sanitizeHtml($reg.html($el));
                         if (!htmlBlock) return;
+                        
+                        if (regSection) {
+                            console.log('ADDING [', regSection, '] ->', text.substring(0, 30));
+                        }
                         
                         if (regSection === 'prizes') prizesHtml += htmlBlock + '<br/><br/>';
                         else if (regSection === 'prices') pricesHtml += htmlBlock + '<br/><br/>';
@@ -223,72 +175,17 @@ export const deepScrapeCabreira = async (link) => {
     }
 }
 
-export const scrapeCabreira = async (year) => {
-    const response = await fetch(`https://cabreirasolutions.com/eventos/`, {
-        headers: { 'User-Agent': 'Mozilla/5.0' }
-    });
+deepScrapeCabreira('https://cabreirasolutions.com/evento/racenature-castelo-de-vide/').then(r => {});
 
-    if (!response.ok) return;
-
-    const html = await response.text();
-    const $ = cheerio.load(html);
-    const items = $('.evento-grid-item').toArray();
-    
-    for (const element of items) {
-        const aTag = $(element).find('.evento-item-image-container a');
-        let href = aTag.attr('href') || '';
-        
-        let title = 'Evento Cabreira';
-        if (href) {
-            const parts = href.split('/').filter(Boolean);
-            const slug = parts[parts.length - 1];
-            if (slug) {
-                title = slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-            }
-        }
-
-        let dateText = $(element).find('.evento-item-data').text().trim().toUpperCase() || 'DATA A DEFINIR';
-        const rawDateForSort = dateText;
-        dateText = formatDateStr(dateText, year);
-        
-        let locText = $(element).find('.evento-item-local').text().trim() || 'A DEFINIR';
-        if (locText !== 'A DEFINIR') locText = toTitleCase(locText);
-        
-        if (year && dateText.includes(year)) {
-            const ambitoVal = getAmbito(title);
-            const id = 'cabreira-' + title.replace(/\s+/g, '-').toLowerCase() + '-' + year;
-            
-            // Deep Scrape
-            const deepData = await deepScrapeCabreira(href);
-            
-            const eventData = {
-                title: title,
-                date: dateText,
-                sortDate: new Date(parseSortDate(rawDateForSort, year)),
-                details: locText,
-                tag: getTag(title),
-                ambito: ambitoVal,
-                escaloes: JSON.stringify(['Todos (Aberto)']),
-                licenca: 'CPT / Lazer',
-                regiao: getRegiao(title, locText),
-                distrito: getDistrito(title, locText),
-                source: 'Cabreira',
-                link: href || 'https://cabreirasolutions.com/eventos/',
-                extraLinks: JSON.stringify(href ? [{ label: 'Ver na Cabreira Solutions', link: href }] : []),
-                registrationOpensAt: deepData.opensAt,
-                registrationClosesAt: deepData.closesAt,
-                description: deepData.description,
-                prices: deepData.prices,
-                insurance: deepData.insurance,
-                prizes: deepData.prizes,
-                programa: deepData.programa,
-            };
-
-            await prisma.event.upsert({
-                where: { id: id },
-                update: eventData,
-                create: { id: id, ...eventData }
-            });
-        }
-    }
+const dump = async () => {
+    const regUrl = 'https://cabreirasolutions.com/evento/racenature-castelo-de-vide/?tab=regulamento';
+    const regResponse = await fetch(regUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    const regHtml = await regResponse.text();
+    const $reg = cheerio.load(regHtml);
+    console.log($reg('#page-content .container').last().html().substring(0, 1500));
 }
+dump();
+
+
+
+
