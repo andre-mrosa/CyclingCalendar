@@ -21,87 +21,63 @@ export const deepScrapeCabreira = async (link) => {
         let prizes = '';
         let programa = null;
         
-        // 2. Extract Prices
-        const pricesTable = $('table').filter((i, el) => $(el).text().toLowerCase().includes('€') || $(el).text().toLowerCase().includes('eur'));
-        if (pricesTable.length > 0) {
-            let pricesHtml = '';
-            pricesTable.each((i, el) => { pricesHtml += '<table>' + $(el).html() + '</table>\n\n'; });
-            prices = sanitizeHtml(pricesHtml);
-        }
-
-        // 3. Extract Prizes, Prices, Insurance, and Programa from text linearly
-        let currentSection = null;
-        let pText = '';
-        let iText = '';
-        let insText = '';
-        let progText = '';
+        let descriptionHtml = '';
         
-        const stopHeaders = [
-            'A PROVA', 'PARTICIPAÇÃO', 'CATEGORIAS DE PARTICIPAÇÃO', 'INSCRIÇÃO', 'POLÍTICA DE CANCELAMENTO', 
-            'PRÉMIOS E CLASSIFICAÇÕES', 'CONDIÇÃO FÍSICA', 'SEGURANÇA', 'TERMO DE RESPONSABILIDADE:', 'TERMO DE RESPONSABILIDADE', 
-            'MECÂNICA', 'SANÇÕES', 'PROGRAMA DO EVENTO', 'SECRETARIADO E LEVANTAMENTO DE FRONTAIS', 'FRONTAIS E CHIPS', 
-            'ABASTECIMENTOS', 'REGULAMENTO ANTIDOPING', 'CIVISMO, RESPEITO E CONDUTA DOS PARTICIPANTES', 'CIVISMO',
-            'ECORRESPONSABILIDADE', 'DIREITOS DE IMAGEM', 'RGPD', 'OUTROS', 'SEGURO DE ACIDENTES PESSOAIS', 'SEGURO DE ACIDENTES', 'SEGURO'
-        ];
-
-        $('p, li, h2, h3, h4, h5, h6, table').each((i, el) => {
-            let text = '';
-            const tagName = el.tagName.toLowerCase();
+        // 1. Extrair Apresentação (Description) da aba atual (default)
+        let currentSection = 'description';
+        $('.event-desc').children().each((i, el) => {
+            if (el.type !== 'tag') return;
+            const $el = $(el);
+            const tagName = (el.tagName || el.name || '').toLowerCase();
+            if (!tagName) return;
             
-            if (tagName === 'table') {
-                text = sanitizeHtml($(el).outerHTML());
-                if (!text) return;
-                // Treat table as part of the current section
-            } else {
-                text = $(el).text().trim();
-                if (!text) return;
-            }
+            let isHeader = false;
+            let headerText = '';
             
-            // Remove leading numbers like "5. " or "13. " for header matching
-            let upper = tagName === 'table' ? '' : text.toUpperCase().replace(/^\d{1,2}\.\s*/, '');
-            
-            let isTagHeader = ['h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName);
-            let isKnownHeader = tagName === 'table' ? false : stopHeaders.find(h => upper === h || upper === h + 'S');
-            
-            // Só mudamos de secção se tivermos a certeza que é um cabeçalho
-            if (isTagHeader || isKnownHeader) {
-                if (upper.includes('PRÉMIO') || upper.includes('CLASSIFICAÇ')) {
-                    currentSection = 'prizes';
-                    return;
-                } else if (upper.includes('INSCRIÇ') || upper.includes('PREÇOS')) {
-                    currentSection = 'prices';
-                    return;
-                } else if (upper.includes('SEGURO')) {
-                    currentSection = 'insurance';
-                    return;
-                } else if (upper.includes('PROGRAMA')) {
-                    currentSection = 'programa';
-                    return;
-                } else {
-                    currentSection = null; // É um cabeçalho de outra secção (ex: Segurança), portanto paramos de gravar
+            if (tagName.match(/^h[1-6]$/)) {
+                isHeader = true;
+                headerText = $el.text().toUpperCase();
+            } else if (tagName === 'ol' || tagName === 'ul') {
+                const lis = $el.find('> li');
+                if (lis.length === 1 && lis.find('strong').length > 0) {
+                    isHeader = true;
+                    headerText = lis.text().toUpperCase();
                 }
             }
             
-            if (currentSection === 'prizes') pText += text + '\n\n';
-            else if (currentSection === 'prices') iText += text + '\n\n';
-            else if (currentSection === 'insurance') insText += text + '\n\n';
-            else if (currentSection === 'programa') progText += text + '<br/><br/>';
-        });
-        
-        if (pText.length > 20) prizes = pText; 
-        if (iText.length > 20 && !prices) prices = iText;
-        if (insText.length > 20 && !insurance) insurance = insText;
-        if (!programa && progText.length > 20) programa = sanitizeHtml(progText);
-
-        // For description, get the first non-empty paragraph
-        $('p').each((i, el) => {
-            const txt = $(el).text().trim();
-            if (txt.length > 50 && !description && !txt.toUpperCase().includes('INSCRIÇÃO') && !txt.toUpperCase().includes('REGULAMENTO')) {
-                description = txt;
+            if (isHeader) {
+                if (headerText.includes('APRESENTA')) {
+                    currentSection = 'description';
+                } else {
+                    // Outras secções na aba Apresentação ignoramos (ou não existem no novo layout)
+                    currentSection = null;
+                }
+                return; // Ignorar o cabeçalho
             }
+            
+            const htmlBlock = sanitizeHtml($.html($el));
+            if (!htmlBlock) return;
+            
+            if (currentSection === 'description') descriptionHtml += htmlBlock + '<br/><br/>';
         });
 
-        // Parse phase dates
+        if (descriptionHtml.length > 20) description = descriptionHtml;
+        if (!description) {
+            $('p').each((i, el) => {
+                const txt = $(el).text().trim();
+                if (txt.length > 50 && !description && !txt.toUpperCase().includes('INSCRIÇÃO') && !txt.toUpperCase().includes('REGULAMENTO')) {
+                    description = txt;
+                }
+            });
+        }
+
+        // 2. Extrair Programa da div específica (pode estar na página default)
+        const progContainer = $('.single-evento-programa').first();
+        if (progContainer.length > 0) {
+            programa = sanitizeHtml(progContainer.html());
+        }
+
+        // Parse phase dates da página default
         $('li, p').each((_, el) => {
             const text = $(el).text();
             if (text.includes('Fase de inscrição') && text.includes('abertura') && text.includes('encerramento')) {
@@ -112,7 +88,84 @@ export const deepScrapeCabreira = async (link) => {
                 if (encerMatch) closesAt = parsePTDateToISO(encerMatch[1] + " pelas 23h59");
             }
         });
-        
+
+        // 3. Fazer fetch da aba Regulamento para preços, prêmios e seguros
+        let pricesHtml = '';
+        let insuranceHtml = '';
+        let prizesHtml = '';
+        try {
+            const regUrl = link + (link.includes('?') ? '&' : '?') + 'tab=regulamento';
+            const regResponse = await fetch(regUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+            if (regResponse.ok) {
+                const regHtml = await regResponse.text();
+                const $reg = cheerio.load(regHtml);
+                
+                let regSection = null;
+                let wrapper = $reg('.wpb_text_column .wpb_wrapper').first();
+                if (wrapper.length === 0) {
+                    wrapper = $reg('#page-content .col-12').first();
+                }
+                if (wrapper.length === 0) {
+                    wrapper = $reg('.event-desc').first();
+                }
+                
+                if (wrapper.length) {
+                    wrapper.children().each((i, el) => {
+                        if (el.type !== 'tag') return;
+                        const $el = $reg(el);
+                        const text = $el.text().toUpperCase();
+                        const tagName = (el.tagName || el.name || '').toLowerCase();
+                        
+                        let isHeader = false;
+                        
+                        if (tagName.match(/^h[1-6]$/)) {
+                            isHeader = true;
+                        } else if (tagName === 'p' && $el.find('strong').length > 0) {
+                            const strongText = $el.find('strong').text().toUpperCase();
+                            if (strongText.length > 5 && text.includes(strongText)) {
+                                isHeader = true;
+                            }
+                        } else if (tagName === 'ul' || tagName === 'ol') {
+                            const lis = $el.find('> li');
+                            if (lis.length === 1 && lis.find('strong').length > 0) {
+                                isHeader = true;
+                            } else if (lis.length > 0 && $el.find('strong').length > 0 && text.length < 100) {
+                                isHeader = true;
+                            }
+                        }
+                        
+                        if (isHeader) {
+                            if (text.match(/PRÉMIO|PREMIO|CLASSIFICA/)) {
+                                regSection = 'prizes';
+                            } else if (text.match(/INSCRI|PREÇO|PRECO|VALORES/)) {
+                                regSection = 'prices';
+                            } else if (text.match(/SEGURO/)) {
+                                regSection = 'insurance';
+                            } else if (text.match(/CONDI|PARTICIPA|KITS|CANCEL|ESPECIFICA|OBRIGA|PENALIZA|RECLAMA|SEGURAN|TERMO|MECAN|SAN|SECRETARIADO|FRONTAIS|ABASTECIMENTO|DOPING|CIVISMO|RESPEITO|IMAGEM|RGPD|OUTROS|CATEGORIA|CONTROLO/)) {
+                                regSection = null;
+                            } else if (text.match(/^[0-9]+\.\s/)) {
+                                regSection = null;
+                            }
+                            return; 
+                        }
+                        
+                        const htmlBlock = sanitizeHtml($reg.html($el));
+                        if (!htmlBlock) return;
+                        
+                        if (regSection === 'prizes') prizesHtml += htmlBlock + '<br/><br/>';
+                        else if (regSection === 'prices') pricesHtml += htmlBlock + '<br/><br/>';
+                        else if (regSection === 'insurance') insuranceHtml += htmlBlock + '<br/><br/>';
+                    });
+                }
+            }
+        } catch (err) {
+            console.error('Error fetching regulamento', err);
+        }
+
+        if (prizesHtml.length > 20) prizes = prizesHtml;
+        if (pricesHtml.length > 20) prices = pricesHtml;
+        if (insuranceHtml.length > 20) insurance = insuranceHtml;
+
         return { opensAt, closesAt, description, prices, insurance, prizes, programa };
     } catch(e) {
         return { opensAt: null, closesAt: null, description: null, prices: null, insurance: null, prizes: null, programa: null };

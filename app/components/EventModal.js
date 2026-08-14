@@ -184,9 +184,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                     <div className="tab-content fade-in">
                         <h3 style={{ marginBottom: '1rem', color: 'var(--accent-primary)' }}>Informação do Evento</h3>
                         {selectedEvent.description ? (
-                            <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.6', whiteSpace: 'pre-line', maxHeight: '300px', overflowY: 'auto', paddingRight: '0.5rem' }} className="custom-scrollbar">
-                                {selectedEvent.description}
-                            </div>
+                            <div className="custom-scrollbar description-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.6', maxHeight: '300px', overflowY: 'auto', paddingRight: '0.5rem' }} dangerouslySetInnerHTML={{ __html: selectedEvent.description }} />
                         ) : (
                             <p style={{ color: 'var(--text-secondary)' }}>Descrição não disponível.</p>
                         )}
@@ -260,7 +258,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             <div style={{ flex: '1 1 300px', background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
                                 <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Preços</h4>
                                 {selectedEvent.prices ? (
-                                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', whiteSpace: 'pre-line', maxHeight: '250px', overflowY: 'auto', paddingRight: '0.5rem' }} className="custom-scrollbar">{selectedEvent.prices}</div>
+                                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', maxHeight: '250px', overflowY: 'auto', paddingRight: '0.5rem' }} className="custom-scrollbar prices-content" dangerouslySetInnerHTML={{ __html: selectedEvent.prices }} />
                                 ) : (
                                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Informação não disponível.</p>
                                 )}
@@ -276,7 +274,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             <div style={{ flex: '1 1 300px', background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
                                 <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>🏆 Prémios</h4>
                                 {selectedEvent.prizes ? (
-                                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', whiteSpace: 'pre-line', maxHeight: '250px', overflowY: 'auto', paddingRight: '0.5rem' }} className="custom-scrollbar">{selectedEvent.prizes}</div>
+                                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', maxHeight: '250px', overflowY: 'auto', paddingRight: '0.5rem' }} className="custom-scrollbar prizes-content" dangerouslySetInnerHTML={{ __html: selectedEvent.prizes }} />
                                 ) : (
                                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Informação não disponível.</p>
                                 )}
@@ -284,7 +282,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             <div style={{ flex: '1 1 300px', background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
                                 <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>🛡️ Seguro</h4>
                                 {selectedEvent.insurance ? (
-                                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', whiteSpace: 'pre-line', maxHeight: '250px', overflowY: 'auto', paddingRight: '0.5rem' }} className="custom-scrollbar">{selectedEvent.insurance}</div>
+                                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', maxHeight: '250px', overflowY: 'auto', paddingRight: '0.5rem' }} className="custom-scrollbar insurance-content" dangerouslySetInnerHTML={{ __html: selectedEvent.insurance }} />
                                 ) : (
                                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Informação não disponível.</p>
                                 )}
