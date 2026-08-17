@@ -172,15 +172,16 @@ export const deepScrapeCabreira = async (link) => {
                         if (tagName.match(/^h[1-6]$/)) {
                             isHeader = true;
                         } else if (tagName === 'p' && $el.find('strong').length > 0) {
-                            const strongText = $el.find('strong').text().toUpperCase();
-                            if (strongText.length > 5 && text.includes(strongText)) {
+                            const strongText = $el.find('strong').text().trim();
+                            const fullText = $el.text().trim();
+                            // Só é cabeçalho se o <p> contiver APENAS o texto bold (±3 chars extra)
+                            // Evitar falsos positivos em parágrafos de conteúdo com palavras a negrito
+                            if (strongText.length > 3 && fullText.length <= strongText.length + 3) {
                                 isHeader = true;
                             }
                         } else if (tagName === 'ul' || tagName === 'ol') {
                             const lis = $el.find('> li');
                             if (lis.length === 1 && lis.find('strong').length > 0) {
-                                isHeader = true;
-                            } else if (lis.length > 0 && $el.find('strong').length > 0 && text.length < 100) {
                                 isHeader = true;
                             }
                         }
