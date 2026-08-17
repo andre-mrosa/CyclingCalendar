@@ -604,7 +604,11 @@ html.light-mode .logo-cabreira {
     padding-right: 1rem;
 }
 
-.programa-content h2, .programa-content h3, .programa-content h4 {
+.programa-content h2 {
+    display: none; /* Título "PROGRAMA" redundante - temos a navegação por abas */
+}
+
+.programa-content h3, .programa-content h4 {
     color: var(--text-primary);
     margin-top: 1rem;
     margin-bottom: 0.5rem;

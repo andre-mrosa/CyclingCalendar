@@ -204,7 +204,9 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             </div>
                             <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: 'var(--radius-md)', flex: 1 }}>
                                 <strong style={{ display: 'block', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>Organização</strong>
-                                <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{selectedEvent.source}</span>
+                                <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                                    {selectedEvent.source === 'Cabreira' ? 'Cabreira Solutions' : selectedEvent.source}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -213,35 +215,63 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 {/* Tab: ESCALOES */}
                 {activeTab === 'escaloes' && (
                     <div className="tab-content fade-in">
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                            {(selectedEvent.escaloes || []).map((esc, idx) => (
-                                <span key={`esc-${idx}`} style={{ background: 'rgba(255,255,255,0.05)', padding: '0.5rem 1rem', borderRadius: 'var(--radius-full)', fontSize: '0.9rem' }}>{esc}</span>
-                            ))}
-                            {(!selectedEvent.escaloes || selectedEvent.escaloes.length === 0) && (
-                                <p style={{ color: 'var(--text-secondary)' }}>Informação de escalões não disponível.</p>
-                            )}
-                        </div>
+                        {(!selectedEvent.escaloes || selectedEvent.escaloes.length === 0) ? (
+                            <p style={{ color: 'var(--text-secondary)' }}>Informação de escalões não disponível.</p>
+                        ) : (
+                            <>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1rem' }}>
+                                    Este evento está aberto às seguintes categorias de participação:
+                                </p>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+                                    {(selectedEvent.escaloes || []).map((esc, idx) => (
+                                        <div key={`esc-${idx}`} style={{
+                                            background: 'rgba(255,255,255,0.05)',
+                                            border: '1px solid rgba(255,255,255,0.08)',
+                                            padding: '0.75rem 1.25rem',
+                                            borderRadius: 'var(--radius-md)',
+                                            fontSize: '0.9rem',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.6rem',
+                                            color: 'var(--text-primary)'
+                                        }}>
+                                            <span style={{ fontSize: '1.1rem' }}>🚴</span>
+                                            <span>{esc}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                                {selectedEvent.licenca && (
+                                    <div style={{ marginTop: '1.25rem', padding: '0.75rem 1rem', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-md)', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                                        <span style={{ fontSize: '1rem' }}>📋</span>
+                                        <div>
+                                            <strong style={{ display: 'block', color: 'var(--text-primary)', fontSize: '0.85rem', marginBottom: '0.2rem' }}>Licença</strong>
+                                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{selectedEvent.licenca}</span>
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        )}
                     </div>
                 )}
 
                 {/* Tab: PROGRAMA */}
                 {activeTab === 'programa' && (
-                    <div className="tab-content fade-in">
+                    <div className="tab-content fade-in" style={{ paddingTop: 0 }}>
                         {selectedEvent.programa ? (
                             <div className="programa-content custom-scrollbar" dangerouslySetInnerHTML={{ __html: selectedEvent.programa }} onClick={handleHtmlClick} />
                         ) : programaData.loading ? (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', paddingTop: '1rem' }}>
                                 <div className="spinner"></div>
                                 <span>A procurar programa oficial...</span>
                             </div>
                         ) : programaData.html ? (
                             <div className="programa-content custom-scrollbar" style={{ maxHeight: '350px', overflowY: 'auto', paddingRight: '0.5rem' }} dangerouslySetInnerHTML={{ __html: programaData.html }} onClick={handleHtmlClick} />
                         ) : programaData.error && selectedEvent.extraLinks && selectedEvent.extraLinks.length > 0 ? (
-                            <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)' }}>
+                            <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)', marginTop: '1rem' }}>
                                 <em>{programaData.error}</em>
                             </div>
                         ) : (
-                            <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)' }}>
+                            <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)', marginTop: '1rem' }}>
                                 <em>Programa não disponível na Base de Dados. A aguardar recolha do sistema.</em>
                             </div>
                         )}
@@ -251,26 +281,28 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 {/* Tab: INSCRIÇÃO & PREÇOS */}
                 {activeTab === 'inscricao' && (
                     <div className="tab-content fade-in">
-                        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
-                            <div style={{ flex: '1 1 200px', background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
-                                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Datas</h4>
-                                {selectedEvent.registrationOpensAt ? (
-                                    <>
-                                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.3rem' }}><strong>Abre:</strong> {formatRegDate(selectedEvent.registrationOpensAt)}</p>
-                                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}><strong>Fecha:</strong> {formatRegDate(selectedEvent.registrationClosesAt)}</p>
-                                    </>
-                                ) : (
-                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Datas não extraídas ou a definir.</p>
-                                )}
+                        {/* Preços - full width on top */}
+                        <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem' }}>
+                            <h4 style={{ marginBottom: '0.75rem', color: 'var(--text-primary)' }}>💶 Preços</h4>
+                            {selectedEvent.prices ? (
+                                <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', maxHeight: '250px', overflowY: 'auto', paddingRight: '0.5rem' }} className="custom-scrollbar prices-content" dangerouslySetInnerHTML={{ __html: selectedEvent.prices }} />
+                            ) : (
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Informação não disponível.</p>
+                            )}
+                        </div>
+                        {/* Datas - below */}
+                        <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: 'var(--radius-md)', display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
+                            <div>
+                                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.6 }}>Abertura das Inscrições</h4>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+                                    {selectedEvent.registrationOpensAt ? formatRegDate(selectedEvent.registrationOpensAt) : 'A definir'}
+                                </p>
                             </div>
-                            
-                            <div style={{ flex: '1 1 300px', background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
-                                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Preços</h4>
-                                {selectedEvent.prices ? (
-                                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', maxHeight: '250px', overflowY: 'auto', paddingRight: '0.5rem' }} className="custom-scrollbar prices-content" dangerouslySetInnerHTML={{ __html: selectedEvent.prices }} />
-                                ) : (
-                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Informação não disponível.</p>
-                                )}
+                            <div>
+                                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.6 }}>Fecho das Inscrições</h4>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+                                    {selectedEvent.registrationClosesAt ? formatRegDate(selectedEvent.registrationClosesAt) : 'A definir'}
+                                </p>
                             </div>
                         </div>
                     </div>
