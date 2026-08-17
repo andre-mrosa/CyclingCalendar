@@ -189,7 +189,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 </div>
 
                 {/* Wrap all tabs in a flex-grow area so modal-actions sticks to bottom */}
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
 
                 {/* Tab: INFO */}
                 {activeTab === 'info' && (
