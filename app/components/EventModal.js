@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Star, X, CalendarPlus, Check } from 'lucide-react';
+import { Calendar, Star, X, CalendarPlus, Check, Bike, FileText, CreditCard } from 'lucide-react';
 
 export default function EventModal({ selectedEvent, setSelectedEvent, favorites, toggleFavorite, isSignedIn }) {
     const [programaData, setProgramaData] = useState({ loading: false, html: null, error: null, additionalLinks: [] });
@@ -188,6 +188,9 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                     })}
                 </div>
 
+                {/* Wrap all tabs in a flex-grow area so modal-actions sticks to bottom */}
+                <div style={{ flex: 1 }}>
+
                 {/* Tab: INFO */}
                 {activeTab === 'info' && (
                     <div className="tab-content fade-in">
@@ -235,14 +238,14 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                             gap: '0.6rem',
                                             color: 'var(--text-primary)'
                                         }}>
-                                            <span style={{ fontSize: '1.1rem' }}>🚴</span>
+                                            <Bike size={16} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
                                             <span>{esc}</span>
                                         </div>
                                     ))}
                                 </div>
                                 {selectedEvent.licenca && (
                                     <div style={{ marginTop: '1.25rem', padding: '0.75rem 1rem', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-md)', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                                        <span style={{ fontSize: '1rem' }}>📋</span>
+                                        <FileText size={16} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
                                         <div>
                                             <strong style={{ display: 'block', color: 'var(--text-primary)', fontSize: '0.85rem', marginBottom: '0.2rem' }}>Licença</strong>
                                             <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{selectedEvent.licenca}</span>
@@ -283,7 +286,9 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                     <div className="tab-content fade-in">
                         {/* Preços - full width on top */}
                         <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem' }}>
-                            <h4 style={{ marginBottom: '0.75rem', color: 'var(--text-primary)' }}>💶 Preços</h4>
+                            <h4 style={{ marginBottom: '0.75rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <CreditCard size={16} /> Preços
+                            </h4>
                             {selectedEvent.prices ? (
                                 <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', maxHeight: '250px', overflowY: 'auto', paddingRight: '0.5rem' }} className="custom-scrollbar prices-content" dangerouslySetInnerHTML={{ __html: selectedEvent.prices }} />
                             ) : (
@@ -351,7 +356,9 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                     </div>
                 )}
 
-                <div className="modal-actions" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'stretch', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                </div> {/* end flex-grow tab area */}
+
+                <div className="modal-actions" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'stretch', marginTop: 'auto', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
                     {programaData.loading ? (
                         <div style={{ padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
                             <div className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }}></div>
