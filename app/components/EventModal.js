@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Star, X, CalendarPlus, Check, Bike, FileText, CreditCard } from 'lucide-react';
+import { Calendar, Star, X, CalendarPlus, Check, Bike, FileText, CreditCard, Trophy, Shield } from 'lucide-react';
 
 export default function EventModal({ selectedEvent, setSelectedEvent, favorites, toggleFavorite, isSignedIn }) {
     const [programaData, setProgramaData] = useState({ loading: false, html: null, error: null, additionalLinks: [] });
@@ -194,9 +194,8 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 {/* Tab: INFO */}
                 {activeTab === 'info' && (
                     <div className="tab-content fade-in">
-                        <h3 style={{ marginBottom: '1rem', color: 'var(--accent-primary)' }}>Informação do Evento</h3>
                         {selectedEvent.description ? (
-                            <div className="custom-scrollbar description-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.6', maxHeight: '300px', overflowY: 'auto', paddingRight: '0.5rem' }} dangerouslySetInnerHTML={{ __html: selectedEvent.description }} />
+                            <div className="description-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.6' }} dangerouslySetInnerHTML={{ __html: selectedEvent.description }} />
                         ) : (
                             <p style={{ color: 'var(--text-secondary)' }}>Descrição não disponível.</p>
                         )}
@@ -268,7 +267,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 <span>A procurar programa oficial...</span>
                             </div>
                         ) : programaData.html ? (
-                            <div className="programa-content custom-scrollbar" style={{ maxHeight: '350px', overflowY: 'auto', paddingRight: '0.5rem' }} dangerouslySetInnerHTML={{ __html: programaData.html }} onClick={handleHtmlClick} />
+                            <div className="programa-content" dangerouslySetInnerHTML={{ __html: programaData.html }} onClick={handleHtmlClick} />
                         ) : programaData.error && selectedEvent.extraLinks && selectedEvent.extraLinks.length > 0 ? (
                             <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)', marginTop: '1rem' }}>
                                 <em>{programaData.error}</em>
@@ -286,11 +285,8 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                     <div className="tab-content fade-in">
                         {/* Preços - full width on top */}
                         <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem' }}>
-                            <h4 style={{ marginBottom: '0.75rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <CreditCard size={16} /> Preços
-                            </h4>
                             {selectedEvent.prices ? (
-                                <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', maxHeight: '250px', overflowY: 'auto', paddingRight: '0.5rem' }} className="custom-scrollbar prices-content" dangerouslySetInnerHTML={{ __html: selectedEvent.prices }} />
+                                <div className="prices-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }} dangerouslySetInnerHTML={{ __html: selectedEvent.prices }} />
                             ) : (
                                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Informação não disponível.</p>
                             )}
@@ -318,17 +314,21 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                     <div className="tab-content fade-in">
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem' }}>
                             <div style={{ flex: '1 1 300px', background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
-                                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>🏆 Prémios</h4>
+                                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Trophy size={15} /> Prémios
+                                </h4>
                                 {selectedEvent.prizes ? (
-                                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', maxHeight: '250px', overflowY: 'auto', paddingRight: '0.5rem' }} className="custom-scrollbar prizes-content" dangerouslySetInnerHTML={{ __html: selectedEvent.prizes }} />
+                                    <div className="prizes-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }} dangerouslySetInnerHTML={{ __html: selectedEvent.prizes }} />
                                 ) : (
                                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Informação não disponível.</p>
                                 )}
                             </div>
                             <div style={{ flex: '1 1 300px', background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
-                                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>🛡️ Seguro</h4>
+                                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Shield size={15} /> Seguro
+                                </h4>
                                 {selectedEvent.insurance ? (
-                                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', maxHeight: '250px', overflowY: 'auto', paddingRight: '0.5rem' }} className="custom-scrollbar insurance-content" dangerouslySetInnerHTML={{ __html: selectedEvent.insurance }} />
+                                    <div className="insurance-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }} dangerouslySetInnerHTML={{ __html: selectedEvent.insurance }} />
                                 ) : (
                                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Informação não disponível.</p>
                                 )}
@@ -340,9 +340,8 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 {/* Tab: LOCALIZACAO */}
                 {activeTab === 'localizacao' && (
                     <div className="tab-content fade-in">
-                        <h3 style={{ marginBottom: '1rem', color: 'var(--accent-primary)' }}>Localização</h3>
                         {selectedEvent.details && selectedEvent.details !== 'A definir' ? (
-                            <div className="modal-map" style={{ height: '400px' }}>
+                            <div className="modal-map" style={{ height: 'calc(85vh - 310px)' }}>
                                 <iframe 
                                     style={{ border: 0, borderRadius: 'var(--radius-md)', background: 'var(--bg-color)', width: '100%', height: '100%' }}
                                     loading="lazy" 
