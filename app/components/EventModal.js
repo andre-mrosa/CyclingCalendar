@@ -9,6 +9,15 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
     const [calendarMsg, setCalendarMsg] = useState('');
     const [activeTab, setActiveTab] = useState('info');
 
+    // Formata datas de inscrição em pt-PT sem segundos (usa UTC para preservar hora original)
+    const formatRegDate = (isoStr) => {
+        if (!isoStr) return 'A definir';
+        const d = new Date(isoStr);
+        const datePart = d.toLocaleDateString('pt-PT', { timeZone: 'UTC', day: '2-digit', month: 'long', year: 'numeric' });
+        const timePart = d.toLocaleTimeString('pt-PT', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' });
+        return `${datePart} às ${timePart}`;
+    };
+
     // Fetch Programa on Modal open
     useEffect(() => {
         if (!selectedEvent) {
@@ -247,8 +256,8 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Datas</h4>
                                 {selectedEvent.registrationOpensAt ? (
                                     <>
-                                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.3rem' }}><strong>Abre:</strong> {new Date(selectedEvent.registrationOpensAt).toLocaleString('pt-PT')}</p>
-                                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}><strong>Fecha:</strong> {selectedEvent.registrationClosesAt ? new Date(selectedEvent.registrationClosesAt).toLocaleString('pt-PT') : 'A definir'}</p>
+                                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.3rem' }}><strong>Abre:</strong> {formatRegDate(selectedEvent.registrationOpensAt)}</p>
+                                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}><strong>Fecha:</strong> {formatRegDate(selectedEvent.registrationClosesAt)}</p>
                                     </>
                                 ) : (
                                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Datas não extraídas ou a definir.</p>

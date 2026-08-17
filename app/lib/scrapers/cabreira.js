@@ -128,15 +128,17 @@ export const deepScrapeCabreira = async (link) => {
             }
         }
 
-        // Parse phase dates da página default
+        // Parse phase dates da página principal (fallback)
         $('li, p').each((_, el) => {
             const text = $(el).text();
-            if (text.includes('Fase de inscrição') && text.includes('abertura') && text.includes('encerramento')) {
-                const abertMatch = text.match(/abertura dia (\d{2}-\d{2}-\d{4}(?: pelas \d{2}h\d{2})?)/);
-                const encerMatch = text.match(/do dia (\d{2}-\d{2}-\d{4})/);
-                
+            if (text.match(/abertura/i)) {
+                const abertMatch = text.match(/abertura dia (\d{2}-\d{2}-\d{4}(?:\s+pelas\s+\d{2}h\d{2})?)/);
                 if (abertMatch && !opensAt) opensAt = parsePTDateToISO(abertMatch[1]);
-                if (encerMatch) closesAt = parsePTDateToISO(encerMatch[1] + " pelas 23h59");
+            }
+            const encerFinalMain = text.match(/encerram\s+(?:o\s+)?dia\s+(\d{2}-\d{2}-\d{4}(?:\s+pelas\s+\d{2}h\d{2})?)/);
+            if (encerFinalMain) {
+                const ds = encerFinalMain[1].includes('pelas') ? encerFinalMain[1] : encerFinalMain[1] + ' pelas 23h59';
+                closesAt = parsePTDateToISO(ds);
             }
         });
 
@@ -209,6 +211,30 @@ export const deepScrapeCabreira = async (link) => {
                         else if (regSection === 'insurance') insuranceHtml += htmlBlock + '<br/><br/>';
                     });
                 }
+                
+                // Extrair datas de inscrição do regulamento (onde normalmente vivem)
+                let finalCloseDate = null;
+                $reg('li, p, ul, ol').each((_, el) => {
+                    const text = $reg(el).text();
+                    // Data de abertura (1ª fase)
+                    if (!opensAt) {
+                        const abertMatch = text.match(/abertura dia (\d{2}-\d{2}-\d{4}(?:\s+pelas\s+\d{2}h\d{2})?)/);
+                        if (abertMatch) opensAt = parsePTDateToISO(abertMatch[1]);
+                    }
+                    // Data final de fecho explícita ("inscrições encerram dia")
+                    const encerFinal = text.match(/encerram\s+(?:o\s+)?dia\s+(\d{2}-\d{2}-\d{4}(?:\s+pelas\s+\d{2}h\d{2})?)/);
+                    if (encerFinal) {
+                        const ds = encerFinal[1].includes('pelas') ? encerFinal[1] : encerFinal[1] + ' pelas 23h59';
+                        finalCloseDate = parsePTDateToISO(ds);
+                    }
+                    // Fallback: fecho de fase ("encerramento do dia")
+                    if (!closesAt) {
+                        const encerPhase = text.match(/encerramento\s+(?:às\s+\d{2}h\d{2}\s+)?do\s+dia\s+(\d{2}-\d{2}-\d{4})/);
+                        if (encerPhase) closesAt = parsePTDateToISO(encerPhase[1] + ' pelas 23h59');
+                    }
+                });
+                // Preferir a data final explícita sobre a data de fase
+                if (finalCloseDate) closesAt = finalCloseDate;
             }
         } catch (err) {
             console.error('Error fetching regulamento', err);
