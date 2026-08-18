@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Calendar, Star, X, CalendarPlus, Check, Bike, FileText, CreditCard, Trophy, Shield } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import SmartLogo from './SmartLogo';
 
 export default function EventModal({ selectedEvent, setSelectedEvent, favorites, toggleFavorite, isSignedIn }) {
     const { resolvedTheme } = useTheme();
@@ -128,11 +129,9 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '1rem', paddingRight: '2rem', marginBottom: '0.5rem' }}>
                     {selectedEvent.logo && (
                         <a href={selectedEvent.link} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', flexShrink: 0 }} title="Abrir página do evento">
-                            <img 
+                            <SmartLogo 
                                 src={selectedEvent.logo} 
                                 alt={`Logo ${selectedEvent.title}`} 
-                                className="event-logo-shadow"
-                                referrerPolicy="no-referrer"
                                 style={{ height: '40px', width: 'auto', borderRadius: '4px', objectFit: 'contain' }} 
                             />
                         </a>

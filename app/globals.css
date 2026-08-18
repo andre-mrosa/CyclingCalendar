@@ -830,11 +830,19 @@ body {
     transition: filter 0.3s ease;
 }
 
-html.dark .logo-fpc, html.dark .event-logo-shadow {
+html.dark .logo-fpc {
     filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.7)) drop-shadow(0 0 8px rgba(255, 255, 255, 0.4));
 }
 
-html.light-mode .logo-cabreira, html.light-mode .event-logo-shadow {
+html.light-mode .logo-cabreira {
+    filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 8px rgba(0, 0, 0, 0.3));
+}
+
+.drop-shadow-light {
+    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.7)) drop-shadow(0 0 8px rgba(255, 255, 255, 0.4));
+}
+
+.drop-shadow-dark {
     filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 8px rgba(0, 0, 0, 0.3));
 }
 
