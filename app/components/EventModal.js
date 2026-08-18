@@ -131,6 +131,8 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             <img 
                                 src={selectedEvent.logo} 
                                 alt={`Logo ${selectedEvent.title}`} 
+                                className="event-logo-shadow"
+                                referrerPolicy="no-referrer"
                                 style={{ height: '40px', width: 'auto', borderRadius: '4px', objectFit: 'contain' }} 
                             />
                         </a>
