@@ -4,6 +4,6 @@ export default function robots() {
       userAgent: '*',
       allow: '/',
     },
-    sitemap: 'https://cyclingcalendar.vercel.app/sitemap.xml',
+    sitemap: 'https://cyclingcalendar.pt/sitemap.xml',
   }
 }

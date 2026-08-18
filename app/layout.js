@@ -16,6 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
+  metadataBase: new URL("https://cyclingcalendar.pt"),
   title: "Calendário de Ciclismo Portugal | FPC & Cabreira Solutions",
   description: "O calendário unificado de ciclismo em Portugal. Descobre todas as provas de Estrada, BTT, XCO, XCM, Enduro e Granfondos. Filtra por escalões, distritos e mais.",
   keywords: ["ciclismo", "portugal", "calendário ciclismo", "fpc", "federação portuguesa de ciclismo", "cabreira solutions", "btt", "granfondo", "xco", "xcm", "provas de ciclismo"],
