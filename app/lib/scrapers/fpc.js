@@ -15,8 +15,9 @@ export const deepScrapeFPC = async (link) => {
         
         let extractedHtml = '';
 
-        // Extrair texto descritivo
-        const containerHtml = $('.conteudo_div').html() || $('.container').html();
+        // Extrair texto descritivo e imagens (Cartaz/Banner) usando o body inteiro
+        // para garantir que não falhamos se eles criarem múltiplos contentores no site
+        const containerHtml = $('body').html();
         if (containerHtml && !containerHtml.includes('Página não encontrada')) {
             const $temp = cheerio.load(containerHtml);
             $temp('#navigation, #sub_menu_sobre, footer, script, style, iframe, .navbar, .logo, .menu, .menu_lateral_items, .redes_sociais, #menu, .header, nav, header').remove(); // remove lixo
@@ -53,7 +54,7 @@ export const deepScrapeFPC = async (link) => {
             
             // Tentar extrair link do onClick (comum no site da FPC para PDFs)
             if (onclick && onclick.includes('window.open')) {
-                const match = onclick.match(/window\.open\(\s*'([^']+)'/);
+                const match = onclick.match(/window\.open\s*\(\s*'([^']+)'/);
                 if (match) href = match[1];
             }
 
