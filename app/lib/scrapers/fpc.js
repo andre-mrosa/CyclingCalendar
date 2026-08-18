@@ -12,10 +12,62 @@ export const deepScrapeFPC = async (link) => {
         if (!response.ok) return null;
         const html = await response.text();
         const $ = cheerio.load(html);
+        
+        let extractedHtml = '';
+
+        // Extrair texto descritivo
+        const containerText = $('.conteudo_div').html() || $('.container').html();
+        if (containerText && !containerText.includes('Página não encontrada')) {
+            // Limpar divs e classes inúteis
+            const $temp = cheerio.load(containerText);
+            $temp('script, style, img, iframe').remove(); // remove scripts and images from text
+            const textContent = $temp.text().replace(/\s+/g, ' ').trim();
+            if (textContent.length > 50) {
+                extractedHtml += `<div class="fpc-description" style="margin-bottom: 1.5rem; color: var(--text-secondary); line-height: 1.6;">${sanitizeHtml($temp.html())}</div>`;
+            }
+        }
+
+        // Extrair Links (Regulamentos, PDFs)
+        const pdfLinks = [];
+        $('a').each((i, el) => {
+            const href = $(el).attr('href');
+            const text = $(el).text().trim() || 'Link Adicional';
+            if (href && (href.toLowerCase().endsWith('.pdf') || href.includes('fpciclismo.pt/ficheiro/'))) {
+                let fullLink = href;
+                if (!href.startsWith('http')) {
+                    fullLink = href.startsWith('/') ? `https://www.fpciclismo.pt${href}` : `https://www.fpciclismo.pt/${href}`;
+                }
+                // Avoid duplicates
+                if (!pdfLinks.some(l => l.link === fullLink)) {
+                    pdfLinks.push({ text, link: fullLink });
+                }
+            }
+        });
+
+        if (pdfLinks.length > 0) {
+            extractedHtml += `<div class="fpc-downloads" style="margin-top: 1.5rem;">
+                <h4 style="margin-bottom: 1rem; color: var(--text-primary);">Documentos Disponíveis (FPC)</h4>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">`;
+            
+            for (const doc of pdfLinks) {
+                extractedHtml += `
+                    <a href="${doc.link}" target="_blank" rel="noopener noreferrer" style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: var(--bg-secondary); border: 1px solid var(--card-border); border-radius: var(--radius-md); text-decoration: none; color: var(--text-primary); transition: all 0.2s ease;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-primary);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        <span style="font-weight: 500;">${sanitizeHtml(doc.text)}</span>
+                    </a>`;
+            }
+            extractedHtml += `</div></div>`;
+        }
+
         const table = $('table.table-striped');
         if (table.length > 0) {
-            return sanitizeHtml('<table class="extracted-table">' + table.html() + '</table>');
+            extractedHtml += sanitizeHtml('<table class="extracted-table" style="margin-top: 1.5rem;">' + table.html() + '</table>');
         }
+
+        if (extractedHtml.trim().length > 0) {
+            return extractedHtml;
+        }
+
     } catch(e) {
         console.error('Error deep scraping FPC link:', link, e);
     }
@@ -50,14 +102,23 @@ export const scrapeFPC = async (year) => {
         
         if (ths.length >= 1 && cols.length >= 3) {
             let dateText = $(ths[0]).text().trim();
+            const endDateText = ths.length > 1 ? $(ths[1]).text().trim() : '';
             const nameText = $(cols[0]).text().trim();
             let locText = toTitleCase($(cols[1]).text().trim());
             const extraText = $(cols[2]).text().trim();
+            const organizadorText = cols.length > 3 ? $(cols[3]).text().trim() : null;
             
             if (nameText && dateText && dateText.length > 2 && !nameText.toLowerCase().includes('evento')) {
                 const parts = dateText.split('-');
                 const months = {'01':'JAN', '02':'FEV', '03':'MAR', '04':'ABR', '05':'MAI', '06':'JUN', '07':'JUL', '08':'AGO', '09':'SET', '10':'OUT', '11':'NOV', '12':'DEZ'};
                 if (parts.length === 3) dateText = `${parts[0]} ${months[parts[1]] || parts[1]} ${parts[2]}`;
+                
+                if (endDateText && endDateText !== $(ths[0]).text().trim() && endDateText.length > 2) {
+                    const eParts = endDateText.split('-');
+                    if (eParts.length === 3) {
+                        dateText = `${dateText} a ${eParts[0]} ${months[eParts[1]] || eParts[1]} ${eParts[2]}`;
+                    }
+                }
 
                 let escaloes = [];
                 const det = extraText.trim();
@@ -115,7 +176,8 @@ export const scrapeFPC = async (year) => {
                     distrito: getDistrito(nameText, `${det} ${locText}`),
                     source: 'FPC',
                     link: mainLink,
-                    extraLinks: JSON.stringify(fpcLinks)
+                    extraLinks: JSON.stringify(fpcLinks),
+                    organizador: organizadorText || null
                 };
 
                 await prisma.event.upsert({

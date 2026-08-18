@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Star, X, CalendarPlus, Check, Bike, FileText, CreditCard, Trophy, Shield } from 'lucide-react';
+import { Calendar, Star, X, CalendarPlus, Check, Bike, FileText, CreditCard, Trophy, Shield, Users } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import SmartLogo from './SmartLogo';
 
@@ -262,6 +262,24 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                         <div>
                                             <strong style={{ display: 'block', color: 'var(--text-primary)', fontSize: '0.85rem', marginBottom: '0.2rem' }}>Licença</strong>
                                             <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{selectedEvent.licenca}</span>
+                                        </div>
+                                    </div>
+                                )}
+                                {selectedEvent.organizador && (
+                                    <div className="organizer-card" style={{ 
+                                        padding: '1rem', 
+                                        background: 'var(--bg-secondary)', 
+                                        borderRadius: 'var(--radius-md)', 
+                                        display: 'flex', 
+                                        alignItems: 'flex-start', 
+                                        gap: '0.75rem', 
+                                        marginTop: '1rem',
+                                        border: '1px solid var(--card-border)' 
+                                    }}>
+                                        <Users size={16} style={{ color: 'var(--text-secondary)', flexShrink: 0, marginTop: '0.15rem' }} />
+                                        <div>
+                                            <strong style={{ display: 'block', color: 'var(--text-primary)', fontSize: '0.85rem', marginBottom: '0.2rem' }}>Organizador</strong>
+                                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{selectedEvent.organizador}</span>
                                         </div>
                                     </div>
                                 )}
