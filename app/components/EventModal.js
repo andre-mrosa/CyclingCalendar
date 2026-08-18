@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Calendar, Star, X, CalendarPlus, Check, Bike, FileText, CreditCard, Trophy, Shield, Users } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import SmartLogo from './SmartLogo';
@@ -21,13 +21,32 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
         return `${datePart} às ${timePart}`;
     };
 
+    // Calcula as tabs ativas baseadas nos dados reais do evento
+    const availableTabs = useMemo(() => {
+        if (!selectedEvent) return [];
+        const tabs = [];
+        if (selectedEvent.description || selectedEvent.ambito || selectedEvent.organizador) tabs.push('info');
+        if (selectedEvent.escaloes && selectedEvent.escaloes.length > 0) tabs.push('escaloes');
+        if (selectedEvent.programa || programaData.html || programaData.loading) tabs.push('programa');
+        if (selectedEvent.prices || selectedEvent.registrationOpensAt || selectedEvent.registrationClosesAt) tabs.push('inscricao');
+        if (selectedEvent.prizes || selectedEvent.insurance) tabs.push('premios');
+        if (selectedEvent.details && selectedEvent.details !== 'A definir') tabs.push('localizacao');
+        return tabs;
+    }, [selectedEvent, programaData]);
+
+    useEffect(() => {
+        if (availableTabs.length > 0 && !availableTabs.includes(activeTab)) {
+            setActiveTab(availableTabs[0]);
+        }
+    }, [availableTabs, activeTab]);
+
     // Fetch Programa on Modal open
     useEffect(() => {
         if (!selectedEvent) {
             setProgramaData({ loading: false, html: null, error: null, additionalLinks: [] });
             setCalendarStatus(null);
             setCalendarMsg('');
-            setActiveTab('info');
+            // activeTab will be handled by the other useEffect
             return;
         }
 
@@ -175,41 +194,66 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 </p>
                 
                 {/* Tabs Navigation */}
-                <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '1rem', marginBottom: '1rem', borderBottom: '1px solid var(--card-border)' }} className="hide-scrollbar custom-scrollbar">
-                    {['info', 'escaloes', 'programa', 'inscricao', 'premios', 'localizacao'].map(tab => {
-                        const labels = {
-                            info: 'Info do Evento',
-                            escaloes: 'Escalões Elegíveis',
-                            programa: 'Programa',
-                            inscricao: 'Inscrição & Preços',
-                            premios: 'Prémios & Seguro',
-                            localizacao: 'Localização'
-                        };
-                        return (
-                            <button 
-                                key={tab}
-                                onClick={() => setActiveTab(tab)}
-                                style={{
-                                    background: activeTab === tab ? 'var(--accent-primary)' : 'var(--bg-secondary)',
-                                    color: activeTab === tab ? 'white' : 'var(--text-secondary)',
-                                    border: 'none',
-                                    padding: '0.5rem 1rem',
-                                    borderRadius: 'var(--radius-full)',
-                                    cursor: 'pointer',
-                                    fontWeight: activeTab === tab ? '600' : '400',
-                                    whiteSpace: 'nowrap',
-                                    transition: 'var(--transition)',
-                                    boxShadow: activeTab === tab ? 'var(--shadow-glow)' : 'none'
-                                }}
-                            >
-                                {labels[tab]}
-                            </button>
-                        );
-                    })}
-                </div>
+                {availableTabs.length > 0 ? (
+                    <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '1rem', marginBottom: '1rem', borderBottom: '1px solid var(--card-border)' }} className="hide-scrollbar custom-scrollbar">
+                        {availableTabs.map(tab => {
+                            const labels = {
+                                info: 'Info do Evento',
+                                escaloes: 'Escalões Elegíveis',
+                                programa: selectedEvent.source === 'FPC' ? 'Documentos & Detalhes FPC' : 'Programa',
+                                inscricao: 'Inscrição & Preços',
+                                premios: 'Prémios & Seguro',
+                                localizacao: 'Localização'
+                            };
+                            return (
+                                <button 
+                                    key={tab}
+                                    onClick={() => setActiveTab(tab)}
+                                    style={{
+                                        background: activeTab === tab ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+                                        color: activeTab === tab ? 'white' : 'var(--text-secondary)',
+                                        border: 'none',
+                                        padding: '0.5rem 1rem',
+                                        borderRadius: 'var(--radius-full)',
+                                        cursor: 'pointer',
+                                        fontWeight: activeTab === tab ? '600' : '400',
+                                        whiteSpace: 'nowrap',
+                                        transition: 'var(--transition)',
+                                        boxShadow: activeTab === tab ? 'var(--shadow-glow)' : 'none'
+                                    }}
+                                >
+                                    {labels[tab]}
+                                </button>
+                            );
+                        })}
+                    </div>
+                ) : (
+                    <div style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid var(--card-border)' }}>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>O nosso robô não conseguiu encontrar dados estruturados para este evento. A informação deverá estar disponível apenas na página oficial da organização.</p>
+                    </div>
+                )}
 
                 {/* Wrap all tabs in a flex-grow area so modal-actions sticks to bottom */}
                 <div className="modal-tab-panel">
+                
+                {availableTabs.length === 0 && (
+                    <div className="tab-content fade-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '1.5rem', padding: '2rem' }}>
+                        <FileText size={48} style={{ color: 'var(--card-border)' }} />
+                        <h3 style={{ margin: 0, color: 'var(--text-primary)', textAlign: 'center' }}>Não há dados detalhados</h3>
+                        <a 
+                            href={selectedEvent.link} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            style={{
+                                background: 'var(--accent-primary)', color: 'white', textDecoration: 'none',
+                                padding: '1rem 2rem', borderRadius: 'var(--radius-full)', fontWeight: '600',
+                                display: 'inline-block', boxShadow: 'var(--shadow-md)', transition: 'var(--transition)'
+                            }}
+                        >
+                            Visitar Site da Organização
+                        </a>
+                    </div>
+                )}
 
                 {/* Tab: INFO */}
                 {activeTab === 'info' && (
