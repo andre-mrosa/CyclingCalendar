@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Calendar, Star, X, CalendarPlus, Check, Bike, FileText, CreditCard, Trophy, Shield } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
 export default function EventModal({ selectedEvent, setSelectedEvent, favorites, toggleFavorite, isSignedIn }) {
+    const { resolvedTheme } = useTheme();
     const [programaData, setProgramaData] = useState({ loading: false, html: null, error: null, additionalLinks: [] });
     const [fullscreenImage, setFullscreenImage] = useState(null);
     const [isAddingToCalendar, setIsAddingToCalendar] = useState(false);
@@ -189,17 +191,21 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 </div>
 
                 {/* Wrap all tabs in a flex-grow area so modal-actions sticks to bottom */}
-                <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+                <div className="modal-tab-panel">
 
                 {/* Tab: INFO */}
                 {activeTab === 'info' && (
-                    <div className="tab-content fade-in">
-                        {selectedEvent.description ? (
-                            <div className="description-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.6' }} dangerouslySetInnerHTML={{ __html: selectedEvent.description }} />
-                        ) : (
-                            <p style={{ color: 'var(--text-secondary)' }}>Descrição não disponível.</p>
-                        )}
-                        <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem' }}>
+                    <div className="tab-content fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                        {/* Descrição com scroll próprio */}
+                        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, paddingRight: '0.25rem' }} className="custom-scrollbar">
+                            {selectedEvent.description ? (
+                                <div className="description-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.6' }} dangerouslySetInnerHTML={{ __html: selectedEvent.description }} />
+                            ) : (
+                                <p style={{ color: 'var(--text-secondary)' }}>Descrição não disponível.</p>
+                            )}
+                        </div>
+                        {/* Âmbito e Organização sempre visíveis em baixo */}
+                        <div style={{ flexShrink: 0, marginTop: '1.5rem', display: 'flex', gap: '1rem' }}>
                             <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: 'var(--radius-md)', flex: 1 }}>
                                 <strong style={{ display: 'block', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>Âmbito</strong>
                                 <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{selectedEvent.ambito}</span>
@@ -216,34 +222,24 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                 {/* Tab: ESCALOES */}
                 {activeTab === 'escaloes' && (
-                    <div className="tab-content fade-in">
+                    <div className="tab-content escaloes-tab fade-in">
                         {(!selectedEvent.escaloes || selectedEvent.escaloes.length === 0) ? (
                             <p style={{ color: 'var(--text-secondary)' }}>Informação de escalões não disponível.</p>
                         ) : (
-                            <>
-                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1rem' }}>
+                            <div className="eligibilidade-card">
+                                <p className="escaloes-intro">
                                     Este evento está aberto às seguintes categorias de participação:
                                 </p>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+                                <div className="escaloes-list">
                                     {(selectedEvent.escaloes || []).map((esc, idx) => (
-                                        <div key={`esc-${idx}`} style={{
-                                            background: 'rgba(255,255,255,0.05)',
-                                            border: '1px solid rgba(255,255,255,0.08)',
-                                            padding: '0.75rem 1.25rem',
-                                            borderRadius: 'var(--radius-md)',
-                                            fontSize: '0.9rem',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '0.6rem',
-                                            color: 'var(--text-primary)'
-                                        }}>
+                                        <div key={`esc-${idx}`} className="escalao-chip">
                                             <Bike size={16} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
                                             <span>{esc}</span>
                                         </div>
                                     ))}
                                 </div>
                                 {selectedEvent.licenca && (
-                                    <div style={{ marginTop: '1.25rem', padding: '0.75rem 1rem', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-md)', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                                    <div className="licenca-card">
                                         <FileText size={16} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
                                         <div>
                                             <strong style={{ display: 'block', color: 'var(--text-primary)', fontSize: '0.85rem', marginBottom: '0.2rem' }}>Licença</strong>
@@ -251,14 +247,14 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                         </div>
                                     </div>
                                 )}
-                            </>
+                            </div>
                         )}
                     </div>
                 )}
 
                 {/* Tab: PROGRAMA */}
                 {activeTab === 'programa' && (
-                    <div className="tab-content fade-in" style={{ paddingTop: 0 }}>
+                    <div className="tab-content programa-tab fade-in" style={{ paddingTop: 0 }}>
                         {selectedEvent.programa ? (
                             <div className="programa-content custom-scrollbar" dangerouslySetInnerHTML={{ __html: selectedEvent.programa }} onClick={handleHtmlClick} />
                         ) : programaData.loading ? (
@@ -282,17 +278,17 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                 {/* Tab: INSCRIÇÃO & PREÇOS */}
                 {activeTab === 'inscricao' && (
-                    <div className="tab-content fade-in">
+                    <div className="tab-content inscricao-tab fade-in">
                         {/* Preços - full width on top */}
-                        <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem' }}>
+                        <div className="inscricao-precos-scroll">
                             {selectedEvent.prices ? (
                                 <div className="prices-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }} dangerouslySetInnerHTML={{ __html: selectedEvent.prices }} />
                             ) : (
                                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Informação não disponível.</p>
-                            )}
-                        </div>
-                        {/* Datas - below */}
-                        <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: 'var(--radius-md)', display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
+                        )}
+                    </div>
+                    {/* Datas - below */}
+                        <div className="inscricao-datas">
                             <div>
                                 <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.6 }}>Abertura das Inscrições</h4>
                                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
@@ -312,8 +308,8 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 {/* Tab: PREMIOS E SEGURO */}
                 {activeTab === 'premios' && (
                     <div className="tab-content fade-in">
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem' }}>
-                            <div style={{ flex: '1 1 300px', background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
+                        <div className="premios-seguro-content">
+                            <div className="premio-seguro-panel">
                                 <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <Trophy size={15} /> Prémios
                                 </h4>
@@ -323,7 +319,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Informação não disponível.</p>
                                 )}
                             </div>
-                            <div style={{ flex: '1 1 300px', background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
+                            <div className="premio-seguro-panel">
                                 <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <Shield size={15} /> Seguro
                                 </h4>
@@ -339,10 +335,11 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                 {/* Tab: LOCALIZACAO */}
                 {activeTab === 'localizacao' && (
-                    <div className="tab-content fade-in">
+                    <div className="tab-content localizacao-tab fade-in">
                         {selectedEvent.details && selectedEvent.details !== 'A definir' ? (
-                            <div className="modal-map" style={{ height: 'calc(85vh - 310px)' }}>
+                            <div className="modal-map">
                                 <iframe 
+                                    className={resolvedTheme === 'dark' ? 'map-dark-mode' : 'map-light-mode'}
                                     style={{ border: 0, borderRadius: 'var(--radius-md)', background: 'var(--bg-color)', width: '100%', height: '100%' }}
                                     loading="lazy" 
                                     allowFullScreen 
@@ -357,7 +354,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                 </div> {/* end flex-grow tab area */}
 
-                <div className="modal-actions" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'stretch', marginTop: 'auto', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                <div className="modal-actions" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'stretch', marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
                     {programaData.loading ? (
                         <div style={{ padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
                             <div className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }}></div>

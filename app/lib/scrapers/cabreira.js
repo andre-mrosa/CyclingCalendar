@@ -183,7 +183,11 @@ export const deepScrapeCabreira = async (link) => {
                             }
                         } else if (tagName === 'ul' || tagName === 'ol') {
                             const lis = $el.find('> li');
-                            if (lis.length === 1 && lis.find('strong').length > 0) {
+                            const strongText = lis.find('strong').text().trim();
+                            const fullText = $el.text().trim();
+                            // A price phase is often a one-item list with a bold label.
+                            // It is only a section header when the bold text is the whole item.
+                            if (lis.length === 1 && strongText.length > 3 && fullText.length <= strongText.length + 3) {
                                 isHeader = true;
                             }
                         }
@@ -203,12 +207,16 @@ export const deepScrapeCabreira = async (link) => {
                             return; 
                         }
                         
+                        // Empty paragraphs are visual spacers in the source site and should not
+                        // create empty areas in the event modal.
+                        if (!$el.text().replace(/\u00a0/g, ' ').trim()) return;
+
                         const htmlBlock = sanitizeHtml($reg.html($el));
                         if (!htmlBlock) return;
                         
-                        if (regSection === 'prizes') prizesHtml += htmlBlock + '<br/><br/>';
-                        else if (regSection === 'prices') pricesHtml += htmlBlock + '<br/><br/>';
-                        else if (regSection === 'insurance') insuranceHtml += htmlBlock + '<br/><br/>';
+                        if (regSection === 'prizes') prizesHtml += htmlBlock + '<br/>';
+                        else if (regSection === 'prices') pricesHtml += htmlBlock + '<br/>';
+                        else if (regSection === 'insurance') insuranceHtml += htmlBlock + '<br/>';
                     });
                 }
                 

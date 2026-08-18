@@ -50,17 +50,18 @@ export default function Navigation() {
             <Link 
                 key={link.href}
                 href={link.href} 
+                className="navigation-link"
                 style={{ 
-                    color: isActive ? 'var(--accent-primary)' : 'var(--text-primary)', 
+                    color: isActive ? 'white' : 'var(--text-primary)',
                     textDecoration: 'none', 
                     fontWeight: 'bold', 
                     display: 'flex', 
                     alignItems: 'center', 
                     gap: '6px',
-                    borderTop: '2px solid transparent',
-                    borderBottom: isActive ? '2px solid var(--accent-primary)' : '2px solid transparent',
-                    paddingTop: '0.2rem',
-                    paddingBottom: '0.2rem',
+                    border: `1px solid ${isActive ? 'rgba(96, 165, 250, 0.5)' : 'transparent'}`,
+                    borderRadius: 'var(--radius-full)',
+                    background: isActive ? 'rgba(59, 130, 246, 0.85)' : 'transparent',
+                    padding: '0.45rem 0.7rem',
                     transition: 'var(--transition)'
                 }}
             >

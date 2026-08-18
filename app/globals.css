@@ -246,6 +246,10 @@ body {
     scrollbar-width: none;
 }
 .desktop-links { display: flex; align-items: center; gap: 1.5rem; width: 100%; }
+.navigation-link:hover {
+    color: var(--accent-secondary) !important;
+    background: rgba(59, 130, 246, 0.1) !important;
+}
 .mobile-sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100vh; background: var(--card-bg); backdrop-filter: blur(20px); border-right: 1px solid var(--card-border); transition: left 0.3s ease; z-index: 1001; display: flex; flex-direction: column; padding: 2rem 1rem; }
 .mobile-sidebar.open { left: 0; }
 .no-scrollbar::-webkit-scrollbar {
@@ -280,7 +284,7 @@ body {
     background: var(--card-bg);
     border: 1px solid var(--card-border);
     border-radius: var(--radius-lg);
-    padding: 2.5rem;
+    padding: 2.5rem 2.5rem 1.25rem;
     width: min(1100px, 90vw);
     height: 85vh;
     overflow: hidden;
@@ -289,6 +293,210 @@ body {
     animation: scaleUp 0.2s ease-out;
     display: flex;
     flex-direction: column;
+}
+
+/* Each event tab shares the space between the tab navigation and action buttons.
+   Long content scrolls here instead of being clipped by the modal. */
+.modal-tab-panel {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-tab-panel > .tab-content {
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 0.5rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.modal-tab-panel > .tab-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-tab-panel > .tab-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+/* The programme already has its own formatted, scrollable content. */
+.modal-tab-panel > .programa-tab {
+    display: flex;
+    flex-direction: column;
+    overflow-y: hidden;
+    padding-right: 0;
+}
+
+/* Registration dates stay visible while the pricing and conditions scroll. */
+.modal-tab-panel > .inscricao-tab {
+    display: flex;
+    flex-direction: column;
+    overflow-y: hidden;
+}
+
+/* The map fills this tab directly, without an extra content scrollbar. */
+.modal-tab-panel > .localizacao-tab {
+    display: flex;
+    flex-direction: column;
+    overflow-y: hidden;
+    padding-right: 0;
+}
+
+.localizacao-tab .modal-map {
+    flex: 1;
+    min-height: 0;
+    height: auto;
+}
+
+.modal-map iframe {
+    transition: filter 0.25s ease;
+}
+
+/* Google Maps Embed has no theme switch; this renders the map appropriately in dark mode. */
+.modal-map iframe.map-dark-mode {
+    filter: brightness(0.78) contrast(0.95) saturate(0.75) invert(0.88) hue-rotate(180deg);
+}
+
+.inscricao-precos-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 0.25rem;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.inscricao-datas {
+    flex-shrink: 0;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
+}
+
+.inscricao-datas > div {
+    flex: 1 1 250px;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+/* Compact legacy scraper output while keeping phase lists easy to scan. */
+.prices-content > br {
+    display: none;
+}
+
+.prices-content p:empty {
+    display: none;
+}
+
+.prices-content ul,
+.prices-content ol {
+    margin: 0.75rem 0 0.75rem 1.25rem;
+}
+
+.prices-content li + li {
+    margin-top: 0.35rem;
+}
+
+/* Prizes and insurance remain visible side by side, with a scroll area per card. */
+.premios-seguro-content {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
+    height: 100%;
+    min-height: 0;
+}
+
+.premio-seguro-panel {
+    min-height: 0;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.03);
+    display: flex;
+    flex-direction: column;
+}
+
+/* Eligibility summary */
+.escaloes-tab {
+    display: flex;
+    flex-direction: column;
+}
+
+.eligibilidade-card {
+    width: min(100%, 620px);
+    margin: auto 0;
+    padding: 1.25rem;
+    border: 1px solid rgba(96, 165, 250, 0.16);
+    border-radius: var(--radius-lg);
+    background: linear-gradient(145deg, rgba(59, 130, 246, 0.1), rgba(255, 255, 255, 0.025) 58%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.escaloes-intro {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 0.9rem;
+    font-weight: 500;
+}
+
+.escaloes-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.escalao-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.8rem 1.1rem;
+    border: 1px solid rgba(96, 165, 250, 0.22);
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(255, 255, 255, 0.03));
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.licenca-card {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    width: 100%;
+    margin-top: 1rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-md);
+    background: rgba(15, 23, 42, 0.16);
+}
+
+.prizes-content,
+.insurance-content {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+@media (max-width: 800px) {
+    .premios-seguro-content {
+        grid-template-columns: 1fr;
+        height: auto;
+    }
+
+    .premio-seguro-panel {
+        min-height: 220px;
+    }
 }
 
 .modal-close {
@@ -588,10 +796,12 @@ html.light-mode .logo-cabreira {
 }
 
 .programa-content {
+    flex: 1;
+    min-height: 0;
     color: var(--text-secondary);
     font-size: 0.95rem;
     line-height: 1.6;
-    max-height: 450px;
+    max-height: none;
     overflow-y: auto;
     text-align: left !important;
 }
@@ -679,7 +889,7 @@ html.light-mode .logo-cabreira {
 /* --- Cabreira Programa Visual Schedule Styles --- */
 /* Day header row */
 .programa-content > div > div {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
 }
 
 /* Each day block: date header */
@@ -687,18 +897,35 @@ html.light-mode .logo-cabreira {
     font-size: 1rem;
     font-weight: 700;
     color: var(--accent-primary, #60a5fa);
-    padding: 0.5rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: 0.65rem 0 0.55rem;
+    background: var(--card-bg);
     border-bottom: 1px solid rgba(255,255,255,0.1);
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.6rem;
     text-transform: capitalize;
     letter-spacing: 0.02em;
+    box-shadow: 0 8px 12px -12px rgba(0, 0, 0, 0.9);
 }
 
 /* Activity list container (second child div of each day block) */
 .programa-content > div > div > div:last-child {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.4rem;
+    position: relative;
+    padding-left: 0.65rem;
+}
+
+.programa-content > div > div > div:last-child::before {
+    content: '';
+    position: absolute;
+    top: 0.7rem;
+    bottom: 0.7rem;
+    left: 0;
+    width: 1px;
+    background: rgba(96, 165, 250, 0.3);
 }
 
 /* Each individual activity row */
@@ -706,16 +933,36 @@ html.light-mode .logo-cabreira {
     display: grid;
     grid-template-columns: 110px 1fr;
     gap: 0.5rem 1rem;
-    padding: 0.6rem 0.75rem;
-    border-radius: 6px;
-    background: rgba(255,255,255,0.03);
-    border-left: 2px solid rgba(255,255,255,0.08);
+    position: relative;
+    padding: 0.7rem 0.8rem;
+    border-radius: var(--radius-md);
+    background: linear-gradient(90deg, rgba(59, 130, 246, 0.09), rgba(255,255,255,0.025));
+    border: 1px solid rgba(255,255,255,0.06);
     align-items: start;
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+
+.programa-content > div > div > div:last-child > div:hover {
+    border-color: rgba(96, 165, 250, 0.28);
+    background: linear-gradient(90deg, rgba(59, 130, 246, 0.15), rgba(255,255,255,0.04));
+    transform: translateX(2px);
+}
+
+.programa-content > div > div > div:last-child > div::before {
+    content: '';
+    position: absolute;
+    left: -0.92rem;
+    top: 1.05rem;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent-primary, #60a5fa);
+    box-shadow: 0 0 0 4px var(--card-bg);
 }
 
 /* Time (p tag inside activity) */
 .programa-content > div > div > div:last-child > div > p {
-    color: var(--text-muted, rgba(255,255,255,0.45));
+    color: var(--accent-primary, #60a5fa);
     font-size: 0.78rem;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
@@ -727,9 +974,10 @@ html.light-mode .logo-cabreira {
 /* Activity title (h6 inside activity) */
 .programa-content > div > div > div:last-child > div > h6 {
     color: var(--text-primary);
-    font-size: 0.88rem;
+    font-size: 0.92rem;
     font-weight: 600;
-    margin: 0 0 0.15rem 0;
+    line-height: 1.35;
+    margin: 0 0 0.25rem 0;
 }
 
 /* Description / location div inside activity */
@@ -737,7 +985,15 @@ html.light-mode .logo-cabreira {
     grid-column: 2;
     color: var(--text-secondary);
     font-size: 0.8rem;
-    line-height: 1.4;
+    line-height: 1.45;
+}
+
+.programa-content > div > div > div:last-child > div > div a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-top: 0.1rem;
+    font-size: 0.78rem;
 }
 
 /* Hide HTML comments shown as text */
@@ -746,6 +1002,16 @@ html.light-mode .logo-cabreira {
 @media (max-width: 800px) {
     .modal-two-cols {
         grid-template-columns: 1fr !important;
+    }
+
+    .programa-content > div > div > div:last-child > div {
+        grid-template-columns: 82px minmax(0, 1fr);
+        gap: 0.35rem 0.65rem;
+        padding: 0.65rem;
+    }
+
+    .programa-content > div > div > div:last-child > div > p {
+        font-size: 0.72rem;
     }
 }
 
