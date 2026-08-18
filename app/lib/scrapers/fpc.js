@@ -16,23 +16,29 @@ export const deepScrapeFPC = async (link) => {
         let extractedHtml = '';
 
         // Extrair texto descritivo
-        const containerText = $('.conteudo_div').html() || $('.container').html();
-        if (containerText && !containerText.includes('Página não encontrada')) {
-            // Limpar divs e classes inúteis
-            const $temp = cheerio.load(containerText);
-            $temp('script, style, img, iframe').remove(); // remove scripts and images from text
+        const containerHtml = $('.conteudo_div').html() || $('.container').html();
+        if (containerHtml && !containerHtml.includes('Página não encontrada')) {
+            const $temp = cheerio.load(containerHtml);
+            $temp('#navigation, #sub_menu_sobre, footer, script, style, iframe, .navbar, .logo').remove(); // remove lixo
+            // Extrair banner principal, se existir
+            const banner = $temp('img[src*="anexo_banner"]').attr('src');
+            if (banner) {
+                extractedHtml += `<div class="fpc-banner" style="margin-bottom: 1.5rem;"><img src="${banner}" style="width: 100%; border-radius: var(--radius-md);" alt="Banner Evento" /></div>`;
+            }
+            $temp('img').remove(); // remover as restantes imagens para texto limpo
+            
             const textContent = $temp.text().replace(/\s+/g, ' ').trim();
-            if (textContent.length > 50) {
+            if (textContent.length > 50 && !textContent.includes('Regulamentos Filiações')) {
                 extractedHtml += `<div class="fpc-description" style="margin-bottom: 1.5rem; color: var(--text-secondary); line-height: 1.6;">${sanitizeHtml($temp.html())}</div>`;
             }
         }
 
-        // Extrair Links (Regulamentos, PDFs)
+        // Extrair Links (Regulamentos, PDFs, KML)
         const pdfLinks = [];
         $('a').each((i, el) => {
             const href = $(el).attr('href');
-            const text = $(el).text().trim() || 'Link Adicional';
-            if (href && (href.toLowerCase().endsWith('.pdf') || href.includes('fpciclismo.pt/ficheiro/'))) {
+            const text = $(el).text().trim() || $(el).find('input').attr('value') || 'Link Adicional';
+            if (href && (href.toLowerCase().endsWith('.pdf') || href.toLowerCase().endsWith('.kml') || href.toLowerCase().endsWith('.gpx') || href.includes('fpciclismo.pt/ficheiro/'))) {
                 let fullLink = href;
                 if (!href.startsWith('http')) {
                     fullLink = href.startsWith('/') ? `https://www.fpciclismo.pt${href}` : `https://www.fpciclismo.pt/${href}`;
@@ -46,22 +52,27 @@ export const deepScrapeFPC = async (link) => {
 
         if (pdfLinks.length > 0) {
             extractedHtml += `<div class="fpc-downloads" style="margin-top: 1.5rem;">
-                <h4 style="margin-bottom: 1rem; color: var(--text-primary);">Documentos Disponíveis (FPC)</h4>
+                <h4 style="margin-bottom: 1rem; color: var(--text-primary);">Documentos e Ficheiros Disponíveis</h4>
                 <div style="display: flex; flex-direction: column; gap: 0.75rem;">`;
             
             for (const doc of pdfLinks) {
+                const isMap = doc.link.toLowerCase().endsWith('.kml') || doc.link.toLowerCase().endsWith('.gpx');
+                const icon = isMap 
+                    ? `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-primary);"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg>`
+                    : `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-primary);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`;
+                
                 extractedHtml += `
                     <a href="${doc.link}" target="_blank" rel="noopener noreferrer" style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: var(--bg-secondary); border: 1px solid var(--card-border); border-radius: var(--radius-md); text-decoration: none; color: var(--text-primary); transition: all 0.2s ease;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-primary);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        ${icon}
                         <span style="font-weight: 500;">${sanitizeHtml(doc.text)}</span>
                     </a>`;
             }
             extractedHtml += `</div></div>`;
         }
 
-        const table = $('table.table-striped');
+        const table = $('table.table-striped, table.dc_table_s20');
         if (table.length > 0) {
-            extractedHtml += sanitizeHtml('<table class="extracted-table" style="margin-top: 1.5rem;">' + table.html() + '</table>');
+            extractedHtml += sanitizeHtml('<table class="extracted-table" style="margin-top: 1.5rem;">' + table.first().html() + '</table>');
         }
 
         if (extractedHtml.trim().length > 0) {
@@ -145,6 +156,8 @@ export const scrapeFPC = async (year) => {
                 
                 let fpcLinks = [];
                 let mainLink = 'https://www.fpciclismo.pt/';
+                let hasProvaInscrever = false;
+
                 $(element).find('a').each((i, a) => {
                     const href = $(a).attr('href') || '';
                     const onclick = $(a).attr('onclick') || '';
@@ -156,8 +169,13 @@ export const scrapeFPC = async (year) => {
                         extracted = href;
                     }
                     if (extracted) {
-                        mainLink = extracted;
                         fpcLinks.push({ label: 'Link FPC', link: extracted });
+                        if (extracted.includes('prova-inscrever')) {
+                            mainLink = extracted;
+                            hasProvaInscrever = true;
+                        } else if (!hasProvaInscrever) {
+                            mainLink = extracted;
+                        }
                     }
                 });
 
