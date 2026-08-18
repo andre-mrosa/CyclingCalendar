@@ -93,52 +93,58 @@ export default function WelcomeModal() {
             >
                 {/* Header */}
                 <div style={{
-                    padding: '1.5rem',
+                    padding: '2rem 2.5rem 1.5rem 2.5rem',
                     borderBottom: '1px solid var(--card-border)',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '1rem',
-                    background: 'var(--card-bg)'
+                    gap: '1.25rem',
+                    background: 'var(--bg-secondary)',
                 }}>
                     <div style={{
-                        background: 'rgba(59, 130, 246, 0.2)',
-                        padding: '0.75rem',
+                        background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.05) 100%)',
+                        padding: '0.85rem',
                         borderRadius: '50%',
-                        color: 'var(--accent-primary)'
+                        color: 'var(--accent-primary)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '1px solid rgba(59, 130, 246, 0.1)'
                     }}>
-                        <AlertCircle size={28} />
+                        <AlertCircle size={32} strokeWidth={1.5} />
                     </div>
                     <div>
-                        <h2 style={{ margin: 0, fontSize: '1.4rem', color: 'var(--text-primary)' }}>
+                        <h2 style={{ margin: 0, fontSize: '1.4rem', color: 'var(--text-primary)', fontWeight: '600', letterSpacing: '-0.01em' }}>
                             Bem-vindo ao Calendário Ciclismo
                         </h2>
-                        <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--accent-primary)', fontWeight: '600', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent-primary)' }}></span>
                             Versão {appVersion} (Em Desenvolvimento)
-                        </span>
+                        </div>
                     </div>
                 </div>
 
                 {/* Body */}
-                <div style={{ padding: '1.5rem', color: 'var(--text-secondary)', lineHeight: 1.6, fontSize: '1rem' }}>
-                    <p style={{ marginTop: 0 }}>
-                        Olá! Esta plataforma foi criada para facilitar a consulta de todas as provas do calendário de ciclismo.
-                    </p>
-                    <p>
-                        Ainda nos encontramos em <strong>fase de desenvolvimento ativo (v{appVersion})</strong>, por isso pedimos a tua paciência caso encontres pequenos bugs ou comportamentos inesperados. 
-                    </p>
-                    <p>
-                        Se tiveres alguma sugestão, ideia de melhoria ou quiseres reportar um erro, envia-me uma mensagem através do formulário abaixo:
-                    </p>
+                <div style={{ padding: '0.5rem 2.5rem 2rem 2.5rem', color: 'var(--text-secondary)', lineHeight: 1.65, fontSize: '1rem' }}>
+                    <div style={{ marginBottom: '1.5rem' }}>
+                        <p style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+                            Olá! Esta plataforma foi criada para facilitar a consulta de todas as provas do calendário de ciclismo.
+                        </p>
+                        <p style={{ margin: '1rem 0' }}>
+                            Ainda nos encontramos em <strong style={{ color: 'var(--text-primary)' }}>fase de desenvolvimento ativo (v{appVersion})</strong>, por isso pedimos a tua paciência caso encontres pequenos bugs ou comportamentos inesperados. 
+                        </p>
+                        <p style={{ marginBottom: 0, marginTop: '1rem' }}>
+                            Se tiveres alguma sugestão, ideia de melhoria ou reportar um erro, contacta-nos:
+                        </p>
+                    </div>
                     
                     <form onSubmit={handleContactSubmit} style={{ 
-                        background: 'var(--card-bg)', 
-                        padding: '1.25rem', 
-                        borderRadius: 'var(--radius-md)', 
+                        background: 'var(--bg-secondary)', 
+                        padding: '1.5rem', 
+                        borderRadius: 'var(--radius-lg)', 
                         border: '1px solid var(--card-border)',
-                        marginTop: '1rem',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '0.75rem'
+                        gap: '1rem',
                     }}>
                         {submitStatus === 'success' ? (
                             <div style={{
@@ -160,14 +166,17 @@ export default function WelcomeModal() {
                                         value={formData.name}
                                         onChange={(e) => setFormData({...formData, name: e.target.value})}
                                         disabled={isSubmitting}
+                                        onFocus={(e) => { e.target.style.borderColor = 'var(--accent-primary)'; e.target.style.boxShadow = '0 0 0 1px var(--accent-primary)'; }}
+                                        onBlur={(e) => { e.target.style.borderColor = 'var(--card-border)'; e.target.style.boxShadow = 'none'; }}
                                         style={{
-                                            padding: '0.75rem',
-                                            borderRadius: 'var(--radius-sm)',
+                                            padding: '0.85rem',
+                                            borderRadius: 'var(--radius-md)',
                                             border: '1px solid var(--card-border)',
-                                            background: 'var(--bg-primary)',
+                                            background: 'var(--bg-secondary)',
                                             color: 'var(--text-primary)',
                                             outline: 'none',
-                                            fontSize: '0.9rem'
+                                            fontSize: '0.95rem',
+                                            transition: 'all 0.2s ease'
                                         }}
                                     />
                                     <input 
@@ -176,14 +185,17 @@ export default function WelcomeModal() {
                                         value={formData.email}
                                         onChange={(e) => setFormData({...formData, email: e.target.value})}
                                         disabled={isSubmitting}
+                                        onFocus={(e) => { e.target.style.borderColor = 'var(--accent-primary)'; e.target.style.boxShadow = '0 0 0 1px var(--accent-primary)'; }}
+                                        onBlur={(e) => { e.target.style.borderColor = 'var(--card-border)'; e.target.style.boxShadow = 'none'; }}
                                         style={{
-                                            padding: '0.75rem',
-                                            borderRadius: 'var(--radius-sm)',
+                                            padding: '0.85rem',
+                                            borderRadius: 'var(--radius-md)',
                                             border: '1px solid var(--card-border)',
-                                            background: 'var(--bg-primary)',
+                                            background: 'var(--bg-secondary)',
                                             color: 'var(--text-primary)',
                                             outline: 'none',
-                                            fontSize: '0.9rem'
+                                            fontSize: '0.95rem',
+                                            transition: 'all 0.2s ease'
                                         }}
                                     />
                                 </div>
@@ -194,15 +206,19 @@ export default function WelcomeModal() {
                                     onChange={(e) => setFormData({...formData, message: e.target.value})}
                                     disabled={isSubmitting}
                                     rows={3}
+                                    onFocus={(e) => { e.target.style.borderColor = 'var(--accent-primary)'; e.target.style.boxShadow = '0 0 0 1px var(--accent-primary)'; }}
+                                    onBlur={(e) => { e.target.style.borderColor = 'var(--card-border)'; e.target.style.boxShadow = 'none'; }}
                                     style={{
-                                        padding: '0.75rem',
-                                        borderRadius: 'var(--radius-sm)',
+                                        padding: '0.85rem',
+                                        borderRadius: 'var(--radius-md)',
                                         border: '1px solid var(--card-border)',
-                                        background: 'var(--bg-primary)',
+                                        background: 'var(--bg-secondary)',
                                         color: 'var(--text-primary)',
                                         outline: 'none',
-                                        fontSize: '0.9rem',
-                                        resize: 'vertical'
+                                        fontSize: '0.95rem',
+                                        resize: 'vertical',
+                                        transition: 'all 0.2s ease',
+                                        minHeight: '100px'
                                     }}
                                 />
                                 {submitStatus === 'error' && (
@@ -215,68 +231,105 @@ export default function WelcomeModal() {
                                     disabled={isSubmitting}
                                     style={{
                                         background: 'var(--accent-primary)',
-                                        color: 'white',
                                         border: 'none',
-                                        padding: '0.75rem',
-                                        borderRadius: 'var(--radius-sm)',
-                                        fontWeight: 'bold',
+                                        borderRadius: 'var(--radius-md)',
+                                        color: 'white',
+                                        fontWeight: '600',
+                                        fontSize: '1rem',
                                         cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                                        transition: 'var(--transition)',
-                                        fontSize: '0.95rem',
-                                        opacity: isSubmitting ? 0.7 : 1
+                                        opacity: isSubmitting ? 0.7 : 1,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '0.5rem',
+                                        transition: 'all 0.2s ease',
+                                        marginTop: '0.5rem',
+                                        boxShadow: '0 2px 10px rgba(59, 130, 246, 0.3)',
+                                        padding: '0.75rem'
+                                    }}
+                                    onMouseOver={(e) => {
+                                        if (!isSubmitting) e.currentTarget.style.transform = 'translateY(-1px)';
+                                    }}
+                                    onMouseOut={(e) => {
+                                        if (!isSubmitting) e.currentTarget.style.transform = 'translateY(0)';
                                     }}
                                 >
-                                    {isSubmitting ? 'A enviar...' : 'Enviar Mensagem'}
+                                    {isSubmitting ? (
+                                        <>
+                                            <div className="spinner" style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white' }}></div>
+                                            A enviar...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Send size={18} />
+                                            Enviar Mensagem
+                                        </>
+                                    )}
                                 </button>
                             </>
                         )}
                     </form>
+
                     {/* Checkbox */}
-                    <div style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '0.75rem', 
-                        marginTop: '2rem',
-                        cursor: 'pointer',
-                        padding: '0.5rem 0'
-                    }} onClick={() => setNeverShow(!neverShow)}>
-                        <input 
-                            type="checkbox" 
-                            checked={neverShow}
-                            onChange={() => setNeverShow(!neverShow)}
-                            style={{ 
-                                width: '18px', 
-                                height: '18px', 
-                                cursor: 'pointer',
-                                accentColor: 'var(--accent-primary)'
-                            }}
-                        />
-                        <label style={{ cursor: 'pointer', fontSize: '0.9rem', userSelect: 'none' }}>
-                            Não voltar a mostrar este aviso
+                    <div style={{ marginTop: '2rem' }}>
+                        <label style={{ 
+                            display: 'inline-flex', 
+                            alignItems: 'center', 
+                            gap: '0.75rem', 
+                            cursor: 'pointer',
+                            color: 'var(--text-secondary)',
+                            transition: 'color 0.2s ease'
+                        }} 
+                        onMouseOver={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+                        onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
+                        onClick={() => setNeverShow(!neverShow)}>
+                            <div style={{
+                                width: '20px',
+                                height: '20px',
+                                borderRadius: '4px',
+                                border: `2px solid ${neverShow ? 'var(--accent-primary)' : 'var(--card-border)'}`,
+                                background: neverShow ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'all 0.2s ease'
+                            }}>
+                                {neverShow && <CheckCircle2 size={14} color="white" strokeWidth={3} />}
+                            </div>
+                            <span style={{ userSelect: 'none', fontWeight: '500' }}>Não voltar a mostrar este aviso</span>
                         </label>
                     </div>
                 </div>
 
                 {/* Footer */}
                 <div style={{
-                    padding: '1.25rem 1.5rem',
+                    padding: '1.5rem 2.5rem',
                     borderTop: '1px solid var(--card-border)',
-                    background: 'var(--card-bg)',
                     display: 'flex',
-                    justifyContent: 'flex-end'
+                    justifyContent: 'flex-end',
+                    background: 'var(--card-bg)'
                 }}>
                     <button 
                         onClick={handleClose}
                         style={{
+                            padding: '0.65rem 1.5rem',
                             background: 'var(--accent-primary)',
-                            color: 'white',
                             border: 'none',
-                            padding: '0.75rem 2rem',
-                            borderRadius: 'var(--radius-md)',
-                            fontWeight: 'bold',
+                            borderRadius: 'var(--radius-full)',
+                            color: 'white',
+                            fontWeight: '600',
                             cursor: 'pointer',
-                            transition: 'var(--transition)',
-                            fontSize: '1rem'
+                            fontSize: '1rem',
+                            boxShadow: '0 4px 12px rgba(59, 130, 246, 0.25)',
+                            transition: 'all 0.2s ease'
+                        }}
+                        onMouseOver={(e) => {
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                            e.currentTarget.style.boxShadow = '0 6px 16px rgba(59, 130, 246, 0.35)';
+                        }}
+                        onMouseOut={(e) => {
+                            e.currentTarget.style.transform = 'translateY(0)';
+                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.25)';
                         }}
                     >
                         Entendido, continuar!
