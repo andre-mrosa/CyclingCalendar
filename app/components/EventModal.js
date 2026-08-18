@@ -132,7 +132,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             <SmartLogo 
                                 src={selectedEvent.logo} 
                                 alt={`Logo ${selectedEvent.title}`} 
-                                style={{ height: '40px', width: 'auto', borderRadius: '4px', objectFit: 'contain' }} 
+                                style={{ height: '40px', width: 'auto', objectFit: 'contain' }} 
                             />
                         </a>
                     )}
