@@ -145,7 +145,12 @@ export const scrapeFPC = async (year) => {
                 if (codes.includes('.14') || lowerName.includes('sub19') || lowerName.includes('sub-19') || lowerName.includes('juniores')) escaloes.push('Sub-19 (Juniores)');
                 if (codes.includes('.15') || lowerName.includes('sub17') || lowerName.includes('sub-17') || lowerName.includes('cadetes')) escaloes.push('Sub-17 (Cadetes)');
                 if (codes.includes('.16') || lowerName.includes('sub15') || lowerName.includes('sub-15') || lowerName.includes('juvenis')) escaloes.push('Sub-15 (Juvenis)');
-                if (codes.includes('.17') || lowerName.includes('master') || lowerName.includes('veteranos')) escaloes.push('Masters / Veteranos');
+                
+                const hasMasterName = lowerName.includes('master') || lowerName.includes('veterano');
+                const hasYouthName = lowerName.includes('cadete') || lowerName.includes('junior') || lowerName.includes('júnior') || lowerName.includes('juvenil') || lowerName.includes('escola');
+                // FPC costuma ter gralhas e meter 2.17 (Masters) em provas de Cadetes.
+                if ((codes.includes('.17') && (!hasYouthName || hasMasterName)) || hasMasterName) escaloes.push('Masters / Veteranos');
+                
                 if (codes.includes('.18') || lowerName.includes('feminin')) escaloes.push('Femininas');
                 if (det.toLowerCase().includes('escolas') || lowerName.includes('escolas')) escaloes.push('Escolas');
 
