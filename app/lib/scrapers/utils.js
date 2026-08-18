@@ -1,5 +1,20 @@
 import * as cheerio from 'cheerio';
 
+export const fetchImageAsBase64 = async (url) => {
+    if (!url) return null;
+    try {
+        const response = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://cabreirasolutions.com/' } });
+        if (!response.ok) return null;
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const mimeType = response.headers.get('content-type') || 'image/jpeg';
+        return `data:${mimeType};base64,${buffer.toString('base64')}`;
+    } catch (e) {
+        console.error('Error fetching image as base64:', url, e);
+        return null;
+    }
+};
+
 export const getTag = (name, det = '') => {
     const lowerName = name.toLowerCase();
     const lowerDet = det.toLowerCase();

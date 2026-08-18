@@ -2,7 +2,7 @@ import * as cheerio from 'cheerio';
 import { prisma } from '../db';
 import { 
     formatDateStr, parseSortDate, getAmbito, getTag, getRegiao, 
-    getDistrito, toTitleCase, parsePTDateToISO, sanitizeHtml 
+    getDistrito, toTitleCase, parsePTDateToISO, sanitizeHtml, fetchImageAsBase64 
 } from './utils';
 
 export const deepScrapeCabreira = async (link) => {
@@ -282,13 +282,17 @@ export const scrapeCabreira = async (year) => {
             }
         }
         
-        let logo = $(element).find('.evento-item-image-container .evento-item-logo').attr('src') || null;
-        let image = null;
+        let logoUrl = $(element).find('.evento-item-image-container .evento-item-logo').attr('src') || null;
+        let imageUrl = null;
         const styleAttr = $(element).find('.evento-item-image-container .evento-item-image').attr('style');
         if (styleAttr) {
             const match = styleAttr.match(/url\(['"]?(.*?)['"]?\)/);
-            if (match) image = match[1];
+            if (match) imageUrl = match[1];
         }
+        
+        // Fetch and convert to base64
+        const logo = await fetchImageAsBase64(logoUrl);
+        const image = await fetchImageAsBase64(imageUrl);
 
         let dateText = $(element).find('.evento-item-data').text().trim().toUpperCase() || 'DATA A DEFINIR';
         const rawDateForSort = dateText;
