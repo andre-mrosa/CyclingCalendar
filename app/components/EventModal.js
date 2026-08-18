@@ -78,7 +78,11 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
             setProgramaData({ loading: true, html: null, error: null, additionalLinks: [] });
             try {
-                const res = await fetch(`/api/programa?url=${encodeURIComponent(targetUrl)}`);
+                const urlObj = new URL('/api/programa', window.location.origin);
+                urlObj.searchParams.append('url', targetUrl);
+                if (selectedEvent.id) urlObj.searchParams.append('id', selectedEvent.id);
+                
+                const res = await fetch(urlObj.toString());
                 if (res.ok) {
                     const data = await res.json();
                     setProgramaData({ 
