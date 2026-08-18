@@ -156,7 +156,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 padding: '0.5rem', borderRadius: '50%',
                                 transition: 'var(--transition)',
-                                backgroundColor: favorites.includes(selectedEvent.id) ? 'rgba(234, 179, 8, 0.1)' : 'rgba(255, 255, 255, 0.05)'
+                                backgroundColor: favorites.includes(selectedEvent.id) ? 'rgba(234, 179, 8, 0.1)' : 'var(--bg-secondary)'
                             }}
                             title={favorites.includes(selectedEvent.id) ? "Remover dos Favoritos" : "Adicionar aos Favoritos"}
                         >
@@ -175,7 +175,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 </p>
                 
                 {/* Tabs Navigation */}
-                <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '1rem', marginBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }} className="hide-scrollbar custom-scrollbar">
+                <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '1rem', marginBottom: '1rem', borderBottom: '1px solid var(--card-border)' }} className="hide-scrollbar custom-scrollbar">
                     {['info', 'escaloes', 'programa', 'inscricao', 'premios', 'localizacao'].map(tab => {
                         const labels = {
                             info: 'Info do Evento',
@@ -190,7 +190,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
                                 style={{
-                                    background: activeTab === tab ? 'var(--accent-primary)' : 'rgba(255,255,255,0.05)',
+                                    background: activeTab === tab ? 'var(--accent-primary)' : 'var(--bg-secondary)',
                                     color: activeTab === tab ? 'white' : 'var(--text-secondary)',
                                     border: 'none',
                                     padding: '0.5rem 1rem',
@@ -224,11 +224,11 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         </div>
                         {/* Âmbito e Organização sempre visíveis em baixo */}
                         <div style={{ flexShrink: 0, marginTop: '1.5rem', display: 'flex', gap: '1rem' }}>
-                            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: 'var(--radius-md)', flex: 1 }}>
+                            <div style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', flex: 1 }}>
                                 <strong style={{ display: 'block', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>Âmbito</strong>
                                 <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{selectedEvent.ambito}</span>
                             </div>
-                            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: 'var(--radius-md)', flex: 1 }}>
+                            <div style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', flex: 1 }}>
                                 <strong style={{ display: 'block', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>Organização</strong>
                                 <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                                     {selectedEvent.source === 'Cabreira' ? 'Cabreira Solutions' : selectedEvent.source}
@@ -283,11 +283,11 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         ) : programaData.html ? (
                             <div className="programa-content" dangerouslySetInnerHTML={{ __html: programaData.html }} onClick={handleHtmlClick} />
                         ) : programaData.error && selectedEvent.extraLinks && selectedEvent.extraLinks.length > 0 ? (
-                            <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)', marginTop: '1rem' }}>
+                            <div style={{ padding: '1rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)', marginTop: '1rem' }}>
                                 <em>{programaData.error}</em>
                             </div>
                         ) : (
-                            <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)', marginTop: '1rem' }}>
+                            <div style={{ padding: '1rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)', marginTop: '1rem' }}>
                                 <em>Programa não disponível na Base de Dados. A aguardar recolha do sistema.</em>
                             </div>
                         )}
@@ -372,7 +372,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                 </div> {/* end flex-grow tab area */}
 
-                <div className="modal-actions" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'stretch', marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                <div className="modal-actions" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'stretch', marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--card-border)' }}>
                     {programaData.loading ? (
                         <div style={{ padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
                             <div className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }}></div>
@@ -448,9 +448,9 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             className="modal-btn"
                             style={{ 
                                 display: 'flex', alignItems: 'center', gap: '0.5rem', 
-                                backgroundColor: calendarStatus === 'success' || calendarStatus === 'exists' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255, 255, 255, 0.05)',
-                                color: calendarStatus === 'success' || calendarStatus === 'exists' ? '#22c55e' : 'var(--text-primary)',
-                                border: `1px solid ${calendarStatus === 'success' || calendarStatus === 'exists' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255, 255, 255, 0.1)'}`,
+                                backgroundColor: calendarStatus === 'success' || calendarStatus === 'exists' ? 'rgba(34, 197, 94, 0.1)' : 'var(--bg-secondary)',
+                                color: calendarStatus === 'success' || calendarStatus === 'exists' ? 'rgb(34, 197, 94)' : 'var(--text-primary)',
+                                border: `1px solid ${calendarStatus === 'success' || calendarStatus === 'exists' ? 'rgba(34, 197, 94, 0.2)' : 'var(--card-border)'}`,
                                 opacity: isAddingToCalendar ? 0.7 : 1,
                                 cursor: (isAddingToCalendar || calendarStatus === 'success' || calendarStatus === 'exists') ? 'default' : 'pointer'
                             }}

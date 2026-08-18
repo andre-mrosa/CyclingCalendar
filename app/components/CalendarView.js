@@ -248,14 +248,14 @@ export default function CalendarView({
                                 padding: '0.6rem 2.5rem 0.6rem 1.25rem', 
                                 borderRadius: '20px', 
                                 border: '1px solid var(--card-border)', 
-                                background: 'rgba(255, 255, 255, 0.03)', 
-                                color: 'var(--text-primary)',
+                                background: 'var(--bg-secondary)', 
+                                border: '1px solid var(--card-border)',
                                 fontSize: '0.9rem',
                                 outline: 'none',
                                 transition: 'var(--transition)'
                             }}
-                            onFocus={(e) => { e.target.style.borderColor = 'var(--accent-primary)'; e.target.style.background = 'rgba(255, 255, 255, 0.05)'; }}
-                            onBlur={(e) => { e.target.style.borderColor = 'var(--card-border)'; e.target.style.background = 'rgba(255, 255, 255, 0.03)'; }}
+                            onFocus={(e) => { e.target.style.borderColor = 'var(--accent-primary)'; e.target.style.background = 'var(--bg-secondary)'; }}
+                            onBlur={(e) => { e.target.style.borderColor = 'var(--card-border)'; e.target.style.background = 'var(--bg-secondary)'; }}
                         />
                         {searchTerm && (
                             <button
@@ -656,7 +656,7 @@ export default function CalendarView({
                         
                         {filteredEvents.length > visibleCount && (
                             <div ref={loaderRef} style={{ height: '40px', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '2rem 0' }}>
-                                <div className="spinner" style={{ width: '30px', height: '30px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--accent-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+                                <div className="spinner" style={{ width: '30px', height: '30px', border: '3px solid var(--card-border)', borderTopColor: 'var(--accent-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
                                 <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
                             </div>
                         )}

@@ -72,11 +72,11 @@ body {
     background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.15);
+    background: var(--bg-secondary);
     border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.25);
+    background: var(--bg-secondary);
 }
 
 .app-container {
@@ -308,7 +308,7 @@ body {
 .event-list-item:hover {
     transform: translateX(4px);
     box-shadow: var(--shadow-sm);
-    border-color: rgba(255, 255, 255, 0.1);
+    border-color: var(--card-border);
 }
 
 .event-list-item.favorite-item {
@@ -393,7 +393,7 @@ body {
     overscroll-behavior: contain;
     padding-right: 0.5rem;
     scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+    scrollbar-color: var(--bg-secondary) transparent;
 }
 
 .modal-tab-panel > .tab-content::-webkit-scrollbar {
@@ -401,7 +401,7 @@ body {
 }
 
 .modal-tab-panel > .tab-content::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--bg-secondary);
     border-radius: 4px;
 }
 
@@ -450,7 +450,7 @@ body {
     padding-right: 0.25rem;
     overscroll-behavior: contain;
     scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+    scrollbar-color: var(--bg-secondary) transparent;
 }
 
 .inscricao-datas {
@@ -465,7 +465,7 @@ body {
     flex: 1 1 250px;
     padding: 1rem;
     border-radius: var(--radius-md);
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--bg-secondary);
 }
 
 /* Compact legacy scraper output while keeping phase lists easy to scan. */
@@ -499,7 +499,7 @@ body {
     min-height: 0;
     padding: 1rem;
     border-radius: var(--radius-md);
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--bg-secondary);
     display: flex;
     flex-direction: column;
 }
@@ -516,8 +516,8 @@ body {
     padding: 1.25rem;
     border: 1px solid rgba(96, 165, 250, 0.16);
     border-radius: var(--radius-lg);
-    background: linear-gradient(145deg, rgba(59, 130, 246, 0.1), rgba(255, 255, 255, 0.025) 58%);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    background: linear-gradient(145deg, rgba(59, 130, 246, 0.1), var(--bg-secondary) 58%);
+    box-shadow: inset 0 1px 0 var(--bg-secondary);
 }
 
 .escaloes-intro {
@@ -540,7 +540,7 @@ body {
     padding: 0.8rem 1.1rem;
     border: 1px solid rgba(96, 165, 250, 0.22);
     border-radius: var(--radius-md);
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(255, 255, 255, 0.03));
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), var(--bg-secondary));
     color: var(--text-primary);
     font-size: 0.95rem;
     font-weight: 600;
@@ -553,7 +553,7 @@ body {
     width: 100%;
     margin-top: 1rem;
     padding: 0.9rem 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--card-border);
     border-radius: var(--radius-md);
     background: rgba(15, 23, 42, 0.16);
 }
@@ -566,7 +566,7 @@ body {
     padding-right: 0.5rem;
     overscroll-behavior: contain;
     scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+    scrollbar-color: var(--bg-secondary) transparent;
 }
 
 @media (max-width: 800px) {
@@ -584,7 +584,7 @@ body {
     position: absolute;
     top: 1rem;
     right: 1rem;
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--bg-secondary);
     border: none;
     color: var(--text-secondary);
     width: 32px;
@@ -598,7 +598,7 @@ body {
 }
 
 .modal-close:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--bg-secondary);
     color: var(--text-primary);
 }
 
@@ -637,12 +637,12 @@ body {
     background: var(--accent-secondary);
 }
 .modal-btn.secondary {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--bg-secondary);
     color: var(--text-primary);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--card-border);
 }
 .modal-btn.secondary:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--bg-secondary);
 }
 
 .btn-entrar {
@@ -724,7 +724,7 @@ body {
 }
 
 .dropdown-item:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--bg-secondary);
 }
 
 /* Add hover effect for event items */
@@ -813,12 +813,12 @@ body {
 }
 
 .event-list-tag { white-space: nowrap;
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--bg-secondary);
     color: var(--text-secondary);
     padding: 0.25rem 0.6rem;
     border-radius: 20px;
     font-size: 0.75rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--card-border);
     
 }
 
@@ -932,7 +932,7 @@ html.light-mode .logo-cabreira {
 }
 
 .extracted-table th {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--bg-secondary);
     color: var(--text-primary);
     font-weight: 600;
 }
@@ -940,7 +940,7 @@ html.light-mode .logo-cabreira {
 .spinner {
     width: 20px;
     height: 20px;
-    border: 3px solid rgba(255, 255, 255, 0.1);
+    border: 3px solid var(--card-border);
     border-radius: 50%;
     border-top-color: var(--primary-color);
     animation: spin 1s ease-in-out infinite;
@@ -964,15 +964,15 @@ html.light-mode .logo-cabreira {
     width: 6px;
 }
 .programa-content::-webkit-scrollbar-track {
-    background: rgba(255,255,255,0.05);
+    background: var(--bg-secondary);
     border-radius: 10px;
 }
 .programa-content::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.2);
+    background: var(--bg-secondary);
     border-radius: 10px;
 }
 .programa-content::-webkit-scrollbar-thumb:hover {
-    background: rgba(255,255,255,0.3);
+    background: var(--bg-secondary);
 }
 
 /* --- Cabreira Programa Visual Schedule Styles --- */
@@ -991,7 +991,7 @@ html.light-mode .logo-cabreira {
     z-index: 2;
     padding: 0.65rem 0 0.55rem;
     background: var(--card-bg);
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid var(--card-border);
     margin-bottom: 0.6rem;
     text-transform: capitalize;
     letter-spacing: 0.02em;
@@ -1025,15 +1025,15 @@ html.light-mode .logo-cabreira {
     position: relative;
     padding: 0.7rem 0.8rem;
     border-radius: var(--radius-md);
-    background: linear-gradient(90deg, rgba(59, 130, 246, 0.09), rgba(255,255,255,0.025));
-    border: 1px solid rgba(255,255,255,0.06);
+    background: linear-gradient(90deg, rgba(59, 130, 246, 0.09), var(--bg-secondary));
+    border: 1px solid var(--card-border);
     align-items: start;
     transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
 }
 
 .programa-content > div > div > div:last-child > div:hover {
     border-color: rgba(96, 165, 250, 0.28);
-    background: linear-gradient(90deg, rgba(59, 130, 246, 0.15), rgba(255,255,255,0.04));
+    background: linear-gradient(90deg, rgba(59, 130, 246, 0.15), var(--bg-secondary));
     transform: translateX(2px);
 }
 
@@ -1156,7 +1156,7 @@ html.light-mode .logo-cabreira {
     color: var(--text-primary);
 }
 .extracted-table th, .tab-content table th {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--bg-secondary);
     font-weight: 600;
 }
 .extracted-table th, .extracted-table td, .tab-content table th, .tab-content table td {
@@ -1193,7 +1193,7 @@ html.light-mode .logo-cabreira {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--card-border);
     padding-bottom: 0.5rem;
     gap: 1rem;
 }
@@ -1228,7 +1228,7 @@ html.light-mode .logo-cabreira {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
-    border-left: 2px solid rgba(255, 255, 255, 0.1);
+    border-left: 2px solid var(--card-border);
 }
 
 .timeline-item {
@@ -1260,18 +1260,18 @@ html.light-mode .logo-cabreira {
     color: var(--text-secondary);
     font-size: 0.95rem;
     line-height: 1.6;
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--bg-secondary);
     padding: 1rem;
     border-radius: var(--radius-md);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--card-border);
 }
 
 
 /* Custom Scrollbar */
 .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-.custom-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); border-radius: 4px; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+.custom-scrollbar::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: 4px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: var(--bg-secondary); border-radius: 4px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--bg-secondary); }
 
 .custom-scrollbar::-webkit-scrollbar {
     width: 10px;
