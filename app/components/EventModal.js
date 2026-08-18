@@ -284,13 +284,13 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                 {/* Tab: ESCALOES */}
                 {activeTab === 'escaloes' && (
-                    <div className="tab-content escaloes-tab fade-in">
+                    <div className="tab-content escaloes-tab fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                         {(!selectedEvent.escaloes || selectedEvent.escaloes.length === 0) ? (
                             <p style={{ color: 'var(--text-secondary)' }}>Informação de escalões não disponível.</p>
                         ) : (
-                            <div className="eligibilidade-card" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                            <div className="eligibilidade-card" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                                 
-                                <div>
+                                <div style={{ flex: 1 }}>
                                     <h4 style={{ marginBottom: '1rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.05rem' }}>
                                         <Bike size={18} style={{ color: 'var(--accent-primary)' }} />
                                         Categorias de Participação
@@ -314,7 +314,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                     </div>
                                 </div>
 
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                                <div style={{ flexShrink: 0, marginTop: 'auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                                     {selectedEvent.licenca && (
                                         <div style={{ 
                                             padding: '1.25rem', background: 'var(--bg-secondary)', 
