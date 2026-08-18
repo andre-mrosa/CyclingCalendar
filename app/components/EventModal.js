@@ -288,45 +288,60 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         {(!selectedEvent.escaloes || selectedEvent.escaloes.length === 0) ? (
                             <p style={{ color: 'var(--text-secondary)' }}>Informação de escalões não disponível.</p>
                         ) : (
-                            <div className="eligibilidade-card">
-                                <p className="escaloes-intro">
-                                    Este evento está aberto às seguintes categorias de participação:
-                                </p>
-                                <div className="escaloes-list">
-                                    {(selectedEvent.escaloes || []).map((esc, idx) => (
-                                        <div key={`esc-${idx}`} className="escalao-chip">
-                                            <Bike size={16} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
-                                            <span>{esc}</span>
-                                        </div>
-                                    ))}
+                            <div className="eligibilidade-card" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                                
+                                <div>
+                                    <h4 style={{ marginBottom: '1rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.05rem' }}>
+                                        <Bike size={18} style={{ color: 'var(--accent-primary)' }} />
+                                        Categorias de Participação
+                                    </h4>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+                                        {(selectedEvent.escaloes || []).map((esc, idx) => (
+                                            <div key={`esc-${idx}`} style={{
+                                                display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+                                                padding: '0.5rem 1rem', borderRadius: 'var(--radius-full)',
+                                                background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)',
+                                                color: 'var(--accent-secondary)', fontSize: '0.95rem', fontWeight: '500',
+                                                boxShadow: '0 2px 10px rgba(0,0,0,0.05)', transition: 'transform 0.2s',
+                                                cursor: 'default'
+                                            }}
+                                            onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                                            onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                                            >
+                                                <span>{esc}</span>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
-                                {selectedEvent.licenca && (
-                                    <div className="licenca-card">
-                                        <FileText size={16} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
-                                        <div>
-                                            <strong style={{ display: 'block', color: 'var(--text-primary)', fontSize: '0.85rem', marginBottom: '0.2rem' }}>Licença</strong>
-                                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{selectedEvent.licenca}</span>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                                    {selectedEvent.licenca && (
+                                        <div style={{ 
+                                            padding: '1.25rem', background: 'var(--bg-secondary)', 
+                                            borderRadius: 'var(--radius-md)', border: '1px solid var(--card-border)',
+                                            display: 'flex', flexDirection: 'column', gap: '0.5rem'
+                                        }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
+                                                <FileText size={16} />
+                                                <span style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Licença Exigida</span>
+                                            </div>
+                                            <span style={{ color: 'var(--text-primary)', fontSize: '1.05rem', fontWeight: '500' }}>{selectedEvent.licenca}</span>
                                         </div>
-                                    </div>
-                                )}
-                                {selectedEvent.organizador && (
-                                    <div className="organizer-card" style={{ 
-                                        padding: '1rem', 
-                                        background: 'var(--bg-secondary)', 
-                                        borderRadius: 'var(--radius-md)', 
-                                        display: 'flex', 
-                                        alignItems: 'flex-start', 
-                                        gap: '0.75rem', 
-                                        marginTop: '1rem',
-                                        border: '1px solid var(--card-border)' 
-                                    }}>
-                                        <Users size={16} style={{ color: 'var(--text-secondary)', flexShrink: 0, marginTop: '0.15rem' }} />
-                                        <div>
-                                            <strong style={{ display: 'block', color: 'var(--text-primary)', fontSize: '0.85rem', marginBottom: '0.2rem' }}>Organizador</strong>
-                                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{selectedEvent.organizador}</span>
+                                    )}
+                                    {selectedEvent.organizador && (
+                                        <div style={{ 
+                                            padding: '1.25rem', background: 'var(--bg-secondary)', 
+                                            borderRadius: 'var(--radius-md)', border: '1px solid var(--card-border)',
+                                            display: 'flex', flexDirection: 'column', gap: '0.5rem'
+                                        }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
+                                                <Users size={16} />
+                                                <span style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Organizador Oficial</span>
+                                            </div>
+                                            <span style={{ color: 'var(--text-primary)', fontSize: '1.05rem', fontWeight: '500' }}>{selectedEvent.organizador}</span>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
+                                </div>
                             </div>
                         )}
                     </div>
