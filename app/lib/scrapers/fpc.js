@@ -20,10 +20,15 @@ export const deepScrapeFPC = async (link) => {
         if (containerHtml && !containerHtml.includes('Página não encontrada')) {
             const $temp = cheerio.load(containerHtml);
             $temp('#navigation, #sub_menu_sobre, footer, script, style, iframe, .navbar, .logo, .menu, .menu_lateral_items, .redes_sociais, #menu, .header, nav, header').remove(); // remove lixo
-            // Extrair banner principal, se existir
-            const banner = $temp('img[src*="anexo_banner"]').attr('src');
-            if (banner) {
-                extractedHtml += `<div class="fpc-banner" style="margin-bottom: 1.5rem;"><img src="${banner}" style="width: 100%; border-radius: var(--radius-md);" alt="Banner Evento" /></div>`;
+            // Extrair banner principal ou cartaz, se existir
+            const bannerImg = $temp('img[src*="anexo_banner"]');
+            const cartazImg = $temp('img[src*="anexo_cartaz"]');
+            
+            const mainImgUrl = bannerImg.length > 0 ? bannerImg.attr('src') : (cartazImg.length > 0 ? cartazImg.attr('src') : null);
+            if (mainImgUrl) {
+                const isCartaz = mainImgUrl.includes('anexo_cartaz');
+                const maxWidth = isCartaz ? 'max-width: 400px; margin: 0 auto; display: block;' : 'width: 100%;';
+                extractedHtml += `<div class="fpc-banner" style="margin-bottom: 1.5rem;"><img src="${mainImgUrl}" style="${maxWidth} border-radius: var(--radius-md); box-shadow: var(--shadow-md);" alt="Imagem do Evento" /></div>`;
             }
             $temp('img').remove(); // remover as restantes imagens para texto limpo
             
@@ -43,9 +48,17 @@ export const deepScrapeFPC = async (link) => {
         // Extrair Links (Regulamentos, PDFs, KML)
         const pdfLinks = [];
         $('a').each((i, el) => {
-            const href = $(el).attr('href');
+            let href = $(el).attr('href');
+            const onclick = $(el).attr('onclick') || $(el).attr('onClick');
+            
+            // Tentar extrair link do onClick (comum no site da FPC para PDFs)
+            if (onclick && onclick.includes('window.open')) {
+                const match = onclick.match(/window\.open\(\s*'([^']+)'/);
+                if (match) href = match[1];
+            }
+
             const text = $(el).text().trim() || $(el).find('input').attr('value') || 'Link Adicional';
-            if (href && (href.toLowerCase().endsWith('.pdf') || href.toLowerCase().endsWith('.kml') || href.toLowerCase().endsWith('.gpx') || href.includes('fpciclismo.pt/ficheiro/'))) {
+            if (href && href !== 'javascript:void(0)' && (href.toLowerCase().endsWith('.pdf') || href.toLowerCase().endsWith('.kml') || href.toLowerCase().endsWith('.gpx') || href.includes('fpciclismo.pt/ficheiro/'))) {
                 let fullLink = href;
                 if (!href.startsWith('http')) {
                     fullLink = href.startsWith('/') ? `https://www.fpciclismo.pt${href}` : `https://www.fpciclismo.pt/${href}`;
