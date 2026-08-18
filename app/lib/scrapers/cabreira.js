@@ -281,6 +281,14 @@ export const scrapeCabreira = async (year) => {
                 title = slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
             }
         }
+        
+        let logo = $(element).find('.evento-item-image-container .evento-item-logo').attr('src') || null;
+        let image = null;
+        const styleAttr = $(element).find('.evento-item-image-container .evento-item-image').attr('style');
+        if (styleAttr) {
+            const match = styleAttr.match(/url\(['"]?(.*?)['"]?\)/);
+            if (match) image = match[1];
+        }
 
         let dateText = $(element).find('.evento-item-data').text().trim().toUpperCase() || 'DATA A DEFINIR';
         const rawDateForSort = dateText;
@@ -317,6 +325,8 @@ export const scrapeCabreira = async (year) => {
                 insurance: deepData.insurance,
                 prizes: deepData.prizes,
                 programa: deepData.programa,
+                logo: logo,
+                image: image,
             };
 
             await prisma.event.upsert({

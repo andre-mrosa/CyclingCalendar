@@ -126,7 +126,24 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 <button className="modal-close" onClick={() => setSelectedEvent(null)}>✕</button>
                 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '1rem', paddingRight: '2rem', marginBottom: '0.5rem' }}>
-                    <h2 className="modal-title" style={{ paddingRight: 0, marginBottom: 0 }}>{selectedEvent.title}</h2>
+                    {selectedEvent.logo && (
+                        <a href={selectedEvent.link} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', flexShrink: 0 }} title="Abrir página do evento">
+                            <img 
+                                src={selectedEvent.logo} 
+                                alt={`Logo ${selectedEvent.title}`} 
+                                style={{ height: '40px', width: 'auto', borderRadius: '4px', objectFit: 'contain' }} 
+                            />
+                        </a>
+                    )}
+                    <h2 className="modal-title" style={{ paddingRight: 0, marginBottom: 0 }}>
+                        {selectedEvent.logo ? (
+                            <a href={selectedEvent.link} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
+                                {selectedEvent.title}
+                            </a>
+                        ) : (
+                            selectedEvent.title
+                        )}
+                    </h2>
                     {isSignedIn && (
                         <button 
                             onClick={(e) => {
