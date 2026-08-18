@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSettingsStore } from '../store/useSettingsStore';
 import useSWR from 'swr';
-import CustomSelect from './CustomSelect';
+
 import { Calendar, MapPin, Search, X, ChevronLeft, ChevronRight, Users, Heart, Star, LayoutGrid, List, HelpCircle, Filter } from 'lucide-react';
 import { useFavorites } from '../hooks/useFavorites';
 import { filterEvents } from '../utils/filterEvents';
@@ -344,22 +344,24 @@ export default function CalendarView({
                                 <>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                                         <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold' }}>Mês Inicial</label>
-                                        <CustomSelect 
+                                        <select 
+                                            className="custom-select"
                                             value={monthNames[monthFrom - 1]} 
-                                            onChange={(val) => onMonthFromChange({target:{value: monthNames.indexOf(val) + 1}})} 
-                                            options={monthNames} 
-                                            maxHeight="400px" 
-                                        />
+                                            onChange={(e) => onMonthFromChange({target:{value: monthNames.indexOf(e.target.value) + 1}})} 
+                                        >
+                                            {monthNames.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                        </select>
                                     </div>
                                     
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                                         <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold' }}>Mês Final</label>
-                                        <CustomSelect 
+                                        <select 
+                                            className="custom-select"
                                             value={monthNames[monthTo - 1]} 
-                                            onChange={(val) => onMonthToChange({target:{value: monthNames.indexOf(val) + 1}})} 
-                                            options={monthNames} 
-                                            maxHeight="400px" 
-                                        />
+                                            onChange={(e) => onMonthToChange({target:{value: monthNames.indexOf(e.target.value) + 1}})} 
+                                        >
+                                            {monthNames.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                        </select>
                                     </div>
                                 </>
                             )}
@@ -415,36 +417,39 @@ export default function CalendarView({
                             {activeFilters.includes('ambito') && !forceAmbito && (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                                     <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold' }}>Âmbito</label>
-                                    <CustomSelect 
+                                    <select 
+                                        className="custom-select"
                                         value={selectedAmbito} 
-                                        onChange={setSelectedAmbito} 
-                                        options={uniqueAmbitos} 
-                                        maxHeight="400px" 
-                                    />
+                                        onChange={(e) => setSelectedAmbito(e.target.value)} 
+                                    >
+                                        {uniqueAmbitos.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                    </select>
                                 </div>
                             )}
                             
                             {activeFilters.includes('licenca') && !forceLicenca && (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                                     <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold' }}>Licença</label>
-                                    <CustomSelect 
+                                    <select 
+                                        className="custom-select"
                                         value={selectedLicenca} 
-                                        onChange={setSelectedLicenca} 
-                                        options={uniqueLicencas} 
-                                        maxHeight="400px" 
-                                    />
+                                        onChange={(e) => setSelectedLicenca(e.target.value)} 
+                                    >
+                                        {uniqueLicencas.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                    </select>
                                 </div>
                             )}
                             
                             {activeFilters.includes('regiao') && (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                                     <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold' }}>Região</label>
-                                    <CustomSelect 
+                                    <select 
+                                        className="custom-select"
                                         value={selectedRegiao} 
-                                        onChange={setSelectedRegiao} 
-                                        options={uniqueRegioes} 
-                                        maxHeight="400px" 
-                                    />
+                                        onChange={(e) => setSelectedRegiao(e.target.value)} 
+                                    >
+                                        {uniqueRegioes.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                    </select>
                                 </div>
                             )}
                             
@@ -472,12 +477,13 @@ export default function CalendarView({
                                             </button>
                                         )}
                                     </div>
-                                    <CustomSelect 
+                                    <select 
+                                        className="custom-select"
                                         value={selectedDistrito} 
-                                        onChange={setSelectedDistrito} 
-                                        options={uniqueDistritos} 
-                                        maxHeight="600px"
-                                    />
+                                        onChange={(e) => setSelectedDistrito(e.target.value)} 
+                                    >
+                                        {uniqueDistritos.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                    </select>
                                 </div>
                             )}
                             
