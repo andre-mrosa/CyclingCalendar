@@ -1,8 +1,10 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { X, AlertCircle } from 'lucide-react';
+import { AlertCircle, Send, CheckCircle2 } from 'lucide-react';
+import packageJson from '../../package.json';
 
 export default function WelcomeModal() {
+    const appVersion = packageJson.version;
     const [isOpen, setIsOpen] = useState(false);
     const [neverShow, setNeverShow] = useState(false);
     
@@ -12,7 +14,7 @@ export default function WelcomeModal() {
     const [formData, setFormData] = useState({ name: '', email: '', message: '' });
 
     useEffect(() => {
-        const hideWelcome = localStorage.getItem('hideWelcomeModal_v0.5');
+        const hideWelcome = localStorage.getItem(`hideWelcomeModal_v${appVersion}`);
         if (!hideWelcome) {
             setIsOpen(true);
         }
@@ -20,7 +22,7 @@ export default function WelcomeModal() {
 
     const handleClose = () => {
         if (neverShow) {
-            localStorage.setItem('hideWelcomeModal_v0.5', 'true');
+            localStorage.setItem(`hideWelcomeModal_v${appVersion}`, 'true');
         }
         setIsOpen(false);
         // Reset state after close
@@ -111,7 +113,7 @@ export default function WelcomeModal() {
                             Bem-vindo ao Calendário Ciclismo
                         </h2>
                         <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>
-                            Versão 0.5 (Em Desenvolvimento)
+                            Versão {appVersion} (Em Desenvolvimento)
                         </span>
                     </div>
                 </div>
@@ -122,7 +124,7 @@ export default function WelcomeModal() {
                         Olá! Esta plataforma foi criada para facilitar a consulta de todas as provas do calendário de ciclismo.
                     </p>
                     <p>
-                        Ainda nos encontramos em <strong>fase de desenvolvimento ativo (v0.5)</strong>, por isso pedimos a tua paciência caso encontres pequenos bugs ou comportamentos inesperados. 
+                        Ainda nos encontramos em <strong>fase de desenvolvimento ativo (v{appVersion})</strong>, por isso pedimos a tua paciência caso encontres pequenos bugs ou comportamentos inesperados. 
                     </p>
                     <p>
                         Se tiveres alguma sugestão, ideia de melhoria ou quiseres reportar um erro, envia-me uma mensagem através do formulário abaixo:
