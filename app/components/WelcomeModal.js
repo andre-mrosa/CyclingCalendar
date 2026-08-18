@@ -79,7 +79,7 @@ export default function WelcomeModal() {
         >
             <div 
                 style={{
-                    background: 'var(--bg-primary)',
+                    background: 'var(--card-bg)',
                     borderRadius: 'var(--radius-lg)',
                     width: '100%',
                     maxWidth: '550px',
@@ -93,12 +93,10 @@ export default function WelcomeModal() {
             >
                 {/* Header */}
                 <div style={{
-                    padding: '2rem 2.5rem 1.5rem 2.5rem',
-                    borderBottom: '1px solid var(--card-border)',
+                    padding: '2rem 2.5rem 1rem 2.5rem',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '1.25rem',
-                    background: 'var(--bg-secondary)',
                 }}>
                     <div style={{
                         background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.05) 100%)',
@@ -124,9 +122,9 @@ export default function WelcomeModal() {
                 </div>
 
                 {/* Body */}
-                <div style={{ padding: '0.5rem 2.5rem 2rem 2.5rem', color: 'var(--text-secondary)', lineHeight: 1.65, fontSize: '1rem' }}>
+                <div style={{ padding: '0 2.5rem 2rem 2.5rem', color: 'var(--text-secondary)', lineHeight: 1.65, fontSize: '0.95rem' }}>
                     <div style={{ marginBottom: '1.5rem' }}>
-                        <p style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+                        <p style={{ marginTop: '0.5rem', marginBottom: '1rem' }}>
                             Olá! Esta plataforma foi criada para facilitar a consulta de todas as provas do calendário de ciclismo.
                         </p>
                         <p style={{ margin: '1rem 0' }}>
@@ -138,9 +136,9 @@ export default function WelcomeModal() {
                     </div>
                     
                     <form onSubmit={handleContactSubmit} style={{ 
-                        background: 'var(--bg-secondary)', 
+                        background: 'var(--bg-primary)', 
                         padding: '1.5rem', 
-                        borderRadius: 'var(--radius-lg)', 
+                        borderRadius: 'var(--radius-md)', 
                         border: '1px solid var(--card-border)',
                         display: 'flex',
                         flexDirection: 'column',
@@ -159,7 +157,7 @@ export default function WelcomeModal() {
                             </div>
                         ) : (
                             <>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
                                     <input 
                                         type="text" 
                                         placeholder="Teu nome (opcional)" 
@@ -169,6 +167,7 @@ export default function WelcomeModal() {
                                         onFocus={(e) => { e.target.style.borderColor = 'var(--accent-primary)'; e.target.style.boxShadow = '0 0 0 1px var(--accent-primary)'; }}
                                         onBlur={(e) => { e.target.style.borderColor = 'var(--card-border)'; e.target.style.boxShadow = 'none'; }}
                                         style={{
+                                            flex: '1 1 150px',
                                             padding: '0.85rem',
                                             borderRadius: 'var(--radius-md)',
                                             border: '1px solid var(--card-border)',
@@ -176,7 +175,8 @@ export default function WelcomeModal() {
                                             color: 'var(--text-primary)',
                                             outline: 'none',
                                             fontSize: '0.95rem',
-                                            transition: 'all 0.2s ease'
+                                            transition: 'all 0.2s ease',
+                                            minWidth: '0'
                                         }}
                                     />
                                     <input 
@@ -188,6 +188,7 @@ export default function WelcomeModal() {
                                         onFocus={(e) => { e.target.style.borderColor = 'var(--accent-primary)'; e.target.style.boxShadow = '0 0 0 1px var(--accent-primary)'; }}
                                         onBlur={(e) => { e.target.style.borderColor = 'var(--card-border)'; e.target.style.boxShadow = 'none'; }}
                                         style={{
+                                            flex: '1 1 150px',
                                             padding: '0.85rem',
                                             borderRadius: 'var(--radius-md)',
                                             border: '1px solid var(--card-border)',
@@ -195,7 +196,8 @@ export default function WelcomeModal() {
                                             color: 'var(--text-primary)',
                                             outline: 'none',
                                             fontSize: '0.95rem',
-                                            transition: 'all 0.2s ease'
+                                            transition: 'all 0.2s ease',
+                                            minWidth: '0'
                                         }}
                                     />
                                 </div>
@@ -304,10 +306,8 @@ export default function WelcomeModal() {
                 {/* Footer */}
                 <div style={{
                     padding: '1.5rem 2.5rem',
-                    borderTop: '1px solid var(--card-border)',
                     display: 'flex',
                     justifyContent: 'flex-end',
-                    background: 'var(--card-bg)'
                 }}>
                     <button 
                         onClick={handleClose}
