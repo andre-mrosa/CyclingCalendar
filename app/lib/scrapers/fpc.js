@@ -19,7 +19,7 @@ export const deepScrapeFPC = async (link) => {
         const containerHtml = $('.conteudo_div').html() || $('.container').html();
         if (containerHtml && !containerHtml.includes('Página não encontrada')) {
             const $temp = cheerio.load(containerHtml);
-            $temp('#navigation, #sub_menu_sobre, footer, script, style, iframe, .navbar, .logo').remove(); // remove lixo
+            $temp('#navigation, #sub_menu_sobre, footer, script, style, iframe, .navbar, .logo, .menu, .menu_lateral_items, .redes_sociais, #menu, .header, nav, header').remove(); // remove lixo
             // Extrair banner principal, se existir
             const banner = $temp('img[src*="anexo_banner"]').attr('src');
             if (banner) {
@@ -29,6 +29,13 @@ export const deepScrapeFPC = async (link) => {
             
             const textContent = $temp.text().replace(/\s+/g, ' ').trim();
             if (textContent.length > 50 && !textContent.includes('Regulamentos Filiações')) {
+                // Formatar links úteis que restaram na descrição
+                $temp('a').each((i, el) => {
+                    $temp(el).attr('target', '_blank');
+                    $temp(el).attr('rel', 'noopener noreferrer');
+                    $temp(el).attr('style', 'color: var(--accent-primary); text-decoration: underline; font-weight: 500;');
+                });
+                
                 extractedHtml += `<div class="fpc-description" style="margin-bottom: 1.5rem; color: var(--text-secondary); line-height: 1.6;">${sanitizeHtml($temp.html())}</div>`;
             }
         }
