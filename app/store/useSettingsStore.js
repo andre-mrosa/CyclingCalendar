@@ -8,6 +8,7 @@ export const useSettingsStore = create(
             defaultRegiao: 'Todas',
             useCurrentMonth: false,
             selectedSources: ['FPC', 'Cabreira'],
+            hiddenTabs: [],
 
             setDefaultEscalao: (val) => set({ defaultEscalao: val }),
             setDefaultRegiao: (val) => set({ defaultRegiao: val }),
@@ -23,7 +24,14 @@ export const useSettingsStore = create(
                 return { selectedSources: newSources };
             }),
 
-            reorderSources: (newOrder) => set({ selectedSources: newOrder })
+            reorderSources: (newOrder) => set({ selectedSources: newOrder }),
+
+            toggleHiddenTab: (tabId) => set((state) => {
+                const newHidden = state.hiddenTabs.includes(tabId)
+                    ? state.hiddenTabs.filter(t => t !== tabId)
+                    : [...state.hiddenTabs, tabId];
+                return { hiddenTabs: newHidden };
+            })
         }),
         {
             name: 'cycling-calendar-settings', // unique name in localStorage

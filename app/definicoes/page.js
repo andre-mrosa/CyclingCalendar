@@ -11,7 +11,8 @@ export default function Conta() {
         defaultEscalao, setDefaultEscalao,
         defaultRegiao, setDefaultRegiao,
         useCurrentMonth, toggleUseCurrentMonth,
-        selectedSources, toggleSource, reorderSources
+        selectedSources, toggleSource, reorderSources,
+        hiddenTabs, toggleHiddenTab
     } = useSettingsStore();
 
     const [activeModal, setActiveModal] = useState(null); // 'regiao' or 'escalao'
@@ -244,6 +245,40 @@ export default function Conta() {
                             <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.25rem', fontStyle: 'italic' }}>
                                 Usa as setas para definir a prioridade (desduplicação).
                             </p>
+                        </div>
+                    </div>
+                </section>
+
+                <section style={{
+                    background: 'var(--card-bg)',
+                    border: '1px solid var(--card-border)',
+                    padding: '2rem',
+                    borderRadius: 'var(--radius-lg)'
+                }}>
+                    <h2 style={{ marginBottom: '1.5rem', color: 'var(--text-primary)' }}>Navegação</h2>
+                    
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
+                        <div style={{ flex: 1, minWidth: '200px' }}>
+                            <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>Esconder Separadores</h3>
+                            <p style={{ margin: '0.25rem 0 1rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                                Escolhe quais os separadores do menu superior que não queres ver.
+                            </p>
+                        </div>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flexShrink: 0, minWidth: '220px' }}>
+                            {['Nacionais', 'Internacionais', 'Taças', 'Regionais', 'Lazer', 'Favoritos'].map(tab => (
+                                <div key={tab} style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: hiddenTabs.includes(tab) ? 'var(--card-bg)' : 'var(--bg-secondary)', padding: '0.5rem 0.75rem', borderRadius: '4px', border: hiddenTabs.includes(tab) ? '1px solid var(--card-border)' : '1px solid var(--accent-secondary)', opacity: hiddenTabs.includes(tab) ? 0.6 : 1 }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', color: 'var(--text-primary)', margin: 0, fontSize: '0.95rem' }}>
+                                        <input 
+                                            type="checkbox" 
+                                            checked={!hiddenTabs.includes(tab)}
+                                            onChange={() => toggleHiddenTab(tab)}
+                                            style={{ width: '18px', height: '18px', accentColor: 'var(--accent-primary)' }}
+                                        />
+                                        Mostrar "{tab}"
+                                    </label>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </section>

@@ -7,6 +7,7 @@ import { SignInButton, Show, UserButton } from '@clerk/nextjs';
 import { Home, Trophy, MapPin, Bike, HelpCircle, Settings, Menu, X, Moon, Sun, Flag, Star, Globe, LogIn } from 'lucide-react';
 import SettingsPage from '../definicoes/page';
 import HelpPage from '../ajuda/page';
+import { useSettingsStore } from '../store/useSettingsStore';
 
 export default function Navigation() {
     const pathname = usePathname();
@@ -26,7 +27,9 @@ export default function Navigation() {
         setIsMobileMenuOpen(false);
     }, [pathname]);
 
-    const links = [
+    const { hiddenTabs } = useSettingsStore();
+
+    const allLinks = [
         { href: "/", label: "Geral", icon: <Home size={18} />, exact: true },
         { href: "/nacionais", label: "Nacionais", icon: <Flag size={18} /> },
         { href: "/internacionais", label: "Internacionais", icon: <Globe size={18} /> },
@@ -35,6 +38,8 @@ export default function Navigation() {
         { href: "/lazer", label: "Lazer", icon: <Bike size={18} /> },
         { href: "/favoritos", label: "Favoritos", icon: <Star size={18} /> }
     ];
+
+    const links = allLinks.filter(link => !hiddenTabs.includes(link.label));
     
     const rightLinks = [
         { href: "/ajuda", label: "Ajuda", icon: <HelpCircle size={18} /> },
