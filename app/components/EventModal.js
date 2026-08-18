@@ -27,7 +27,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
         const tabs = [];
         if (selectedEvent.description || selectedEvent.ambito || selectedEvent.organizador) tabs.push('info');
         if (selectedEvent.escaloes && selectedEvent.escaloes.length > 0) tabs.push('escaloes');
-        if (selectedEvent.programa || programaData.html || programaData.loading) tabs.push('programa');
+        if (selectedEvent.programa && selectedEvent.programa !== 'Não disponível') tabs.push('programa');
         if (selectedEvent.prices || selectedEvent.registrationOpensAt || selectedEvent.registrationClosesAt) tabs.push('inscricao');
         if (selectedEvent.prizes || selectedEvent.insurance) tabs.push('premios');
         if (selectedEvent.details && selectedEvent.details !== 'A definir') tabs.push('localizacao');
@@ -40,7 +40,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
         }
     }, [availableTabs, activeTab]);
 
-    // Fetch Programa on Modal open
+    // Fetch Programa on Modal open (Now exclusively uses DB cache for speed)
     useEffect(() => {
         if (!selectedEvent) {
             setProgramaData({ loading: false, html: null, error: null, additionalLinks: [] });
@@ -52,54 +52,11 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
         setCalendarMsg('');
 
-        const fetchPrograma = async () => {
-            if (selectedEvent.programa && selectedEvent.programa.trim().length > 0) {
-                setProgramaData({ loading: false, html: selectedEvent.programa, error: null, additionalLinks: [] });
-                return;
-            }
-
-            // Find a valid URL to extract from (prefer Cabreira, then FPC)
-            let targetUrl = null;
-            if (selectedEvent.extraLinks && selectedEvent.extraLinks.length > 0) {
-                const cabreiraLink = selectedEvent.extraLinks.find(l => l.link.includes('cabreira'));
-                const fpcLink = selectedEvent.extraLinks.find(l => l.link.includes('fpciclismo') && !l.link.includes('inscrever'));
-                if (cabreiraLink) targetUrl = cabreiraLink.link;
-                else if (fpcLink) targetUrl = fpcLink.link;
-            }
-            if (!targetUrl) {
-                if (selectedEvent.link && !selectedEvent.link.includes('fpciclismo.pt/calendario')) {
-                    targetUrl = selectedEvent.link;
-                }
-            }
-
-            if (!targetUrl || targetUrl === 'https://www.fpciclismo.pt/' || targetUrl === 'https://cabreirasolutions.com/eventos/') {
-                return; // No specific event page to scrape
-            }
-
-            setProgramaData({ loading: true, html: null, error: null, additionalLinks: [] });
-            try {
-                const urlObj = new URL('/api/programa', window.location.origin);
-                urlObj.searchParams.append('url', targetUrl);
-                if (selectedEvent.id) urlObj.searchParams.append('id', selectedEvent.id);
-                
-                const res = await fetch(urlObj.toString());
-                if (res.ok) {
-                    const data = await res.json();
-                    setProgramaData({ 
-                        loading: false, 
-                        html: data.programa || null, 
-                        error: !data.programa ? 'O programa detalhado não foi encontrado. Por favor verifique o Website Oficial.' : null,
-                        additionalLinks: data.additionalLinks || []
-                    });
-                } else {
-                    setProgramaData({ loading: false, html: null, error: 'Falha ao aceder à página oficial.', additionalLinks: [] });
-                }
-            } catch (err) {
-                setProgramaData({ loading: false, html: null, error: 'Erro de ligação.', additionalLinks: [] });
-            }
-        };
-
-        fetchPrograma();
+        if (selectedEvent.programa && selectedEvent.programa.trim().length > 0 && selectedEvent.programa !== 'Não disponível') {
+            setProgramaData({ loading: false, html: selectedEvent.programa, error: null, additionalLinks: [] });
+        } else {
+            setProgramaData({ loading: false, html: null, error: null, additionalLinks: [] });
+        }
     }, [selectedEvent]);
 
     const handleHtmlClick = (e) => {
