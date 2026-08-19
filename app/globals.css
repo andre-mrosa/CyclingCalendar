@@ -510,14 +510,6 @@ body {
     flex-direction: column;
 }
 
-.eligibilidade-card {
-    margin: auto 0;
-    padding: 1.25rem;
-    border: 1px solid rgba(96, 165, 250, 0.16);
-    border-radius: var(--radius-lg);
-    background: linear-gradient(145deg, rgba(59, 130, 246, 0.1), var(--bg-secondary) 58%);
-    box-shadow: inset 0 1px 0 var(--bg-secondary);
-}
 
 .escaloes-intro {
     color: var(--text-secondary);

@@ -249,7 +249,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         {(!selectedEvent.escaloes || selectedEvent.escaloes.length === 0) ? (
                             <p style={{ color: 'var(--text-secondary)' }}>Informação de escalões não disponível.</p>
                         ) : (
-                            <div className="eligibilidade-card" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                                 
                                 <div style={{ marginBottom: '2rem' }}>
                                     <h4 style={{ marginBottom: '1rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.05rem' }}>
