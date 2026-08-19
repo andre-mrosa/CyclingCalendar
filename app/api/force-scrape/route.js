@@ -15,8 +15,8 @@ export async function GET(request) {
             data: { programa: null }
         });
 
-        // Loop até o scraper não ter mais nada para processar (limite máximo de segurança: 30 vezes)
-        for (let i = 0; i < 30; i++) {
+        // Loop até o scraper não ter mais nada para processar (limite máximo de segurança: 100 vezes)
+        for (let i = 0; i < 100; i++) {
             lastResult = await incrementalDeepScrapeFPC();
             if (lastResult === 0) break; // Acabaram-se os eventos
             totalProcessed += lastResult || 0;

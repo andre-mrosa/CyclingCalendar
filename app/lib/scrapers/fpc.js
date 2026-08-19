@@ -270,6 +270,8 @@ export const incrementalDeepScrapeFPC = async () => {
                     where: { id: ev.id }, 
                     data: { programa: programaHtml || '<p>Detalhes de programa indisponíveis na página da FPC.</p>' } 
                 });
+                // Pausa extra de 500ms entre pedidos individuais para poupar os servidores da FPC
+                await new Promise(r => setTimeout(r, 500));
             }
         }
         
