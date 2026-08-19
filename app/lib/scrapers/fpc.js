@@ -263,18 +263,30 @@ export const incrementalDeepScrapeFPC = async () => {
             take: 5
         });
         
+        let processedCount = 0;
         for (const ev of fpcEventsToUpdate) {
             if (ev.link) {
-                const programaHtml = await deepScrapeFPC(ev.link);
-                await prisma.event.update({ 
-                    where: { id: ev.id }, 
-                    data: { programa: programaHtml || '<p>Detalhes de programa indisponíveis na página da FPC.</p>' } 
-                });
+                try {
+                    const programaHtml = await deepScrapeFPC(ev.link);
+                    await prisma.event.update({ 
+                        where: { id: ev.id }, 
+                        data: { programa: programaHtml || '<p>Detalhes de programa indisponíveis na página da FPC.</p>' } 
+                    });
+                    processedCount++;
+                } catch (err) {
+                    console.error('Erro a processar evento ' + ev.id + ':', err);
+                    // Update it to something so it doesn't get stuck in an infinite loop!
+                    await prisma.event.update({ 
+                        where: { id: ev.id }, 
+                        data: { programa: '<p>Erro ao extrair detalhes na página da FPC.</p>' } 
+                    });
+                }
                 // Pausa extra de 500ms entre pedidos individuais para poupar os servidores da FPC
                 await new Promise(r => setTimeout(r, 500));
             }
         }
         
+        // Return how many we queried so the loop continues if we got a full batch
         return fpcEventsToUpdate.length;
     } catch(e) {
         console.error('Erro no incremental FPC:', e);
