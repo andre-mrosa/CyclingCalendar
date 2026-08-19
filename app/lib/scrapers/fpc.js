@@ -23,11 +23,24 @@ export const deepScrapeFPC = async (link) => {
             $temp('#navigation, #sub_menu_sobre, footer, script, style, iframe, .navbar, .logo, .menu, .menu_lateral_items, .redes_sociais, #menu, .header, nav, header, .three__blocks, .footer, .footer_bg, #rodape, .patrocinadores, .parceiros, .cyclopnet').remove(); // remove lixo
             // Remover nós de texto diretamente na raiz (FPC copyright)
             $temp('body').contents().filter((i, el) => el.nodeType === 3).remove();
-            // Extrair banner principal ou cartaz, se existir
+            // Extrair banner principal ou cartaz
+            let mainImgUrl = null;
             const bannerImg = $temp('img[src*="anexo_banner"]');
             const cartazImg = $temp('img[src*="anexo_cartaz"]');
-            
-            const mainImgUrl = bannerImg.length > 0 ? bannerImg.attr('src') : (cartazImg.length > 0 ? cartazImg.attr('src') : null);
+            if (bannerImg.length > 0) mainImgUrl = bannerImg.attr('src');
+            else if (cartazImg.length > 0) mainImgUrl = cartazImg.attr('src');
+            else {
+                // Tentar encontrar cartaz nos botões input
+                $temp('input[type="button"]').each((i, el) => {
+                    const val = $temp(el).attr('value');
+                    const onclick = $temp(el).attr('onclick');
+                    if (val && val.toLowerCase() === 'cartaz' && onclick) {
+                        const match = onclick.match(/window\.open\s*\(\s*'([^']+)'/);
+                        if (match) mainImgUrl = match[1];
+                    }
+                });
+            }
+
             if (mainImgUrl) {
                 const isCartaz = mainImgUrl.includes('anexo_cartaz');
                 const maxWidth = isCartaz ? 'max-width: 400px; margin: 0 auto; display: block;' : 'width: 100%;';
@@ -50,7 +63,7 @@ export const deepScrapeFPC = async (link) => {
 
         // Extrair Links (Regulamentos, PDFs, KML)
         const pdfLinks = [];
-        $('a').each((i, el) => {
+        $('a, input[type="button"]').each((i, el) => {
             let href = $(el).attr('href');
             const onclick = $(el).attr('onclick') || $(el).attr('onClick');
             
@@ -60,8 +73,10 @@ export const deepScrapeFPC = async (link) => {
                 if (match) href = match[1];
             }
 
-            const text = $(el).text().trim() || $(el).find('input').attr('value') || 'Link Adicional';
-            if (href && href !== 'javascript:void(0)' && (href.toLowerCase().endsWith('.pdf') || href.toLowerCase().endsWith('.kml') || href.toLowerCase().endsWith('.gpx') || href.includes('fpciclismo.pt/ficheiro/'))) {
+            const text = $(el).text().trim() || $(el).attr('value') || 'Link Adicional';
+            if (text.toLowerCase() === 'cartaz') return; // Já extraído como imagem
+
+            if (href && href !== 'javascript:void(0)' && (href.toLowerCase().endsWith('.pdf') || href.toLowerCase().endsWith('.jpg') || href.toLowerCase().endsWith('.png') || href.toLowerCase().endsWith('.kml') || href.toLowerCase().endsWith('.gpx') || href.includes('fpciclismo.pt/ficheiro/'))) {
                 let fullLink = href;
                 if (!href.startsWith('http')) {
                     fullLink = href.startsWith('/') ? `https://www.fpciclismo.pt${href}` : `https://www.fpciclismo.pt/${href}`;
@@ -257,7 +272,10 @@ export const incrementalDeepScrapeFPC = async () => {
                 });
             }
         }
+        
+        return fpcEventsToUpdate.length;
     } catch(e) {
         console.error('Erro no incremental FPC:', e);
+        return 0;
     }
 };
