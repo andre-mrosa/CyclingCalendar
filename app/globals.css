@@ -511,7 +511,6 @@ body {
 }
 
 .eligibilidade-card {
-    width: min(100%, 620px);
     margin: auto 0;
     padding: 1.25rem;
     border: 1px solid rgba(96, 165, 250, 0.16);

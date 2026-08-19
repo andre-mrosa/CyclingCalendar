@@ -251,7 +251,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         ) : (
                             <div className="eligibilidade-card" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                                 
-                                <div style={{ flex: 1 }}>
+                                <div style={{ marginBottom: '2rem' }}>
                                     <h4 style={{ marginBottom: '1rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.05rem' }}>
                                         <Bike size={18} style={{ color: 'var(--accent-primary)' }} />
                                         Categorias de Participação
@@ -275,7 +275,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                     </div>
                                 </div>
 
-                                <div style={{ flexShrink: 0, marginTop: 'auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                                     {selectedEvent.licenca && (
                                         <div style={{ 
                                             padding: '1.25rem', background: 'var(--bg-secondary)', 
