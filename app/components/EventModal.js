@@ -231,12 +231,12 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 {/* Tab: INFO */}
                 {activeTab === 'info' && (
                     <div className="tab-content fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                        {/* FPC Banner at top if exists */}
-                        {fpcBannerHtml && (
-                            <div className="fpc-banner-container" style={{ marginBottom: '1rem' }} dangerouslySetInnerHTML={{ __html: fpcBannerHtml }} />
-                        )}
-                        {/* Descrição com scroll próprio */}
+                        {/* Descrição e Banner com scroll próprio */}
                         <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, paddingRight: '0.25rem' }} className="custom-scrollbar">
+                            {/* FPC Banner at top if exists */}
+                            {fpcBannerHtml && (
+                                <div className="fpc-banner-container" style={{ marginBottom: '1.5rem', textAlign: 'center' }} dangerouslySetInnerHTML={{ __html: fpcBannerHtml }} />
+                            )}
                             {selectedEvent.description ? (
                                 <div className="description-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.6' }} dangerouslySetInnerHTML={{ __html: selectedEvent.description }} />
                             ) : (
