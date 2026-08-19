@@ -39,12 +39,12 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
         const tabs = [];
         if (selectedEvent.description || selectedEvent.ambito || selectedEvent.organizador) tabs.push('info');
         if (selectedEvent.escaloes && selectedEvent.escaloes.length > 0) tabs.push('escaloes');
-        if (selectedEvent.programa && selectedEvent.programa !== 'Não disponível') tabs.push('programa');
+        if (programaCleanHtml && programaCleanHtml.trim().length > 0 && programaCleanHtml !== 'Não disponível') tabs.push('programa');
         if (selectedEvent.prices || selectedEvent.registrationOpensAt || selectedEvent.registrationClosesAt) tabs.push('inscricao');
         if (selectedEvent.prizes || selectedEvent.insurance) tabs.push('premios');
         if (selectedEvent.details && selectedEvent.details !== 'A definir') tabs.push('localizacao');
         return tabs;
-    }, [selectedEvent, programaData]);
+    }, [selectedEvent, programaCleanHtml]);
 
     useEffect(() => {
         if (availableTabs.length > 0 && !availableTabs.includes(activeTab)) {
