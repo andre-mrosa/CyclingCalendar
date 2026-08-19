@@ -2,7 +2,7 @@ import * as cheerio from 'cheerio';
 import { prisma } from '../db';
 import { 
     parseSortDate, getAmbito, getTag, getRegiao, 
-    getDistrito, toTitleCase, getLicenca, sanitizeHtml 
+    getDistrito, toTitleCase, getLicenca, sanitizeHtml, fetchImageAsBase64 
 } from './utils';
 
 export const deepScrapeFPC = async (link) => {
@@ -42,9 +42,14 @@ export const deepScrapeFPC = async (link) => {
             }
 
             if (mainImgUrl) {
-                const isCartaz = mainImgUrl.includes('anexo_cartaz');
+                const isCartaz = mainImgUrl.includes('anexo_cartaz') || mainImgUrl.toLowerCase().includes('cartaz');
                 const maxWidth = isCartaz ? 'max-width: 400px; margin: 0 auto; display: block;' : 'width: 100%;';
-                extractedHtml += `<div class="fpc-banner" style="margin-bottom: 1.5rem;"><img src="${mainImgUrl}" style="${maxWidth} border-radius: var(--radius-md); box-shadow: var(--shadow-md);" alt="Imagem do Evento" /></div>`;
+                
+                // Converte a imagem para Base64 para não depender do servidor lento da FPC no frontend
+                const base64Img = await fetchImageAsBase64(mainImgUrl);
+                const finalImgSrc = base64Img || mainImgUrl; // fallback para URL direto se falhar
+                
+                extractedHtml += `<div class="fpc-banner" style="margin-bottom: 1.5rem;"><img src="${finalImgSrc}" style="${maxWidth} border-radius: var(--radius-md); box-shadow: var(--shadow-md);" alt="Imagem do Evento" /></div>`;
             }
             $temp('img').remove(); // remover as restantes imagens para texto limpo
             

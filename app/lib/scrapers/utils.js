@@ -3,7 +3,7 @@ import * as cheerio from 'cheerio';
 export const fetchImageAsBase64 = async (url) => {
     if (!url) return null;
     try {
-        const response = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://cabreirasolutions.com/' } });
+        const response = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
         if (!response.ok) return null;
         const arrayBuffer = await response.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
