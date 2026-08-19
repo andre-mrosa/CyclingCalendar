@@ -21,6 +21,18 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
         return `${datePart} às ${timePart}`;
     };
 
+    // Separate banner from programa content
+    const programaContentFull = selectedEvent?.programa || '';
+    let fpcBannerHtml = '';
+    let programaCleanHtml = programaContentFull;
+    if (programaContentFull.includes('<div class="fpc-banner"')) {
+        const bannerMatch = programaContentFull.match(/<div class="fpc-banner"[^>]*>[\s\S]*?<\/div>/);
+        if (bannerMatch) {
+            fpcBannerHtml = bannerMatch[0];
+            programaCleanHtml = programaContentFull.replace(bannerMatch[0], '');
+        }
+    }
+
     // Calcula as tabs ativas baseadas nos dados reais do evento
     const availableTabs = useMemo(() => {
         if (!selectedEvent) return [];
@@ -219,6 +231,10 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 {/* Tab: INFO */}
                 {activeTab === 'info' && (
                     <div className="tab-content fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                        {/* FPC Banner at top if exists */}
+                        {fpcBannerHtml && (
+                            <div className="fpc-banner-container" style={{ marginBottom: '1rem' }} dangerouslySetInnerHTML={{ __html: fpcBannerHtml }} />
+                        )}
                         {/* Descrição com scroll próprio */}
                         <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, paddingRight: '0.25rem' }} className="custom-scrollbar">
                             {selectedEvent.description ? (
@@ -311,19 +327,8 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 {/* Tab: PROGRAMA */}
                 {activeTab === 'programa' && (
                     <div className="tab-content programa-tab fade-in" style={{ paddingTop: 0 }}>
-                        {selectedEvent.programa ? (
-                            <div className="programa-content custom-scrollbar" dangerouslySetInnerHTML={{ __html: selectedEvent.programa }} onClick={handleHtmlClick} />
-                        ) : programaData.loading ? (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', paddingTop: '1rem' }}>
-                                <div className="spinner"></div>
-                                <span>A procurar programa oficial...</span>
-                            </div>
-                        ) : programaData.html ? (
-                            <div className="programa-content" dangerouslySetInnerHTML={{ __html: programaData.html }} onClick={handleHtmlClick} />
-                        ) : programaData.error && selectedEvent.extraLinks && selectedEvent.extraLinks.length > 0 ? (
-                            <div style={{ padding: '1rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)', marginTop: '1rem' }}>
-                                <em>{programaData.error}</em>
-                            </div>
+                        {programaCleanHtml ? (
+                            <div className="programa-content custom-scrollbar" dangerouslySetInnerHTML={{ __html: programaCleanHtml }} onClick={handleHtmlClick} />
                         ) : (
                             <div style={{ padding: '1rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)', marginTop: '1rem' }}>
                                 <em>Programa não disponível na Base de Dados. A aguardar recolha do sistema.</em>

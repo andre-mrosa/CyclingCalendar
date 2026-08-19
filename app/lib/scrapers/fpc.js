@@ -20,7 +20,9 @@ export const deepScrapeFPC = async (link) => {
         const containerHtml = $('body').html();
         if (containerHtml && !containerHtml.includes('Página não encontrada')) {
             const $temp = cheerio.load(containerHtml);
-            $temp('#navigation, #sub_menu_sobre, footer, script, style, iframe, .navbar, .logo, .menu, .menu_lateral_items, .redes_sociais, #menu, .header, nav, header').remove(); // remove lixo
+            $temp('#navigation, #sub_menu_sobre, footer, script, style, iframe, .navbar, .logo, .menu, .menu_lateral_items, .redes_sociais, #menu, .header, nav, header, .three__blocks, .footer, .footer_bg, #rodape, .patrocinadores, .parceiros, .cyclopnet').remove(); // remove lixo
+            // Remover nós de texto diretamente na raiz (FPC copyright)
+            $temp('body').contents().filter((i, el) => el.nodeType === 3).remove();
             // Extrair banner principal ou cartaz, se existir
             const bannerImg = $temp('img[src*="anexo_banner"]');
             const cartazImg = $temp('img[src*="anexo_cartaz"]');
