@@ -20,12 +20,12 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
             return;
         }
         
-        const loadFullEvent = àsync () => {
+        const loadFullEvent = async () => {
             if (activeEvent.programa !== undefined) {
                 setFullEvent(selectedEvent);
             } else {
                 try {
-                    const res = await fetch(`/api/events/${selectedEvent.id}`);
+                    const res = await fetch(`/api/events/${activeEvent.id}`);
                     const data = await res.json();
                     if (data.success && data.event) {
                         const mergedEvent = { ...selectedEvent, ...data.event };
@@ -68,9 +68,9 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
         if (activeEvent.description || activeEvent.ambito || activeEvent.organizador) tabs.push('info');
         if (activeEvent.escaloes && activeEvent.escaloes.length > 0) tabs.push('escaloes');
         if (programaCleanHtml && programaCleanHtml.trim().length > 0 && programaCleanHtml !== 'NÃ£o disponÃ­vel') tabs.push('programa');
-        if (activeEvent.prices || selectedEvent.registrationOpensAt || selectedEvent.registrationClosesAt) tabs.push('inscricao');
+        if (activeEvent.prices || activeEvent.registrationOpensAt || activeEvent.registrationClosesAt) tabs.push('inscricao');
         if (activeEvent.prizes || activeEvent.insurance) tabs.push('premios');
-        if (selectedEvent.details && selectedEvent.details !== 'A definir') tabs.push('localizacao');
+        if (activeEvent.details && activeEvent.details !== 'A definir') tabs.push('localizacao');
         return tabs;
     }, [selectedEvent, programaCleanHtml]);
 
@@ -92,8 +92,8 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
         setCalendarMsg('');
 
-        if (selectedEvent.programa && selectedEvent.programa.trim().length > 0 && selectedEvent.programa !== 'NÃ£o disponÃ­vel') {
-            setProgramaData({ loading: false, html: selectedEvent.programa, error: null, additionalLinks: [] });
+        if (activeEvent.programa && activeEvent.programa.trim().length > 0 && activeEvent.programa !== 'NÃ£o disponÃ­vel') {
+            setProgramaData({ loading: false, html: activeEvent.programa, error: null, additionalLinks: [] });
         } else {
             setProgramaData({ loading: false, html: null, error: null, additionalLinks: [] });
         }
@@ -105,7 +105,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
         }
     };
 
-    const handleAddToCalendar = àsync () => {
+    const handleAddToCalendar = async () => {
         if (!isSignedIn || !selectedEvent) return;
         setIsAddingToCalendar(true);
         setCalendarStatus(null);
@@ -147,43 +147,43 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 <button clàssName="modal-close" onClick={() => setSelectedEvent(null)}>âœ•</button>
                 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '1rem', paddingRight: '2rem', marginBottom: '0.5rem' }}>
-                    {selectedEvent.logo && (
-                        <a href={selectedEvent.link} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', flexShrink: 0 }} title="Abrir pÃ¡gina do evento">
+                    {activeEvent.logo && (
+                        <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', flexShrink: 0 }} title="Abrir pÃ¡gina do evento">
                             <SmartLogo 
-                                src={selectedEvent.logo} 
-                                alt={`Logo ${selectedEvent.title}`} 
+                                src={activeEvent.logo} 
+                                alt={`Logo ${activeEvent.title}`} 
                                 style={{ height: '40px', width: 'auto', objectFit: 'contain' }} 
                             />
                         </a>
                     )}
                     <h2 clàssName="modal-title" style={{ paddingRight: 0, marginBottom: 0 }}>
-                        {selectedEvent.logo ? (
-                            <a href={selectedEvent.link} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
-                                {selectedEvent.title}
+                        {activeEvent.logo ? (
+                            <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
+                                {activeEvent.title}
                             </a>
                         ) : (
-                            selectedEvent.title
+                            activeEvent.title
                         )}
                     </h2>
                     {isSignedIn && (
                         <button 
                             onClick={(e) => {
                                 e.stopPropagation();
-                                toggleFavorite(selectedEvent.id);
+                                toggleFavorite(activeEvent.id);
                             }}
                             style={{
                                 background: 'none', border: 'none', cursor: 'pointer',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 padding: '0.5rem', borderRadius: '50%',
                                 transition: 'var(--transition)',
-                                backgroundColor: favorites.includes(selectedEvent.id) ? 'rgba(234, 179, 8, 0.1)' : 'var(--bg-secondary)'
+                                backgroundColor: favorites.includes(activeEvent.id) ? 'rgba(234, 179, 8, 0.1)' : 'var(--bg-secondary)'
                             }}
-                            title={favorites.includes(selectedEvent.id) ? "Remover dos Favoritos" : "Adicionar aos Favoritos"}
+                            title={favorites.includes(activeEvent.id) ? "Remover dos Favoritos" : "Adicionar aos Favoritos"}
                         >
                             <Star 
                                 size={24} 
-                                color={favorites.includes(selectedEvent.id) ? "#eab308" : "var(--text-secondary)"} 
-                                fill={favorites.includes(selectedEvent.id) ? "#eab308" : "none"} 
+                                color={favorites.includes(activeEvent.id) ? "#eab308" : "var(--text-secondary)"} 
+                                fill={favorites.includes(activeEvent.id) ? "#eab308" : "none"} 
                                 style={{ transition: 'var(--transition)' }}
                             />
                         </button>
@@ -191,7 +191,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 </div>
 
                 <p clàssName="modal-date" style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', marginTop: '0.5rem', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <Calendar size={18} /> {selectedEvent.date}{selectedEvent.endDate ? ` a ${selectedEvent.endDate}` : ''}
+                    <Calendar size={18} /> {activeEvent.date}{activeEvent.endDate ? ` a ${activeEvent.endDate}` : ''}
                 </p>
                 
                 {/* Tabs Navigation */}
@@ -201,7 +201,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             const labels = {
                                 info: 'Info do Evento',
                                 escaloes: 'EscalÃµes ElegÃ­veis',
-                                programa: selectedEvent.source === 'FPC' ? 'Documentos & Detalhes FPC' : 'Programa',
+                                programa: activeEvent.source === 'FPC' ? 'Documentos & Detalhes FPC' : 'Programa',
                                 inscricao: 'InscriÃ§Ã£o & PreÃ§os',
                                 premios: 'PrÃ©mios & Seguro',
                                 localizacao: 'LocalizaÃ§Ã£o'
@@ -242,7 +242,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         <FileText size={48} style={{ color: 'var(--card-border)' }} />
                         <h3 style={{ margin: 0, color: 'var(--text-primary)', textAlign: 'center' }}>NÃ£o hÃ¡ dados detalhados</h3>
                         <a 
-                            href={selectedEvent.link} 
+                            href={activeEvent.link} 
                             target="_blank" 
                             rel="noopener noreferrer" 
                             style={{
@@ -280,7 +280,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             <div style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', flex: 1 }}>
                                 <strong style={{ display: 'block', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>OrganizaÃ§Ã£o</strong>
                                 <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                                    {selectedEvent.source === 'Cabreira' ? 'Cabreira Solutions' : selectedEvent.source}
+                                    {activeEvent.source === 'Cabreira' ? 'Cabreira Solutions' : activeEvent.source}
                                 </span>
                             </div>
                         </div>
@@ -290,7 +290,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 {/* Tab: ESCALOES */}
                 {activeTab === 'escaloes' && (
                     <div clàssName="tab-content escaloes-tab fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                        {(!activeEvent.escaloes || activeEvent.escaloes.length === 0) ? (
+                        {(!selectedEvent.escaloes || activeEvent.escaloes.length === 0) ? (
                             <p style={{ color: 'var(--text-secondary)' }}>InformaÃ§Ã£o de escalÃµes nÃ£o disponÃ­vel.</p>
                         ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -322,7 +322,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 </div>
 
                                 <div style={{ flexShrink: 0, marginTop: '1.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-                                    {selectedEvent.licenca && (
+                                    {activeEvent.licenca && (
                                         <div style={{ 
                                             padding: '1.25rem', background: 'var(--bg-secondary)', 
                                             borderRadius: 'var(--radius-md)', border: '1px solid var(--card-border)',
@@ -332,7 +332,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                                 <FileText size={16} />
                                                 <span style={{ fontSize: '0.85rem', textTransform: 'uppercàse', letterSpacing: '0.05em', fontWeight: '600' }}>LicenÃ§a Exigida</span>
                                             </div>
-                                            <span style={{ color: 'var(--text-primary)', fontSize: '1.05rem', fontWeight: '500' }}>{selectedEvent.licenca}</span>
+                                            <span style={{ color: 'var(--text-primary)', fontSize: '1.05rem', fontWeight: '500' }}>{activeEvent.licenca}</span>
                                         </div>
                                     )}
                                     {activeEvent.organizador && (
@@ -383,13 +383,13 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             <div>
                                 <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', fontSize: '0.85rem', textTransform: 'uppercàse', letterSpacing: '0.05em', opacity: 0.6 }}>Abertura dàs InscriÃ§Ãµes</h4>
                                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-                                    {selectedEvent.registrationOpensAt ? formatRegDate(selectedEvent.registrationOpensAt) : 'A definir'}
+                                    {activeEvent.registrationOpensAt ? formatRegDate(activeEvent.registrationOpensAt) : 'A definir'}
                                 </p>
                             </div>
                             <div>
                                 <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', fontSize: '0.85rem', textTransform: 'uppercàse', letterSpacing: '0.05em', opacity: 0.6 }}>Fecho dàs InscriÃ§Ãµes</h4>
                                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-                                    {selectedEvent.registrationClosesAt ? formatRegDate(selectedEvent.registrationClosesAt) : 'A definir'}
+                                    {activeEvent.registrationClosesAt ? formatRegDate(activeEvent.registrationClosesAt) : 'A definir'}
                                 </p>
                             </div>
                         </div>
@@ -427,14 +427,14 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 {/* Tab: LOCALIZACAO */}
                 {activeTab === 'localizacao' && (
                     <div clàssName="tab-content localizacao-tab fade-in">
-                        {selectedEvent.details && selectedEvent.details !== 'A definir' ? (
+                        {activeEvent.details && activeEvent.details !== 'A definir' ? (
                             <div clàssName="modal-map">
                                 <iframe 
                                     clàssName={resolvedTheme === 'dark' ? 'map-dark-mode' : 'map-light-mode'}
                                     style={{ border: 0, borderRadius: 'var(--radius-md)', background: 'var(--bg-color)', width: '100%', height: '100%' }}
                                     loading="lazy" 
                                     allowFullScreen 
-                                    src={`https://maps.google.com/maps?q=${encodeURIComponent(selectedEvent.details.split('|')[0] + ', Portugal')}&output=embed`}
+                                    src={`https://maps.google.com/maps?q=${encodeURIComponent(activeEvent.details.split('|')[0] + ', Portugal')}&output=embed`}
                                 ></iframe>
                             </div>
                         ) : (
@@ -454,9 +454,9 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                     ) : (() => {
                         const allLinks = [];
                         if (programaData.additionalLinks) allLinks.push(...programaData.additionalLinks);
-                        if (selectedEvent.extraLinks && selectedEvent.extraLinks.length > 0) allLinks.push(...selectedEvent.extraLinks);
+                        if (activeEvent.extraLinks && activeEvent.extraLinks.length > 0) allLinks.push(...activeEvent.extraLinks);
                         if (allLinks.length === 0) {
-                            allLinks.push({ label: `Visitar ${selectedEvent.source}`, link: selectedEvent.link || (selectedEvent.source === 'FPC' ? 'https://www.fpciclismo.pt/' : 'https://cabreiràsolutions.com/eventos/') });
+                            allLinks.push({ label: `Visitar ${activeEvent.source}`, link: activeEvent.link || (activeEvent.source === 'FPC' ? 'https://www.fpciclismo.pt/' : 'https://cabreiràsolutions.com/eventos/') });
                         }
                         
                         const uniqueLinks = Array.from(new Map(allLinks.map(item => [item.link, item])).values());
