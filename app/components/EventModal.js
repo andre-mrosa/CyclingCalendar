@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Calendar, Star, X, CalendarPlus, Check, Bike, FileText, CreditCard, Trophy, Shield, Users } from 'lucide-react';
+import { Calendar, Star, X, CalendarPlus, Check, Bike, FileText, CreditCard, Trophy, Shield, Users, Globe } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import SmartLogo from './SmartLogo';
 
@@ -276,18 +276,51 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 <p style={{ color: 'var(--text-secondary)' }}>Descrição não disponível.</p>
                             )}
                         </div>
-                        {/* Âmbito e Organização sempre visíveis em baixo */}
-                        <div style={{ flexShrink: 0, marginTop: '1.5rem', display: 'flex', gap: '1rem' }}>
-                            <div style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', flex: 1 }}>
-                                <strong style={{ display: 'block', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>Âmbito</strong>
-                                <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{activeEvent.ambito}</span>
-                            </div>
-                            <div style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', flex: 1 }}>
-                                <strong style={{ display: 'block', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>Organização</strong>
-                                <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                                    {activeEvent.source === 'Cabreira' ? 'Cabreira Solutions' : activeEvent.source}
-                                </span>
-                            </div>
+                        {/* Info Footer consolidado com Âmbito, Organização e Licença */}
+                        <div style={{ flexShrink: 0, marginTop: '1.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                            {activeEvent.ambito && (
+                                <div style={{ 
+                                    padding: '1.25rem', background: 'var(--bg-secondary)', 
+                                    borderRadius: 'var(--radius-md)', border: '1px solid var(--card-border)',
+                                    display: 'flex', flexDirection: 'column', gap: '0.5rem'
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
+                                        <Globe size={16} />
+                                        <span style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Âmbito</span>
+                                    </div>
+                                    <span style={{ color: 'var(--text-primary)', fontSize: '1.05rem', fontWeight: '500' }}>{activeEvent.ambito}</span>
+                                </div>
+                            )}
+                            {activeEvent.licenca && (
+                                <div style={{ 
+                                    padding: '1.25rem', background: 'var(--bg-secondary)', 
+                                    borderRadius: 'var(--radius-md)', border: '1px solid var(--card-border)',
+                                    display: 'flex', flexDirection: 'column', gap: '0.5rem'
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
+                                        <FileText size={16} />
+                                        <span style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Licença</span>
+                                    </div>
+                                    <span style={{ color: 'var(--text-primary)', fontSize: '1.05rem', fontWeight: '500' }}>{activeEvent.licenca}</span>
+                                </div>
+                            )}
+                            {(activeEvent.organizador || activeEvent.source) && (
+                                <div style={{ 
+                                    padding: '1.25rem', background: 'var(--bg-secondary)', 
+                                    borderRadius: 'var(--radius-md)', border: '1px solid var(--card-border)',
+                                    display: 'flex', flexDirection: 'column', gap: '0.5rem'
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
+                                        <Users size={16} />
+                                        <span style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Organização</span>
+                                    </div>
+                                    <span style={{ color: 'var(--text-primary)', fontSize: '1.05rem', fontWeight: '500' }}>
+                                        {activeEvent.organizador 
+                                            ? (activeEvent.organizador === 'U.V.P./F.P.C' ? 'FPC' : activeEvent.organizador) 
+                                            : (activeEvent.source === 'Cabreira' ? 'Cabreira Solutions' : activeEvent.source)}
+                                    </span>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
@@ -324,35 +357,6 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                             ))}
                                         </div>
                                     </div>
-                                </div>
-
-                                <div style={{ flexShrink: 0, marginTop: '1.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-                                    {activeEvent.licenca && (
-                                        <div style={{ 
-                                            padding: '1.25rem', background: 'var(--bg-secondary)', 
-                                            borderRadius: 'var(--radius-md)', border: '1px solid var(--card-border)',
-                                            display: 'flex', flexDirection: 'column', gap: '0.5rem'
-                                        }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
-                                                <FileText size={16} />
-                                                <span style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Licença Exigida</span>
-                                            </div>
-                                            <span style={{ color: 'var(--text-primary)', fontSize: '1.05rem', fontWeight: '500' }}>{activeEvent.licenca}</span>
-                                        </div>
-                                    )}
-                                    {activeEvent.organizador && (
-                                        <div style={{ 
-                                            padding: '1.25rem', background: 'var(--bg-secondary)', 
-                                            borderRadius: 'var(--radius-md)', border: '1px solid var(--card-border)',
-                                            display: 'flex', flexDirection: 'column', gap: '0.5rem'
-                                        }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
-                                                <Users size={16} />
-                                                <span style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Organizador Oficial</span>
-                                            </div>
-                                            <span style={{ color: 'var(--text-primary)', fontSize: '1.05rem', fontWeight: '500' }}>{activeEvent.organizador}</span>
-                                        </div>
-                                    )}
                                 </div>
                             </div>
                         )}
