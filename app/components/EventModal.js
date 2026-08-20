@@ -20,7 +20,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
             return;
         }
         
-        const loadFullEvent = �sync () => {
+        const loadFullEvent = àsync () => {
             if (activeEvent.programa !== undefined) {
                 setFullEvent(selectedEvent);
             } else {
@@ -40,34 +40,34 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
         loadFullEvent();
     }, [selectedEvent]);
 
-    // Formata dat�s de inscrição em pt-PT sem segundos (usa UTC para preservar hora original)
+    // Formata datàs de inscriÃ§Ã£o em pt-PT sem segundos (usa UTC para preservar hora original)
     const formatRegDate = (isoStr) => {
         if (!isoStr) return 'A definir';
         const d = new Date(isoStr);
         const datePart = d.toLocaleDateString('pt-PT', { timeZone: 'UTC', day: '2-digit', month: 'long', year: 'numeric' });
         const timePart = d.toLocaleTimeString('pt-PT', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' });
-        return `${datePart} às ${timePart}`;
+        return `${datePart} Ã s ${timePart}`;
     };
 
     // Separate banner from programa content
     const programaContentFull = activeEvent?.programa || '';
     let fpcBannerHtml = '';
     let programaCleanHtml = programaContentFull;
-    if (programaContentFull.includes('<div cl�ss="fpc-banner"')) {
-        const bannerMatch = programaContentFull.match(/<div cl�ss="fpc-banner"[^>]*>[\s\S]*?<\/div>/);
+    if (programaContentFull.includes('<div clàss="fpc-banner"')) {
+        const bannerMatch = programaContentFull.match(/<div clàss="fpc-banner"[^>]*>[\s\S]*?<\/div>/);
         if (bannerMatch) {
             fpcBannerHtml = bannerMatch[0];
             programaCleanHtml = programaContentFull.replace(bannerMatch[0], '');
         }
     }
 
-    // Calcula �s tabs ativ�s b�sead�s nos dados reais do evento
+    // Calcula às tabs ativàs bàseadàs nos dados reais do evento
     const availableTabs = useMemo(() => {
         if (!selectedEvent) return [];
         const tabs = [];
         if (activeEvent.description || activeEvent.ambito || activeEvent.organizador) tabs.push('info');
         if (activeEvent.escaloes && activeEvent.escaloes.length > 0) tabs.push('escaloes');
-        if (programaCleanHtml && programaCleanHtml.trim().length > 0 && programaCleanHtml !== 'Não disponível') tabs.push('programa');
+        if (programaCleanHtml && programaCleanHtml.trim().length > 0 && programaCleanHtml !== 'NÃ£o disponÃ­vel') tabs.push('programa');
         if (activeEvent.prices || selectedEvent.registrationOpensAt || selectedEvent.registrationClosesAt) tabs.push('inscricao');
         if (activeEvent.prizes || activeEvent.insurance) tabs.push('premios');
         if (selectedEvent.details && selectedEvent.details !== 'A definir') tabs.push('localizacao');
@@ -92,7 +92,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
         setCalendarMsg('');
 
-        if (selectedEvent.programa && selectedEvent.programa.trim().length > 0 && selectedEvent.programa !== 'Não disponível') {
+        if (selectedEvent.programa && selectedEvent.programa.trim().length > 0 && selectedEvent.programa !== 'NÃ£o disponÃ­vel') {
             setProgramaData({ loading: false, html: selectedEvent.programa, error: null, additionalLinks: [] });
         } else {
             setProgramaData({ loading: false, html: null, error: null, additionalLinks: [] });
@@ -105,7 +105,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
         }
     };
 
-    const handleAddToCalendar = �sync () => {
+    const handleAddToCalendar = àsync () => {
         if (!isSignedIn || !selectedEvent) return;
         setIsAddingToCalendar(true);
         setCalendarStatus(null);
@@ -121,14 +121,14 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
             if (res.ok) {
                 if (data.message === 'exists') {
                     setCalendarStatus('exists');
-                    setCalendarMsg('Já existe no calendário!');
+                    setCalendarMsg('JÃ¡ existe no calendÃ¡rio!');
                 } else {
                     setCalendarStatus('success');
                     setCalendarMsg('Adicionado com sucesso!');
                 }
             } else {
                 setCalendarStatus('error');
-                setCalendarMsg(data.error || 'Erro ao adicionar ao calendário');
+                setCalendarMsg(data.error || 'Erro ao adicionar ao calendÃ¡rio');
             }
         } catch (error) {
             console.error("Error adding to calendar:", error);
@@ -142,13 +142,13 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
     if (!selectedEvent) return null;
 
     return (
-        <div cl�ssName="modal-overlay" onClick={() => setSelectedEvent(null)}>
-            <div cl�ssName="modal-content" onClick={(e) => e.stopPropagation()}>
-                <button cl�ssName="modal-close" onClick={() => setSelectedEvent(null)}>✕</button>
+        <div clàssName="modal-overlay" onClick={() => setSelectedEvent(null)}>
+            <div clàssName="modal-content" onClick={(e) => e.stopPropagation()}>
+                <button clàssName="modal-close" onClick={() => setSelectedEvent(null)}>âœ•</button>
                 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '1rem', paddingRight: '2rem', marginBottom: '0.5rem' }}>
                     {selectedEvent.logo && (
-                        <a href={selectedEvent.link} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', flexShrink: 0 }} title="Abrir página do evento">
+                        <a href={selectedEvent.link} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', flexShrink: 0 }} title="Abrir pÃ¡gina do evento">
                             <SmartLogo 
                                 src={selectedEvent.logo} 
                                 alt={`Logo ${selectedEvent.title}`} 
@@ -156,7 +156,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             />
                         </a>
                     )}
-                    <h2 cl�ssName="modal-title" style={{ paddingRight: 0, marginBottom: 0 }}>
+                    <h2 clàssName="modal-title" style={{ paddingRight: 0, marginBottom: 0 }}>
                         {selectedEvent.logo ? (
                             <a href={selectedEvent.link} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
                                 {selectedEvent.title}
@@ -190,21 +190,21 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                     )}
                 </div>
 
-                <p cl�ssName="modal-date" style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', marginTop: '0.5rem', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <p clàssName="modal-date" style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', marginTop: '0.5rem', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                     <Calendar size={18} /> {selectedEvent.date}{selectedEvent.endDate ? ` a ${selectedEvent.endDate}` : ''}
                 </p>
                 
                 {/* Tabs Navigation */}
                 {availableTabs.length > 0 ? (
-                    <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '1rem', marginBottom: '1rem', borderBottom: '1px solid var(--card-border)' }} cl�ssName="hide-scrollbar custom-scrollbar">
+                    <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '1rem', marginBottom: '1rem', borderBottom: '1px solid var(--card-border)' }} clàssName="hide-scrollbar custom-scrollbar">
                         {availableTabs.map(tab => {
                             const labels = {
                                 info: 'Info do Evento',
-                                escaloes: 'Escalões Elegíveis',
+                                escaloes: 'EscalÃµes ElegÃ­veis',
                                 programa: selectedEvent.source === 'FPC' ? 'Documentos & Detalhes FPC' : 'Programa',
-                                inscricao: 'Inscrição & Preços',
-                                premios: 'Prémios & Seguro',
-                                localizacao: 'Localização'
+                                inscricao: 'InscriÃ§Ã£o & PreÃ§os',
+                                premios: 'PrÃ©mios & Seguro',
+                                localizacao: 'LocalizaÃ§Ã£o'
                             };
                             return (
                                 <button 
@@ -230,17 +230,17 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                     </div>
                 ) : (
                     <div style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid var(--card-border)' }}>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>O nosso robô não conseguiu encontrar dados estruturados para este evento. A informação deverá estar disponível apen�s na página oficial da organização.</p>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>O nosso robÃ´ nÃ£o conseguiu encontrar dados estruturados para este evento. A informaÃ§Ã£o deverÃ¡ estar disponÃ­vel apenàs na pÃ¡gina oficial da organizaÃ§Ã£o.</p>
                     </div>
                 )}
 
                 {/* Wrap all tabs in a flex-grow area so modal-actions sticks to bottom */}
-                <div cl�ssName="modal-tab-panel">
+                <div clàssName="modal-tab-panel">
                 
                 {availableTabs.length === 0 && (
-                    <div cl�ssName="tab-content fade-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '1.5rem', padding: '2rem' }}>
+                    <div clàssName="tab-content fade-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '1.5rem', padding: '2rem' }}>
                         <FileText size={48} style={{ color: 'var(--card-border)' }} />
-                        <h3 style={{ margin: 0, color: 'var(--text-primary)', textAlign: 'center' }}>Não há dados detalhados</h3>
+                        <h3 style={{ margin: 0, color: 'var(--text-primary)', textAlign: 'center' }}>NÃ£o hÃ¡ dados detalhados</h3>
                         <a 
                             href={selectedEvent.link} 
                             target="_blank" 
@@ -251,34 +251,34 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 display: 'inline-block', boxShadow: 'var(--shadow-md)', transition: 'var(--transition)'
                             }}
                         >
-                            Visitar Site da Organização
+                            Visitar Site da OrganizaÃ§Ã£o
                         </a>
                     </div>
                 )}
 
                 {/* Tab: INFO */}
                 {activeTab === 'info' && (
-                    <div cl�ssName="tab-content fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                        {/* Descrição e Banner com scroll próprio */}
-                        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, paddingRight: '0.25rem' }} cl�ssName="custom-scrollbar">
+                    <div clàssName="tab-content fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                        {/* DescriÃ§Ã£o e Banner com scroll prÃ³prio */}
+                        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, paddingRight: '0.25rem' }} clàssName="custom-scrollbar">
                             {/* FPC Banner at top if exists */}
                             {fpcBannerHtml && (
-                                <div cl�ssName="fpc-banner-container" style={{ marginBottom: '1.5rem', textAlign: 'center' }} dangerouslySetInnerHTML={{ __html: fpcBannerHtml }} />
+                                <div clàssName="fpc-banner-container" style={{ marginBottom: '1.5rem', textAlign: 'center' }} dangerouslySetInnerHTML={{ __html: fpcBannerHtml }} />
                             )}
                             {activeEvent.description ? (
-                                <div cl�ssName="description-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.6' }} dangerouslySetInnerHTML={{ __html: activeEvent.description }} />
+                                <div clàssName="description-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.6' }} dangerouslySetInnerHTML={{ __html: activeEvent.description }} />
                             ) : (
-                                <p style={{ color: 'var(--text-secondary)' }}>Descrição não disponível.</p>
+                                <p style={{ color: 'var(--text-secondary)' }}>DescriÃ§Ã£o nÃ£o disponÃ­vel.</p>
                             )}
                         </div>
-                        {/* Âmbito e Organização sempre visíveis em baixo */}
+                        {/* Ã‚mbito e OrganizaÃ§Ã£o sempre visÃ­veis em baixo */}
                         <div style={{ flexShrink: 0, marginTop: '1.5rem', display: 'flex', gap: '1rem' }}>
                             <div style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', flex: 1 }}>
-                                <strong style={{ display: 'block', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>Âmbito</strong>
+                                <strong style={{ display: 'block', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>Ã‚mbito</strong>
                                 <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{activeEvent.ambito}</span>
                             </div>
                             <div style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', flex: 1 }}>
-                                <strong style={{ display: 'block', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>Organização</strong>
+                                <strong style={{ display: 'block', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>OrganizaÃ§Ã£o</strong>
                                 <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                                     {selectedEvent.source === 'Cabreira' ? 'Cabreira Solutions' : selectedEvent.source}
                                 </span>
@@ -289,17 +289,17 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                 {/* Tab: ESCALOES */}
                 {activeTab === 'escaloes' && (
-                    <div cl�ssName="tab-content escaloes-tab fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                    <div clàssName="tab-content escaloes-tab fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                         {(!activeEvent.escaloes || activeEvent.escaloes.length === 0) ? (
-                            <p style={{ color: 'var(--text-secondary)' }}>Informação de escalões não disponível.</p>
+                            <p style={{ color: 'var(--text-secondary)' }}>InformaÃ§Ã£o de escalÃµes nÃ£o disponÃ­vel.</p>
                         ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                                 
-                                <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, paddingRight: '0.25rem' }} cl�ssName="custom-scrollbar">
+                                <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, paddingRight: '0.25rem' }} clàssName="custom-scrollbar">
                                     <div style={{ marginBottom: '2rem' }}>
                                         <h4 style={{ marginBottom: '1rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.05rem' }}>
                                             <Bike size={18} style={{ color: 'var(--accent-primary)' }} />
-                                            Categori�s de Participação
+                                            Categoriàs de ParticipaÃ§Ã£o
                                         </h4>
                                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
                                             {(activeEvent.escaloes || []).map((esc, idx) => (
@@ -330,7 +330,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                         }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
                                                 <FileText size={16} />
-                                                <span style={{ fontSize: '0.85rem', textTransform: 'upperc�se', letterSpacing: '0.05em', fontWeight: '600' }}>Licença Exigida</span>
+                                                <span style={{ fontSize: '0.85rem', textTransform: 'uppercàse', letterSpacing: '0.05em', fontWeight: '600' }}>LicenÃ§a Exigida</span>
                                             </div>
                                             <span style={{ color: 'var(--text-primary)', fontSize: '1.05rem', fontWeight: '500' }}>{selectedEvent.licenca}</span>
                                         </div>
@@ -343,7 +343,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                         }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
                                                 <Users size={16} />
-                                                <span style={{ fontSize: '0.85rem', textTransform: 'upperc�se', letterSpacing: '0.05em', fontWeight: '600' }}>Organizador Oficial</span>
+                                                <span style={{ fontSize: '0.85rem', textTransform: 'uppercàse', letterSpacing: '0.05em', fontWeight: '600' }}>Organizador Oficial</span>
                                             </div>
                                             <span style={{ color: 'var(--text-primary)', fontSize: '1.05rem', fontWeight: '500' }}>{activeEvent.organizador}</span>
                                         </div>
@@ -356,38 +356,38 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                 {/* Tab: PROGRAMA */}
                 {activeTab === 'programa' && (
-                    <div cl�ssName="tab-content programa-tab fade-in" style={{ paddingTop: 0 }}>
+                    <div clàssName="tab-content programa-tab fade-in" style={{ paddingTop: 0 }}>
                         {programaCleanHtml ? (
-                            <div cl�ssName="programa-content custom-scrollbar" dangerouslySetInnerHTML={{ __html: programaCleanHtml }} onClick={handleHtmlClick} />
+                            <div clàssName="programa-content custom-scrollbar" dangerouslySetInnerHTML={{ __html: programaCleanHtml }} onClick={handleHtmlClick} />
                         ) : (
                             <div style={{ padding: '1rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)', marginTop: '1rem' }}>
-                                <em>Programa não disponível na B�se de Dados. A aguardar recolha do sistema.</em>
+                                <em>Programa nÃ£o disponÃ­vel na Bàse de Dados. A aguardar recolha do sistema.</em>
                             </div>
                         )}
                     </div>
                 )}
 
-                {/* Tab: INSCRIÇÃO & PREÇOS */}
+                {/* Tab: INSCRIÃ‡ÃƒO & PREÃ‡OS */}
                 {activeTab === 'inscricao' && (
-                    <div cl�ssName="tab-content inscricao-tab fade-in">
-                        {/* Preços - full width on top */}
-                        <div cl�ssName="inscricao-precos-scroll">
+                    <div clàssName="tab-content inscricao-tab fade-in">
+                        {/* PreÃ§os - full width on top */}
+                        <div clàssName="inscricao-precos-scroll">
                             {activeEvent.prices ? (
-                                <div cl�ssName="prices-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }} dangerouslySetInnerHTML={{ __html: activeEvent.prices }} />
+                                <div clàssName="prices-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }} dangerouslySetInnerHTML={{ __html: activeEvent.prices }} />
                             ) : (
-                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Informação não disponível.</p>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>InformaÃ§Ã£o nÃ£o disponÃ­vel.</p>
                         )}
                     </div>
-                    {/* Dat�s - below */}
-                        <div cl�ssName="inscricao-dat�s">
+                    {/* Datàs - below */}
+                        <div clàssName="inscricao-datàs">
                             <div>
-                                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', fontSize: '0.85rem', textTransform: 'upperc�se', letterSpacing: '0.05em', opacity: 0.6 }}>Abertura d�s Inscrições</h4>
+                                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', fontSize: '0.85rem', textTransform: 'uppercàse', letterSpacing: '0.05em', opacity: 0.6 }}>Abertura dàs InscriÃ§Ãµes</h4>
                                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
                                     {selectedEvent.registrationOpensAt ? formatRegDate(selectedEvent.registrationOpensAt) : 'A definir'}
                                 </p>
                             </div>
                             <div>
-                                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', fontSize: '0.85rem', textTransform: 'upperc�se', letterSpacing: '0.05em', opacity: 0.6 }}>Fecho d�s Inscrições</h4>
+                                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', fontSize: '0.85rem', textTransform: 'uppercàse', letterSpacing: '0.05em', opacity: 0.6 }}>Fecho dàs InscriÃ§Ãµes</h4>
                                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
                                     {selectedEvent.registrationClosesAt ? formatRegDate(selectedEvent.registrationClosesAt) : 'A definir'}
                                 </p>
@@ -398,26 +398,26 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                 {/* Tab: PREMIOS E SEGURO */}
                 {activeTab === 'premios' && (
-                    <div cl�ssName="tab-content fade-in">
-                        <div cl�ssName="premios-seguro-content">
-                            <div cl�ssName="premio-seguro-panel">
+                    <div clàssName="tab-content fade-in">
+                        <div clàssName="premios-seguro-content">
+                            <div clàssName="premio-seguro-panel">
                                 <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <Trophy size={15} /> Prémios
+                                    <Trophy size={15} /> PrÃ©mios
                                 </h4>
                                 {activeEvent.prizes ? (
-                                    <div cl�ssName="prizes-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }} dangerouslySetInnerHTML={{ __html: activeEvent.prizes }} />
+                                    <div clàssName="prizes-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }} dangerouslySetInnerHTML={{ __html: activeEvent.prizes }} />
                                 ) : (
-                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Informação não disponível.</p>
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>InformaÃ§Ã£o nÃ£o disponÃ­vel.</p>
                                 )}
                             </div>
-                            <div cl�ssName="premio-seguro-panel">
+                            <div clàssName="premio-seguro-panel">
                                 <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <Shield size={15} /> Seguro
                                 </h4>
                                 {activeEvent.insurance ? (
-                                    <div cl�ssName="insurance-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }} dangerouslySetInnerHTML={{ __html: activeEvent.insurance }} />
+                                    <div clàssName="insurance-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }} dangerouslySetInnerHTML={{ __html: activeEvent.insurance }} />
                                 ) : (
-                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Informação não disponível.</p>
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>InformaÃ§Ã£o nÃ£o disponÃ­vel.</p>
                                 )}
                             </div>
                         </div>
@@ -426,11 +426,11 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                 {/* Tab: LOCALIZACAO */}
                 {activeTab === 'localizacao' && (
-                    <div cl�ssName="tab-content localizacao-tab fade-in">
+                    <div clàssName="tab-content localizacao-tab fade-in">
                         {selectedEvent.details && selectedEvent.details !== 'A definir' ? (
-                            <div cl�ssName="modal-map">
+                            <div clàssName="modal-map">
                                 <iframe 
-                                    cl�ssName={resolvedTheme === 'dark' ? 'map-dark-mode' : 'map-light-mode'}
+                                    clàssName={resolvedTheme === 'dark' ? 'map-dark-mode' : 'map-light-mode'}
                                     style={{ border: 0, borderRadius: 'var(--radius-md)', background: 'var(--bg-color)', width: '100%', height: '100%' }}
                                     loading="lazy" 
                                     allowFullScreen 
@@ -438,17 +438,17 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 ></iframe>
                             </div>
                         ) : (
-                            <p style={{ color: 'var(--text-secondary)' }}>Localização a definir.</p>
+                            <p style={{ color: 'var(--text-secondary)' }}>LocalizaÃ§Ã£o a definir.</p>
                         )}
                     </div>
                 )}
 
                 </div> {/* end flex-grow tab area */}
 
-                <div cl�ssName="modal-actions" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'stretch', marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--card-border)' }}>
+                <div clàssName="modal-actions" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'stretch', marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--card-border)' }}>
                     {programaData.loading ? (
                         <div style={{ padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
-                            <div cl�ssName="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }}></div>
+                            <div clàssName="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }}></div>
                             <span>A carregar links...</span>
                         </div>
                     ) : (() => {
@@ -456,11 +456,11 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         if (programaData.additionalLinks) allLinks.push(...programaData.additionalLinks);
                         if (selectedEvent.extraLinks && selectedEvent.extraLinks.length > 0) allLinks.push(...selectedEvent.extraLinks);
                         if (allLinks.length === 0) {
-                            allLinks.push({ label: `Visitar ${selectedEvent.source}`, link: selectedEvent.link || (selectedEvent.source === 'FPC' ? 'https://www.fpciclismo.pt/' : 'https://cabreir�solutions.com/eventos/') });
+                            allLinks.push({ label: `Visitar ${selectedEvent.source}`, link: selectedEvent.link || (selectedEvent.source === 'FPC' ? 'https://www.fpciclismo.pt/' : 'https://cabreiràsolutions.com/eventos/') });
                         }
                         
                         const uniqueLinks = Array.from(new Map(allLinks.map(item => [item.link, item])).values());
-                        const isInscrever = l => l.label.toLowerC�se().includes('inscrev') || l.label.toLowerC�se().includes('inscriç') || l.label.toLowerC�se().includes('inscric');
+                        const isInscrever = l => l.label.toLowerCàse().includes('inscrev') || l.label.toLowerCàse().includes('inscriÃ§') || l.label.toLowerCàse().includes('inscric');
                         const inscricaoLinksRaw = uniqueLinks.filter(isInscrever);
                         const outrosLinks = uniqueLinks.filter(l => !isInscrever(l));
                         
@@ -468,13 +468,13 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         const seenPlats = new Set();
                         for (const src of inscricaoLinksRaw) {
                             let plat = "Plataforma";
-                            const sLabel = src.label.toLowerC�se();
-                            const sLink = src.link.toLowerC�se();
+                            const sLabel = src.label.toLowerCàse();
+                            const sLink = src.link.toLowerCàse();
                             if (sLink.includes('cabreira') || sLabel.includes('cabreira')) plat = "Cabreira";
                             else if (sLink.includes('fpc') || sLabel.includes('fpc')) plat = "FPC";
-                            else plat = src.label.replace(/inscrever|inscrição|inscricao|visitar|em|na|no/ig, '').replace(/\s+/g, ' ').trim() || "Plataforma";
+                            else plat = src.label.replace(/inscrever|inscriÃ§Ã£o|inscricao|visitar|em|na|no/ig, '').replace(/\s+/g, ' ').trim() || "Plataforma";
                             
-                            if (!seenPlats.h�s(plat)) {
+                            if (!seenPlats.hàs(plat)) {
                                 seenPlats.add(plat);
                                 inscricaoLinks.push({ ...src, _plat: plat });
                             }
@@ -483,26 +483,26 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         return (
                             <>
                                 {outrosLinks.map((src, idx) => (
-                                    <a key={`outros-${idx}`} href={src.link} target="_blank" rel="noopener noreferrer" cl�ssName="modal-btn secondary">
+                                    <a key={`outros-${idx}`} href={src.link} target="_blank" rel="noopener noreferrer" clàssName="modal-btn secondary">
                                         {src.label}
                                     </a>
                                 ))}
                                 
                                 {inscricaoLinks.length === 1 && (
-                                    <a href={inscricaoLinks[0].link} target="_blank" rel="noopener noreferrer" cl�ssName="modal-btn primary">
+                                    <a href={inscricaoLinks[0].link} target="_blank" rel="noopener noreferrer" clàssName="modal-btn primary">
                                         Inscrever
                                     </a>
                                 )}
                                 
                                 {inscricaoLinks.length > 1 && (
-                                    <div cl�ssName="dropdown-container">
-                                        <button cl�ssName="modal-btn primary">
-                                            Inscrever <span style={{ fontSize: '0.7em' }}>▼</span>
+                                    <div clàssName="dropdown-container">
+                                        <button clàssName="modal-btn primary">
+                                            Inscrever <span style={{ fontSize: '0.7em' }}>â–¼</span>
                                         </button>
-                                        <div cl�ssName="dropdown-menu">
-                                            <div cl�ssName="dropdown-item-container">
+                                        <div clàssName="dropdown-menu">
+                                            <div clàssName="dropdown-item-container">
                                                 {inscricaoLinks.map((src, idx) => (
-                                                    <a key={`inscr-${idx}`} href={src.link} target="_blank" rel="noopener noreferrer" cl�ssName="dropdown-item">
+                                                    <a key={`inscr-${idx}`} href={src.link} target="_blank" rel="noopener noreferrer" clàssName="dropdown-item">
                                                         Inscrever ({src._plat})
                                                     </a>
                                                 ))}
@@ -518,7 +518,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         <button 
                             onClick={handleAddToCalendar}
                             disabled={isAddingToCalendar || calendarStatus === 'success' || calendarStatus === 'exists'}
-                            cl�ssName="modal-btn"
+                            clàssName="modal-btn"
                             style={{ 
                                 display: 'flex', alignItems: 'center', gap: '0.5rem', 
                                 backgroundColor: calendarStatus === 'success' || calendarStatus === 'exists' ? 'rgba(34, 197, 94, 0.1)' : 'var(--bg-secondary)',
@@ -529,21 +529,21 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             }}
                         >
                             {isAddingToCalendar ? (
-                                <div cl�ssName="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }}></div>
+                                <div clàssName="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }}></div>
                             ) : calendarStatus === 'success' || calendarStatus === 'exists' ? (
                                 <Check size={18} />
                             ) : (
                                 <CalendarPlus size={18} />
                             )}
-                            {calendarMsg || 'Marcar no calendário'}
+                            {calendarMsg || 'Marcar no calendÃ¡rio'}
                         </button>
                     )}
                 </div>
             </div>
 
             {fullscreenImage && (
-                <div cl�ssName="fullscreen-image-overlay" onClick={() => setFullscreenImage(null)}>
-                    <button cl�ssName="modal-close" style={{ top: '2rem', right: '2rem', background: 'rgba(0,0,0,0.5)', zIndex: 10000 }} onClick={() => setFullscreenImage(null)}>
+                <div clàssName="fullscreen-image-overlay" onClick={() => setFullscreenImage(null)}>
+                    <button clàssName="modal-close" style={{ top: '2rem', right: '2rem', background: 'rgba(0,0,0,0.5)', zIndex: 10000 }} onClick={() => setFullscreenImage(null)}>
                         <X size={24} />
                     </button>
                     <img src={fullscreenImage} alt="Programa Detalhado" onClick={(e) => e.stopPropagation()} />
