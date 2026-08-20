@@ -40,7 +40,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
         loadFullEvent();
     }, [selectedEvent]);
 
-    // Formata datàs de inscriÃ§Ã£o em pt-PT sem segundos (usa UTC para preservar hora original)
+    // Formata datas de inscriÃ§Ã£o em pt-PT sem segundos (usa UTC para preservar hora original)
     const formatRegDate = (isoStr) => {
         if (!isoStr) return 'A definir';
         const d = new Date(isoStr);
@@ -53,15 +53,15 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
     const programaContentFull = activeEvent?.programa || '';
     let fpcBannerHtml = '';
     let programaCleanHtml = programaContentFull;
-    if (programaContentFull.includes('<div clàss="fpc-banner"')) {
-        const bannerMatch = programaContentFull.match(/<div clàss="fpc-banner"[^>]*>[\s\S]*?<\/div>/);
+    if (programaContentFull.includes('<div class="fpc-banner"')) {
+        const bannerMatch = programaContentFull.match(/<div class="fpc-banner"[^>]*>[\s\S]*?<\/div>/);
         if (bannerMatch) {
             fpcBannerHtml = bannerMatch[0];
             programaCleanHtml = programaContentFull.replace(bannerMatch[0], '');
         }
     }
 
-    // Calcula às tabs ativàs bàseadàs nos dados reais do evento
+    // Calcula as tabs ativas baseadas nos dados reais do evento
     const availableTabs = useMemo(() => {
         if (!selectedEvent) return [];
         const tabs = [];
@@ -142,9 +142,9 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
     if (!selectedEvent) return null;
 
     return (
-        <div clàssName="modal-overlay" onClick={() => setSelectedEvent(null)}>
-            <div clàssName="modal-content" onClick={(e) => e.stopPropagation()}>
-                <button clàssName="modal-close" onClick={() => setSelectedEvent(null)}>âœ•</button>
+        <div className="modal-overlay" onClick={() => setSelectedEvent(null)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <button className="modal-close" onClick={() => setSelectedEvent(null)}>âœ•</button>
                 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '1rem', paddingRight: '2rem', marginBottom: '0.5rem' }}>
                     {activeEvent.logo && (
@@ -156,7 +156,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             />
                         </a>
                     )}
-                    <h2 clàssName="modal-title" style={{ paddingRight: 0, marginBottom: 0 }}>
+                    <h2 className="modal-title" style={{ paddingRight: 0, marginBottom: 0 }}>
                         {activeEvent.logo ? (
                             <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
                                 {activeEvent.title}
@@ -190,13 +190,13 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                     )}
                 </div>
 
-                <p clàssName="modal-date" style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', marginTop: '0.5rem', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <p className="modal-date" style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', marginTop: '0.5rem', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                     <Calendar size={18} /> {activeEvent.date}{activeEvent.endDate ? ` a ${activeEvent.endDate}` : ''}
                 </p>
                 
                 {/* Tabs Navigation */}
                 {availableTabs.length > 0 ? (
-                    <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '1rem', marginBottom: '1rem', borderBottom: '1px solid var(--card-border)' }} clàssName="hide-scrollbar custom-scrollbar">
+                    <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '1rem', marginBottom: '1rem', borderBottom: '1px solid var(--card-border)' }} className="hide-scrollbar custom-scrollbar">
                         {availableTabs.map(tab => {
                             const labels = {
                                 info: 'Info do Evento',
@@ -230,15 +230,15 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                     </div>
                 ) : (
                     <div style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid var(--card-border)' }}>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>O nosso robÃ´ nÃ£o conseguiu encontrar dados estruturados para este evento. A informaÃ§Ã£o deverÃ¡ estar disponÃ­vel apenàs na pÃ¡gina oficial da organizaÃ§Ã£o.</p>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>O nosso robÃ´ nÃ£o conseguiu encontrar dados estruturados para este evento. A informaÃ§Ã£o deverÃ¡ estar disponÃ­vel apenas na pÃ¡gina oficial da organizaÃ§Ã£o.</p>
                     </div>
                 )}
 
                 {/* Wrap all tabs in a flex-grow area so modal-actions sticks to bottom */}
-                <div clàssName="modal-tab-panel">
+                <div className="modal-tab-panel">
                 
                 {availableTabs.length === 0 && (
-                    <div clàssName="tab-content fade-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '1.5rem', padding: '2rem' }}>
+                    <div className="tab-content fade-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '1.5rem', padding: '2rem' }}>
                         <FileText size={48} style={{ color: 'var(--card-border)' }} />
                         <h3 style={{ margin: 0, color: 'var(--text-primary)', textAlign: 'center' }}>NÃ£o hÃ¡ dados detalhados</h3>
                         <a 
@@ -258,15 +258,15 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                 {/* Tab: INFO */}
                 {activeTab === 'info' && (
-                    <div clàssName="tab-content fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                    <div className="tab-content fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                         {/* DescriÃ§Ã£o e Banner com scroll prÃ³prio */}
-                        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, paddingRight: '0.25rem' }} clàssName="custom-scrollbar">
+                        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, paddingRight: '0.25rem' }} className="custom-scrollbar">
                             {/* FPC Banner at top if exists */}
                             {fpcBannerHtml && (
-                                <div clàssName="fpc-banner-container" style={{ marginBottom: '1.5rem', textAlign: 'center' }} dangerouslySetInnerHTML={{ __html: fpcBannerHtml }} />
+                                <div className="fpc-banner-container" style={{ marginBottom: '1.5rem', textAlign: 'center' }} dangerouslySetInnerHTML={{ __html: fpcBannerHtml }} />
                             )}
                             {activeEvent.description ? (
-                                <div clàssName="description-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.6' }} dangerouslySetInnerHTML={{ __html: activeEvent.description }} />
+                                <div className="description-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.6' }} dangerouslySetInnerHTML={{ __html: activeEvent.description }} />
                             ) : (
                                 <p style={{ color: 'var(--text-secondary)' }}>DescriÃ§Ã£o nÃ£o disponÃ­vel.</p>
                             )}
@@ -289,17 +289,17 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                 {/* Tab: ESCALOES */}
                 {activeTab === 'escaloes' && (
-                    <div clàssName="tab-content escaloes-tab fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                    <div className="tab-content escaloes-tab fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                         {(!selectedEvent.escaloes || activeEvent.escaloes.length === 0) ? (
                             <p style={{ color: 'var(--text-secondary)' }}>InformaÃ§Ã£o de escalÃµes nÃ£o disponÃ­vel.</p>
                         ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                                 
-                                <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, paddingRight: '0.25rem' }} clàssName="custom-scrollbar">
+                                <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, paddingRight: '0.25rem' }} className="custom-scrollbar">
                                     <div style={{ marginBottom: '2rem' }}>
                                         <h4 style={{ marginBottom: '1rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.05rem' }}>
                                             <Bike size={18} style={{ color: 'var(--accent-primary)' }} />
-                                            Categoriàs de ParticipaÃ§Ã£o
+                                            Categorias de ParticipaÃ§Ã£o
                                         </h4>
                                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
                                             {(activeEvent.escaloes || []).map((esc, idx) => (
@@ -330,7 +330,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                         }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
                                                 <FileText size={16} />
-                                                <span style={{ fontSize: '0.85rem', textTransform: 'uppercàse', letterSpacing: '0.05em', fontWeight: '600' }}>LicenÃ§a Exigida</span>
+                                                <span style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>LicenÃ§a Exigida</span>
                                             </div>
                                             <span style={{ color: 'var(--text-primary)', fontSize: '1.05rem', fontWeight: '500' }}>{activeEvent.licenca}</span>
                                         </div>
@@ -343,7 +343,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                         }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
                                                 <Users size={16} />
-                                                <span style={{ fontSize: '0.85rem', textTransform: 'uppercàse', letterSpacing: '0.05em', fontWeight: '600' }}>Organizador Oficial</span>
+                                                <span style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Organizador Oficial</span>
                                             </div>
                                             <span style={{ color: 'var(--text-primary)', fontSize: '1.05rem', fontWeight: '500' }}>{activeEvent.organizador}</span>
                                         </div>
@@ -356,12 +356,12 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                 {/* Tab: PROGRAMA */}
                 {activeTab === 'programa' && (
-                    <div clàssName="tab-content programa-tab fade-in" style={{ paddingTop: 0 }}>
+                    <div className="tab-content programa-tab fade-in" style={{ paddingTop: 0 }}>
                         {programaCleanHtml ? (
-                            <div clàssName="programa-content custom-scrollbar" dangerouslySetInnerHTML={{ __html: programaCleanHtml }} onClick={handleHtmlClick} />
+                            <div className="programa-content custom-scrollbar" dangerouslySetInnerHTML={{ __html: programaCleanHtml }} onClick={handleHtmlClick} />
                         ) : (
                             <div style={{ padding: '1rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)', marginTop: '1rem' }}>
-                                <em>Programa nÃ£o disponÃ­vel na Bàse de Dados. A aguardar recolha do sistema.</em>
+                                <em>Programa nÃ£o disponÃ­vel na Base de Dados. A aguardar recolha do sistema.</em>
                             </div>
                         )}
                     </div>
@@ -369,25 +369,25 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                 {/* Tab: INSCRIÃ‡ÃƒO & PREÃ‡OS */}
                 {activeTab === 'inscricao' && (
-                    <div clàssName="tab-content inscricao-tab fade-in">
+                    <div className="tab-content inscricao-tab fade-in">
                         {/* PreÃ§os - full width on top */}
-                        <div clàssName="inscricao-precos-scroll">
+                        <div className="inscricao-precos-scroll">
                             {activeEvent.prices ? (
-                                <div clàssName="prices-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }} dangerouslySetInnerHTML={{ __html: activeEvent.prices }} />
+                                <div className="prices-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }} dangerouslySetInnerHTML={{ __html: activeEvent.prices }} />
                             ) : (
                                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>InformaÃ§Ã£o nÃ£o disponÃ­vel.</p>
                         )}
                     </div>
-                    {/* Datàs - below */}
-                        <div clàssName="inscricao-datàs">
+                    {/* Datas - below */}
+                        <div className="inscricao-datas">
                             <div>
-                                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', fontSize: '0.85rem', textTransform: 'uppercàse', letterSpacing: '0.05em', opacity: 0.6 }}>Abertura dàs InscriÃ§Ãµes</h4>
+                                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.6 }}>Abertura das InscriÃ§Ãµes</h4>
                                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
                                     {activeEvent.registrationOpensAt ? formatRegDate(activeEvent.registrationOpensAt) : 'A definir'}
                                 </p>
                             </div>
                             <div>
-                                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', fontSize: '0.85rem', textTransform: 'uppercàse', letterSpacing: '0.05em', opacity: 0.6 }}>Fecho dàs InscriÃ§Ãµes</h4>
+                                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.6 }}>Fecho das InscriÃ§Ãµes</h4>
                                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
                                     {activeEvent.registrationClosesAt ? formatRegDate(activeEvent.registrationClosesAt) : 'A definir'}
                                 </p>
@@ -398,24 +398,24 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                 {/* Tab: PREMIOS E SEGURO */}
                 {activeTab === 'premios' && (
-                    <div clàssName="tab-content fade-in">
-                        <div clàssName="premios-seguro-content">
-                            <div clàssName="premio-seguro-panel">
+                    <div className="tab-content fade-in">
+                        <div className="premios-seguro-content">
+                            <div className="premio-seguro-panel">
                                 <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <Trophy size={15} /> PrÃ©mios
                                 </h4>
                                 {activeEvent.prizes ? (
-                                    <div clàssName="prizes-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }} dangerouslySetInnerHTML={{ __html: activeEvent.prizes }} />
+                                    <div className="prizes-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }} dangerouslySetInnerHTML={{ __html: activeEvent.prizes }} />
                                 ) : (
                                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>InformaÃ§Ã£o nÃ£o disponÃ­vel.</p>
                                 )}
                             </div>
-                            <div clàssName="premio-seguro-panel">
+                            <div className="premio-seguro-panel">
                                 <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <Shield size={15} /> Seguro
                                 </h4>
                                 {activeEvent.insurance ? (
-                                    <div clàssName="insurance-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }} dangerouslySetInnerHTML={{ __html: activeEvent.insurance }} />
+                                    <div className="insurance-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }} dangerouslySetInnerHTML={{ __html: activeEvent.insurance }} />
                                 ) : (
                                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>InformaÃ§Ã£o nÃ£o disponÃ­vel.</p>
                                 )}
@@ -426,11 +426,11 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                 {/* Tab: LOCALIZACAO */}
                 {activeTab === 'localizacao' && (
-                    <div clàssName="tab-content localizacao-tab fade-in">
+                    <div className="tab-content localizacao-tab fade-in">
                         {activeEvent.details && activeEvent.details !== 'A definir' ? (
-                            <div clàssName="modal-map">
+                            <div className="modal-map">
                                 <iframe 
-                                    clàssName={resolvedTheme === 'dark' ? 'map-dark-mode' : 'map-light-mode'}
+                                    className={resolvedTheme === 'dark' ? 'map-dark-mode' : 'map-light-mode'}
                                     style={{ border: 0, borderRadius: 'var(--radius-md)', background: 'var(--bg-color)', width: '100%', height: '100%' }}
                                     loading="lazy" 
                                     allowFullScreen 
@@ -445,10 +445,10 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                 </div> {/* end flex-grow tab area */}
 
-                <div clàssName="modal-actions" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'stretch', marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--card-border)' }}>
+                <div className="modal-actions" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'stretch', marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--card-border)' }}>
                     {programaData.loading ? (
                         <div style={{ padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
-                            <div clàssName="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }}></div>
+                            <div className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }}></div>
                             <span>A carregar links...</span>
                         </div>
                     ) : (() => {
@@ -456,11 +456,11 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         if (programaData.additionalLinks) allLinks.push(...programaData.additionalLinks);
                         if (activeEvent.extraLinks && activeEvent.extraLinks.length > 0) allLinks.push(...activeEvent.extraLinks);
                         if (allLinks.length === 0) {
-                            allLinks.push({ label: `Visitar ${activeEvent.source}`, link: activeEvent.link || (activeEvent.source === 'FPC' ? 'https://www.fpciclismo.pt/' : 'https://cabreiràsolutions.com/eventos/') });
+                            allLinks.push({ label: `Visitar ${activeEvent.source}`, link: activeEvent.link || (activeEvent.source === 'FPC' ? 'https://www.fpciclismo.pt/' : 'https://cabreirasolutions.com/eventos/') });
                         }
                         
                         const uniqueLinks = Array.from(new Map(allLinks.map(item => [item.link, item])).values());
-                        const isInscrever = l => l.label.toLowerCàse().includes('inscrev') || l.label.toLowerCàse().includes('inscriÃ§') || l.label.toLowerCàse().includes('inscric');
+                        const isInscrever = l => l.label.toLowerCase().includes('inscrev') || l.label.toLowerCase().includes('inscriÃ§') || l.label.toLowerCase().includes('inscric');
                         const inscricaoLinksRaw = uniqueLinks.filter(isInscrever);
                         const outrosLinks = uniqueLinks.filter(l => !isInscrever(l));
                         
@@ -468,13 +468,13 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         const seenPlats = new Set();
                         for (const src of inscricaoLinksRaw) {
                             let plat = "Plataforma";
-                            const sLabel = src.label.toLowerCàse();
-                            const sLink = src.link.toLowerCàse();
+                            const sLabel = src.label.toLowerCase();
+                            const sLink = src.link.toLowerCase();
                             if (sLink.includes('cabreira') || sLabel.includes('cabreira')) plat = "Cabreira";
                             else if (sLink.includes('fpc') || sLabel.includes('fpc')) plat = "FPC";
                             else plat = src.label.replace(/inscrever|inscriÃ§Ã£o|inscricao|visitar|em|na|no/ig, '').replace(/\s+/g, ' ').trim() || "Plataforma";
                             
-                            if (!seenPlats.hàs(plat)) {
+                            if (!seenPlats.has(plat)) {
                                 seenPlats.add(plat);
                                 inscricaoLinks.push({ ...src, _plat: plat });
                             }
@@ -483,26 +483,26 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         return (
                             <>
                                 {outrosLinks.map((src, idx) => (
-                                    <a key={`outros-${idx}`} href={src.link} target="_blank" rel="noopener noreferrer" clàssName="modal-btn secondary">
+                                    <a key={`outros-${idx}`} href={src.link} target="_blank" rel="noopener noreferrer" className="modal-btn secondary">
                                         {src.label}
                                     </a>
                                 ))}
                                 
                                 {inscricaoLinks.length === 1 && (
-                                    <a href={inscricaoLinks[0].link} target="_blank" rel="noopener noreferrer" clàssName="modal-btn primary">
+                                    <a href={inscricaoLinks[0].link} target="_blank" rel="noopener noreferrer" className="modal-btn primary">
                                         Inscrever
                                     </a>
                                 )}
                                 
                                 {inscricaoLinks.length > 1 && (
-                                    <div clàssName="dropdown-container">
-                                        <button clàssName="modal-btn primary">
+                                    <div className="dropdown-container">
+                                        <button className="modal-btn primary">
                                             Inscrever <span style={{ fontSize: '0.7em' }}>â–¼</span>
                                         </button>
-                                        <div clàssName="dropdown-menu">
-                                            <div clàssName="dropdown-item-container">
+                                        <div className="dropdown-menu">
+                                            <div className="dropdown-item-container">
                                                 {inscricaoLinks.map((src, idx) => (
-                                                    <a key={`inscr-${idx}`} href={src.link} target="_blank" rel="noopener noreferrer" clàssName="dropdown-item">
+                                                    <a key={`inscr-${idx}`} href={src.link} target="_blank" rel="noopener noreferrer" className="dropdown-item">
                                                         Inscrever ({src._plat})
                                                     </a>
                                                 ))}
@@ -518,7 +518,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         <button 
                             onClick={handleAddToCalendar}
                             disabled={isAddingToCalendar || calendarStatus === 'success' || calendarStatus === 'exists'}
-                            clàssName="modal-btn"
+                            className="modal-btn"
                             style={{ 
                                 display: 'flex', alignItems: 'center', gap: '0.5rem', 
                                 backgroundColor: calendarStatus === 'success' || calendarStatus === 'exists' ? 'rgba(34, 197, 94, 0.1)' : 'var(--bg-secondary)',
@@ -529,7 +529,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             }}
                         >
                             {isAddingToCalendar ? (
-                                <div clàssName="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }}></div>
+                                <div className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }}></div>
                             ) : calendarStatus === 'success' || calendarStatus === 'exists' ? (
                                 <Check size={18} />
                             ) : (
@@ -542,8 +542,8 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
             </div>
 
             {fullscreenImage && (
-                <div clàssName="fullscreen-image-overlay" onClick={() => setFullscreenImage(null)}>
-                    <button clàssName="modal-close" style={{ top: '2rem', right: '2rem', background: 'rgba(0,0,0,0.5)', zIndex: 10000 }} onClick={() => setFullscreenImage(null)}>
+                <div className="fullscreen-image-overlay" onClick={() => setFullscreenImage(null)}>
+                    <button className="modal-close" style={{ top: '2rem', right: '2rem', background: 'rgba(0,0,0,0.5)', zIndex: 10000 }} onClick={() => setFullscreenImage(null)}>
                         <X size={24} />
                     </button>
                     <img src={fullscreenImage} alt="Programa Detalhado" onClick={(e) => e.stopPropagation()} />
