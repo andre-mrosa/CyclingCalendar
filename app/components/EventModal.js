@@ -71,6 +71,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
         if (!selectedEvent) return [];
         const tabs = [];
         if (activeEvent.description || activeEvent.ambito || activeEvent.organizador) tabs.push('info');
+        if (activeEvent.escaloes && activeEvent.escaloes.length > 0) tabs.push('escaloes');
         if (programaCleanHtml && programaCleanHtml.trim().length > 0 && programaCleanHtml !== 'Não disponível') tabs.push('programa');
         if (activeEvent.prices || activeEvent.registrationOpensAt || activeEvent.registrationClosesAt) tabs.push('inscricao');
         if (activeEvent.prizes || activeEvent.insurance) tabs.push('premios');
@@ -204,6 +205,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         {availableTabs.map(tab => {
                             const labels = {
                                 info: 'Info do Evento',
+                                escaloes: 'Escalões Elegíveis',
                                 programa: activeEvent.source === 'FPC' ? 'Documentos & Detalhes FPC' : 'Programa',
                                 inscricao: 'Inscrição & Preços',
                                 premios: 'Prémios & Seguro',
@@ -274,27 +276,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 <p style={{ color: 'var(--text-secondary)' }}>Descrição não disponível.</p>
                             )}
                         </div>
-                        {/* Categorias de Participação (Escalões) Full-Width */}
-                        {activeEvent.escaloes && activeEvent.escaloes.length > 0 && (
-                            <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px dashed var(--card-border)' }}>
-                                <h4 style={{ marginBottom: '1rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.05rem' }}>
-                                    <Bike size={18} style={{ color: 'var(--accent-primary)' }} />
-                                    Categorias de Participação
-                                </h4>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
-                                    {activeEvent.escaloes.map((esc, idx) => (
-                                        <div key={`esc-${idx}`} style={{
-                                            display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-                                            padding: '0.5rem 1rem', borderRadius: 'var(--radius-full)',
-                                            background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)',
-                                            color: 'var(--accent-secondary)', fontSize: '0.95rem', fontWeight: '500'
-                                        }}>
-                                            <span>{esc}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+                        
                         {/* Info Footer consolidado com Âmbito, Organização e Licença */}
                         <div style={{ flexShrink: 0, marginTop: '1.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                             {activeEvent.licenca && (
@@ -330,6 +312,43 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         </div>
                     </div>
                 )}
+                {/* Tab: ESCALOES */}
+                {activeTab === 'escaloes' && (
+                    <div className="tab-content escaloes-tab fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                        {(!activeEvent.escaloes || activeEvent.escaloes.length === 0) ? (
+                            <p style={{ color: 'var(--text-secondary)' }}>Informação de escalões não disponível.</p>
+                        ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                                <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, paddingRight: '0.25rem' }} className="custom-scrollbar">
+                                    <div style={{ marginBottom: '2rem' }}>
+                                        <h4 style={{ marginBottom: '1rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.05rem' }}>
+                                            <Bike size={18} style={{ color: 'var(--accent-primary)' }} />
+                                            Categorias de Participação
+                                        </h4>
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+                                            {activeEvent.escaloes.map((esc, idx) => (
+                                                <div key={`esc-${idx}`} style={{
+                                                    display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+                                                    padding: '0.5rem 1rem', borderRadius: 'var(--radius-full)',
+                                                    background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)',
+                                                    color: 'var(--accent-secondary)', fontSize: '0.95rem', fontWeight: '500',
+                                                    boxShadow: '0 2px 10px rgba(0,0,0,0.05)', transition: 'transform 0.2s',
+                                                    cursor: 'default'
+                                                }}
+                                                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                                                onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                                                >
+                                                    <span>{esc}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
 
                 {/* Tab: PROGRAMA */}
                 {activeTab === 'programa' && (
