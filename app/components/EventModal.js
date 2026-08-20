@@ -11,6 +11,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
     const [calendarStatus, setCalendarStatus] = useState(null); // 'success', 'exists', 'error'
     const [calendarMsg, setCalendarMsg] = useState('');
     const [activeTab, setActiveTab] = useState('info');
+
     const [fullEvent, setFullEvent] = useState(null);
     const activeEvent = fullEvent || selectedEvent;
 
@@ -19,17 +20,16 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
             setFullEvent(null);
             return;
         }
-        
+
         const loadFullEvent = async () => {
-            if (activeEvent.programa !== undefined) {
+            if (activeEvent?.programa !== undefined) {
                 setFullEvent(selectedEvent);
             } else {
                 try {
-                    const res = await fetch(`/api/events/${activeEvent.id}`);
+                    const res = await fetch(`/api/events/${selectedEvent.id}`);
                     const data = await res.json();
                     if (data.success && data.event) {
-                        const mergedEvent = { ...selectedEvent, ...data.event };
-                        setFullEvent(mergedEvent);
+                        setFullEvent({ ...selectedEvent, ...data.event });
                     }
                 } catch (e) {
                     console.error("Error fetching full event:", e);
@@ -40,17 +40,18 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
         loadFullEvent();
     }, [selectedEvent]);
 
-    // Formata datas de inscriÃ§Ã£o em pt-PT sem segundos (usa UTC para preservar hora original)
+
+    // Formata datas de inscrição em pt-PT sem segundos (usa UTC para preservar hora original)
     const formatRegDate = (isoStr) => {
         if (!isoStr) return 'A definir';
         const d = new Date(isoStr);
         const datePart = d.toLocaleDateString('pt-PT', { timeZone: 'UTC', day: '2-digit', month: 'long', year: 'numeric' });
         const timePart = d.toLocaleTimeString('pt-PT', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' });
-        return `${datePart} Ã s ${timePart}`;
+        return `${datePart} às ${timePart}`;
     };
 
     // Separate banner from programa content
-    const programaContentFull = activeEvent?.programa || '';
+    const programaContentFull = selectedEvent?.programa || '';
     let fpcBannerHtml = '';
     let programaCleanHtml = programaContentFull;
     if (programaContentFull.includes('<div class="fpc-banner"')) {
@@ -67,7 +68,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
         const tabs = [];
         if (activeEvent.description || activeEvent.ambito || activeEvent.organizador) tabs.push('info');
         if (activeEvent.escaloes && activeEvent.escaloes.length > 0) tabs.push('escaloes');
-        if (programaCleanHtml && programaCleanHtml.trim().length > 0 && programaCleanHtml !== 'NÃ£o disponÃ­vel') tabs.push('programa');
+        if (programaCleanHtml && programaCleanHtml.trim().length > 0 && programaCleanHtml !== 'Não disponível') tabs.push('programa');
         if (activeEvent.prices || activeEvent.registrationOpensAt || activeEvent.registrationClosesAt) tabs.push('inscricao');
         if (activeEvent.prizes || activeEvent.insurance) tabs.push('premios');
         if (activeEvent.details && activeEvent.details !== 'A definir') tabs.push('localizacao');
@@ -92,7 +93,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
         setCalendarMsg('');
 
-        if (activeEvent.programa && activeEvent.programa.trim().length > 0 && activeEvent.programa !== 'NÃ£o disponÃ­vel') {
+        if (activeEvent.programa && activeEvent.programa.trim().length > 0 && activeEvent.programa !== 'Não disponível') {
             setProgramaData({ loading: false, html: activeEvent.programa, error: null, additionalLinks: [] });
         } else {
             setProgramaData({ loading: false, html: null, error: null, additionalLinks: [] });
@@ -121,14 +122,14 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
             if (res.ok) {
                 if (data.message === 'exists') {
                     setCalendarStatus('exists');
-                    setCalendarMsg('JÃ¡ existe no calendÃ¡rio!');
+                    setCalendarMsg('Já existe no calendário!');
                 } else {
                     setCalendarStatus('success');
                     setCalendarMsg('Adicionado com sucesso!');
                 }
             } else {
                 setCalendarStatus('error');
-                setCalendarMsg(data.error || 'Erro ao adicionar ao calendÃ¡rio');
+                setCalendarMsg(data.error || 'Erro ao adicionar ao calendário');
             }
         } catch (error) {
             console.error("Error adding to calendar:", error);
@@ -144,11 +145,11 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
     return (
         <div className="modal-overlay" onClick={() => setSelectedEvent(null)}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                <button className="modal-close" onClick={() => setSelectedEvent(null)}>âœ•</button>
+                <button className="modal-close" onClick={() => setSelectedEvent(null)}>✕</button>
                 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '1rem', paddingRight: '2rem', marginBottom: '0.5rem' }}>
                     {activeEvent.logo && (
-                        <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', flexShrink: 0 }} title="Abrir pÃ¡gina do evento">
+                        <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', flexShrink: 0 }} title="Abrir página do evento">
                             <SmartLogo 
                                 src={activeEvent.logo} 
                                 alt={`Logo ${activeEvent.title}`} 
@@ -200,11 +201,11 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         {availableTabs.map(tab => {
                             const labels = {
                                 info: 'Info do Evento',
-                                escaloes: 'EscalÃµes ElegÃ­veis',
+                                escaloes: 'Escalões Elegíveis',
                                 programa: activeEvent.source === 'FPC' ? 'Documentos & Detalhes FPC' : 'Programa',
-                                inscricao: 'InscriÃ§Ã£o & PreÃ§os',
-                                premios: 'PrÃ©mios & Seguro',
-                                localizacao: 'LocalizaÃ§Ã£o'
+                                inscricao: 'Inscrição & Preços',
+                                premios: 'Prémios & Seguro',
+                                localizacao: 'Localização'
                             };
                             return (
                                 <button 
@@ -230,7 +231,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                     </div>
                 ) : (
                     <div style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid var(--card-border)' }}>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>O nosso robÃ´ nÃ£o conseguiu encontrar dados estruturados para este evento. A informaÃ§Ã£o deverÃ¡ estar disponÃ­vel apenas na pÃ¡gina oficial da organizaÃ§Ã£o.</p>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>O nosso robô não conseguiu encontrar dados estruturados para este evento. A informação deverá estar disponível apenas na página oficial da organização.</p>
                     </div>
                 )}
 
@@ -240,7 +241,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 {availableTabs.length === 0 && (
                     <div className="tab-content fade-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '1.5rem', padding: '2rem' }}>
                         <FileText size={48} style={{ color: 'var(--card-border)' }} />
-                        <h3 style={{ margin: 0, color: 'var(--text-primary)', textAlign: 'center' }}>NÃ£o hÃ¡ dados detalhados</h3>
+                        <h3 style={{ margin: 0, color: 'var(--text-primary)', textAlign: 'center' }}>Não há dados detalhados</h3>
                         <a 
                             href={activeEvent.link} 
                             target="_blank" 
@@ -251,7 +252,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 display: 'inline-block', boxShadow: 'var(--shadow-md)', transition: 'var(--transition)'
                             }}
                         >
-                            Visitar Site da OrganizaÃ§Ã£o
+                            Visitar Site da Organização
                         </a>
                     </div>
                 )}
@@ -259,7 +260,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 {/* Tab: INFO */}
                 {activeTab === 'info' && (
                     <div className="tab-content fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                        {/* DescriÃ§Ã£o e Banner com scroll prÃ³prio */}
+                        {/* Descrição e Banner com scroll próprio */}
                         <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, paddingRight: '0.25rem' }} className="custom-scrollbar">
                             {/* FPC Banner at top if exists */}
                             {fpcBannerHtml && (
@@ -268,17 +269,17 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             {activeEvent.description ? (
                                 <div className="description-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.6' }} dangerouslySetInnerHTML={{ __html: activeEvent.description }} />
                             ) : (
-                                <p style={{ color: 'var(--text-secondary)' }}>DescriÃ§Ã£o nÃ£o disponÃ­vel.</p>
+                                <p style={{ color: 'var(--text-secondary)' }}>Descrição não disponível.</p>
                             )}
                         </div>
-                        {/* Ã‚mbito e OrganizaÃ§Ã£o sempre visÃ­veis em baixo */}
+                        {/* Âmbito e Organização sempre visíveis em baixo */}
                         <div style={{ flexShrink: 0, marginTop: '1.5rem', display: 'flex', gap: '1rem' }}>
                             <div style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', flex: 1 }}>
-                                <strong style={{ display: 'block', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>Ã‚mbito</strong>
+                                <strong style={{ display: 'block', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>Âmbito</strong>
                                 <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{activeEvent.ambito}</span>
                             </div>
                             <div style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', flex: 1 }}>
-                                <strong style={{ display: 'block', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>OrganizaÃ§Ã£o</strong>
+                                <strong style={{ display: 'block', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>Organização</strong>
                                 <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                                     {activeEvent.source === 'Cabreira' ? 'Cabreira Solutions' : activeEvent.source}
                                 </span>
@@ -291,7 +292,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 {activeTab === 'escaloes' && (
                     <div className="tab-content escaloes-tab fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                         {(!selectedEvent.escaloes || activeEvent.escaloes.length === 0) ? (
-                            <p style={{ color: 'var(--text-secondary)' }}>InformaÃ§Ã£o de escalÃµes nÃ£o disponÃ­vel.</p>
+                            <p style={{ color: 'var(--text-secondary)' }}>Informação de escalões não disponível.</p>
                         ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                                 
@@ -299,7 +300,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                     <div style={{ marginBottom: '2rem' }}>
                                         <h4 style={{ marginBottom: '1rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.05rem' }}>
                                             <Bike size={18} style={{ color: 'var(--accent-primary)' }} />
-                                            Categorias de ParticipaÃ§Ã£o
+                                            Categorias de Participação
                                         </h4>
                                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
                                             {(activeEvent.escaloes || []).map((esc, idx) => (
@@ -330,7 +331,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                         }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
                                                 <FileText size={16} />
-                                                <span style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>LicenÃ§a Exigida</span>
+                                                <span style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Licença Exigida</span>
                                             </div>
                                             <span style={{ color: 'var(--text-primary)', fontSize: '1.05rem', fontWeight: '500' }}>{activeEvent.licenca}</span>
                                         </div>
@@ -361,33 +362,33 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             <div className="programa-content custom-scrollbar" dangerouslySetInnerHTML={{ __html: programaCleanHtml }} onClick={handleHtmlClick} />
                         ) : (
                             <div style={{ padding: '1rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)', marginTop: '1rem' }}>
-                                <em>Programa nÃ£o disponÃ­vel na Base de Dados. A aguardar recolha do sistema.</em>
+                                <em>Programa não disponível na Base de Dados. A aguardar recolha do sistema.</em>
                             </div>
                         )}
                     </div>
                 )}
 
-                {/* Tab: INSCRIÃ‡ÃƒO & PREÃ‡OS */}
+                {/* Tab: INSCRIÇÃO & PREÇOS */}
                 {activeTab === 'inscricao' && (
                     <div className="tab-content inscricao-tab fade-in">
-                        {/* PreÃ§os - full width on top */}
+                        {/* Preços - full width on top */}
                         <div className="inscricao-precos-scroll">
                             {activeEvent.prices ? (
                                 <div className="prices-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }} dangerouslySetInnerHTML={{ __html: activeEvent.prices }} />
                             ) : (
-                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>InformaÃ§Ã£o nÃ£o disponÃ­vel.</p>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Informação não disponível.</p>
                         )}
                     </div>
                     {/* Datas - below */}
                         <div className="inscricao-datas">
                             <div>
-                                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.6 }}>Abertura das InscriÃ§Ãµes</h4>
+                                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.6 }}>Abertura das Inscrições</h4>
                                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
                                     {activeEvent.registrationOpensAt ? formatRegDate(activeEvent.registrationOpensAt) : 'A definir'}
                                 </p>
                             </div>
                             <div>
-                                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.6 }}>Fecho das InscriÃ§Ãµes</h4>
+                                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.6 }}>Fecho das Inscrições</h4>
                                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
                                     {activeEvent.registrationClosesAt ? formatRegDate(activeEvent.registrationClosesAt) : 'A definir'}
                                 </p>
@@ -402,12 +403,12 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         <div className="premios-seguro-content">
                             <div className="premio-seguro-panel">
                                 <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <Trophy size={15} /> PrÃ©mios
+                                    <Trophy size={15} /> Prémios
                                 </h4>
                                 {activeEvent.prizes ? (
                                     <div className="prizes-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }} dangerouslySetInnerHTML={{ __html: activeEvent.prizes }} />
                                 ) : (
-                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>InformaÃ§Ã£o nÃ£o disponÃ­vel.</p>
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Informação não disponível.</p>
                                 )}
                             </div>
                             <div className="premio-seguro-panel">
@@ -417,7 +418,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 {activeEvent.insurance ? (
                                     <div className="insurance-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }} dangerouslySetInnerHTML={{ __html: activeEvent.insurance }} />
                                 ) : (
-                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>InformaÃ§Ã£o nÃ£o disponÃ­vel.</p>
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Informação não disponível.</p>
                                 )}
                             </div>
                         </div>
@@ -438,7 +439,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 ></iframe>
                             </div>
                         ) : (
-                            <p style={{ color: 'var(--text-secondary)' }}>LocalizaÃ§Ã£o a definir.</p>
+                            <p style={{ color: 'var(--text-secondary)' }}>Localização a definir.</p>
                         )}
                     </div>
                 )}
@@ -460,7 +461,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         }
                         
                         const uniqueLinks = Array.from(new Map(allLinks.map(item => [item.link, item])).values());
-                        const isInscrever = l => l.label.toLowerCase().includes('inscrev') || l.label.toLowerCase().includes('inscriÃ§') || l.label.toLowerCase().includes('inscric');
+                        const isInscrever = l => l.label.toLowerCase().includes('inscrev') || l.label.toLowerCase().includes('inscriç') || l.label.toLowerCase().includes('inscric');
                         const inscricaoLinksRaw = uniqueLinks.filter(isInscrever);
                         const outrosLinks = uniqueLinks.filter(l => !isInscrever(l));
                         
@@ -472,7 +473,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             const sLink = src.link.toLowerCase();
                             if (sLink.includes('cabreira') || sLabel.includes('cabreira')) plat = "Cabreira";
                             else if (sLink.includes('fpc') || sLabel.includes('fpc')) plat = "FPC";
-                            else plat = src.label.replace(/inscrever|inscriÃ§Ã£o|inscricao|visitar|em|na|no/ig, '').replace(/\s+/g, ' ').trim() || "Plataforma";
+                            else plat = src.label.replace(/inscrever|inscrição|inscricao|visitar|em|na|no/ig, '').replace(/\s+/g, ' ').trim() || "Plataforma";
                             
                             if (!seenPlats.has(plat)) {
                                 seenPlats.add(plat);
@@ -497,7 +498,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 {inscricaoLinks.length > 1 && (
                                     <div className="dropdown-container">
                                         <button className="modal-btn primary">
-                                            Inscrever <span style={{ fontSize: '0.7em' }}>â–¼</span>
+                                            Inscrever <span style={{ fontSize: '0.7em' }}>▼</span>
                                         </button>
                                         <div className="dropdown-menu">
                                             <div className="dropdown-item-container">
@@ -535,7 +536,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             ) : (
                                 <CalendarPlus size={18} />
                             )}
-                            {calendarMsg || 'Marcar no calendÃ¡rio'}
+                            {calendarMsg || 'Marcar no calendário'}
                         </button>
                     )}
                 </div>
@@ -552,5 +553,3 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
         </div>
     );
 }
-
-

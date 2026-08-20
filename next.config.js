@@ -9,6 +9,14 @@ const withPWA = withPWAInit({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: 'fpciclismo.pt' },
+      { protocol: 'https', hostname: 'www.fpciclismo.pt' },
+      { protocol: 'https', hostname: 'cabreirasolutions.com' },
+      { protocol: 'https', hostname: 'www.cabreirasolutions.com' }
+    ]
+  },
   turbopack: {}
 };
 
