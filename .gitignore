@@ -45,3 +45,29 @@ next-env.d.ts
 /.clerk/
 
 /app/generated/prisma
+
+# Scratch and testing scripts
+*.js
+!next.config.js
+!tailwind.config.js
+!postcss.config.js
+!app/**/*.js
+!lib/**/*.js
+!public/**/*.js
+
+# Scraped data and HTML
+*.html
+*.json
+!package.json
+!package-lock.json
+
+
+# Media testing
+banner.jpg
+logo.jpg
+
+*.txt
+*.py
+*.mjs
+public/out.css
+

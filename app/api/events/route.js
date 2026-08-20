@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+export const dynamic = 'force-dynamic';
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 
@@ -35,6 +36,25 @@ export async function GET(request) {
                         }
                     }
                 ]
+            },
+            select: {
+                id: true,
+                title: true,
+                date: true,
+                sortDate: true,
+                details: true,
+                tag: true,
+                ambito: true,
+                escaloes: true,
+                licenca: true,
+                regiao: true,
+                distrito: true,
+                source: true,
+                link: true,
+                extraLinks: true,
+                registrationOpensAt: true,
+                registrationClosesAt: true,
+                // Omitted: description, prices, insurance, prizes, programa, logo, image
             },
             orderBy: {
                 sortDate: 'asc'

@@ -1,4 +1,4 @@
-import * as cheerio from 'cheerio';
+import * as cheerio from 'cheerio'; // trigger hot-reload 2
 import { prisma } from '../db';
 import { 
     parseSortDate, getAmbito, getTag, getRegiao, 
@@ -10,7 +10,8 @@ export const deepScrapeFPC = async (link) => {
     try {
         const response = await fetch(link, { headers: { 'User-Agent': 'Mozilla/5.0' } });
         if (!response.ok) return null;
-        const html = await response.text();
+        const arrayBuffer = await response.arrayBuffer();
+        const html = Buffer.from(arrayBuffer).toString('latin1');
         const $ = cheerio.load(html);
         
         let extractedHtml = '';
@@ -19,21 +20,20 @@ export const deepScrapeFPC = async (link) => {
         // para garantir que não falhamos se eles criarem múltiplos contentores no site
         const containerHtml = $('body').html();
         if (containerHtml && !containerHtml.includes('Página não encontrada')) {
-            const $temp = cheerio.load(containerHtml);
-            $temp('#navigation, #sub_menu_sobre, footer, script, style, iframe, .navbar, .logo, .menu, .menu_lateral_items, .redes_sociais, #menu, .header, nav, header, .three__blocks, .footer, .footer_bg, #rodape, .patrocinadores, .parceiros, .cyclopnet').remove(); // remove lixo
-            // Remover nós de texto diretamente na raiz (FPC copyright)
-            $temp('body').contents().filter((i, el) => el.nodeType === 3).remove();
-            // Extrair banner principal ou cartaz
+            const $tempBody = cheerio.load(containerHtml);
+            $tempBody('#navigation, #sub_menu_sobre, footer, script, style, iframe, .navbar, .logo, .menu, .menu_lateral_items, .redes_sociais, #menu, .header, nav, header, .three__blocks, .footer, .footer_bg, #rodape, .patrocinadores, .parceiros, .cyclopnet, .copyright').remove(); // remove lixo
+            
+            // Extract cartaz from the full body before isolating main content
             let mainImgUrl = null;
-            const bannerImg = $temp('img[src*="anexo_banner"]');
-            const cartazImg = $temp('img[src*="anexo_cartaz"]');
-            if (bannerImg.length > 0) mainImgUrl = bannerImg.attr('src');
-            else if (cartazImg.length > 0) mainImgUrl = cartazImg.attr('src');
+            const bannerImg = $tempBody('img[src*="anexo_banner"]');
+            const cartazImg = $tempBody('img[src*="anexo_cartaz"]');
+            if (bannerImg.length > 0) mainImgUrl = bannerImg.first().attr('src');
+            else if (cartazImg.length > 0) mainImgUrl = cartazImg.first().attr('src');
             else {
                 // Tentar encontrar cartaz nos botões input
-                $temp('input[type="button"]').each((i, el) => {
-                    const val = $temp(el).attr('value');
-                    const onclick = $temp(el).attr('onclick');
+                $tempBody('input[type="button"]').each((i, el) => {
+                    const val = $tempBody(el).attr('value');
+                    const onclick = $tempBody(el).attr('onclick');
                     if (val && val.toLowerCase() === 'cartaz' && onclick) {
                         const match = onclick.match(/window\.open\s*\(\s*'([^']+)'/);
                         if (match) mainImgUrl = match[1];
@@ -41,15 +41,22 @@ export const deepScrapeFPC = async (link) => {
                 });
             }
 
+            // Isolate main content if available, else fallback to body
+            const mainContentHtml = $tempBody('.main-content').length > 0 ? $tempBody('.main-content').html() : $tempBody('body').html();
+            const $temp = cheerio.load(mainContentHtml);
+            
+            // Remover nós de texto soltos que sejam lixo
+            $temp('*').contents().filter(function() { return this.nodeType === 3 && this.nodeValue.includes('Cyclopnet'); }).parent().remove();
+            $temp('*').contents().filter(function() { return this.nodeType === 3 && this.nodeValue.includes('FPC ©'); }).parent().remove();
+
             if (mainImgUrl) {
                 const isCartaz = mainImgUrl.includes('anexo_cartaz') || mainImgUrl.toLowerCase().includes('cartaz');
                 const maxWidth = isCartaz ? 'max-width: 400px; margin: 0 auto; display: block;' : 'width: 100%;';
                 
-                // Converte a imagem para Base64 para não depender do servidor lento da FPC no frontend
-                const base64Img = await fetchImageAsBase64(mainImgUrl);
-                const finalImgSrc = base64Img || mainImgUrl; // fallback para URL direto se falhar
+                // Use Next.js image optimizer to compress the 15MB JPGs on the fly!
+                const optimizedImgUrl = `/_next/image?url=${encodeURIComponent(mainImgUrl)}&w=640&q=75`;
                 
-                extractedHtml += `<div class="fpc-banner" style="margin-bottom: 1.5rem;"><img src="${finalImgSrc}" style="${maxWidth} border-radius: var(--radius-md); box-shadow: var(--shadow-md);" alt="Imagem do Evento" /></div>`;
+                extractedHtml += `<div class="fpc-banner" style="margin-bottom: 1.5rem;"><img src="${optimizedImgUrl}" style="${maxWidth} border-radius: var(--radius-md); box-shadow: var(--shadow-md);" alt="Imagem do Evento" loading="lazy" /></div>`;
             }
             $temp('img').remove(); // remover as restantes imagens para texto limpo
             
