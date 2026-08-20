@@ -273,40 +273,31 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             ) : (
                                 <p style={{ color: 'var(--text-secondary)' }}>Descrição não disponível.</p>
                             )}
-                            {activeEvent.escaloes && activeEvent.escaloes.length > 0 && (
-                                <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px dashed var(--card-border)' }}>
-                                    <h4 style={{ marginBottom: '1rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.05rem' }}>
-                                        <Bike size={18} style={{ color: 'var(--accent-primary)' }} />
-                                        Categorias de Participação
-                                    </h4>
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
-                                        {activeEvent.escaloes.map((esc, idx) => (
-                                            <div key={`esc-${idx}`} style={{
-                                                display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-                                                padding: '0.5rem 1rem', borderRadius: 'var(--radius-full)',
-                                                background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)',
-                                                color: 'var(--accent-secondary)', fontSize: '0.95rem', fontWeight: '500'
-                                            }}>
-                                                <span>{esc}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
                         </div>
                         {/* Info Footer consolidado com Âmbito, Organização e Licença */}
                         <div style={{ flexShrink: 0, marginTop: '1.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-                            {activeEvent.ambito && (
+                            {activeEvent.escaloes && activeEvent.escaloes.length > 0 && (
                                 <div style={{ 
                                     padding: '1.25rem', background: 'var(--bg-secondary)', 
                                     borderRadius: 'var(--radius-md)', border: '1px solid var(--card-border)',
-                                    display: 'flex', flexDirection: 'column', gap: '0.5rem'
+                                    display: 'flex', flexDirection: 'column', gap: '0.75rem'
                                 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
-                                        <Globe size={16} />
-                                        <span style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Âmbito</span>
+                                        <Bike size={16} />
+                                        <span style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Escalões</span>
                                     </div>
-                                    <span style={{ color: 'var(--text-primary)', fontSize: '1.05rem', fontWeight: '500' }}>{activeEvent.ambito}</span>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                        {activeEvent.escaloes.map((esc, idx) => (
+                                            <div key={`esc-${idx}`} style={{
+                                                display: 'inline-flex', alignItems: 'center',
+                                                padding: '0.25rem 0.75rem', borderRadius: 'var(--radius-full)',
+                                                background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)',
+                                                color: 'var(--accent-secondary)', fontSize: '0.85rem', fontWeight: '500'
+                                            }}>
+                                                {esc}
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
                             {activeEvent.licenca && (
