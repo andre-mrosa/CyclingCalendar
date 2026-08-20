@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useSettingsStore } from '../store/useSettingsStore';
 import useSWR from 'swr';
 
-import { Calendar, MapPin, Search, X, ChevronLeft, ChevronRight, Users, Heart, Star, LayoutGrid, List, HelpCircle, Filter } from 'lucide-react';
+import { Calendar, MapPin, Search, X, ChevronLeft, ChevronRight, Users, Heart, Star, LayoutGrid, List, HelpCircle, Filter, Bike } from 'lucide-react';
 import { useFavorites } from '../hooks/useFavorites';
 import { filterEvents } from '../utils/filterEvents';
 import EventModal from './EventModal';
@@ -631,7 +631,7 @@ export default function CalendarView({
                                             <h3 className="event-list-title">{event.title}</h3>
                                             <div className="event-list-details">
                                                 <div className="event-list-detail-item" style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                    <Users size={14} style={{ flexShrink: 0, color: 'var(--text-secondary)' }} />
+                                                    <Bike size={14} style={{ flexShrink: 0, color: 'var(--text-secondary)' }} />
                                                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                                         {(event.escaloes || []).join(' • ')} {extraDetails ? `(${extraDetails})` : ''}
                                                     </span>

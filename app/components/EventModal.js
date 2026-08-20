@@ -65,6 +65,8 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
     // Clean up fpc-downloads layout
     programaCleanHtml = programaCleanHtml.replace(/<div class="fpc-downloads" style="margin-top: 1\.5rem;">/g, '<div class="fpc-downloads">');
     programaCleanHtml = programaCleanHtml.replace(/<h4[^>]*>.*?<\/h4>/g, '');
+    programaCleanHtml = programaCleanHtml.replace(/width="24" height="24"/g, 'width="18" height="18"');
+    programaCleanHtml = programaCleanHtml.replace(/color: var\(--accent-primary\);/g, 'color: var(--text-secondary);');
 
     // Calcula as tabs ativas baseadas nos dados reais do evento
     const availableTabs = useMemo(() => {
