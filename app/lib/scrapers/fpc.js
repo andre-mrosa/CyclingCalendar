@@ -101,8 +101,7 @@ export const deepScrapeFPC = async (link) => {
         });
 
         if (pdfLinks.length > 0) {
-            extractedHtml += `<div class="fpc-downloads" style="margin-top: 1.5rem;">
-                <h4 style="margin-bottom: 1rem; color: var(--text-primary);">Documentos e Ficheiros Disponíveis</h4>
+            extractedHtml += `<div class="fpc-downloads">
                 <div style="display: flex; flex-direction: column; gap: 0.75rem;">`;
             
             for (const doc of pdfLinks) {
