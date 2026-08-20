@@ -280,24 +280,15 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 <div style={{ 
                                     padding: '1.25rem', background: 'var(--bg-secondary)', 
                                     borderRadius: 'var(--radius-md)', border: '1px solid var(--card-border)',
-                                    display: 'flex', flexDirection: 'column', gap: '0.75rem'
+                                    display: 'flex', flexDirection: 'column', gap: '0.5rem'
                                 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
                                         <Bike size={16} />
                                         <span style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Escalões</span>
                                     </div>
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                                        {activeEvent.escaloes.map((esc, idx) => (
-                                            <div key={`esc-${idx}`} style={{
-                                                display: 'inline-flex', alignItems: 'center',
-                                                padding: '0.25rem 0.75rem', borderRadius: 'var(--radius-full)',
-                                                background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)',
-                                                color: 'var(--accent-secondary)', fontSize: '0.85rem', fontWeight: '500'
-                                            }}>
-                                                {esc}
-                                            </div>
-                                        ))}
-                                    </div>
+                                    <span style={{ color: 'var(--text-primary)', fontSize: '1.05rem', fontWeight: '500' }}>
+                                        {activeEvent.escaloes.join(', ')}
+                                    </span>
                                 </div>
                             )}
                             {activeEvent.licenca && (
