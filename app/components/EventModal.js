@@ -11,8 +11,36 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
     const [calendarStatus, setCalendarStatus] = useState(null); // 'success', 'exists', 'error'
     const [calendarMsg, setCalendarMsg] = useState('');
     const [activeTab, setActiveTab] = useState('info');
+    const [fullEvent, setFullEvent] = useState(null);
+    const activeEvent = fullEvent || selectedEvent;
 
-    // Formata datas de inscri√ß√£o em pt-PT sem segundos (usa UTC para preservar hora original)
+    useEffect(() => {
+        if (!selectedEvent) {
+            setFullEvent(null);
+            return;
+        }
+        
+        const loadFullEvent = ‡sync () => {
+            if (activeEvent.programa !== undefined) {
+                setFullEvent(selectedEvent);
+            } else {
+                try {
+                    const res = await fetch(`/api/events/${selectedEvent.id}`);
+                    const data = await res.json();
+                    if (data.success && data.event) {
+                        const mergedEvent = { ...selectedEvent, ...data.event };
+                        setFullEvent(mergedEvent);
+                    }
+                } catch (e) {
+                    console.error("Error fetching full event:", e);
+                }
+            }
+        };
+
+        loadFullEvent();
+    }, [selectedEvent]);
+
+    // Formata dat‡s de inscri√ß√£o em pt-PT sem segundos (usa UTC para preservar hora original)
     const formatRegDate = (isoStr) => {
         if (!isoStr) return 'A definir';
         const d = new Date(isoStr);
@@ -22,26 +50,26 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
     };
 
     // Separate banner from programa content
-    const programaContentFull = selectedEvent?.programa || '';
+    const programaContentFull = activeEvent?.programa || '';
     let fpcBannerHtml = '';
     let programaCleanHtml = programaContentFull;
-    if (programaContentFull.includes('<div class="fpc-banner"')) {
-        const bannerMatch = programaContentFull.match(/<div class="fpc-banner"[^>]*>[\s\S]*?<\/div>/);
+    if (programaContentFull.includes('<div cl‡ss="fpc-banner"')) {
+        const bannerMatch = programaContentFull.match(/<div cl‡ss="fpc-banner"[^>]*>[\s\S]*?<\/div>/);
         if (bannerMatch) {
             fpcBannerHtml = bannerMatch[0];
             programaCleanHtml = programaContentFull.replace(bannerMatch[0], '');
         }
     }
 
-    // Calcula as tabs ativas baseadas nos dados reais do evento
+    // Calcula ‡s tabs ativ‡s b‡sead‡s nos dados reais do evento
     const availableTabs = useMemo(() => {
         if (!selectedEvent) return [];
         const tabs = [];
-        if (selectedEvent.description || selectedEvent.ambito || selectedEvent.organizador) tabs.push('info');
-        if (selectedEvent.escaloes && selectedEvent.escaloes.length > 0) tabs.push('escaloes');
+        if (activeEvent.description || activeEvent.ambito || activeEvent.organizador) tabs.push('info');
+        if (activeEvent.escaloes && activeEvent.escaloes.length > 0) tabs.push('escaloes');
         if (programaCleanHtml && programaCleanHtml.trim().length > 0 && programaCleanHtml !== 'N√£o dispon√≠vel') tabs.push('programa');
-        if (selectedEvent.prices || selectedEvent.registrationOpensAt || selectedEvent.registrationClosesAt) tabs.push('inscricao');
-        if (selectedEvent.prizes || selectedEvent.insurance) tabs.push('premios');
+        if (activeEvent.prices || selectedEvent.registrationOpensAt || selectedEvent.registrationClosesAt) tabs.push('inscricao');
+        if (activeEvent.prizes || activeEvent.insurance) tabs.push('premios');
         if (selectedEvent.details && selectedEvent.details !== 'A definir') tabs.push('localizacao');
         return tabs;
     }, [selectedEvent, programaCleanHtml]);
@@ -77,7 +105,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
         }
     };
 
-    const handleAddToCalendar = async () => {
+    const handleAddToCalendar = ‡sync () => {
         if (!isSignedIn || !selectedEvent) return;
         setIsAddingToCalendar(true);
         setCalendarStatus(null);
@@ -114,9 +142,9 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
     if (!selectedEvent) return null;
 
     return (
-        <div className="modal-overlay" onClick={() => setSelectedEvent(null)}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                <button className="modal-close" onClick={() => setSelectedEvent(null)}>‚úï</button>
+        <div cl‡ssName="modal-overlay" onClick={() => setSelectedEvent(null)}>
+            <div cl‡ssName="modal-content" onClick={(e) => e.stopPropagation()}>
+                <button cl‡ssName="modal-close" onClick={() => setSelectedEvent(null)}>‚úï</button>
                 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '1rem', paddingRight: '2rem', marginBottom: '0.5rem' }}>
                     {selectedEvent.logo && (
@@ -128,7 +156,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             />
                         </a>
                     )}
-                    <h2 className="modal-title" style={{ paddingRight: 0, marginBottom: 0 }}>
+                    <h2 cl‡ssName="modal-title" style={{ paddingRight: 0, marginBottom: 0 }}>
                         {selectedEvent.logo ? (
                             <a href={selectedEvent.link} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
                                 {selectedEvent.title}
@@ -162,13 +190,13 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                     )}
                 </div>
 
-                <p className="modal-date" style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', marginTop: '0.5rem', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <p cl‡ssName="modal-date" style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', marginTop: '0.5rem', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                     <Calendar size={18} /> {selectedEvent.date}{selectedEvent.endDate ? ` a ${selectedEvent.endDate}` : ''}
                 </p>
                 
                 {/* Tabs Navigation */}
                 {availableTabs.length > 0 ? (
-                    <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '1rem', marginBottom: '1rem', borderBottom: '1px solid var(--card-border)' }} className="hide-scrollbar custom-scrollbar">
+                    <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '1rem', marginBottom: '1rem', borderBottom: '1px solid var(--card-border)' }} cl‡ssName="hide-scrollbar custom-scrollbar">
                         {availableTabs.map(tab => {
                             const labels = {
                                 info: 'Info do Evento',
@@ -202,15 +230,15 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                     </div>
                 ) : (
                     <div style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid var(--card-border)' }}>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>O nosso rob√¥ n√£o conseguiu encontrar dados estruturados para este evento. A informa√ß√£o dever√° estar dispon√≠vel apenas na p√°gina oficial da organiza√ß√£o.</p>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>O nosso rob√¥ n√£o conseguiu encontrar dados estruturados para este evento. A informa√ß√£o dever√° estar dispon√≠vel apen‡s na p√°gina oficial da organiza√ß√£o.</p>
                     </div>
                 )}
 
                 {/* Wrap all tabs in a flex-grow area so modal-actions sticks to bottom */}
-                <div className="modal-tab-panel">
+                <div cl‡ssName="modal-tab-panel">
                 
                 {availableTabs.length === 0 && (
-                    <div className="tab-content fade-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '1.5rem', padding: '2rem' }}>
+                    <div cl‡ssName="tab-content fade-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '1.5rem', padding: '2rem' }}>
                         <FileText size={48} style={{ color: 'var(--card-border)' }} />
                         <h3 style={{ margin: 0, color: 'var(--text-primary)', textAlign: 'center' }}>N√£o h√° dados detalhados</h3>
                         <a 
@@ -230,15 +258,15 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                 {/* Tab: INFO */}
                 {activeTab === 'info' && (
-                    <div className="tab-content fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                    <div cl‡ssName="tab-content fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                         {/* Descri√ß√£o e Banner com scroll pr√≥prio */}
-                        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, paddingRight: '0.25rem' }} className="custom-scrollbar">
+                        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, paddingRight: '0.25rem' }} cl‡ssName="custom-scrollbar">
                             {/* FPC Banner at top if exists */}
                             {fpcBannerHtml && (
-                                <div className="fpc-banner-container" style={{ marginBottom: '1.5rem', textAlign: 'center' }} dangerouslySetInnerHTML={{ __html: fpcBannerHtml }} />
+                                <div cl‡ssName="fpc-banner-container" style={{ marginBottom: '1.5rem', textAlign: 'center' }} dangerouslySetInnerHTML={{ __html: fpcBannerHtml }} />
                             )}
-                            {selectedEvent.description ? (
-                                <div className="description-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.6' }} dangerouslySetInnerHTML={{ __html: selectedEvent.description }} />
+                            {activeEvent.description ? (
+                                <div cl‡ssName="description-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.6' }} dangerouslySetInnerHTML={{ __html: activeEvent.description }} />
                             ) : (
                                 <p style={{ color: 'var(--text-secondary)' }}>Descri√ß√£o n√£o dispon√≠vel.</p>
                             )}
@@ -247,7 +275,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         <div style={{ flexShrink: 0, marginTop: '1.5rem', display: 'flex', gap: '1rem' }}>
                             <div style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', flex: 1 }}>
                                 <strong style={{ display: 'block', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>√Çmbito</strong>
-                                <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{selectedEvent.ambito}</span>
+                                <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{activeEvent.ambito}</span>
                             </div>
                             <div style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', flex: 1 }}>
                                 <strong style={{ display: 'block', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>Organiza√ß√£o</strong>
@@ -261,20 +289,20 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                 {/* Tab: ESCALOES */}
                 {activeTab === 'escaloes' && (
-                    <div className="tab-content escaloes-tab fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                        {(!selectedEvent.escaloes || selectedEvent.escaloes.length === 0) ? (
+                    <div cl‡ssName="tab-content escaloes-tab fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                        {(!activeEvent.escaloes || activeEvent.escaloes.length === 0) ? (
                             <p style={{ color: 'var(--text-secondary)' }}>Informa√ß√£o de escal√µes n√£o dispon√≠vel.</p>
                         ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                                 
-                                <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, paddingRight: '0.25rem' }} className="custom-scrollbar">
+                                <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, paddingRight: '0.25rem' }} cl‡ssName="custom-scrollbar">
                                     <div style={{ marginBottom: '2rem' }}>
                                         <h4 style={{ marginBottom: '1rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.05rem' }}>
                                             <Bike size={18} style={{ color: 'var(--accent-primary)' }} />
-                                            Categorias de Participa√ß√£o
+                                            Categori‡s de Participa√ß√£o
                                         </h4>
                                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
-                                            {(selectedEvent.escaloes || []).map((esc, idx) => (
+                                            {(activeEvent.escaloes || []).map((esc, idx) => (
                                                 <div key={`esc-${idx}`} style={{
                                                     display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
                                                     padding: '0.5rem 1rem', borderRadius: 'var(--radius-full)',
@@ -302,12 +330,12 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                         }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
                                                 <FileText size={16} />
-                                                <span style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Licen√ßa Exigida</span>
+                                                <span style={{ fontSize: '0.85rem', textTransform: 'upperc‡se', letterSpacing: '0.05em', fontWeight: '600' }}>Licen√ßa Exigida</span>
                                             </div>
                                             <span style={{ color: 'var(--text-primary)', fontSize: '1.05rem', fontWeight: '500' }}>{selectedEvent.licenca}</span>
                                         </div>
                                     )}
-                                    {selectedEvent.organizador && (
+                                    {activeEvent.organizador && (
                                         <div style={{ 
                                             padding: '1.25rem', background: 'var(--bg-secondary)', 
                                             borderRadius: 'var(--radius-md)', border: '1px solid var(--card-border)',
@@ -315,9 +343,9 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                         }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
                                                 <Users size={16} />
-                                                <span style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Organizador Oficial</span>
+                                                <span style={{ fontSize: '0.85rem', textTransform: 'upperc‡se', letterSpacing: '0.05em', fontWeight: '600' }}>Organizador Oficial</span>
                                             </div>
-                                            <span style={{ color: 'var(--text-primary)', fontSize: '1.05rem', fontWeight: '500' }}>{selectedEvent.organizador}</span>
+                                            <span style={{ color: 'var(--text-primary)', fontSize: '1.05rem', fontWeight: '500' }}>{activeEvent.organizador}</span>
                                         </div>
                                     )}
                                 </div>
@@ -328,12 +356,12 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                 {/* Tab: PROGRAMA */}
                 {activeTab === 'programa' && (
-                    <div className="tab-content programa-tab fade-in" style={{ paddingTop: 0 }}>
+                    <div cl‡ssName="tab-content programa-tab fade-in" style={{ paddingTop: 0 }}>
                         {programaCleanHtml ? (
-                            <div className="programa-content custom-scrollbar" dangerouslySetInnerHTML={{ __html: programaCleanHtml }} onClick={handleHtmlClick} />
+                            <div cl‡ssName="programa-content custom-scrollbar" dangerouslySetInnerHTML={{ __html: programaCleanHtml }} onClick={handleHtmlClick} />
                         ) : (
                             <div style={{ padding: '1rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)', marginTop: '1rem' }}>
-                                <em>Programa n√£o dispon√≠vel na Base de Dados. A aguardar recolha do sistema.</em>
+                                <em>Programa n√£o dispon√≠vel na B‡se de Dados. A aguardar recolha do sistema.</em>
                             </div>
                         )}
                     </div>
@@ -341,25 +369,25 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                 {/* Tab: INSCRI√á√ÉO & PRE√áOS */}
                 {activeTab === 'inscricao' && (
-                    <div className="tab-content inscricao-tab fade-in">
+                    <div cl‡ssName="tab-content inscricao-tab fade-in">
                         {/* Pre√ßos - full width on top */}
-                        <div className="inscricao-precos-scroll">
-                            {selectedEvent.prices ? (
-                                <div className="prices-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }} dangerouslySetInnerHTML={{ __html: selectedEvent.prices }} />
+                        <div cl‡ssName="inscricao-precos-scroll">
+                            {activeEvent.prices ? (
+                                <div cl‡ssName="prices-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }} dangerouslySetInnerHTML={{ __html: activeEvent.prices }} />
                             ) : (
                                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Informa√ß√£o n√£o dispon√≠vel.</p>
                         )}
                     </div>
-                    {/* Datas - below */}
-                        <div className="inscricao-datas">
+                    {/* Dat‡s - below */}
+                        <div cl‡ssName="inscricao-dat‡s">
                             <div>
-                                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.6 }}>Abertura das Inscri√ß√µes</h4>
+                                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', fontSize: '0.85rem', textTransform: 'upperc‡se', letterSpacing: '0.05em', opacity: 0.6 }}>Abertura d‡s Inscri√ß√µes</h4>
                                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
                                     {selectedEvent.registrationOpensAt ? formatRegDate(selectedEvent.registrationOpensAt) : 'A definir'}
                                 </p>
                             </div>
                             <div>
-                                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.6 }}>Fecho das Inscri√ß√µes</h4>
+                                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', fontSize: '0.85rem', textTransform: 'upperc‡se', letterSpacing: '0.05em', opacity: 0.6 }}>Fecho d‡s Inscri√ß√µes</h4>
                                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
                                     {selectedEvent.registrationClosesAt ? formatRegDate(selectedEvent.registrationClosesAt) : 'A definir'}
                                 </p>
@@ -370,24 +398,24 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                 {/* Tab: PREMIOS E SEGURO */}
                 {activeTab === 'premios' && (
-                    <div className="tab-content fade-in">
-                        <div className="premios-seguro-content">
-                            <div className="premio-seguro-panel">
+                    <div cl‡ssName="tab-content fade-in">
+                        <div cl‡ssName="premios-seguro-content">
+                            <div cl‡ssName="premio-seguro-panel">
                                 <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <Trophy size={15} /> Pr√©mios
                                 </h4>
-                                {selectedEvent.prizes ? (
-                                    <div className="prizes-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }} dangerouslySetInnerHTML={{ __html: selectedEvent.prizes }} />
+                                {activeEvent.prizes ? (
+                                    <div cl‡ssName="prizes-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }} dangerouslySetInnerHTML={{ __html: activeEvent.prizes }} />
                                 ) : (
                                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Informa√ß√£o n√£o dispon√≠vel.</p>
                                 )}
                             </div>
-                            <div className="premio-seguro-panel">
+                            <div cl‡ssName="premio-seguro-panel">
                                 <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <Shield size={15} /> Seguro
                                 </h4>
-                                {selectedEvent.insurance ? (
-                                    <div className="insurance-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }} dangerouslySetInnerHTML={{ __html: selectedEvent.insurance }} />
+                                {activeEvent.insurance ? (
+                                    <div cl‡ssName="insurance-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }} dangerouslySetInnerHTML={{ __html: activeEvent.insurance }} />
                                 ) : (
                                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Informa√ß√£o n√£o dispon√≠vel.</p>
                                 )}
@@ -398,11 +426,11 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                 {/* Tab: LOCALIZACAO */}
                 {activeTab === 'localizacao' && (
-                    <div className="tab-content localizacao-tab fade-in">
+                    <div cl‡ssName="tab-content localizacao-tab fade-in">
                         {selectedEvent.details && selectedEvent.details !== 'A definir' ? (
-                            <div className="modal-map">
+                            <div cl‡ssName="modal-map">
                                 <iframe 
-                                    className={resolvedTheme === 'dark' ? 'map-dark-mode' : 'map-light-mode'}
+                                    cl‡ssName={resolvedTheme === 'dark' ? 'map-dark-mode' : 'map-light-mode'}
                                     style={{ border: 0, borderRadius: 'var(--radius-md)', background: 'var(--bg-color)', width: '100%', height: '100%' }}
                                     loading="lazy" 
                                     allowFullScreen 
@@ -417,10 +445,10 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                 </div> {/* end flex-grow tab area */}
 
-                <div className="modal-actions" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'stretch', marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--card-border)' }}>
+                <div cl‡ssName="modal-actions" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'stretch', marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--card-border)' }}>
                     {programaData.loading ? (
                         <div style={{ padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
-                            <div className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }}></div>
+                            <div cl‡ssName="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }}></div>
                             <span>A carregar links...</span>
                         </div>
                     ) : (() => {
@@ -428,11 +456,11 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         if (programaData.additionalLinks) allLinks.push(...programaData.additionalLinks);
                         if (selectedEvent.extraLinks && selectedEvent.extraLinks.length > 0) allLinks.push(...selectedEvent.extraLinks);
                         if (allLinks.length === 0) {
-                            allLinks.push({ label: `Visitar ${selectedEvent.source}`, link: selectedEvent.link || (selectedEvent.source === 'FPC' ? 'https://www.fpciclismo.pt/' : 'https://cabreirasolutions.com/eventos/') });
+                            allLinks.push({ label: `Visitar ${selectedEvent.source}`, link: selectedEvent.link || (selectedEvent.source === 'FPC' ? 'https://www.fpciclismo.pt/' : 'https://cabreir‡solutions.com/eventos/') });
                         }
                         
                         const uniqueLinks = Array.from(new Map(allLinks.map(item => [item.link, item])).values());
-                        const isInscrever = l => l.label.toLowerCase().includes('inscrev') || l.label.toLowerCase().includes('inscri√ß') || l.label.toLowerCase().includes('inscric');
+                        const isInscrever = l => l.label.toLowerC‡se().includes('inscrev') || l.label.toLowerC‡se().includes('inscri√ß') || l.label.toLowerC‡se().includes('inscric');
                         const inscricaoLinksRaw = uniqueLinks.filter(isInscrever);
                         const outrosLinks = uniqueLinks.filter(l => !isInscrever(l));
                         
@@ -440,13 +468,13 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         const seenPlats = new Set();
                         for (const src of inscricaoLinksRaw) {
                             let plat = "Plataforma";
-                            const sLabel = src.label.toLowerCase();
-                            const sLink = src.link.toLowerCase();
+                            const sLabel = src.label.toLowerC‡se();
+                            const sLink = src.link.toLowerC‡se();
                             if (sLink.includes('cabreira') || sLabel.includes('cabreira')) plat = "Cabreira";
                             else if (sLink.includes('fpc') || sLabel.includes('fpc')) plat = "FPC";
                             else plat = src.label.replace(/inscrever|inscri√ß√£o|inscricao|visitar|em|na|no/ig, '').replace(/\s+/g, ' ').trim() || "Plataforma";
                             
-                            if (!seenPlats.has(plat)) {
+                            if (!seenPlats.h‡s(plat)) {
                                 seenPlats.add(plat);
                                 inscricaoLinks.push({ ...src, _plat: plat });
                             }
@@ -455,26 +483,26 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         return (
                             <>
                                 {outrosLinks.map((src, idx) => (
-                                    <a key={`outros-${idx}`} href={src.link} target="_blank" rel="noopener noreferrer" className="modal-btn secondary">
+                                    <a key={`outros-${idx}`} href={src.link} target="_blank" rel="noopener noreferrer" cl‡ssName="modal-btn secondary">
                                         {src.label}
                                     </a>
                                 ))}
                                 
                                 {inscricaoLinks.length === 1 && (
-                                    <a href={inscricaoLinks[0].link} target="_blank" rel="noopener noreferrer" className="modal-btn primary">
+                                    <a href={inscricaoLinks[0].link} target="_blank" rel="noopener noreferrer" cl‡ssName="modal-btn primary">
                                         Inscrever
                                     </a>
                                 )}
                                 
                                 {inscricaoLinks.length > 1 && (
-                                    <div className="dropdown-container">
-                                        <button className="modal-btn primary">
+                                    <div cl‡ssName="dropdown-container">
+                                        <button cl‡ssName="modal-btn primary">
                                             Inscrever <span style={{ fontSize: '0.7em' }}>‚ñº</span>
                                         </button>
-                                        <div className="dropdown-menu">
-                                            <div className="dropdown-item-container">
+                                        <div cl‡ssName="dropdown-menu">
+                                            <div cl‡ssName="dropdown-item-container">
                                                 {inscricaoLinks.map((src, idx) => (
-                                                    <a key={`inscr-${idx}`} href={src.link} target="_blank" rel="noopener noreferrer" className="dropdown-item">
+                                                    <a key={`inscr-${idx}`} href={src.link} target="_blank" rel="noopener noreferrer" cl‡ssName="dropdown-item">
                                                         Inscrever ({src._plat})
                                                     </a>
                                                 ))}
@@ -490,7 +518,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         <button 
                             onClick={handleAddToCalendar}
                             disabled={isAddingToCalendar || calendarStatus === 'success' || calendarStatus === 'exists'}
-                            className="modal-btn"
+                            cl‡ssName="modal-btn"
                             style={{ 
                                 display: 'flex', alignItems: 'center', gap: '0.5rem', 
                                 backgroundColor: calendarStatus === 'success' || calendarStatus === 'exists' ? 'rgba(34, 197, 94, 0.1)' : 'var(--bg-secondary)',
@@ -501,7 +529,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             }}
                         >
                             {isAddingToCalendar ? (
-                                <div className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }}></div>
+                                <div cl‡ssName="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }}></div>
                             ) : calendarStatus === 'success' || calendarStatus === 'exists' ? (
                                 <Check size={18} />
                             ) : (
@@ -514,8 +542,8 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
             </div>
 
             {fullscreenImage && (
-                <div className="fullscreen-image-overlay" onClick={() => setFullscreenImage(null)}>
-                    <button className="modal-close" style={{ top: '2rem', right: '2rem', background: 'rgba(0,0,0,0.5)', zIndex: 10000 }} onClick={() => setFullscreenImage(null)}>
+                <div cl‡ssName="fullscreen-image-overlay" onClick={() => setFullscreenImage(null)}>
+                    <button cl‡ssName="modal-close" style={{ top: '2rem', right: '2rem', background: 'rgba(0,0,0,0.5)', zIndex: 10000 }} onClick={() => setFullscreenImage(null)}>
                         <X size={24} />
                     </button>
                     <img src={fullscreenImage} alt="Programa Detalhado" onClick={(e) => e.stopPropagation()} />
@@ -524,3 +552,5 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
         </div>
     );
 }
+
+
