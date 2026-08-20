@@ -51,7 +51,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
     };
 
     // Separate banner from programa content
-    const programaContentFull = selectedEvent?.programa || '';
+    const programaContentFull = activeEvent?.programa || '';
     let fpcBannerHtml = '';
     let programaCleanHtml = programaContentFull;
     if (programaContentFull.includes('<div class="fpc-banner"')) {
@@ -73,7 +73,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
         if (activeEvent.prizes || activeEvent.insurance) tabs.push('premios');
         if (activeEvent.details && activeEvent.details !== 'A definir') tabs.push('localizacao');
         return tabs;
-    }, [selectedEvent, programaCleanHtml]);
+    }, [activeEvent, programaCleanHtml]);
 
     useEffect(() => {
         if (availableTabs.length > 0 && !availableTabs.includes(activeTab)) {
@@ -291,7 +291,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 {/* Tab: ESCALOES */}
                 {activeTab === 'escaloes' && (
                     <div className="tab-content escaloes-tab fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                        {(!selectedEvent.escaloes || activeEvent.escaloes.length === 0) ? (
+                        {(!activeEvent.escaloes || activeEvent.escaloes.length === 0) ? (
                             <p style={{ color: 'var(--text-secondary)' }}>Informação de escalões não disponível.</p>
                         ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
