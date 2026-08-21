@@ -5,11 +5,11 @@ export const metadata = {
 
 export default function TermsOfService() {
   return (
-    <main className="min-h-screen bg-gray-900 text-gray-200 py-20 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto bg-gray-800 p-8 rounded-2xl shadow-xl">
+    <main className="min-h-screen bg-slate-900 text-slate-200 py-20 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-3xl mx-auto bg-slate-800/50 backdrop-blur border border-white/10 p-8 rounded-2xl shadow-xl">
         <h1 className="text-3xl font-bold text-white mb-6">Termos de Serviço</h1>
         
-        <div className="space-y-6 text-gray-300">
+        <div className="space-y-6 text-slate-300">
           <p>
             Bem-vindo ao <strong>Cycling Calendar</strong>. Ao aceder e utilizar o nosso website e serviços, 
             concorda em cumprir e ficar vinculado aos seguintes Termos de Serviço. Se não concordar com alguma 
@@ -77,7 +77,7 @@ export default function TermsOfService() {
             </p>
           </section>
 
-          <div className="mt-12 pt-6 border-t border-gray-700 text-sm text-gray-500">
+          <div className="mt-12 pt-6 border-t border-white/10 text-sm text-slate-400">
             Última atualização: {new Date().toLocaleDateString('pt-PT')}
           </div>
         </div>

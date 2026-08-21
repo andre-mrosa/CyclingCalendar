@@ -17,42 +17,26 @@ export default function Conta() {
 
     const [activeModal, setActiveModal] = useState(null);
 
-    const helpButtonStyle = {
-        background: 'none', border: 'none', cursor: 'pointer',
-        padding: '0', display: 'flex', alignItems: 'center',
-        color: 'var(--accent-primary)', opacity: 0.8,
-        transition: 'opacity 0.2s',
-        marginLeft: '0.5rem'
-    };
-
     return (
-        <div className="app-container" style={{ padding: '2rem' }}>
-            <header style={{ marginBottom: '2.5rem', textAlign: 'center' }}>
-                <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem', fontWeight: 700 }}>Definições</h1>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '1rem' }}>
+        <div className="p-8 text-slate-300">
+            <header className="mb-10 text-center">
+                <h1 className="text-3xl mb-2 font-bold text-white">Definições</h1>
+                <p className="text-slate-400 text-base">
                     Personaliza a tua experiência no Calendário Ciclismo.
                 </p>
             </header>
 
-            <main style={{
-                display: 'flex', flexDirection: 'column', gap: '2rem',
-                maxWidth: '700px', margin: '0 auto'
-            }}>
-                <section style={{
-                    background: 'var(--bg-secondary)',
-                    border: '1px solid var(--card-border)',
-                    borderRadius: 'var(--radius-lg)',
-                    padding: '0 1.5rem'
-                }}>
-                    <div className="setting-row">
-                        <div className="setting-info">
-                            <h3 className="setting-title">
+            <main className="flex flex-col gap-8 max-w-2xl mx-auto">
+                <section className="bg-slate-900 border border-slate-800 rounded-xl px-6 py-4 backdrop-blur shadow-xl">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between py-4 border-b border-slate-800/50 last:border-0 gap-4">
+                        <div>
+                            <h3 className="font-semibold text-slate-200 flex items-center mb-1">
                                 Região Predefinida
-                                <button onClick={() => setActiveModal('regiao')} style={helpButtonStyle} title="Assistente de Região"><HelpCircle size={16} /></button>
+                                <button onClick={() => setActiveModal('regiao')} className="ml-2 text-blue-500 hover:text-blue-400 transition-colors opacity-80" title="Assistente de Região"><HelpCircle size={16} /></button>
                             </h3>
-                            <p className="setting-desc">Filtra automaticamente o calendário pela tua associação regional.</p>
+                            <p className="text-sm text-slate-400">Filtra automaticamente o calendário pela tua associação regional.</p>
                         </div>
-                        <select className="custom-select" value={defaultRegiao} onChange={(e) => setDefaultRegiao(e.target.value)}>
+                        <select className="h-9 px-3 text-sm rounded-lg border border-slate-700 bg-slate-800 text-slate-200 outline-none focus:border-blue-500 transition-colors w-full md:w-auto" value={defaultRegiao} onChange={(e) => setDefaultRegiao(e.target.value)}>
                             <option value="Todas">Nenhuma (Todas)</option>
                             <option value="AC Minho">AC Minho</option>
                             <option value="AC Porto">AC Porto</option>
@@ -68,15 +52,15 @@ export default function Conta() {
                         </select>
                     </div>
 
-                    <div className="setting-row">
-                        <div className="setting-info">
-                            <h3 className="setting-title">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between py-4 border-b border-slate-800/50 last:border-0 gap-4">
+                        <div>
+                            <h3 className="font-semibold text-slate-200 flex items-center mb-1">
                                 Escalão Predefinido
-                                <button onClick={() => setActiveModal('escalao')} style={helpButtonStyle} title="Assistente de Escalão"><HelpCircle size={16} /></button>
+                                <button onClick={() => setActiveModal('escalao')} className="ml-2 text-blue-500 hover:text-blue-400 transition-colors opacity-80" title="Assistente de Escalão"><HelpCircle size={16} /></button>
                             </h3>
-                            <p className="setting-desc">Mostra as provas mais adequadas à tua categoria ao abrir a página.</p>
+                            <p className="text-sm text-slate-400">Mostra as provas mais adequadas à tua categoria ao abrir a página.</p>
                         </div>
-                        <select className="custom-select" value={defaultEscalao} onChange={(e) => setDefaultEscalao(e.target.value)}>
+                        <select className="h-9 px-3 text-sm rounded-lg border border-slate-700 bg-slate-800 text-slate-200 outline-none focus:border-blue-500 transition-colors w-full md:w-auto" value={defaultEscalao} onChange={(e) => setDefaultEscalao(e.target.value)}>
                             <option value="Todos">Nenhum (Todos)</option>
                             <option value="Elite Amador / Individual">Elite Amador / Individual</option>
                             <option value="Elite / Sub-23">Elite / Sub-23</option>
@@ -90,75 +74,65 @@ export default function Conta() {
                         </select>
                     </div>
 
-                    <div className="setting-row">
-                        <div className="setting-info">
-                            <h3 className="setting-title">Ocultar Eventos Passados</h3>
-                            <p className="setting-desc">Inicia o calendário no mês atual, escondendo provas que já decorreram.</p>
+                    <div className="flex flex-col md:flex-row md:items-center justify-between py-4 border-b border-slate-800/50 last:border-0 gap-4">
+                        <div>
+                            <h3 className="font-semibold text-slate-200 mb-1">Ocultar Eventos Passados</h3>
+                            <p className="text-sm text-slate-400">Inicia o calendário no mês atual, escondendo provas que já decorreram.</p>
                         </div>
                         <div 
-                            className={`toggle-switch ${useCurrentMonth ? 'active' : ''}`} 
+                            className={`w-11 h-6 shrink-0 rounded-full transition-all flex items-center px-1 cursor-pointer border ${useCurrentMonth ? 'bg-blue-500/20 border-blue-500/50 shadow-[0_0_8px_rgba(59,130,246,0.3)]' : 'bg-slate-800 border-slate-700'}`} 
                             onClick={toggleUseCurrentMonth}
-                        />
+                        >
+                            <div className={`w-4 h-4 rounded-full transition-all ${useCurrentMonth ? 'translate-x-5 bg-blue-400 shadow-[0_0_8px_rgba(59,130,246,0.8)]' : 'translate-x-0 bg-slate-500'}`}/>
+                        </div>
                     </div>
                 </section>
 
-                <section style={{
-                    background: 'var(--bg-secondary)',
-                    border: '1px solid var(--card-border)',
-                    borderRadius: 'var(--radius-lg)',
-                    padding: '0 1.5rem'
-                }}>
-                    <div style={{ padding: '1.5rem 0 1rem' }}>
-                        <h3 className="setting-title" style={{ marginBottom: '0.25rem' }}>Menu de Navegação</h3>
-                        <p className="setting-desc">Personaliza os separadores visíveis no topo da página. Desativa o que não usas.</p>
+                <section className="bg-slate-900 border border-slate-800 rounded-xl px-6 py-4 backdrop-blur shadow-xl">
+                    <div className="pt-2 pb-4">
+                        <h3 className="font-semibold text-slate-200 mb-1">Menu de Navegação</h3>
+                        <p className="text-sm text-slate-400">Personaliza os separadores visíveis no topo da página. Desativa o que não usas.</p>
                     </div>
                     
-                    <div style={{ paddingBottom: '1rem' }}>
+                    <div className="pb-2">
                         {['Nacionais', 'Internacionais', 'Taças', 'Regionais', 'Lazer', 'Favoritos'].map(tab => {
                             const isVisible = !hiddenTabs.includes(tab);
                             return (
-                                <div key={tab} className="setting-row" style={{ padding: '0.75rem 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                    <span style={{ fontSize: '0.95rem', color: isVisible ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+                                <div key={tab} className="flex flex-col md:flex-row md:items-center justify-between py-4 border-b border-slate-800/50 last:border-0 gap-4">
+                                    <span className={`text-[0.95rem] ${isVisible ? 'text-slate-200' : 'text-slate-500'}`}>
                                         Separador <strong>{tab}</strong>
                                     </span>
                                     <div 
-                                        className={`toggle-switch ${isVisible ? 'active' : ''}`} 
+                                        className={`w-11 h-6 shrink-0 rounded-full transition-all flex items-center px-1 cursor-pointer border ${isVisible ? 'bg-blue-500/20 border-blue-500/50 shadow-[0_0_8px_rgba(59,130,246,0.3)]' : 'bg-slate-800 border-slate-700'}`} 
                                         onClick={() => toggleHiddenTab(tab)}
-                                    />
+                                    >
+                                        <div className={`w-4 h-4 rounded-full transition-all ${isVisible ? 'translate-x-5 bg-blue-400 shadow-[0_0_8px_rgba(59,130,246,0.8)]' : 'translate-x-0 bg-slate-500'}`}/>
+                                    </div>
                                 </div>
                             );
                         })}
                     </div>
                 </section>
 
-                <section style={{
-                    background: 'var(--bg-secondary)',
-                    border: '1px solid var(--card-border)',
-                    borderRadius: 'var(--radius-lg)',
-                    padding: '0 1.5rem'
-                }}>
-                    <div style={{ padding: '1.5rem 0 1rem' }}>
-                        <h3 className="setting-title" style={{ marginBottom: '0.25rem' }}>Fontes de Dados (Scrapers)</h3>
-                        <p className="setting-desc">Gere a origem das provas. Em caso de duplicados, a que está em cima tem prioridade.</p>
+                <section className="bg-slate-900 border border-slate-800 rounded-xl px-6 py-4 backdrop-blur shadow-xl">
+                    <div className="pt-2 pb-4">
+                        <h3 className="font-semibold text-slate-200 mb-1">Fontes de Dados (Scrapers)</h3>
+                        <p className="text-sm text-slate-400">Gere a origem das provas. Em caso de duplicados, a que está em cima tem prioridade.</p>
                     </div>
 
-                    <div style={{ paddingBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div className="pb-2 flex flex-col gap-2">
                         {selectedSources.map((source, index) => (
-                            <div key={source} style={{ 
-                                display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
-                                background: 'var(--card-bg)', padding: '0.75rem 1rem', 
-                                borderRadius: 'var(--radius-md)', border: '1px solid var(--card-border)' 
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                    <div style={{ color: 'var(--text-secondary)', cursor: 'grab' }} title="Ordem (Arrasta para mudar se tivéssemos drag&drop, ou usa clique duplo/botões)">
+                            <div key={source} className="flex items-center justify-between bg-slate-800/50 px-4 py-3 rounded-md border border-slate-700">
+                                <div className="flex items-center gap-4">
+                                    <div className="text-slate-500 cursor-grab hover:text-slate-300 transition-colors" title="Ordem (Usa botões para mudar)">
                                         <GripVertical size={16} />
                                     </div>
-                                    <span style={{ fontWeight: 500, fontSize: '0.95rem' }}>
+                                    <span className="font-medium text-[0.95rem] text-slate-200">
                                         {source === 'FPC' ? 'Federação Portuguesa (FPC)' : 'Cabreira Solutions'}
                                     </span>
                                 </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <div className="flex items-center gap-4">
+                                    <div className="flex flex-col gap-1">
                                         <button 
                                             onClick={() => {
                                                 const newOrder = [...selectedSources];
@@ -166,7 +140,7 @@ export default function Conta() {
                                                 reorderSources(newOrder);
                                             }}
                                             disabled={index === 0}
-                                            style={{ background: 'none', border: 'none', cursor: index === 0 ? 'not-allowed' : 'pointer', opacity: index === 0 ? 0.2 : 0.7, padding: '0 4px', fontSize: '10px', color: 'var(--text-primary)' }}
+                                            className="text-xs px-2 py-0.5 rounded bg-slate-700/50 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                                         >▲</button>
                                         <button 
                                             onClick={() => {
@@ -175,31 +149,33 @@ export default function Conta() {
                                                 reorderSources(newOrder);
                                             }}
                                             disabled={index === selectedSources.length - 1}
-                                            style={{ background: 'none', border: 'none', cursor: index === selectedSources.length - 1 ? 'not-allowed' : 'pointer', opacity: index === selectedSources.length - 1 ? 0.2 : 0.7, padding: '0 4px', fontSize: '10px', color: 'var(--text-primary)' }}
+                                            className="text-xs px-2 py-0.5 rounded bg-slate-700/50 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                                         >▼</button>
                                     </div>
                                     <div 
-                                        className="toggle-switch active" 
+                                        className="w-11 h-6 shrink-0 rounded-full transition-all flex items-center px-1 cursor-pointer border bg-blue-500/20 border-blue-500/50 shadow-[0_0_8px_rgba(59,130,246,0.3)]" 
                                         onClick={() => toggleSource(source)}
-                                    />
+                                    >
+                                        <div className="w-4 h-4 rounded-full transition-all translate-x-5 bg-blue-400 shadow-[0_0_8px_rgba(59,130,246,0.8)]"/>
+                                    </div>
                                 </div>
                             </div>
                         ))}
 
                         {['FPC', 'Cabreira'].filter(s => !selectedSources.includes(s)).map(source => (
-                            <div key={source} style={{ 
-                                display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
-                                background: 'transparent', padding: '0.75rem 1rem', 
-                                borderRadius: 'var(--radius-md)', border: '1px dashed var(--card-border)',
-                                opacity: 0.6
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                    <div style={{ opacity: 0 }}><GripVertical size={16} /></div>
-                                    <span style={{ fontSize: '0.95rem' }}>
+                            <div key={source} className="flex items-center justify-between bg-transparent px-4 py-3 rounded-md border border-dashed border-slate-700 opacity-60 hover:opacity-100 transition-opacity">
+                                <div className="flex items-center gap-4">
+                                    <div className="opacity-0"><GripVertical size={16} /></div>
+                                    <span className="text-[0.95rem] text-slate-400">
                                         {source === 'FPC' ? 'Federação Portuguesa (FPC)' : 'Cabreira Solutions'}
                                     </span>
                                 </div>
-                                <div className="toggle-switch" onClick={() => toggleSource(source)} />
+                                <div 
+                                    className="w-11 h-6 shrink-0 rounded-full transition-all flex items-center px-1 cursor-pointer border bg-slate-800 border-slate-700" 
+                                    onClick={() => toggleSource(source)}
+                                >
+                                    <div className="w-4 h-4 rounded-full transition-all translate-x-0 bg-slate-500"/>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -208,27 +184,19 @@ export default function Conta() {
 
             {/* Modals */}
             {activeModal && (
-                <div style={{
-                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                    backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    zIndex: 1000, padding: '1rem', backdropFilter: 'blur(4px)'
-                }} onClick={(e) => {
-                    if (e.target === e.currentTarget) setActiveModal(null);
-                }}>
-                    <div style={{ 
-                        background: 'var(--card-bg)', borderRadius: 'var(--radius-lg)', position: 'relative',
-                        maxWidth: '500px', width: '100%', boxShadow: 'var(--shadow-lg)', overflow: 'hidden'
-                    }}>
+                <div 
+                    className="fixed inset-0 bg-black/60 flex items-center justify-center z-[1000] p-4 backdrop-blur-sm"
+                    onClick={(e) => {
+                        if (e.target === e.currentTarget) setActiveModal(null);
+                    }}
+                >
+                    <div className="bg-slate-900 border border-slate-800 rounded-xl relative max-w-[500px] w-full shadow-2xl overflow-hidden">
                         <button 
                             onClick={() => setActiveModal(null)}
-                            style={{
-                                position: 'absolute', top: '10px', right: '10px',
-                                background: 'none', border: 'none', fontSize: '1.5rem', color: 'var(--text-secondary)',
-                                cursor: 'pointer', zIndex: 10
-                            }}
+                            className="absolute top-3 right-3 text-slate-400 hover:text-white transition-colors text-2xl leading-none z-10"
                         >×</button>
                         
-                        <div style={{ maxHeight: '90vh', overflowY: 'auto' }}>
+                        <div className="max-h-[90vh] overflow-y-auto p-1">
                             {activeModal === 'regiao' && <RegionAssistant onApply={(val) => { setDefaultRegiao(val); setActiveModal(null); }} />}
                             {activeModal === 'escalao' && <EscalaoAssistant onApply={(val) => { setDefaultEscalao(val); setActiveModal(null); }} />}
                         </div>

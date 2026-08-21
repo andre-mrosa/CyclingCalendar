@@ -33,105 +33,54 @@ export default function ContactoPage() {
     };
 
     return (
-        <div style={{
-            maxWidth: '600px',
-            margin: '0 auto',
-            padding: '2rem 1rem',
-            animation: 'fadeIn 0.3s ease-out'
-        }}>
-            <div style={{
-                background: 'var(--card-bg)',
-                borderRadius: 'var(--radius-lg)',
-                border: '1px solid var(--card-border)',
-                boxShadow: 'var(--shadow-md)',
-                overflow: 'hidden'
-            }}>
-                <div style={{
-                    padding: '2rem',
-                    borderBottom: '1px solid var(--card-border)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '1rem',
-                    background: 'rgba(59, 130, 246, 0.05)'
-                }}>
-                    <div style={{
-                        background: 'rgba(59, 130, 246, 0.1)',
-                        padding: '1rem',
-                        borderRadius: '50%',
-                        color: 'var(--accent-primary)'
-                    }}>
+        <div className="max-w-[600px] mx-auto py-8 px-4 animate-[fadeIn_0.3s_ease-out]">
+            <div className="bg-slate-900 backdrop-blur border-white/10 ring-1 text-slate-300 rounded-lg shadow-md overflow-hidden">
+                <div className="p-8 border-b border-white/10 flex items-center gap-4 bg-blue-500/5">
+                    <div className="bg-blue-500/10 p-4 rounded-full text-blue-500">
                         <Mail size={32} />
                     </div>
                     <div>
-                        <h1 style={{ margin: 0, fontSize: '1.8rem', color: 'var(--text-primary)' }}>Contactos</h1>
-                        <p style={{ margin: '0.25rem 0 0 0', color: 'var(--text-secondary)' }}>
+                        <h1 className="m-0 text-3xl text-slate-100">Contactos</h1>
+                        <p className="mt-1 text-slate-400">
                             Envia-me as tuas sugestões ou reporta um erro.
                         </p>
                     </div>
                 </div>
 
-                <div style={{ padding: '2rem' }}>
-                    <form onSubmit={handleContactSubmit} style={{ 
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '1.25rem'
-                    }}>
+                <div className="p-8">
+                    <form onSubmit={handleContactSubmit} className="flex flex-col gap-5">
                         {submitStatus === 'success' ? (
-                            <div style={{
-                                padding: '1.5rem',
-                                background: 'rgba(34, 197, 94, 0.1)',
-                                color: '#16a34a',
-                                borderRadius: 'var(--radius-md)',
-                                textAlign: 'center',
-                                border: '1px solid rgba(34, 197, 94, 0.2)',
-                                fontSize: '1.1rem'
-                            }}>
+                            <div className="p-6 bg-green-500/10 text-green-500 rounded-md text-center border border-green-500/20 text-lg">
                                 <strong>Obrigado!</strong> A tua mensagem foi enviada com sucesso.
                             </div>
                         ) : (
                             <>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem' }}>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                        <label style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: '500' }}>Nome (Opcional)</label>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-sm font-medium">Nome (Opcional)</label>
                                         <input 
                                             type="text" 
                                             placeholder="O teu nome..." 
                                             value={formData.name}
                                             onChange={(e) => setFormData({...formData, name: e.target.value})}
                                             disabled={isSubmitting}
-                                            style={{
-                                                padding: '0.75rem',
-                                                borderRadius: 'var(--radius-sm)',
-                                                border: '1px solid var(--card-border)',
-                                                background: 'var(--bg-primary)',
-                                                color: 'var(--text-primary)',
-                                                outline: 'none',
-                                                fontSize: '1rem'
-                                            }}
+                                            className="bg-slate-950/50 border border-slate-700/80 rounded-lg focus:ring-2 focus:ring-blue-500/50 p-3 outline-none text-base disabled:opacity-50 disabled:cursor-not-allowed"
                                         />
                                     </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                        <label style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: '500' }}>E-mail (Opcional)</label>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-sm font-medium">E-mail (Opcional)</label>
                                         <input 
                                             type="email" 
                                             placeholder="O teu e-mail..." 
                                             value={formData.email}
                                             onChange={(e) => setFormData({...formData, email: e.target.value})}
                                             disabled={isSubmitting}
-                                            style={{
-                                                padding: '0.75rem',
-                                                borderRadius: 'var(--radius-sm)',
-                                                border: '1px solid var(--card-border)',
-                                                background: 'var(--bg-primary)',
-                                                color: 'var(--text-primary)',
-                                                outline: 'none',
-                                                fontSize: '1rem'
-                                            }}
+                                            className="bg-slate-950/50 border border-slate-700/80 rounded-lg focus:ring-2 focus:ring-blue-500/50 p-3 outline-none text-base disabled:opacity-50 disabled:cursor-not-allowed"
                                         />
                                     </div>
                                 </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                    <label style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: '500' }}>Mensagem</label>
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-sm font-medium">Mensagem</label>
                                     <textarea 
                                         placeholder="Escreve aqui a tua mensagem..." 
                                         required
@@ -139,21 +88,12 @@ export default function ContactoPage() {
                                         onChange={(e) => setFormData({...formData, message: e.target.value})}
                                         disabled={isSubmitting}
                                         rows={5}
-                                        style={{
-                                            padding: '0.75rem',
-                                            borderRadius: 'var(--radius-sm)',
-                                            border: '1px solid var(--card-border)',
-                                            background: 'var(--bg-primary)',
-                                            color: 'var(--text-primary)',
-                                            outline: 'none',
-                                            fontSize: '1rem',
-                                            resize: 'vertical'
-                                        }}
+                                        className="bg-slate-950/50 border border-slate-700/80 rounded-lg focus:ring-2 focus:ring-blue-500/50 p-3 outline-none text-base resize-y disabled:opacity-50 disabled:cursor-not-allowed"
                                     />
                                 </div>
                                 
                                 {submitStatus === 'error' && (
-                                    <span style={{ color: '#ef4444', fontSize: '0.9rem', textAlign: 'center' }}>
+                                    <span className="text-red-500 text-sm text-center">
                                         Ocorreu um erro ao enviar. Tenta novamente mais tarde.
                                     </span>
                                 )}
@@ -161,19 +101,7 @@ export default function ContactoPage() {
                                 <button 
                                     type="submit" 
                                     disabled={isSubmitting}
-                                    style={{
-                                        background: 'var(--accent-primary)',
-                                        color: 'white',
-                                        border: 'none',
-                                        padding: '1rem',
-                                        borderRadius: 'var(--radius-md)',
-                                        fontWeight: 'bold',
-                                        cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                                        transition: 'var(--transition)',
-                                        fontSize: '1.05rem',
-                                        marginTop: '0.5rem',
-                                        opacity: isSubmitting ? 0.7 : 1
-                                    }}
+                                    className="bg-blue-600 hover:bg-blue-500 text-white rounded-lg shadow-md p-4 font-bold transition-colors text-lg mt-2 disabled:opacity-70 disabled:cursor-not-allowed"
                                 >
                                     {isSubmitting ? 'A enviar...' : 'Enviar Mensagem'}
                                 </button>

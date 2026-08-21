@@ -16,21 +16,15 @@ export default function Ajuda() {
     };
 
     return (
-        <div className="app-container" style={{ padding: '2rem' }}>
-            <header style={{ marginBottom: '2rem', textAlign: 'center' }}>
-                <h1 style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>Central de Ajuda</h1>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>
+        <div className="min-h-screen p-8 bg-slate-900 backdrop-blur border border-white/10 text-slate-300">
+            <header className="mb-8 text-center">
+                <h1 className="text-4xl mb-2 font-bold text-white">Central de Ajuda</h1>
+                <p className="text-lg text-slate-400">
                     Usa os nossos assistentes para descobrir a tua associação ou calcular o teu escalão oficial.
                 </p>
             </header>
 
-            <main style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
-                gap: '2rem',
-                maxWidth: '1000px',
-                margin: '0 auto'
-            }}>
+            <main className="grid grid-cols-[repeat(auto-fit,minmax(350px,1fr))] gap-8 max-w-[1000px] mx-auto">
                 <RegionAssistant onApply={(val) => handleApply('regiao', val)} />
                 <EscalaoAssistant onApply={(val) => handleApply('escalao', val)} />
             </main>

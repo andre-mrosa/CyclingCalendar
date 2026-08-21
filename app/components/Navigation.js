@@ -55,19 +55,7 @@ export default function Navigation() {
             <Link 
                 key={link.href}
                 href={link.href} 
-                style={{ 
-                    color: isActive ? 'var(--accent-primary)' : 'var(--text-primary)', 
-                    textDecoration: 'none', 
-                    fontWeight: 'bold', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '6px',
-                    borderTop: '2px solid transparent',
-                    borderBottom: isActive ? '2px solid var(--accent-primary)' : '2px solid transparent',
-                    paddingTop: '0.2rem',
-                    paddingBottom: '0.2rem',
-                    transition: 'var(--transition)'
-                }}
+                className={`flex items-center gap-1.5 font-bold py-1 border-y-2 border-t-transparent transition-all duration-300 ${isActive ? 'text-blue-400 border-b-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.5)]' : 'text-slate-300 hover:text-slate-50 border-b-transparent'}`}
             >
                 {link.icon}
                 {link.label}
@@ -75,79 +63,45 @@ export default function Navigation() {
         );
     };
 
+    const ThemeToggle = () => (
+        <button 
+            onClick={() => setTheme(isDarkMode ? 'light' : 'dark')}
+            className="relative w-9 h-5 rounded-full bg-slate-800 border border-slate-700 flex items-center transition-colors shadow-inner cursor-pointer p-0"
+            title="Alternar Modo Noturno"
+        >
+            <div className={`absolute w-4 h-4 rounded-full flex items-center justify-center transition-all duration-300 shadow-[0_1px_2px_rgba(0,0,0,0.3)] ${isDarkMode ? 'bg-slate-900 left-[2px]' : 'bg-white left-[18px]'}`}>
+                {mounted && (isDarkMode ? <Moon size={10} className="text-slate-300" /> : <Sun size={10} className="text-yellow-500" />)}
+            </div>
+        </button>
+    );
+
     return (
         <>
-            <nav className="no-scrollbar" style={{
-                display: 'flex',
-                padding: '1rem 2rem',
-                background: 'var(--card-bg)',
-                borderBottom: '1px solid var(--card-border)',
-                backdropFilter: 'blur(10px)',
-                position: 'sticky',
-                top: 0,
-                zIndex: 100,
-                alignItems: 'center'
-            }}>
+            <nav className="no-scrollbar flex items-center px-8 py-4 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50 text-slate-50">
                 <button 
-                    className="mobile-menu-btn" 
+                    className="md:hidden mr-4 text-slate-50 hover:text-blue-400 transition-colors" 
                     onClick={() => setIsMobileMenuOpen(true)}
                     title="Menu"
-                    style={{ marginRight: '1rem' }}
                 >
                     <Menu size={24} />
                 </button>
 
-                <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none', marginRight: '1.5rem' }}>
-                    <img src="/icon.jpg" alt="Calendário Ciclismo Logo" style={{ width: '36px', height: '36px', borderRadius: '8px', objectFit: 'cover' }} />
+                <Link href="/" className="flex items-center gap-3 mr-6 no-underline">
+                    <img src="/icon.jpg" alt="Calendário Ciclismo Logo" className="w-9 h-9 rounded-lg object-cover" />
                 </Link>
 
-                <div className="desktop-links">
-                    <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+                <div className="hidden md:flex flex-1 items-center">
+                    <div className="flex gap-6 items-center">
                         {links.map(renderLink)}
                     </div>
                     
-                    <div style={{ marginLeft: 'auto', display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-                        <button 
-                            onClick={() => setTheme(isDarkMode ? 'light' : 'dark')}
-                            style={{
-                                position: 'relative',
-                                width: '36px',
-                                height: '20px',
-                                borderRadius: '20px',
-                                background: 'var(--card-border)',
-                                border: 'none',
-                                cursor: 'pointer',
-                                padding: 0,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: isDarkMode ? 'flex-start' : 'flex-end',
-                                transition: 'background-color 0.3s ease',
-                                boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.2)'
-                            }}
-                            title="Alternar Modo Noturno"
-                        >
-                            <div style={{
-                                width: '16px',
-                                height: '16px',
-                                borderRadius: '50%',
-                                background: isDarkMode ? '#1e293b' : '#ffffff',
-                                position: 'absolute',
-                                left: isDarkMode ? '2px' : '18px',
-                                transition: 'left 0.3s cubic-bezier(0.4, 0.0, 0.2, 1)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                boxShadow: '0 1px 2px rgba(0,0,0,0.3)'
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    {mounted && (isDarkMode ? <Moon size={10} color="#cbd5e1" /> : <Sun size={10} color="#eab308" />)}
-                                </div>
-                            </div>
-                        </button>
+                    <div className="ml-auto flex gap-6 items-center">
+                        <ThemeToggle />
+                        
                         <Show when="signed-out">
                             {rightLinks.map(renderLink)}
                             <SignInButton mode="modal">
-                                <button className="btn-entrar">
+                                <button className="flex items-center gap-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 px-4 py-1.5 rounded-lg transition-colors font-bold shadow-[0_0_10px_rgba(59,130,246,0.1)] hover:shadow-[0_0_15px_rgba(59,130,246,0.2)] cursor-pointer">
                                     <LogIn size={16} />
                                     Entrar
                                 </button>
@@ -170,12 +124,12 @@ export default function Navigation() {
                                 <UserButton.MenuItems>
                                     <UserButton.Action 
                                         label="Definições"
-                                        labelIcon={<Settings size={16} style={{marginRight: '0.5rem'}} />}
+                                        labelIcon={<Settings size={16} className="mr-2" />}
                                         onClick={() => setIsSettingsModalOpen(true)}
                                     />
                                     <UserButton.Action 
                                         label="Ajuda"
-                                        labelIcon={<HelpCircle size={16} style={{marginRight: '0.5rem'}} />}
+                                        labelIcon={<HelpCircle size={16} className="mr-2" />}
                                         onClick={() => setIsHelpModalOpen(true)}
                                     />
                                 </UserButton.MenuItems>
@@ -185,68 +139,35 @@ export default function Navigation() {
                 </div>
                 
                 {/* Mobile specific toggle that shows only when menu is closed */}
-                <div style={{ marginLeft: 'auto' }} className="mobile-menu-btn">
-                    <button 
-                        onClick={() => setTheme(isDarkMode ? 'light' : 'dark')}
-                        style={{
-                            position: 'relative',
-                            width: '36px',
-                            height: '20px',
-                            borderRadius: '20px',
-                            background: 'var(--card-border)',
-                            border: 'none',
-                            cursor: 'pointer',
-                            padding: 0,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: isDarkMode ? 'flex-start' : 'flex-end',
-                            boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.2)'
-                        }}
-                    >
-                        <div style={{
-                            width: '16px',
-                            height: '16px',
-                            borderRadius: '50%',
-                            background: isDarkMode ? '#1e293b' : '#ffffff',
-                            position: 'absolute',
-                            left: isDarkMode ? '2px' : '18px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            boxShadow: '0 1px 2px rgba(0,0,0,0.3)'
-                        }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                {mounted && (isDarkMode ? <Moon size={10} color="#cbd5e1" /> : <Sun size={10} color="#eab308" />)}
-                            </div>
-                        </div>
-                    </button>
+                <div className="ml-auto md:hidden flex items-center">
+                    <ThemeToggle />
                 </div>
             </nav>
 
             <div 
-                className={`mobile-overlay ${isMobileMenuOpen ? 'open' : ''}`}
+                className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[45] transition-opacity duration-300 md:hidden ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
                 onClick={() => setIsMobileMenuOpen(false)}
             />
 
-            <div className={`mobile-sidebar ${isMobileMenuOpen ? 'open' : ''}`}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                    <h2 style={{ fontSize: '1.2rem', color: 'var(--text-primary)', margin: 0 }}>Menu</h2>
+            <div className={`fixed top-0 left-0 bottom-0 w-64 bg-slate-900 border-r border-slate-800 z-50 transform transition-transform duration-300 ease-in-out md:hidden text-slate-50 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                <div className="flex justify-between items-center p-6 mb-4">
+                    <h2 className="text-lg text-slate-50 m-0 font-bold">Menu</h2>
                     <button 
                         onClick={() => setIsMobileMenuOpen(false)}
-                        style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        className="bg-transparent border-none text-slate-400 hover:text-blue-400 cursor-pointer flex items-center justify-center transition-colors"
                     >
                         <X size={24} />
                     </button>
                 </div>
                 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div className="flex flex-col gap-4 px-6">
                     {links.map(renderLink)}
-                    <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--card-border)' }}>
+                    <div className="mt-4 pt-4 border-t border-slate-800 flex flex-col gap-4">
                         <Show when="signed-out">
                             {rightLinks.map(renderLink)}
-                            <div style={{ marginTop: '1rem' }}>
+                            <div className="mt-2">
                                 <SignInButton mode="modal">
-                                    <button className="btn-entrar btn-entrar-mobile">
+                                    <button className="flex items-center justify-center gap-2 w-full bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 px-4 py-2 rounded-lg transition-colors font-bold shadow-[0_0_10px_rgba(59,130,246,0.1)] cursor-pointer">
                                         <LogIn size={18} />
                                         Entrar
                                     </button>
@@ -254,9 +175,9 @@ export default function Navigation() {
                             </div>
                         </Show>
                         <Show when="signed-in">
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0' }}>
+                            <div className="flex items-center gap-2 py-2 text-slate-50 font-medium">
                                 <UserButton />
-                                <span style={{ fontWeight: '500' }}>A minha conta</span>
+                                <span>A minha conta</span>
                             </div>
                         </Show>
                     </div>
@@ -266,36 +187,14 @@ export default function Navigation() {
             {/* Custom Full Pages inside Modals */}
             {(isSettingsModalOpen || isHelpModalOpen) && (
                 <div 
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                        backdropFilter: 'blur(4px)',
-                        zIndex: 9999,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: '1rem'
-                    }}
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4"
                     onClick={() => {
                         setIsSettingsModalOpen(false);
                         setIsHelpModalOpen(false);
                     }}
                 >
                     <div 
-                        style={{
-                            background: 'var(--bg-primary)',
-                            borderRadius: 'var(--radius-lg)',
-                            width: '100%',
-                            maxWidth: '900px',
-                            maxHeight: '90vh',
-                            overflowY: 'auto',
-                            boxShadow: 'var(--shadow-lg)',
-                            position: 'relative'
-                        }}
+                        className="bg-slate-900 rounded-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl relative border border-slate-800 text-slate-50"
                         onClick={e => e.stopPropagation()}
                     >
                         <button 
@@ -303,27 +202,12 @@ export default function Navigation() {
                                 setIsSettingsModalOpen(false);
                                 setIsHelpModalOpen(false);
                             }}
-                            style={{
-                                position: 'absolute',
-                                top: '15px',
-                                right: '20px',
-                                background: 'rgba(255,255,255,0.1)',
-                                border: 'none',
-                                color: 'var(--text-primary)',
-                                fontSize: '1.5rem',
-                                width: '36px', height: '36px',
-                                borderRadius: '50%',
-                                cursor: 'pointer',
-                                zIndex: 10,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}
+                            className="absolute top-4 right-5 bg-white/10 hover:bg-white/20 hover:text-blue-400 text-slate-50 text-xl w-9 h-9 rounded-full cursor-pointer z-10 flex items-center justify-center transition-colors border-none"
                         >
                             <X size={20} />
                         </button>
                         
-                        <div style={{ marginTop: '2rem' }}>
+                        <div className="mt-8">
                             {isSettingsModalOpen && <SettingsPage />}
                             {isHelpModalOpen && <HelpPage />}
                         </div>

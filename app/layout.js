@@ -58,11 +58,11 @@ import WelcomeModal from "./components/WelcomeModal";
 export default function RootLayout({ children }) {
   return (
     <html lang="pt" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
-        <ThemeProvider attribute="class" defaultTheme="dark" value={{ light: 'light-mode', dark: 'dark' }}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-950 text-slate-200 selection:bg-blue-500/30 selection:text-blue-200`} suppressHydrationWarning>
+        <ThemeProvider attribute="class" defaultTheme="dark">
           <ThemeClerkProvider>
             <Navigation />
-            <main style={{ minHeight: 'calc(100vh - 120px)' }}>
+            <main className="min-h-[calc(100vh-120px)] w-full overflow-x-hidden">
               {children}
             </main>
             <Footer />

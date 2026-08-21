@@ -23,31 +23,53 @@ export const deepScrapeFPC = async (link) => {
             const $tempBody = cheerio.load(containerHtml);
             $tempBody('#navigation, #sub_menu_sobre, footer, script, style, iframe, .navbar, .logo, .menu, .menu_lateral_items, .redes_sociais, #menu, .header, nav, header, .three__blocks, .footer, .footer_bg, #rodape, .patrocinadores, .parceiros, .cyclopnet, .copyright').remove(); // remove lixo
             
-            // Extract cartaz from the full body before isolating main content
+            // Extract cartaz and other buttons from the full body before isolating main content
             let mainImgUrl = null;
             const bannerImg = $tempBody('img[src*="anexo_banner"]');
             const cartazImg = $tempBody('img[src*="anexo_cartaz"]');
             if (bannerImg.length > 0) mainImgUrl = bannerImg.first().attr('src');
             else if (cartazImg.length > 0) mainImgUrl = cartazImg.first().attr('src');
-            else {
-                // Tentar encontrar cartaz nos botões input
-                $tempBody('input[type="button"]').each((i, el) => {
-                    const val = $tempBody(el).attr('value');
-                    const onclick = $tempBody(el).attr('onclick');
-                    if (val && val.toLowerCase() === 'cartaz' && onclick) {
-                        const match = onclick.match(/window\.open\s*\(\s*'([^']+)'/);
-                        if (match) mainImgUrl = match[1];
+
+            let buttonsHtml = '<div class="fpc-buttons" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; margin-bottom: 1.5rem;">';
+            $tempBody('input[type="button"]').each((i, el) => {
+                const val = $tempBody(el).attr('value');
+                const onclick = $tempBody(el).attr('onclick');
+                const parentA = $tempBody(el).closest('a').attr('href');
+                let link = null;
+                if (onclick) {
+                    const match = onclick.match(/window\.open\s*\(\s*'([^']+)'/);
+                    if (match) link = match[1];
+                } else if (parentA) {
+                    link = parentA;
+                }
+                
+                if (val && link) {
+                    if (val.toLowerCase() === 'cartaz') {
+                        mainImgUrl = link;
                     }
-                });
-            }
+                    const isRed = val.toLowerCase().includes('classifica');
+                    buttonsHtml += `<a href="${link}" target="_blank" rel="noopener noreferrer" style="background-color: ${isRed ? '#ef4444' : '#10b981'}; color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; text-decoration: none; font-weight: 500; display: inline-block;">${val}</a>`;
+                }
+            });
+            buttonsHtml += '</div>';
 
             // Isolate main content if available, else fallback to body
             const mainContentHtml = $tempBody('.main-content').length > 0 ? $tempBody('.main-content').html() : $tempBody('body').html();
             const $temp = cheerio.load(mainContentHtml);
             
+            // Remover painel de noticias da FPC para nao poluir a BD com lixo
+            $temp('form[name="nr_pagina"]').parent().remove();
+            $temp('a').each(function() {
+                if ($temp(this).text().trim() === 'Ler Mais') {
+                    $temp(this).parent().parent().remove();
+                }
+            });
+            
             // Remover nós de texto soltos que sejam lixo
             $temp('*').contents().filter(function() { return this.nodeType === 3 && this.nodeValue.includes('Cyclopnet'); }).parent().remove();
             $temp('*').contents().filter(function() { return this.nodeType === 3 && this.nodeValue.includes('FPC ©'); }).parent().remove();
+
+            extractedHtml += buttonsHtml;
 
             if (mainImgUrl) {
                 const isCartaz = mainImgUrl.includes('anexo_cartaz') || mainImgUrl.toLowerCase().includes('cartaz');

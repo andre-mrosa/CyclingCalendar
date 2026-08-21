@@ -148,28 +148,43 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
     if (!selectedEvent) return null;
 
+    const dateParts = activeEvent.date ? activeEvent.date.split(' ') : [];
+    const day = dateParts[0] || '';
+    const month = dateParts[1] || '';
+
     return (
-        <div className="modal-overlay" onClick={() => setSelectedEvent(null)}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                <button className="modal-close" onClick={() => setSelectedEvent(null)}>✕</button>
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9000] flex items-center justify-center p-2 sm:p-4" onClick={() => setSelectedEvent(null)}>
+            <div className="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-4xl h-[90vh] sm:h-[85vh] flex flex-col shadow-2xl overflow-hidden relative" onClick={(e) => e.stopPropagation()}>
+                <button className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors z-10" onClick={() => setSelectedEvent(null)}>
+                    <X size={24} />
+                </button>
                 
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '1rem', paddingRight: '2rem', marginBottom: '0.5rem' }}>
+                <div className="flex items-center justify-start gap-4 pr-12 mb-2 p-6 pb-0">
+                    <div className="flex flex-col shrink-0 w-[56px] h-[56px] bg-slate-950 rounded-lg overflow-hidden border border-slate-800">
+                        <div className="bg-rose-500 text-white text-[10px] font-bold uppercase tracking-wider text-center py-0.5">
+                            {month}
+                        </div>
+                        <div className="flex-1 flex items-center justify-center text-white text-lg font-bold">
+                            {day}
+                        </div>
+                    </div>
                     {activeEvent.logo && (
-                        <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', flexShrink: 0 }} title="Abrir página do evento">
+                        <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="flex shrink-0" title="Abrir página do evento">
                             <SmartLogo 
                                 src={activeEvent.logo} 
                                 alt={`Logo ${activeEvent.title}`} 
-                                style={{ height: '40px', width: 'auto', objectFit: 'contain' }} 
+                                className="h-10 w-auto object-contain" 
+                                style={{ height: '40px', width: 'auto', objectFit: 'contain' }}
                             />
                         </a>
                     )}
-                    <h2 className="modal-title" style={{ paddingRight: 0, marginBottom: 0 }}>
+                    <h2 className="text-xl sm:text-2xl font-bold text-slate-50 m-0">
                         {activeEvent.logo ? (
-                            <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
+                            <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="text-inherit no-underline hover:text-blue-400 transition-colors">
                                 {activeEvent.title}
                             </a>
                         ) : (
-                            activeEvent.title
+                            <span className="text-slate-50">{activeEvent.title}</span>
                         )}
                     </h2>
                     {isSignedIn && (
@@ -178,32 +193,29 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 e.stopPropagation();
                                 toggleFavorite(activeEvent.id);
                             }}
-                            style={{
-                                background: 'none', border: 'none', cursor: 'pointer',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                padding: '0.5rem', borderRadius: '50%',
-                                transition: 'var(--transition)',
-                                backgroundColor: favorites.includes(activeEvent.id) ? 'rgba(234, 179, 8, 0.1)' : 'var(--bg-secondary)'
-                            }}
+                            className={`flex shrink-0 items-center justify-center w-8 h-8 rounded-full transition-all duration-300 ${favorites.includes(activeEvent.id) ? 'bg-slate-800 border border-yellow-500/30 shadow-[0_0_10px_rgba(234,179,8,0.1)]' : 'bg-slate-800/50 border border-transparent hover:bg-slate-700'}`}
                             title={favorites.includes(activeEvent.id) ? "Remover dos Favoritos" : "Adicionar aos Favoritos"}
                         >
                             <Star 
-                                size={24} 
-                                color={favorites.includes(activeEvent.id) ? "#eab308" : "var(--text-secondary)"} 
-                                fill={favorites.includes(activeEvent.id) ? "#eab308" : "none"} 
-                                style={{ transition: 'var(--transition)' }}
+                                size={16} 
+                                className={`transition-all duration-300 ${favorites.includes(activeEvent.id) ? 'text-yellow-400 drop-shadow-[0_0_5px_rgba(250,204,21,0.4)]' : 'text-slate-400'}`}
+                                fill={favorites.includes(activeEvent.id) ? "#facc15" : "none"}
                             />
                         </button>
                     )}
                 </div>
 
-                <p className="modal-date" style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', marginTop: '0.5rem', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <Calendar size={18} /> {activeEvent.date}{activeEvent.endDate ? ` a ${activeEvent.endDate}` : ''}
-                </p>
+                {activeEvent.endDate ? (
+                    <p className="text-slate-400 mb-6 mt-2 text-sm flex items-center gap-2 px-6">
+                        <Calendar size={14} /> Até {activeEvent.endDate}
+                    </p>
+                ) : (
+                    <div className="mb-6 mt-2"></div>
+                )}
                 
                 {/* Tabs Navigation */}
                 {availableTabs.length > 0 ? (
-                    <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '1rem', marginBottom: '1rem', borderBottom: '1px solid var(--card-border)' }} className="hide-scrollbar custom-scrollbar">
+                    <div className="flex gap-2 overflow-x-auto pb-4 mb-4 border-b border-white/10 px-6 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
                         {availableTabs.map(tab => {
                             const labels = {
                                 info: 'Info do Evento',
@@ -217,18 +229,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 <button 
                                     key={tab}
                                     onClick={() => setActiveTab(tab)}
-                                    style={{
-                                        background: activeTab === tab ? 'var(--accent-primary)' : 'var(--bg-secondary)',
-                                        color: activeTab === tab ? 'white' : 'var(--text-secondary)',
-                                        border: 'none',
-                                        padding: '0.5rem 1rem',
-                                        borderRadius: 'var(--radius-full)',
-                                        cursor: 'pointer',
-                                        fontWeight: activeTab === tab ? '600' : '400',
-                                        whiteSpace: 'nowrap',
-                                        transition: 'var(--transition)',
-                                        boxShadow: activeTab === tab ? 'var(--shadow-glow)' : 'none'
-                                    }}
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${activeTab === tab ? 'bg-slate-700/60 text-slate-100' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'}`}
                                 >
                                     {labels[tab]}
                                 </button>
@@ -236,27 +237,23 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         })}
                     </div>
                 ) : (
-                    <div style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid var(--card-border)' }}>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>O nosso robô não conseguiu encontrar dados estruturados para este evento. A informação deverá estar disponível apenas na página oficial da organização.</p>
+                    <div className="mb-4 pb-4 border-b border-white/10 px-6">
+                        <p className="text-slate-400 text-sm">O nosso robô não conseguiu encontrar dados estruturados para este evento. A informação deverá estar disponível apenas na página oficial da organização.</p>
                     </div>
                 )}
 
                 {/* Wrap all tabs in a flex-grow area so modal-actions sticks to bottom */}
-                <div className="modal-tab-panel">
+                <div className="flex-grow overflow-hidden flex flex-col px-6">
                 
                 {availableTabs.length === 0 && (
-                    <div className="tab-content fade-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '1.5rem', padding: '2rem' }}>
-                        <FileText size={48} style={{ color: 'var(--card-border)' }} />
-                        <h3 style={{ margin: 0, color: 'var(--text-primary)', textAlign: 'center' }}>Não há dados detalhados</h3>
+                    <div className="flex flex-col items-center justify-center h-full gap-6 p-8 animate-fade-in">
+                        <FileText size={48} className="text-slate-600" />
+                        <h3 className="m-0 text-slate-200 text-center text-xl font-semibold">Não há dados detalhados</h3>
                         <a 
                             href={activeEvent.link} 
                             target="_blank" 
                             rel="noopener noreferrer" 
-                            style={{
-                                background: 'var(--accent-primary)', color: 'white', textDecoration: 'none',
-                                padding: '1rem 2rem', borderRadius: 'var(--radius-full)', fontWeight: '600',
-                                display: 'inline-block', boxShadow: 'var(--shadow-md)', transition: 'var(--transition)'
-                            }}
+                            className="bg-blue-600 text-white no-underline px-8 py-4 rounded-full font-semibold inline-block shadow-lg hover:bg-blue-500 transition-colors"
                         >
                             Visitar Site da Organização
                         </a>
@@ -265,46 +262,35 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                 {/* Tab: INFO */}
                 {activeTab === 'info' && (
-                    <div className="tab-content fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                        {/* Descrição e Banner com scroll próprio */}
-                        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, paddingRight: '0.25rem' }} className="custom-scrollbar">
-                            {/* FPC Banner at top if exists */}
+                    <div className="flex flex-col h-full animate-fade-in">
+                        <div className="flex-1 overflow-y-auto min-h-0 pr-2 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
                             {fpcBannerHtml && (
-                                <div className="fpc-banner-container" style={{ marginBottom: '1.5rem', textAlign: 'center' }} dangerouslySetInnerHTML={{ __html: fpcBannerHtml }} />
+                                <div className="mb-6 text-center" dangerouslySetInnerHTML={{ __html: fpcBannerHtml }} />
                             )}
                             {activeEvent.description ? (
-                                <div className="description-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.6' }} dangerouslySetInnerHTML={{ __html: activeEvent.description }} />
+                                <div className="text-slate-300 text-sm leading-relaxed prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: activeEvent.description }} />
                             ) : (
-                                <p style={{ color: 'var(--text-secondary)' }}>Descrição não disponível.</p>
+                                <p className="text-slate-400">Descrição não disponível.</p>
                             )}
                         </div>
                         
-                        {/* Info Footer consolidado com Âmbito, Organização e Licença */}
-                        <div style={{ flexShrink: 0, marginTop: '1.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                        <div className="shrink-0 mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4 pb-4">
                             {activeEvent.licenca && (
-                                <div style={{ 
-                                    padding: '1.25rem', background: 'var(--bg-secondary)', 
-                                    borderRadius: 'var(--radius-md)', border: '1px solid var(--card-border)',
-                                    display: 'flex', flexDirection: 'column', gap: '0.5rem'
-                                }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
+                                <div className="p-5 bg-slate-800/50 rounded-lg border border-white/5 flex flex-col gap-2">
+                                    <div className="flex items-center gap-2 text-slate-400">
                                         <FileText size={16} />
-                                        <span style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Licença</span>
+                                        <span className="text-xs uppercase tracking-wider font-semibold">Licença</span>
                                     </div>
-                                    <span style={{ color: 'var(--text-primary)', fontSize: '1.05rem', fontWeight: '500' }}>{activeEvent.licenca}</span>
+                                    <span className="text-slate-200 text-base font-medium">{activeEvent.licenca}</span>
                                 </div>
                             )}
                             {(activeEvent.organizador || activeEvent.source) && (
-                                <div style={{ 
-                                    padding: '1.25rem', background: 'var(--bg-secondary)', 
-                                    borderRadius: 'var(--radius-md)', border: '1px solid var(--card-border)',
-                                    display: 'flex', flexDirection: 'column', gap: '0.5rem'
-                                }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
+                                <div className="p-5 bg-slate-800/50 rounded-lg border border-white/5 flex flex-col gap-2">
+                                    <div className="flex items-center gap-2 text-slate-400">
                                         <Users size={16} />
-                                        <span style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Organização</span>
+                                        <span className="text-xs uppercase tracking-wider font-semibold">Organização</span>
                                     </div>
-                                    <span style={{ color: 'var(--text-primary)', fontSize: '1.05rem', fontWeight: '500' }}>
+                                    <span className="text-slate-200 text-base font-medium">
                                         {activeEvent.organizador 
                                             ? (activeEvent.organizador === 'U.V.P./F.P.C' ? 'FPC' : activeEvent.organizador) 
                                             : (activeEvent.source === 'Cabreira' ? 'Cabreira Solutions' : activeEvent.source)}
@@ -316,30 +302,20 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 )}
                 {/* Tab: ESCALOES */}
                 {activeTab === 'escaloes' && (
-                    <div className="tab-content escaloes-tab fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                    <div className="flex flex-col h-full animate-fade-in">
                         {(!activeEvent.escaloes || activeEvent.escaloes.length === 0) ? (
-                            <p style={{ color: 'var(--text-secondary)' }}>Informação de escalões não disponível.</p>
+                            <p className="text-slate-400">Informação de escalões não disponível.</p>
                         ) : (
-                            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                                <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, paddingRight: '0.25rem' }} className="custom-scrollbar">
-                                    <div style={{ marginBottom: '2rem' }}>
-                                        <h4 style={{ marginBottom: '1rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.05rem' }}>
-                                            <Bike size={18} style={{ color: 'var(--accent-primary)' }} />
+                            <div className="flex flex-col h-full">
+                                <div className="flex-1 overflow-y-auto min-h-0 pr-2 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+                                    <div className="mb-8">
+                                        <h4 className="mb-4 text-slate-200 flex items-center gap-2 text-lg font-medium">
+                                            <Bike size={18} className="text-blue-400" />
                                             Categorias de Participação
                                         </h4>
-                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+                                        <div className="flex flex-wrap gap-3">
                                             {activeEvent.escaloes.map((esc, idx) => (
-                                                <div key={`esc-${idx}`} style={{
-                                                    display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-                                                    padding: '0.5rem 1rem', borderRadius: 'var(--radius-full)',
-                                                    background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)',
-                                                    color: 'var(--accent-secondary)', fontSize: '0.95rem', fontWeight: '500',
-                                                    boxShadow: '0 2px 10px rgba(0,0,0,0.05)', transition: 'transform 0.2s',
-                                                    cursor: 'default'
-                                                }}
-                                                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-                                                onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-                                                >
+                                                <div key={`esc-${idx}`} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-300 text-sm font-medium shadow-sm hover:-translate-y-0.5 transition-transform cursor-default">
                                                     <span>{esc}</span>
                                                 </div>
                                             ))}
@@ -351,42 +327,44 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                     </div>
                 )}
 
-
                 {/* Tab: PROGRAMA */}
                 {activeTab === 'programa' && (
-                    <div className="tab-content programa-tab fade-in" style={{ paddingTop: 0 }}>
-                        {programaCleanHtml ? (
-                            <div className="programa-content custom-scrollbar" dangerouslySetInnerHTML={{ __html: programaCleanHtml }} onClick={handleHtmlClick} />
-                        ) : (
-                            <div style={{ padding: '1rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)', marginTop: '1rem' }}>
-                                <em>Programa não disponível na Base de Dados. A aguardar recolha do sistema.</em>
-                            </div>
-                        )}
+                    <div className="pt-0 flex flex-col h-full animate-fade-in">
+                        <div className="flex-1 overflow-y-auto min-h-0 pr-2 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+                            {fpcBannerHtml && (
+                                <div className="mb-6 text-center" dangerouslySetInnerHTML={{ __html: fpcBannerHtml }} />
+                            )}
+                            {programaCleanHtml ? (
+                                <div className="prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: programaCleanHtml }} onClick={handleHtmlClick} />
+                            ) : (
+                                <div className="p-4 bg-slate-800/50 rounded-lg text-slate-400 mt-4">
+                                    <em>Programa não disponível na Base de Dados. A aguardar recolha do sistema.</em>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )}
 
                 {/* Tab: INSCRIÇÃO & PREÇOS */}
                 {activeTab === 'inscricao' && (
-                    <div className="tab-content inscricao-tab fade-in">
-                        {/* Preços - full width on top */}
-                        <div className="inscricao-precos-scroll">
+                    <div className="flex flex-col h-full animate-fade-in">
+                        <div className="flex-1 overflow-y-auto min-h-0 pr-2 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent mb-4">
                             {activeEvent.prices ? (
-                                <div className="prices-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }} dangerouslySetInnerHTML={{ __html: activeEvent.prices }} />
+                                <div className="text-slate-300 text-sm prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: activeEvent.prices }} />
                             ) : (
-                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Informação não disponível.</p>
-                        )}
-                    </div>
-                    {/* Datas - below */}
-                        <div className="inscricao-datas">
-                            <div>
-                                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.6 }}>Abertura das Inscrições</h4>
-                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+                                <p className="text-slate-400 text-sm">Informação não disponível.</p>
+                            )}
+                        </div>
+                        <div className="shrink-0 grid grid-cols-1 sm:grid-cols-2 gap-4 pb-4">
+                            <div className="bg-slate-800/50 p-4 rounded-lg border border-white/5">
+                                <h4 className="mb-2 text-slate-400 text-xs uppercase tracking-wider font-semibold">Abertura das Inscrições</h4>
+                                <p className="text-slate-200 text-sm font-medium">
                                     {activeEvent.registrationOpensAt ? formatRegDate(activeEvent.registrationOpensAt) : 'A definir'}
                                 </p>
                             </div>
-                            <div>
-                                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.6 }}>Fecho das Inscrições</h4>
-                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+                            <div className="bg-slate-800/50 p-4 rounded-lg border border-white/5">
+                                <h4 className="mb-2 text-slate-400 text-xs uppercase tracking-wider font-semibold">Fecho das Inscrições</h4>
+                                <p className="text-slate-200 text-sm font-medium">
                                     {activeEvent.registrationClosesAt ? formatRegDate(activeEvent.registrationClosesAt) : 'A definir'}
                                 </p>
                             </div>
@@ -396,26 +374,26 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                 {/* Tab: PREMIOS E SEGURO */}
                 {activeTab === 'premios' && (
-                    <div className="tab-content fade-in">
-                        <div className="premios-seguro-content">
-                            <div className="premio-seguro-panel">
-                                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <Trophy size={15} /> Prémios
+                    <div className="flex flex-col h-full animate-fade-in">
+                        <div className="flex-1 overflow-y-auto min-h-0 pr-2 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent grid grid-cols-1 md:grid-cols-2 gap-6 pb-4">
+                            <div className="bg-slate-800/30 p-5 rounded-lg border border-white/5">
+                                <h4 className="mb-4 text-slate-200 flex items-center gap-2 text-lg font-medium">
+                                    <Trophy size={18} className="text-yellow-400" /> Prémios
                                 </h4>
                                 {activeEvent.prizes ? (
-                                    <div className="prizes-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }} dangerouslySetInnerHTML={{ __html: activeEvent.prizes }} />
+                                    <div className="text-slate-300 text-sm prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: activeEvent.prizes }} />
                                 ) : (
-                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Informação não disponível.</p>
+                                    <p className="text-slate-400 text-sm">Informação não disponível.</p>
                                 )}
                             </div>
-                            <div className="premio-seguro-panel">
-                                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <Shield size={15} /> Seguro
+                            <div className="bg-slate-800/30 p-5 rounded-lg border border-white/5">
+                                <h4 className="mb-4 text-slate-200 flex items-center gap-2 text-lg font-medium">
+                                    <Shield size={18} className="text-green-400" /> Seguro
                                 </h4>
                                 {activeEvent.insurance ? (
-                                    <div className="insurance-content" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }} dangerouslySetInnerHTML={{ __html: activeEvent.insurance }} />
+                                    <div className="text-slate-300 text-sm prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: activeEvent.insurance }} />
                                 ) : (
-                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Informação não disponível.</p>
+                                    <p className="text-slate-400 text-sm">Informação não disponível.</p>
                                 )}
                             </div>
                         </div>
@@ -424,29 +402,28 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                 {/* Tab: LOCALIZACAO */}
                 {activeTab === 'localizacao' && (
-                    <div className="tab-content localizacao-tab fade-in">
+                    <div className="flex flex-col h-full animate-fade-in pb-4">
                         {activeEvent.details && activeEvent.details !== 'A definir' ? (
-                            <div className="modal-map">
+                            <div className="w-full h-64 sm:h-full min-h-[300px] rounded-lg overflow-hidden border border-white/10">
                                 <iframe 
-                                    className={resolvedTheme === 'dark' ? 'map-dark-mode' : 'map-light-mode'}
-                                    style={{ border: 0, borderRadius: 'var(--radius-md)', background: 'var(--bg-color)', width: '100%', height: '100%' }}
+                                    className="w-full h-full border-0 grayscale invert opacity-80"
                                     loading="lazy" 
                                     allowFullScreen 
                                     src={`https://maps.google.com/maps?q=${encodeURIComponent(activeEvent.details.split('|')[0] + ', Portugal')}&output=embed`}
                                 ></iframe>
                             </div>
                         ) : (
-                            <p style={{ color: 'var(--text-secondary)' }}>Localização a definir.</p>
+                            <p className="text-slate-400">Localização a definir.</p>
                         )}
                     </div>
                 )}
 
                 </div> {/* end flex-grow tab area */}
 
-                <div className="modal-actions" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'stretch', marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--card-border)' }}>
+                <div className="flex gap-4 flex-wrap items-stretch mt-3 pt-4 border-t border-white/10 px-6 pb-6 bg-slate-900 shrink-0">
                     {programaData.loading ? (
-                        <div style={{ padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
-                            <div className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }}></div>
+                        <div className="px-6 py-3 flex items-center gap-2 text-slate-400">
+                            <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
                             <span>A carregar links...</span>
                         </div>
                     ) : (() => {
@@ -481,26 +458,26 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         return (
                             <>
                                 {outrosLinks.map((src, idx) => (
-                                    <a key={`outros-${idx}`} href={src.link} target="_blank" rel="noopener noreferrer" className="modal-btn secondary">
+                                    <a key={`outros-${idx}`} href={src.link} target="_blank" rel="noopener noreferrer" className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg font-medium transition-colors border border-white/5 flex items-center justify-center text-center">
                                         {src.label}
                                     </a>
                                 ))}
                                 
                                 {inscricaoLinks.length === 1 && (
-                                    <a href={inscricaoLinks[0].link} target="_blank" rel="noopener noreferrer" className="modal-btn primary">
+                                    <a href={inscricaoLinks[0].link} target="_blank" rel="noopener noreferrer" className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-semibold transition-colors shadow-lg shadow-blue-900/20 flex items-center justify-center text-center">
                                         Inscrever
                                     </a>
                                 )}
                                 
                                 {inscricaoLinks.length > 1 && (
-                                    <div className="dropdown-container">
-                                        <button className="modal-btn primary">
-                                            Inscrever <span style={{ fontSize: '0.7em' }}>▼</span>
+                                    <div className="relative group">
+                                        <button className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-semibold transition-colors shadow-lg shadow-blue-900/20 flex items-center gap-2">
+                                            Inscrever <span className="text-[0.7em]">▼</span>
                                         </button>
-                                        <div className="dropdown-menu">
-                                            <div className="dropdown-item-container">
+                                        <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-xl overflow-hidden z-50">
+                                            <div className="flex flex-col">
                                                 {inscricaoLinks.map((src, idx) => (
-                                                    <a key={`inscr-${idx}`} href={src.link} target="_blank" rel="noopener noreferrer" className="dropdown-item">
+                                                    <a key={`inscr-${idx}`} href={src.link} target="_blank" rel="noopener noreferrer" className="px-4 py-3 hover:bg-slate-700 text-slate-200 text-sm transition-colors border-b border-slate-700 last:border-0">
                                                         Inscrever ({src._plat})
                                                     </a>
                                                 ))}
@@ -516,18 +493,14 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         <button 
                             onClick={handleAddToCalendar}
                             disabled={isAddingToCalendar || calendarStatus === 'success' || calendarStatus === 'exists'}
-                            className="modal-btn"
-                            style={{ 
-                                display: 'flex', alignItems: 'center', gap: '0.5rem', 
-                                backgroundColor: calendarStatus === 'success' || calendarStatus === 'exists' ? 'rgba(34, 197, 94, 0.1)' : 'var(--bg-secondary)',
-                                color: calendarStatus === 'success' || calendarStatus === 'exists' ? 'rgb(34, 197, 94)' : 'var(--text-primary)',
-                                border: `1px solid ${calendarStatus === 'success' || calendarStatus === 'exists' ? 'rgba(34, 197, 94, 0.2)' : 'var(--card-border)'}`,
-                                opacity: isAddingToCalendar ? 0.7 : 1,
-                                cursor: (isAddingToCalendar || calendarStatus === 'success' || calendarStatus === 'exists') ? 'default' : 'pointer'
-                            }}
+                            className={`px-5 py-2.5 rounded-lg font-medium flex items-center gap-2 transition-all ${
+                                calendarStatus === 'success' || calendarStatus === 'exists'
+                                    ? 'bg-green-500/10 text-green-500 border border-green-500/20 cursor-default'
+                                    : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-white/5'
+                            } ${isAddingToCalendar ? 'opacity-70 cursor-default' : ''}`}
                         >
                             {isAddingToCalendar ? (
-                                <div className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }}></div>
+                                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
                             ) : calendarStatus === 'success' || calendarStatus === 'exists' ? (
                                 <Check size={18} />
                             ) : (
@@ -540,11 +513,11 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
             </div>
 
             {fullscreenImage && (
-                <div className="fullscreen-image-overlay" onClick={() => setFullscreenImage(null)}>
-                    <button className="modal-close" style={{ top: '2rem', right: '2rem', background: 'rgba(0,0,0,0.5)', zIndex: 10000 }} onClick={() => setFullscreenImage(null)}>
+                <div className="fixed inset-0 bg-black/90 z-[9999] flex items-center justify-center p-4" onClick={() => setFullscreenImage(null)}>
+                    <button className="absolute top-6 right-6 bg-black/50 hover:bg-black/80 text-white p-2 rounded-full transition-colors" onClick={() => setFullscreenImage(null)}>
                         <X size={24} />
                     </button>
-                    <img src={fullscreenImage} alt="Programa Detalhado" onClick={(e) => e.stopPropagation()} />
+                    <img src={fullscreenImage} alt="Programa Detalhado" className="max-w-full max-h-full object-contain" onClick={(e) => e.stopPropagation()} />
                 </div>
             )}
         </div>

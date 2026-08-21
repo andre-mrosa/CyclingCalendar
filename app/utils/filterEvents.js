@@ -10,7 +10,8 @@ export function filterEvents(events, filters) {
         selectedDistrito,
         monthFrom,
         monthTo,
-        selectedTags
+        selectedTags,
+        selectedType
     } = filters;
 
     if (filterByFavorites && favorites) {
@@ -92,6 +93,20 @@ export function filterEvents(events, filters) {
 
     if (selectedTags && selectedTags.length > 0) {
         filtered = filtered.filter(event => selectedTags.includes(event.tag));
+    }
+
+    if (selectedType && selectedType !== 'Todos') {
+        filtered = filtered.filter(event => {
+            const rawDate = event.date || '';
+            const isMultiDay = !!event.endDate || rawDate.includes(',') || rawDate.includes(' e ') || rawDate.includes(' a ');
+            
+            if (selectedType === 'Etapas') {
+                return isMultiDay;
+            } else if (selectedType === 'Um Dia') {
+                return !isMultiDay;
+            }
+            return true;
+        });
     }
 
     return filtered;
