@@ -72,6 +72,15 @@ export const deepScrapeFPC = async (link) => {
             extractedHtml += buttonsHtml;
 
             if (mainImgUrl) {
+                // Normalize relative URLs to absolute
+                if (!mainImgUrl.startsWith('http')) {
+                    mainImgUrl = mainImgUrl.startsWith('/') 
+                        ? `https://www.fpciclismo.pt${mainImgUrl}` 
+                        : `https://www.fpciclismo.pt/${mainImgUrl}`;
+                }
+                // Ensure https for Next.js image optimizer compatibility
+                mainImgUrl = mainImgUrl.replace(/^http:\/\//, 'https://');
+
                 const isCartaz = mainImgUrl.includes('anexo_cartaz') || mainImgUrl.toLowerCase().includes('cartaz');
                 const maxWidth = isCartaz ? 'max-width: 400px; margin: 0 auto; display: block;' : 'width: 100%;';
                 
@@ -286,14 +295,22 @@ export const scrapeFPC = async (year) => {
 
 export const incrementalDeepScrapeFPC = async () => {
     try {
+        // Include events from the last 3 months (not just future)
+        const threeMonthsAgo = new Date();
+        threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+
         const fpcEventsToUpdate = await prisma.event.findMany({
             where: { 
                 source: 'FPC', 
-                programa: null, 
-                sortDate: { gte: new Date() },
+                OR: [
+                    { programa: null },
+                    { programa: { startsWith: '<p>Detalhes de programa indisponíveis' } },
+                    { programa: { startsWith: '<p>Erro ao extrair' } }
+                ],
+                sortDate: { gte: threeMonthsAgo },
                 link: { contains: 'fpciclismo.pt' }
             },
-            take: 5
+            take: 15
         });
         
         let processedCount = 0;

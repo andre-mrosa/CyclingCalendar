@@ -6,11 +6,13 @@ export async function GET(request) {
         let totalProcessed = 0;
         let lastResult = -1;
 
-        // Force reset the cache for future FPC events
+        // Force reset the cache for recent and future FPC events
+        const threeMonthsAgo = new Date();
+        threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
         await prisma.event.updateMany({
             where: { 
                 source: 'FPC',
-                sortDate: { gte: new Date() }
+                sortDate: { gte: threeMonthsAgo }
             },
             data: { programa: null }
         });

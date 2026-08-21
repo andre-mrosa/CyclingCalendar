@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useSettingsStore } from '../store/useSettingsStore';
 import useSWR from 'swr';
@@ -48,6 +48,7 @@ export default function CalendarView({
     const [monthTo, setMonthTo] = useState(12);
     const [selectedTags, setSelectedTags] = useState([]);
     const [showFilters, setShowFilters] = useState(false);
+    const [selectedType, setSelectedType] = useState('Todos');
     const [visibleCount, setVisibleCount] = useState(16);
     const [selectedEvent, setSelectedEvent] = useState(null);
     const loaderRef = useRef(null);
@@ -102,12 +103,13 @@ export default function CalendarView({
             selectedDistrito,
             monthFrom,
             monthTo,
-            selectedTags
+            selectedTags,
+            selectedType
         });
 
         setFilteredEvents(filtered);
         setVisibleCount(16); // Reset visible count on filter change
-    }, [events, searchTerm, selectedEscaloes, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, filterByFavorites, favorites, forceEscalao, forceAmbito, forceLicenca]);
+    }, [events, searchTerm, selectedEscaloes, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, filterByFavorites, favorites, forceEscalao, forceAmbito, forceLicenca]);
 
     const uniqueEscaloes = ['Elite', 'Elite Amador', 'Sub-23', 'Sub-19 (Juniores)', 'Sub-17 (Cadetes)', 'Sub-15 (Juvenis)', 'Masters / Veteranos', 'Femininas', 'Escolas', 'Profissional (UCI)', 'Todos (Aberto)', 'Geral / Vários'];
     const uniqueAmbitos = ['Todos', ...new Set(events.map(e => e.ambito))];
@@ -168,6 +170,7 @@ export default function CalendarView({
         setMonthFrom(1);
         setMonthTo(12);
         setSelectedTags([]);
+        setSelectedType('Todos');
         setSearchTerm('');
     };
 
@@ -207,7 +210,7 @@ export default function CalendarView({
                             {showFilters ? 'Esconder Filtros' : 'Filtrar Calendário'}
                         </button>
                         
-                        {(selectedEscaloes.length > 0 || selectedDistrito !== 'Todos' || selectedRegiao !== 'Todas' || selectedTags.length > 0 || monthFrom !== 1 || monthTo !== 12 || searchTerm !== '') && (
+                        {(selectedEscaloes.length > 0 || selectedDistrito !== 'Todos' || selectedRegiao !== 'Todas' || selectedTags.length > 0 || selectedType !== 'Todos' || monthFrom !== 1 || monthTo !== 12 || searchTerm !== '') && (
                             <button 
                                 onClick={clearAllFilters}
                                 title="Repor todos os filtros"
@@ -348,6 +351,19 @@ export default function CalendarView({
                                 </div>
                             )}
                             
+                            <div className="flex flex-col gap-2">
+                                <label className="text-xs text-slate-400 uppercase tracking-wider font-bold ml-1">Tipo de Prova</label>
+                                <select 
+                                    className="w-full h-9 px-3 text-sm rounded-lg border border-slate-700 bg-slate-800 text-slate-200 outline-none focus:border-blue-500 transition-colors"
+                                    value={selectedType} 
+                                    onChange={(e) => setSelectedType(e.target.value)} 
+                                >
+                                    <option value="Todos">Todos</option>
+                                    <option value="Etapas">Etapas (Multi-dia)</option>
+                                    <option value="Um Dia">Um Dia</option>
+                                </select>
+                            </div>
+                            
                             {activeFilters.includes('regiao') && (
                                 <div className="flex flex-col gap-2">
                                     <label className="text-xs text-slate-400 uppercase tracking-wider font-bold ml-1">Região</label>
@@ -483,9 +499,12 @@ export default function CalendarView({
                                 const location = parts.length > 0 && parts[0].trim() !== '' ? parts[0].trim() : "A definir";
                                 const extraDetails = parts.length > 1 ? parts.slice(1).join('|').trim() : "";
                                 
-                                const dateParts = event.date.split(' ');
-                                const day = dateParts[0] || '';
-                                const month = dateParts[1] || '';
+                                const rawDate = event.date || '';
+                                const isMultiDay = rawDate.includes(',') || rawDate.includes(' e ') || rawDate.includes(' a ');
+                                const dateParts = rawDate.split(' ');
+                                const monthAbbrs = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+                                const day = dateParts[0] ? dateParts[0].replace(/,/g, '') : '';
+                                const month = dateParts.find(p => monthAbbrs.includes(p.toUpperCase()))?.toUpperCase() || '';
 
                                 return (
                                 <div 
@@ -531,6 +550,11 @@ export default function CalendarView({
                                             {event.licenca && (
                                                 <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${event.licenca === 'Competição' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' : event.licenca === 'CPT / Lazer' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'}`}>
                                                     {event.licenca}
+                                                </span>
+                                            )}
+                                            {isMultiDay && (
+                                                <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                                                    Etapas
                                                 </span>
                                             )}
                                         </div>

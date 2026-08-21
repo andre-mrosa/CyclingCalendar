@@ -21,19 +21,18 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
             return;
         }
 
+        // Reset immediately to avoid showing stale data from previous event
+        setFullEvent(null);
+
         const loadFullEvent = async () => {
-            if (activeEvent?.programa !== undefined) {
-                setFullEvent(selectedEvent);
-            } else {
-                try {
-                    const res = await fetch(`/api/events/${selectedEvent.id}`);
-                    const data = await res.json();
-                    if (data.success && data.event) {
-                        setFullEvent({ ...selectedEvent, ...data.event });
-                    }
-                } catch (e) {
-                    console.error("Error fetching full event:", e);
+            try {
+                const res = await fetch(`/api/events/${selectedEvent.id}`);
+                const data = await res.json();
+                if (data.success && data.event) {
+                    setFullEvent({ ...selectedEvent, ...data.event });
                 }
+            } catch (e) {
+                console.error("Error fetching full event:", e);
             }
         };
 
@@ -54,6 +53,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
     const programaContentFull = activeEvent?.programa || '';
     let fpcBannerHtml = '';
     let programaCleanHtml = programaContentFull;
+
     if (programaContentFull.includes('<div class="fpc-banner"')) {
         const bannerMatch = programaContentFull.match(/<div class="fpc-banner"[^>]*>[\s\S]*?<\/div>/);
         if (bannerMatch) {
@@ -62,8 +62,40 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
         }
     }
 
+    if (activeEvent?.source === 'FPC') {
+        let fpcDownloadsHtml = '';
+        const downloadsMatch = programaContentFull.match(/<div class="fpc-downloads"[\s\S]*?<\/div>\s*<\/div>/);
+        if (downloadsMatch) fpcDownloadsHtml = downloadsMatch[0];
+
+        if (fpcDownloadsHtml) {
+            programaCleanHtml = fpcDownloadsHtml;
+        } else {
+            // Se não houver downloads, deixar vazio em vez de mostrar lixo
+            programaCleanHtml = '';
+        }
+    }
+
     // Clean up fpc-downloads layout
     programaCleanHtml = programaCleanHtml.replace(/<div class="fpc-downloads" style="margin-top: 1\.5rem;">/g, '<div class="fpc-downloads">');
+    
+    // Convert raw FPC inline styles to beautiful Tailwind classes
+    programaCleanHtml = programaCleanHtml.replace(
+        /style="display: flex; flex-direction: column; gap: 0\.75rem;"/g,
+        'class="flex flex-col gap-2 m-0 p-0"'
+    );
+    programaCleanHtml = programaCleanHtml.replace(
+        /style="display: flex; align-items: center; gap: 0\.75rem; padding: 1rem; background: var\(--bg-secondary\); border: 1px solid var\(--card-border\); border-radius: var\(--radius-md\); text-decoration: none; color: var\(--text-primary\); transition: all 0\.2s ease;"/g,
+        'class="flex items-center gap-3 p-3 bg-slate-800/50 hover:bg-slate-700/80 border border-white/5 rounded-lg text-slate-300 hover:text-white text-sm transition-colors !no-underline shadow-sm"'
+    );
+    programaCleanHtml = programaCleanHtml.replace(
+        /<span style="font-weight: 500;">/g,
+        '<span class="font-medium">'
+    );
+    programaCleanHtml = programaCleanHtml.replace(
+        /style="color: var\(--text-secondary\);"/g,
+        'class="text-slate-400 group-hover:text-slate-300"'
+    );
+
     programaCleanHtml = programaCleanHtml.replace(/<h4[^>]*>.*?<\/h4>/g, '');
     programaCleanHtml = programaCleanHtml.replace(/width="24" height="24"/g, 'width="18" height="18"');
     programaCleanHtml = programaCleanHtml.replace(/color: var\(--accent-primary\);/g, 'color: var(--text-secondary);');
@@ -148,9 +180,12 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
     if (!selectedEvent) return null;
 
-    const dateParts = activeEvent.date ? activeEvent.date.split(' ') : [];
-    const day = dateParts[0] || '';
-    const month = dateParts[1] || '';
+    const rawDate = activeEvent.date || '';
+    const isMultiDay = rawDate.includes(',') || rawDate.includes(' e ') || rawDate.includes(' a ');
+    const dateParts = rawDate.split(' ');
+    const monthAbbrs = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+    const day = dateParts[0] ? dateParts[0].replace(/,/g, '') : '';
+    const month = dateParts.find(p => monthAbbrs.includes(p.toUpperCase()))?.toUpperCase() || '';
 
     return (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9000] flex items-center justify-center p-2 sm:p-4" onClick={() => setSelectedEvent(null)}>
@@ -205,9 +240,9 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                     )}
                 </div>
 
-                {activeEvent.endDate ? (
+                {isMultiDay ? (
                     <p className="text-slate-400 mb-6 mt-2 text-sm flex items-center gap-2 px-6">
-                        <Calendar size={14} /> Até {activeEvent.endDate}
+                        <Calendar size={14} /> {rawDate}
                     </p>
                 ) : (
                     <div className="mb-6 mt-2"></div>
@@ -331,9 +366,6 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 {activeTab === 'programa' && (
                     <div className="pt-0 flex flex-col h-full animate-fade-in">
                         <div className="flex-1 overflow-y-auto min-h-0 pr-2 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
-                            {fpcBannerHtml && (
-                                <div className="mb-6 text-center" dangerouslySetInnerHTML={{ __html: fpcBannerHtml }} />
-                            )}
                             {programaCleanHtml ? (
                                 <div className="prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: programaCleanHtml }} onClick={handleHtmlClick} />
                             ) : (
