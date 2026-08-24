@@ -95,7 +95,8 @@ export default function TermsOfService() {
           <ul className="space-y-2">
             <li className="flex gap-2"><span className="text-red-400 mt-1">✕</span><span>Não utilizar a Plataforma para qualquer finalidade ilegal ou não autorizada.</span></li>
             <li className="flex gap-2"><span className="text-red-400 mt-1">✕</span><span>Não tentar aceder de forma não autorizada aos sistemas, servidores ou bases de dados da Plataforma.</span></li>
-            <li className="flex gap-2"><span className="text-red-400 mt-1">✕</span><span>Não realizar scraping automatizado ou extração massiva de dados sem autorização prévia.</span></li>
+            <li className="flex gap-2"><span className="text-red-400 mt-1">✕</span><span>Não sobrecarregar intencionalmente os servidores com pedidos excessivos ou automatizados que comprometam a disponibilidade do serviço.</span></li>
+            <li className="flex gap-2"><span className="text-red-400 mt-1">✕</span><span>Não redistribuir comercialmente ou revender os dados agregados pela Plataforma sem autorização prévia.</span></li>
             <li className="flex gap-2"><span className="text-red-400 mt-1">✕</span><span>Não fornecer informações falsas durante o registo ou utilização do serviço.</span></li>
           </ul>
           <p className="mt-3">Reservamo-nos o direito de suspender ou encerrar o acesso de qualquer utilizador que viole estes termos.</p>
