@@ -1,14 +1,26 @@
 import * as cheerio from 'cheerio';
 
+import sharp from 'sharp';
+
 export const fetchImageAsBase64 = async (url) => {
     if (!url) return null;
     try {
         const response = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
         if (!response.ok) return null;
         const arrayBuffer = await response.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        const mimeType = response.headers.get('content-type') || 'image/jpeg';
-        return `data:${mimeType};base64,${buffer.toString('base64')}`;
+        let buffer = Buffer.from(arrayBuffer);
+        
+        try {
+            buffer = await sharp(buffer)
+                .resize({ width: 800, withoutEnlargement: true })
+                .webp({ quality: 80 })
+                .toBuffer();
+            return `data:image/webp;base64,${buffer.toString('base64')}`;
+        } catch (sharpError) {
+            console.error('Sharp error, falling back:', sharpError.message);
+            const mimeType = response.headers.get('content-type') || 'image/jpeg';
+            return `data:${mimeType};base64,${buffer.toString('base64')}`;
+        }
     } catch (e) {
         console.error('Error fetching image as base64:', url, e);
         return null;

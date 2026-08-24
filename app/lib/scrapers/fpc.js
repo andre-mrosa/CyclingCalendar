@@ -78,16 +78,16 @@ export const deepScrapeFPC = async (link) => {
                         ? `https://www.fpciclismo.pt${mainImgUrl}` 
                         : `https://www.fpciclismo.pt/${mainImgUrl}`;
                 }
-                // Ensure https for Next.js image optimizer compatibility
                 mainImgUrl = mainImgUrl.replace(/^http:\/\//, 'https://');
 
                 const isCartaz = mainImgUrl.includes('anexo_cartaz') || mainImgUrl.toLowerCase().includes('cartaz');
                 const maxWidth = isCartaz ? 'max-width: 400px; margin: 0 auto; display: block;' : 'width: 100%;';
                 
-                // Use Next.js image optimizer to compress the 15MB JPGs on the fly!
-                const optimizedImgUrl = `/_next/image?url=${encodeURIComponent(mainImgUrl)}&w=640&q=75`;
-                
-                extractedHtml += `<div class="fpc-banner" style="margin-bottom: 1.5rem;"><img src="${optimizedImgUrl}" style="${maxWidth} border-radius: var(--radius-md); box-shadow: var(--shadow-md);" alt="Imagem do Evento" loading="lazy" /></div>`;
+                // Fetch and store image as base64 in DB (compressed via sharp)
+                const base64Img = await fetchImageAsBase64(mainImgUrl);
+                if (base64Img) {
+                    extractedHtml += `<div class="fpc-banner" style="margin-bottom: 1.5rem;"><img src="${base64Img}" style="${maxWidth} border-radius: var(--radius-md); box-shadow: var(--shadow-md);" alt="Imagem do Evento" loading="lazy" /></div>`;
+                }
             }
             $temp('img').remove(); // remover as restantes imagens para texto limpo
             
