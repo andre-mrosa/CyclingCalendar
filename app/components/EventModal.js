@@ -206,7 +206,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
     return (
         <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[9000] flex items-center justify-center p-2 sm:p-4" onClick={() => setSelectedEvent(null)}>
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl max-h-[92vh] sm:max-h-[88vh] flex flex-col shadow-2xl overflow-hidden relative" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl h-[90vh] sm:h-[86vh] flex flex-col shadow-2xl overflow-hidden relative" onClick={(e) => e.stopPropagation()}>
                 <button className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors z-10 p-1.5 rounded-full hover:bg-slate-800 cursor-pointer" onClick={() => setSelectedEvent(null)}>
                     <X size={20} />
                 </button>
