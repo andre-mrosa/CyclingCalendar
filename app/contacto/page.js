@@ -33,89 +33,86 @@ export default function ContactoPage() {
     };
 
     return (
-        <div className="max-w-[600px] mx-auto py-8 px-4 animate-[fadeIn_0.3s_ease-out]">
-            <div className="bg-slate-900 backdrop-blur border-white/10 ring-1 text-slate-300 rounded-lg shadow-md overflow-hidden">
-                <div className="p-8 border-b border-white/10 flex items-center gap-4 bg-blue-500/5">
-                    <div className="bg-blue-500/10 p-4 rounded-full text-blue-500">
-                        <Mail size={32} />
-                    </div>
-                    <div>
-                        <h1 className="m-0 text-3xl text-slate-100">Contactos</h1>
-                        <p className="mt-1 text-slate-400">
-                            Envia-me as tuas sugestões ou reporta um erro.
-                        </p>
-                    </div>
+        <div className="max-w-2xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-10">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-500/10 border border-blue-500/20 mb-4">
+                    <Mail size={28} className="text-blue-400" />
                 </div>
+                <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">Contactos</h1>
+                <p className="text-slate-400 text-base sm:text-lg">
+                    Tens sugestões de melhoria ou queres reportar um erro? Fala connosco.
+                </p>
+            </div>
 
-                <div className="p-8">
-                    <form onSubmit={handleContactSubmit} className="flex flex-col gap-5">
-                        {submitStatus === 'success' ? (
-                            <div className="p-6 bg-green-500/10 text-green-500 rounded-md text-center border border-green-500/20 text-lg">
-                                <strong>Obrigado!</strong> A tua mensagem foi enviada com sucesso.
-                            </div>
-                        ) : (
-                            <>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-sm font-medium">Nome (Opcional)</label>
-                                        <input 
-                                            type="text" 
-                                            placeholder="O teu nome..." 
-                                            value={formData.name}
-                                            onChange={(e) => setFormData({...formData, name: e.target.value})}
-                                            disabled={isSubmitting}
-                                            className="bg-slate-950/50 border border-slate-700/80 rounded-lg focus:ring-2 focus:ring-blue-500/50 p-3 outline-none text-base disabled:opacity-50 disabled:cursor-not-allowed"
-                                        />
-                                    </div>
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-sm font-medium">E-mail (Opcional)</label>
-                                        <input 
-                                            type="email" 
-                                            placeholder="O teu e-mail..." 
-                                            value={formData.email}
-                                            onChange={(e) => setFormData({...formData, email: e.target.value})}
-                                            disabled={isSubmitting}
-                                            className="bg-slate-950/50 border border-slate-700/80 rounded-lg focus:ring-2 focus:ring-blue-500/50 p-3 outline-none text-base disabled:opacity-50 disabled:cursor-not-allowed"
-                                        />
-                                    </div>
-                                </div>
+            <div className="bg-slate-900/80 border border-white/5 rounded-2xl p-6 sm:p-8 shadow-xl">
+                <form onSubmit={handleContactSubmit} className="flex flex-col gap-5">
+                    {submitStatus === 'success' ? (
+                        <div className="p-6 bg-emerald-500/10 text-emerald-400 rounded-xl text-center border border-emerald-500/20 text-base font-medium">
+                            <strong className="font-semibold block mb-1">Obrigado!</strong> A tua mensagem foi enviada com sucesso.
+                        </div>
+                    ) : (
+                        <>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-sm font-medium">Mensagem</label>
-                                    <textarea 
-                                        placeholder="Escreve aqui a tua mensagem..." 
-                                        required
-                                        value={formData.message}
-                                        onChange={(e) => setFormData({...formData, message: e.target.value})}
+                                    <label className="text-xs uppercase tracking-wider font-bold text-slate-400">Nome (Opcional)</label>
+                                    <input 
+                                        type="text" 
+                                        placeholder="O teu nome..." 
+                                        value={formData.name}
+                                        onChange={(e) => setFormData({...formData, name: e.target.value})}
                                         disabled={isSubmitting}
-                                        rows={5}
-                                        className="bg-slate-950/50 border border-slate-700/80 rounded-lg focus:ring-2 focus:ring-blue-500/50 p-3 outline-none text-base resize-y disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="bg-slate-950/60 border border-slate-700/80 rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-3.5 outline-none text-slate-200 placeholder-slate-500 text-sm transition-colors disabled:opacity-50"
                                     />
                                 </div>
-                                
-                                {submitStatus === 'error' && (
-                                    <span className="text-red-500 text-sm text-center">
-                                        Ocorreu um erro ao enviar. Tenta novamente mais tarde.
-                                    </span>
-                                )}
-                                
-                                <button 
-                                    type="submit" 
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-xs uppercase tracking-wider font-bold text-slate-400">E-mail (Opcional)</label>
+                                    <input 
+                                        type="email" 
+                                        placeholder="O teu e-mail..." 
+                                        value={formData.email}
+                                        onChange={(e) => setFormData({...formData, email: e.target.value})}
+                                        disabled={isSubmitting}
+                                        className="bg-slate-950/60 border border-slate-700/80 rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-3.5 outline-none text-slate-200 placeholder-slate-500 text-sm transition-colors disabled:opacity-50"
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                <label className="text-xs uppercase tracking-wider font-bold text-slate-400">Mensagem</label>
+                                <textarea 
+                                    placeholder="Escreve aqui a tua mensagem ou sugestão..." 
+                                    required
+                                    value={formData.message}
+                                    onChange={(e) => setFormData({...formData, message: e.target.value})}
                                     disabled={isSubmitting}
-                                    className="bg-blue-600 hover:bg-blue-500 text-white rounded-lg shadow-md p-4 font-bold transition-colors text-lg mt-2 disabled:opacity-70 disabled:cursor-not-allowed"
-                                >
-                                    {isSubmitting ? 'A enviar...' : 'Enviar Mensagem'}
-                                </button>
-                            </>
-                        )}
-                    </form>
-                </div>
+                                    rows={5}
+                                    className="bg-slate-950/60 border border-slate-700/80 rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-3.5 outline-none text-slate-200 placeholder-slate-500 text-sm resize-y transition-colors disabled:opacity-50"
+                                />
+                            </div>
+                            
+                            {submitStatus === 'error' && (
+                                <div className="p-4 bg-red-500/10 text-red-400 rounded-xl text-center border border-red-500/20 text-sm">
+                                    Ocorreu um erro ao enviar. Tenta novamente mais tarde.
+                                </div>
+                            )}
+                            
+                            <button 
+                                type="submit" 
+                                disabled={isSubmitting}
+                                className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-500/20 p-4 font-semibold transition-colors text-base mt-2 disabled:opacity-70 cursor-pointer flex items-center justify-center gap-2"
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                        <span>A enviar...</span>
+                                    </>
+                                ) : (
+                                    'Enviar Mensagem'
+                                )}
+                            </button>
+                        </>
+                    )}
+                </form>
             </div>
-            <style jsx>{`
-                @keyframes fadeIn {
-                    from { opacity: 0; transform: translateY(10px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
-            `}</style>
         </div>
     );
 }

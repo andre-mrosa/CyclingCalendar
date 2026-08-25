@@ -1,6 +1,7 @@
 "use client";
 
 import { useSettingsStore } from '../store/useSettingsStore';
+import { HelpCircle } from 'lucide-react';
 import RegionAssistant from '../components/RegionAssistant';
 import EscalaoAssistant from '../components/EscalaoAssistant';
 
@@ -16,10 +17,13 @@ export default function Ajuda() {
     };
 
     return (
-        <div className="p-8 text-slate-300">
-            <header className="mb-10 text-center">
-                <h1 className="text-4xl mb-2 font-bold text-white">Central de Ajuda</h1>
-                <p className="text-lg text-slate-400">
+        <div className="max-w-5xl mx-auto py-16 px-4 sm:px-6 lg:px-8 text-slate-300">
+            <header className="mb-12 text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-500/10 border border-blue-500/20 mb-4">
+                    <HelpCircle size={28} className="text-blue-400" />
+                </div>
+                <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">Central de Ajuda</h1>
+                <p className="text-slate-400 text-base sm:text-lg">
                     Usa os nossos assistentes para descobrir a tua associação ou calcular o teu escalão oficial.
                 </p>
             </header>

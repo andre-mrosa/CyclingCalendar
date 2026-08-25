@@ -187,14 +187,14 @@ export default function Navigation() {
             {/* Custom Full Pages inside Modals */}
             {(isSettingsModalOpen || isHelpModalOpen) && (
                 <div 
-                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4"
+                    className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999] flex items-center justify-center p-4"
                     onClick={() => {
                         setIsSettingsModalOpen(false);
                         setIsHelpModalOpen(false);
                     }}
                 >
                     <div 
-                        className="bg-slate-900 rounded-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl relative border border-slate-800 text-slate-50"
+                        className="bg-slate-900 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl relative border border-slate-800 text-slate-100"
                         onClick={e => e.stopPropagation()}
                     >
                         <button 
@@ -202,12 +202,12 @@ export default function Navigation() {
                                 setIsSettingsModalOpen(false);
                                 setIsHelpModalOpen(false);
                             }}
-                            className="absolute top-4 right-5 bg-white/10 hover:bg-white/20 hover:text-blue-400 text-slate-50 text-xl w-9 h-9 rounded-full cursor-pointer z-10 flex items-center justify-center transition-colors border-none"
+                            className="absolute top-4 right-5 text-slate-400 hover:text-white transition-colors z-10 w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-800 border-none cursor-pointer"
                         >
                             <X size={20} />
                         </button>
                         
-                        <div className="mt-8">
+                        <div>
                             {isSettingsModalOpen && <SettingsPage />}
                             {isHelpModalOpen && <HelpPage />}
                         </div>
