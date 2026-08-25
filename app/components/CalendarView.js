@@ -563,7 +563,7 @@ export default function CalendarView({
                                         </div>
 
                                         <div className="flex flex-col justify-center min-w-0 flex-1">
-                                            <div className="flex items-center gap-2 mb-1 min-w-0">
+                                            <div className="flex items-center justify-between md:justify-start gap-2 mb-1 min-w-0">
                                                 <h3 className="text-sm sm:text-[0.95rem] font-bold text-slate-900 dark:text-slate-100 truncate leading-snug">
                                                     {event.title}
                                                 </h3>
