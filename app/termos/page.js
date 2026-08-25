@@ -125,21 +125,21 @@ export default function TermsOfService() {
   ];
 
   return (
-    <main className="min-h-screen bg-slate-950 py-16 px-4 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-slate-50 dark:bg-slate-950 py-16 px-4 sm:px-6 lg:px-8 transition-colors duration-200">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-500/10 border border-blue-500/20 mb-6">
-            <FileText size={28} className="text-blue-400" />
+            <FileText size={28} className="text-blue-500 dark:text-blue-400" />
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3">Termos de Serviço</h1>
-          <p className="text-slate-400 text-lg">Condições de utilização do Cycling Calendar</p>
+          <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-3">Termos de Serviço</h1>
+          <p className="text-slate-600 dark:text-slate-400 text-lg">Condições de utilização do Cycling Calendar</p>
         </div>
 
         {/* Intro */}
-        <div className="bg-slate-900/80 border border-white/5 rounded-2xl p-6 sm:p-8 mb-6">
-          <p className="text-slate-300 leading-relaxed">
-            Bem-vindo ao <strong className="text-white">Cycling Calendar</strong>. Ao aceder e utilizar o nosso website e serviços, 
+        <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/5 rounded-2xl p-6 sm:p-8 mb-6 shadow-sm dark:shadow-xl">
+          <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
+            Bem-vindo ao <strong className="text-slate-900 dark:text-white">Cycling Calendar</strong>. Ao aceder e utilizar o nosso website e serviços, 
             concorda em cumprir e ficar vinculado aos seguintes Termos de Serviço. Se não concordar com alguma 
             parte destes termos, não deverá utilizar a nossa plataforma.
           </p>
@@ -150,14 +150,14 @@ export default function TermsOfService() {
           {sections.map((section, index) => {
             const Icon = section.icon;
             return (
-              <div key={index} className="bg-slate-900/80 border border-white/5 rounded-2xl p-6 sm:p-8">
+              <div key={index} className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/5 rounded-2xl p-6 sm:p-8 shadow-sm dark:shadow-xl">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-slate-800 border border-white/10">
-                    <Icon size={18} className="text-slate-400" />
+                  <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10">
+                    <Icon size={18} className="text-slate-600 dark:text-slate-400" />
                   </div>
-                  <h2 className="text-lg font-semibold text-white">{section.title}</h2>
+                  <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{section.title}</h2>
                 </div>
-                <div className="text-slate-400 leading-relaxed text-[15px]">
+                <div className="text-slate-600 dark:text-slate-400 leading-relaxed text-[15px]">
                   {section.content}
                 </div>
               </div>

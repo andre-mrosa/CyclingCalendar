@@ -66,7 +66,7 @@ export default function Navigation() {
             <Link 
                 key={link.href}
                 href={link.href} 
-                className={`flex items-center gap-1.5 font-bold py-1 border-y-2 border-t-transparent transition-all duration-300 ${isActive ? 'text-blue-400 border-b-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.5)]' : 'text-slate-300 hover:text-slate-50 border-b-transparent'}`}
+                className={`flex items-center gap-1.5 font-bold py-1 border-y-2 border-t-transparent transition-all duration-300 ${isActive ? 'text-blue-600 dark:text-blue-400 border-b-blue-600 dark:border-b-blue-400' : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-50 border-b-transparent'}`}
             >
                 {link.icon}
                 {link.label}
@@ -77,20 +77,20 @@ export default function Navigation() {
     const ThemeToggle = () => (
         <button 
             onClick={() => setTheme(isDarkMode ? 'light' : 'dark')}
-            className="relative w-9 h-5 rounded-full bg-slate-800 border border-slate-700 flex items-center transition-colors shadow-inner cursor-pointer p-0"
-            title="Alternar Modo Noturno"
+            className="relative w-9 h-5 rounded-full bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 flex items-center transition-colors shadow-inner cursor-pointer p-0"
+            title={isDarkMode ? "Mudar para Modo Diurno" : "Mudar para Modo Noturno"}
         >
-            <div className={`absolute w-4 h-4 rounded-full flex items-center justify-center transition-all duration-300 shadow-[0_1px_2px_rgba(0,0,0,0.3)] ${isDarkMode ? 'bg-slate-900 left-[2px]' : 'bg-white left-[18px]'}`}>
-                {mounted && (isDarkMode ? <Moon size={10} className="text-slate-300" /> : <Sun size={10} className="text-yellow-500" />)}
+            <div className={`absolute w-4 h-4 rounded-full flex items-center justify-center transition-all duration-300 shadow-[0_1px_2px_rgba(0,0,0,0.2)] ${isDarkMode ? 'bg-slate-900 left-[2px]' : 'bg-white left-[18px]'}`}>
+                {mounted && (isDarkMode ? <Moon size={10} className="text-slate-300" /> : <Sun size={10} className="text-amber-500" />)}
             </div>
         </button>
     );
 
     return (
         <>
-            <nav className="no-scrollbar flex items-center px-8 py-4 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50 text-slate-50">
+            <nav className="no-scrollbar flex items-center px-8 py-4 bg-white/85 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50 text-slate-800 dark:text-slate-50 transition-colors duration-200">
                 <button 
-                    className="md:hidden mr-4 text-slate-50 hover:text-blue-400 transition-colors" 
+                    className="md:hidden mr-4 text-slate-700 dark:text-slate-50 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" 
                     onClick={() => setIsMobileMenuOpen(true)}
                     title="Menu"
                 >
@@ -160,12 +160,12 @@ export default function Navigation() {
                 onClick={() => setIsMobileMenuOpen(false)}
             />
 
-            <div className={`fixed top-0 left-0 bottom-0 w-64 bg-slate-900 border-r border-slate-800 z-50 transform transition-transform duration-300 ease-in-out md:hidden text-slate-50 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-                <div className="flex justify-between items-center p-6 mb-4">
-                    <h2 className="text-lg text-slate-50 m-0 font-bold">Menu</h2>
+            <div className={`fixed top-0 left-0 bottom-0 w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 z-50 transform transition-transform duration-300 ease-in-out md:hidden text-slate-900 dark:text-slate-50 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                <div className="flex justify-between items-center p-6 mb-4 border-b border-slate-100 dark:border-slate-800">
+                    <h2 className="text-lg text-slate-900 dark:text-slate-50 m-0 font-bold">Menu</h2>
                     <button 
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className="bg-transparent border-none text-slate-400 hover:text-blue-400 cursor-pointer flex items-center justify-center transition-colors"
+                        className="bg-transparent border-none text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer flex items-center justify-center transition-colors"
                     >
                         <X size={24} />
                     </button>
@@ -173,7 +173,7 @@ export default function Navigation() {
                 
                 <div className="flex flex-col gap-4 px-6">
                     {links.map(renderLink)}
-                    <div className="mt-4 pt-4 border-t border-slate-800 flex flex-col gap-4">
+                    <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col gap-4">
                         <Show when="signed-out">
                             {rightLinks.map(renderLink)}
                             <div className="mt-2">

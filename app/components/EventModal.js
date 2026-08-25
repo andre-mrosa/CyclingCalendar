@@ -232,18 +232,18 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
     return (
         <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[9000] flex items-center justify-center p-2 sm:p-4" onClick={() => setSelectedEvent(null)}>
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl h-[90vh] sm:h-[86vh] flex flex-col shadow-2xl overflow-hidden relative" onClick={(e) => e.stopPropagation()}>
-                <button className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors z-10 p-1.5 rounded-full hover:bg-slate-800 cursor-pointer" onClick={() => setSelectedEvent(null)}>
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-4xl h-[90vh] sm:h-[86vh] flex flex-col shadow-2xl overflow-hidden relative transition-colors duration-200" onClick={(e) => e.stopPropagation()}>
+                <button className="absolute top-4 right-4 text-slate-400 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors z-10 p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer" onClick={() => setSelectedEvent(null)}>
                     <X size={20} />
                 </button>
                 
                 {/* Header */}
                 <div className="flex items-center justify-start gap-3.5 pr-12 p-4 sm:p-5 pb-1">
-                    <div className="flex flex-col shrink-0 w-[48px] h-[48px] sm:w-[54px] sm:h-[54px] bg-slate-950 rounded-xl overflow-hidden border border-slate-800">
+                    <div className="flex flex-col shrink-0 w-[48px] h-[48px] sm:w-[54px] sm:h-[54px] bg-slate-100 dark:bg-slate-950 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
                         <div className="bg-rose-500 text-white text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-center py-0.5">
                             {month}
                         </div>
-                        <div className="flex-1 flex items-center justify-center text-white text-base sm:text-lg font-bold">
+                        <div className="flex-1 flex items-center justify-center text-slate-900 dark:text-white text-base sm:text-lg font-bold">
                             {day}
                         </div>
                     </div>
@@ -258,13 +258,13 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         </a>
                     )}
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        <h2 className="text-base sm:text-xl font-bold text-white m-0 truncate">
+                        <h2 className="text-base sm:text-xl font-bold text-slate-900 dark:text-white m-0 truncate">
                             {activeEvent.logo ? (
-                                <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="text-inherit no-underline hover:text-blue-400 transition-colors truncate">
+                                <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="text-inherit no-underline hover:text-blue-600 dark:hover:text-blue-400 transition-colors truncate">
                                     {activeEvent.title}
                                 </a>
                             ) : (
-                                <span className="text-white truncate">{activeEvent.title}</span>
+                                <span className="text-slate-900 dark:text-white truncate">{activeEvent.title}</span>
                             )}
                         </h2>
                         {(() => {
@@ -275,7 +275,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                         e.stopPropagation();
                                         toggleFavorite(activeEvent.id);
                                     }}
-                                    className={`flex shrink-0 items-center justify-center w-7 h-7 rounded-full transition-all cursor-pointer ${isEventFavorited ? 'bg-amber-400/15 border border-amber-500/40 text-amber-400' : 'bg-slate-800/80 border border-slate-700/80 text-slate-400 hover:text-slate-200 hover:bg-slate-700'}`}
+                                    className={`flex shrink-0 items-center justify-center w-7 h-7 rounded-full transition-all cursor-pointer ${isEventFavorited ? 'bg-amber-400/15 border border-amber-500/40 text-amber-400' : 'bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
                                     title={isEventFavorited ? "Remover dos Favoritos" : "Adicionar aos Favoritos"}
                                 >
                                     <Star 
@@ -290,14 +290,14 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 </div>
 
                 {isMultiDay && (
-                    <p className="text-slate-400 text-xs flex items-center gap-1.5 px-4 sm:px-5 mb-1.5 mt-0">
-                        <Calendar size={13} className="text-blue-400" /> {rawDate}
+                    <p className="text-slate-500 dark:text-slate-400 text-xs flex items-center gap-1.5 px-4 sm:px-5 mb-1.5 mt-0">
+                        <Calendar size={13} className="text-blue-500 dark:text-blue-400" /> {rawDate}
                     </p>
                 )}
                 
                 {/* Tabs Navigation */}
                 {availableTabs.length > 0 ? (
-                    <div className="flex gap-1.5 overflow-x-auto pb-2.5 mb-2 border-b border-slate-800/80 px-4 sm:px-5 no-scrollbar shrink-0">
+                    <div className="flex gap-1.5 overflow-x-auto pb-2.5 mb-2 border-b border-slate-200 dark:border-slate-800/80 px-4 sm:px-5 no-scrollbar shrink-0">
                         {availableTabs.map(tab => {
                             const labels = {
                                 info: 'Info do Evento',
@@ -309,9 +309,9 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             };
                             return (
                                 <button 
-                                    key={tab}
-                                    onClick={() => setActiveTab(tab)}
-                                    className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap transition-colors cursor-pointer ${activeTab === tab ? 'bg-blue-600/15 text-blue-400 border border-blue-500/30' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border border-transparent'}`}
+                                    key={tab} 
+                                    onClick={() => setActiveTab(tab)} 
+                                    className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap transition-colors cursor-pointer ${activeTab === tab ? 'bg-blue-600/10 dark:bg-blue-600/15 text-blue-600 dark:text-blue-400 border border-blue-500/30' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50 border border-transparent'}`}
                                 >
                                     {labels[tab]}
                                 </button>
@@ -319,8 +319,8 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         })}
                     </div>
                 ) : (
-                    <div className="mb-2 pb-2 border-b border-slate-800/80 px-4 sm:px-5 shrink-0">
-                        <p className="text-slate-400 text-xs">Informação detalhada disponível na página oficial da organização.</p>
+                    <div className="mb-2 pb-2 border-b border-slate-200 dark:border-slate-800/80 px-4 sm:px-5 shrink-0">
+                        <p className="text-slate-500 dark:text-slate-400 text-xs">Informação detalhada disponível na página oficial da organização.</p>
                     </div>
                 )}
 
@@ -596,7 +596,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 </div> {/* end flex-grow tab area */}
 
                 {/* Action footer */}
-                <div className="flex gap-2 flex-wrap items-center justify-between p-3 sm:px-5 sm:py-3 bg-slate-900 border-t border-slate-800 shrink-0">
+                <div className="flex gap-2 flex-wrap items-center justify-between p-3 sm:px-5 sm:py-3 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shrink-0 transition-colors duration-200">
                     {programaData.loading ? (
                         <div className="px-3 py-1.5 flex items-center gap-2 text-slate-400 text-xs">
                             <div className="w-3.5 h-3.5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
@@ -634,7 +634,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         return (
                             <div className="flex items-center gap-2 flex-wrap">
                                 {outrosLinks.map((src, idx) => (
-                                    <a key={`outros-${idx}`} href={src.link} target="_blank" rel="noopener noreferrer" className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs sm:text-sm font-semibold transition-colors border border-slate-700 flex items-center justify-center">
+                                    <a key={`outros-${idx}`} href={src.link} target="_blank" rel="noopener noreferrer" className="px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs sm:text-sm font-semibold transition-colors border border-slate-200 dark:border-slate-700 flex items-center justify-center">
                                         {src.label}
                                     </a>
                                 ))}
@@ -650,10 +650,10 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                         <button className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs sm:text-sm font-semibold transition-colors shadow-lg shadow-blue-500/20 flex items-center gap-1.5 cursor-pointer">
                                             Inscrever <span className="text-[0.7em]">▼</span>
                                         </button>
-                                        <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block w-44 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden z-50">
+                                        <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block w-44 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl overflow-hidden z-50">
                                             <div className="flex flex-col">
                                                 {inscricaoLinks.map((src, idx) => (
-                                                    <a key={`inscr-${idx}`} href={src.link} target="_blank" rel="noopener noreferrer" className="px-3.5 py-2.5 hover:bg-slate-800 text-slate-200 text-xs transition-colors border-b border-slate-800 last:border-0 font-medium">
+                                                    <a key={`inscr-${idx}`} href={src.link} target="_blank" rel="noopener noreferrer" className="px-3.5 py-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs transition-colors border-b border-slate-100 dark:border-slate-800 last:border-0 font-medium">
                                                         Inscrever ({src._plat})
                                                     </a>
                                                 ))}
@@ -671,8 +671,8 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             disabled={isAddingToCalendar || calendarStatus === 'success' || calendarStatus === 'exists'}
                             className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
                                 calendarStatus === 'success' || calendarStatus === 'exists'
-                                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 cursor-default'
-                                    : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
+                                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 cursor-default'
+                                    : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700'
                             } ${isAddingToCalendar ? 'opacity-70 cursor-default' : ''}`}
                         >
                             {isAddingToCalendar ? (

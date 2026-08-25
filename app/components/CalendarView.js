@@ -206,14 +206,14 @@ export default function CalendarView({
     }, [filteredEvents.length, visibleCount]);
 
     return (
-        <div className="bg-slate-950 min-h-screen text-slate-100 pt-8 pb-12 px-4 sm:px-8">
+        <div className="bg-slate-50 dark:bg-slate-950 min-h-screen text-slate-900 dark:text-slate-100 pt-8 pb-12 px-4 sm:px-8 transition-colors duration-200">
             <div className="w-full max-w-6xl mx-auto">
             <header className="mb-8">
                 <div className="flex justify-between items-center w-full gap-4 flex-wrap">
                     <div className="flex gap-4 items-center">
                         <button 
                             onClick={() => setShowFilters(!showFilters)}
-                            className={`inline-flex items-center gap-1.5 font-semibold transition-colors text-[0.95rem] ${showFilters ? 'text-blue-500' : 'text-slate-400 hover:text-slate-300'}`}
+                            className={`inline-flex items-center gap-1.5 font-semibold transition-colors text-[0.95rem] ${showFilters ? 'text-blue-600 dark:text-blue-500' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'}`}
                         >
                             <Filter size={18} />
                             {showFilters ? 'Esconder Filtros' : 'Filtrar Calendário'}
@@ -223,7 +223,7 @@ export default function CalendarView({
                             <button 
                                 onClick={clearAllFilters}
                                 title="Repor todos os filtros"
-                                className="inline-flex items-center gap-1 font-medium text-sm text-slate-400 hover:text-slate-300 transition-colors"
+                                className="inline-flex items-center gap-1 font-medium text-sm text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-300 transition-colors"
                             >
                                 <X size={14} /> Limpar
                             </button>
@@ -236,12 +236,12 @@ export default function CalendarView({
                             placeholder="Pesquisar por nome ou localidade..." 
                             value={searchTerm} 
                             onChange={onSearchChange} 
-                            className="w-full py-2.5 pl-5 pr-10 rounded-full border border-slate-700 bg-slate-800 text-sm outline-none transition-colors focus:border-blue-500 text-slate-50 placeholder-slate-400"
+                            className="w-full py-2.5 pl-5 pr-10 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm outline-none transition-colors focus:border-blue-500 text-slate-900 dark:text-slate-50 placeholder-slate-400 dark:placeholder-slate-500 shadow-sm"
                         />
                         {searchTerm && (
                             <button
                                 onClick={() => setSearchTerm('')}
-                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-300 p-1 flex items-center justify-center rounded-full"
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 flex items-center justify-center rounded-full"
                                 title="Limpar pesquisa"
                             >
                                 <X size={14} />
@@ -251,7 +251,7 @@ export default function CalendarView({
                 </div>
                 
                 {showFilters && (
-                    <div className="mt-4 bg-slate-900 p-5 rounded-2xl border border-slate-800 w-full">
+                    <div className="mt-4 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 w-full shadow-sm">
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 w-full">
                             {activeFilters.includes('year') && (
                                 <div className="flex flex-col gap-2 col-span-full">
@@ -271,7 +271,7 @@ export default function CalendarView({
                                                         : [...selectedYears, y];
                                                     if (newYears.length > 0) setSelectedYears(newYears);
                                                 }} 
-                                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors focus:outline-none ${selectedYears.includes(y) ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 'bg-slate-800 border-slate-700/50 text-slate-400 hover:bg-slate-700 hover:text-slate-300'}`}
+                                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors focus:outline-none ${selectedYears.includes(y) ? 'bg-blue-600/10 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-300'}`}
                                             >
                                                 {y}
                                             </button>
@@ -283,9 +283,9 @@ export default function CalendarView({
                             {activeFilters.includes('month') && (
                                 <>
                                     <div className="flex flex-col gap-2">
-                                        <label className="text-xs text-slate-400 uppercase tracking-wider font-bold ml-1">Mês Inicial</label>
+                                        <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">Mês Inicial</label>
                                         <select 
-                                            className="w-full h-9 px-3 text-sm rounded-lg border border-slate-700 bg-slate-800 text-slate-200 outline-none focus:border-blue-500 transition-colors"
+                                            className="w-full h-9 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors"
                                             value={monthNames[monthFrom - 1]} 
                                             onChange={(e) => onMonthFromChange({target:{value: monthNames.indexOf(e.target.value) + 1}})} 
                                         >
@@ -294,9 +294,9 @@ export default function CalendarView({
                                     </div>
                                     
                                     <div className="flex flex-col gap-2">
-                                        <label className="text-xs text-slate-400 uppercase tracking-wider font-bold ml-1">Mês Final</label>
+                                        <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">Mês Final</label>
                                         <select 
-                                            className="w-full h-9 px-3 text-sm rounded-lg border border-slate-700 bg-slate-800 text-slate-200 outline-none focus:border-blue-500 transition-colors"
+                                            className="w-full h-9 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors"
                                             value={monthNames[monthTo - 1]} 
                                             onChange={(e) => onMonthToChange({target:{value: monthNames.indexOf(e.target.value) + 1}})} 
                                         >
@@ -309,7 +309,7 @@ export default function CalendarView({
                             {activeFilters.includes('escalao') && !forceEscalao && (
                                 <div className="flex flex-col gap-2 col-span-full">
                                     <div className="flex items-center gap-1 mb-0.5">
-                                        <label className="text-xs text-slate-400 uppercase tracking-wider font-bold ml-1 flex items-center">Escalões</label>
+                                        <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1 flex items-center">Escalões</label>
                                         <button 
                                             onClick={() => setShowEscalaoHelp(true)}
                                             title="Não tens a certeza do teu escalão? Clica aqui para descobrir."
@@ -325,7 +325,7 @@ export default function CalendarView({
                                             <button 
                                                 key={esc} 
                                                 onClick={() => onEscalaoToggle(esc)} 
-                                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors focus:outline-none ${selectedEscaloes.includes(esc) ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 'bg-slate-800 border-slate-700/50 text-slate-400 hover:bg-slate-700 hover:text-slate-300'}`}
+                                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors focus:outline-none ${selectedEscaloes.includes(esc) ? 'bg-blue-600/10 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-300'}`}
                                             >
                                                 {esc}
                                             </button>
@@ -336,9 +336,9 @@ export default function CalendarView({
                             
                             {activeFilters.includes('ambito') && !forceAmbito && (
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-xs text-slate-400 uppercase tracking-wider font-bold ml-1">Âmbito</label>
+                                    <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">Âmbito</label>
                                     <select 
-                                        className="w-full h-9 px-3 text-sm rounded-lg border border-slate-700 bg-slate-800 text-slate-200 outline-none focus:border-blue-500 transition-colors"
+                                        className="w-full h-9 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors"
                                         value={selectedAmbito} 
                                         onChange={(e) => setSelectedAmbito(e.target.value)} 
                                     >
@@ -349,9 +349,9 @@ export default function CalendarView({
                             
                             {activeFilters.includes('licenca') && !forceLicenca && (
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-xs text-slate-400 uppercase tracking-wider font-bold ml-1">Licença</label>
+                                    <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">Licença</label>
                                     <select 
-                                        className="w-full h-9 px-3 text-sm rounded-lg border border-slate-700 bg-slate-800 text-slate-200 outline-none focus:border-blue-500 transition-colors"
+                                        className="w-full h-9 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors"
                                         value={selectedLicenca} 
                                         onChange={(e) => setSelectedLicenca(e.target.value)} 
                                     >
@@ -361,9 +361,9 @@ export default function CalendarView({
                             )}
                             
                             <div className="flex flex-col gap-2">
-                                <label className="text-xs text-slate-400 uppercase tracking-wider font-bold ml-1">Tipo de Prova</label>
+                                <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">Tipo de Prova</label>
                                 <select 
-                                    className="w-full h-9 px-3 text-sm rounded-lg border border-slate-700 bg-slate-800 text-slate-200 outline-none focus:border-blue-500 transition-colors"
+                                    className="w-full h-9 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors"
                                     value={selectedType} 
                                     onChange={(e) => setSelectedType(e.target.value)} 
                                 >
@@ -374,9 +374,9 @@ export default function CalendarView({
                             </div>
 
                             <div className="flex flex-col gap-2">
-                                <label className="text-xs text-slate-400 uppercase tracking-wider font-bold ml-1">Eventos Passados / Futuros</label>
+                                <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">Eventos Passados / Futuros</label>
                                 <select 
-                                    className="w-full h-9 px-3 text-sm rounded-lg border border-slate-700 bg-slate-800 text-slate-200 outline-none focus:border-blue-500 transition-colors"
+                                    className="w-full h-9 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors"
                                     value={pastEventsFilter} 
                                     onChange={(e) => setPastEventsFilter(e.target.value)} 
                                 >
@@ -388,9 +388,9 @@ export default function CalendarView({
                             
                             {activeFilters.includes('regiao') && (
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-xs text-slate-400 uppercase tracking-wider font-bold ml-1">Região</label>
+                                    <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">Região</label>
                                     <select 
-                                        className="w-full h-9 px-3 text-sm rounded-lg border border-slate-700 bg-slate-800 text-slate-200 outline-none focus:border-blue-500 transition-colors"
+                                        className="w-full h-9 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors"
                                         value={selectedRegiao} 
                                         onChange={(e) => setSelectedRegiao(e.target.value)} 
                                     >
@@ -402,7 +402,7 @@ export default function CalendarView({
                             {activeFilters.includes('distrito') && (
                                 <div className="flex flex-col gap-2">
                                     <div className="flex items-center gap-1 mb-0.5">
-                                        <label className="text-xs text-slate-400 uppercase tracking-wider font-bold ml-1 flex items-center">Distrito</label>
+                                        <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1 flex items-center">Distrito</label>
                                         {selectedDistrito !== 'Todos' && (
                                             <button 
                                                 onClick={() => setSelectedDistrito('Todos')}
@@ -414,7 +414,7 @@ export default function CalendarView({
                                         )}
                                     </div>
                                     <select 
-                                        className="w-full h-9 px-3 text-sm rounded-lg border border-slate-700 bg-slate-800 text-slate-200 outline-none focus:border-blue-500 transition-colors"
+                                        className="w-full h-9 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors"
                                         value={selectedDistrito} 
                                         onChange={(e) => setSelectedDistrito(e.target.value)} 
                                     >
@@ -425,8 +425,8 @@ export default function CalendarView({
                         </div>
                         
                         {activeFilters.includes('modalidade') && (
-                            <div className="mt-6 pt-5 border-t border-slate-700">
-                                <span className="text-xs text-slate-400 uppercase tracking-wider font-bold ml-1 block mb-3">
+                            <div className="mt-6 pt-5 border-t border-slate-200 dark:border-slate-700">
+                                <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1 block mb-3">
                                     Modalidades
                                 </span>
                                 <div className="flex gap-2 flex-wrap">
@@ -434,7 +434,7 @@ export default function CalendarView({
                                     <button 
                                         key={tag} 
                                         onClick={() => onTagToggle(tag)} 
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors focus:outline-none ${selectedTags.includes(tag) ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 'bg-slate-800 border-slate-700/50 text-slate-400 hover:bg-slate-700 hover:text-slate-300'}`}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors focus:outline-none ${selectedTags.includes(tag) ? 'bg-blue-600/10 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-300'}`}
                                     >
                                         {tag}
                                     </button>
@@ -534,21 +534,21 @@ export default function CalendarView({
                                 <div 
                                     key={event.id} 
                                     onClick={() => setSelectedEvent(event)} 
-                                    className={`group flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-slate-900 border ${isEventFavorited ? 'border-amber-500/50 shadow-[0_0_12px_rgba(245,158,11,0.08)]' : 'border-slate-800'} rounded-xl py-2.5 px-3 sm:py-3 sm:px-4 cursor-pointer hover:border-slate-600 transition-all`}
+                                    className={`group flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white dark:bg-slate-900 border ${isEventFavorited ? 'border-amber-500/50 shadow-[0_0_12px_rgba(245,158,11,0.08)]' : 'border-slate-200 dark:border-slate-800'} rounded-xl py-2.5 px-3 sm:py-3 sm:px-4 cursor-pointer hover:border-blue-400 dark:hover:border-slate-600 shadow-sm transition-all`}
                                 >
                                     <div className="flex gap-4 flex-1 min-w-0">
-                                        <div className="flex flex-col shrink-0 w-[56px] h-[56px] bg-slate-950 rounded-lg overflow-hidden border border-slate-800">
+                                        <div className="flex flex-col shrink-0 w-[56px] h-[56px] bg-slate-100 dark:bg-slate-950 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800">
                                             <div className="bg-rose-500 text-white text-[10px] font-bold uppercase tracking-wider text-center py-0.5">
                                                 {month}
                                             </div>
-                                            <div className="flex-1 flex items-center justify-center text-white text-lg font-bold">
+                                            <div className="flex-1 flex items-center justify-center text-slate-900 dark:text-white text-lg font-bold">
                                                 {day}
                                             </div>
                                         </div>
 
                                         <div className="flex flex-col justify-center min-w-0 flex-1">
                                             <div className="flex items-center gap-2 mb-1">
-                                                <h3 className="text-[0.95rem] font-bold text-slate-100 truncate">
+                                                <h3 className="text-[0.95rem] font-bold text-slate-900 dark:text-slate-100 truncate">
                                                     {event.title}
                                                 </h3>
                                                 <button 
@@ -556,20 +556,20 @@ export default function CalendarView({
                                                         e.stopPropagation();
                                                         toggleFavorite(event.id);
                                                     }}
-                                                    className={`p-1 rounded-full transition-all flex items-center justify-center shrink-0 cursor-pointer ${isEventFavorited ? 'text-amber-400 bg-amber-400/10 hover:bg-amber-400/20' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'}`}
+                                                    className={`p-1 rounded-full transition-all flex items-center justify-center shrink-0 cursor-pointer ${isEventFavorited ? 'text-amber-400 bg-amber-400/10 hover:bg-amber-400/20' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
                                                     title={isEventFavorited ? "Remover dos Favoritos" : "Adicionar aos Favoritos"}
                                                 >
                                                     <Star size={14} fill={isEventFavorited ? "#fbbf24" : "none"} />
                                                 </button>
                                             </div>
-                                            <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[11px] text-slate-400 font-medium">
+                                            <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                                                 <span className="flex items-center gap-1.5 truncate max-w-[150px] sm:max-w-none">
                                                     <MapPin size={13} className="text-rose-500 shrink-0" />
                                                     <span className="truncate">{location}</span>
                                                 </span>
-                                                <span className="hidden sm:inline text-slate-700">•</span>
+                                                <span className="hidden sm:inline text-slate-300 dark:text-slate-700">•</span>
                                                 <span className="flex items-center gap-1.5 truncate">
-                                                    <Bike size={13} className="text-slate-500 shrink-0" />
+                                                    <Bike size={13} className="text-slate-400 dark:text-slate-500 shrink-0" />
                                                     <span className="truncate">{(event.escaloes || []).join(' | ')} {extraDetails ? `(${extraDetails})` : ''}</span>
                                                 </span>
                                             </div>
@@ -595,7 +595,7 @@ export default function CalendarView({
                                             )}
                                         </div>
                                         
-                                        <div className="pl-3 border-l border-slate-800 flex items-center shrink-0">
+                                        <div className="pl-3 border-l border-slate-200 dark:border-slate-800 flex items-center shrink-0">
                                             <OrganizationLogo source={event.source} className="h-5 w-auto object-contain" />
                                         </div>
                                     </div>
