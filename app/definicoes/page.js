@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useSettingsStore } from '../store/useSettingsStore';
-import { HelpCircle, GripVertical, Settings } from 'lucide-react';
+import { HelpCircle, Settings } from 'lucide-react';
 import RegionAssistant from '../components/RegionAssistant';
 import EscalaoAssistant from '../components/EscalaoAssistant';
 
@@ -10,7 +10,7 @@ export default function Conta() {
     const { 
         defaultEscalao, setDefaultEscalao,
         defaultRegiao, setDefaultRegiao,
-        selectedSources, toggleSource, reorderSources,
+        selectedSources, toggleSource,
         hiddenTabs, toggleHiddenTab
     } = useSettingsStore();
 
@@ -107,67 +107,34 @@ export default function Conta() {
                 <section className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/5 rounded-2xl p-6 sm:p-8 shadow-sm dark:shadow-xl">
                     <div className="pb-4">
                         <h3 className="font-semibold text-slate-900 dark:text-slate-200 mb-1 text-base">Fontes de Dados (Scrapers)</h3>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">Gere a origem das provas. Em caso de duplicados, a que está em cima tem prioridade.</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Escolhe as plataformas ativas no calendário. O sistema unifica e apresenta automaticamente as informações mais completas de cada prova.</p>
                     </div>
 
-                    <div className="pt-2 flex flex-col gap-2.5">
-                        {selectedSources.map((source, index) => (
-                            <div key={source} className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/40 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700/60">
-                                <div className="flex items-center gap-4">
-                                    <div className="text-slate-500 cursor-grab hover:text-slate-300 transition-colors" title="Ordem (Usa botões para mudar)">
-                                        <GripVertical size={16} />
-                                    </div>
-                                    <span className="font-medium text-sm text-slate-200">
-                                        {source === 'FPC' ? 'Federação Portuguesa (FPC)' : 'Cabreira Solutions'}
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-4">
-                                    <div className="flex flex-col gap-1">
-                                        <button 
-                                            onClick={() => {
-                                                const newOrder = [...selectedSources];
-                                                [newOrder[index - 1], newOrder[index]] = [newOrder[index], newOrder[index - 1]];
-                                                reorderSources(newOrder);
-                                            }}
-                                            disabled={index === 0}
-                                            className="text-[10px] px-2 py-0.5 rounded bg-slate-700/50 hover:bg-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                                        >▲</button>
-                                        <button 
-                                            onClick={() => {
-                                                const newOrder = [...selectedSources];
-                                                [newOrder[index + 1], newOrder[index]] = [newOrder[index], newOrder[index + 1]];
-                                                reorderSources(newOrder);
-                                            }}
-                                            disabled={index === selectedSources.length - 1}
-                                            className="text-[10px] px-2 py-0.5 rounded bg-slate-700/50 hover:bg-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                                        >▼</button>
+                    <div className="pt-2 flex flex-col gap-3">
+                        {[
+                            { id: 'FPC', name: 'Federação Portuguesa de Ciclismo (FPC)', desc: 'Provas nacionais, regionais, taças e campeonatos oficiais.' },
+                            { id: 'Cabreira', name: 'Cabreira Solutions', desc: 'Granfondos, eventos de lazer e turismo desportivo.' }
+                        ].map(source => {
+                            const isSelected = selectedSources.includes(source.id);
+                            return (
+                                <div key={source.id} className="flex flex-col sm:flex-row sm:items-center justify-between bg-slate-50 dark:bg-slate-800/40 px-4 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700/60 gap-3">
+                                    <div>
+                                        <span className="font-semibold text-sm text-slate-900 dark:text-slate-200 block">
+                                            {source.name}
+                                        </span>
+                                        <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">
+                                            {source.desc}
+                                        </span>
                                     </div>
                                     <div 
-                                        className="w-11 h-6 shrink-0 rounded-full transition-all flex items-center px-1 cursor-pointer border bg-blue-500/20 border-blue-500/50 shadow-[0_0_8px_rgba(59,130,246,0.3)]" 
-                                        onClick={() => toggleSource(source)}
+                                        className={`w-11 h-6 shrink-0 rounded-full transition-all flex items-center px-1 cursor-pointer border ${isSelected ? 'bg-blue-500/20 border-blue-500/50 shadow-[0_0_8px_rgba(59,130,246,0.3)]' : 'bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-700'}`} 
+                                        onClick={() => toggleSource(source.id)}
                                     >
-                                        <div className="w-4 h-4 rounded-full transition-all translate-x-5 bg-blue-400 shadow-[0_0_8px_rgba(59,130,246,0.8)]"/>
+                                        <div className={`w-4 h-4 rounded-full transition-all ${isSelected ? 'translate-x-5 bg-blue-500 dark:bg-blue-400 shadow-[0_0_8px_rgba(59,130,246,0.8)]' : 'translate-x-0 bg-slate-400 dark:bg-slate-500'}`}/>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
-
-                        {['FPC', 'Cabreira'].filter(s => !selectedSources.includes(s)).map(source => (
-                            <div key={source} className="flex items-center justify-between bg-transparent px-4 py-3 rounded-xl border border-dashed border-slate-700/60 opacity-60 hover:opacity-100 transition-opacity">
-                                <div className="flex items-center gap-4">
-                                    <div className="opacity-0"><GripVertical size={16} /></div>
-                                    <span className="text-sm text-slate-400">
-                                        {source === 'FPC' ? 'Federação Portuguesa (FPC)' : 'Cabreira Solutions'}
-                                    </span>
-                                </div>
-                                <div 
-                                    className="w-11 h-6 shrink-0 rounded-full transition-all flex items-center px-1 cursor-pointer border bg-slate-800 border-slate-700" 
-                                    onClick={() => toggleSource(source)}
-                                >
-                                    <div className="w-4 h-4 rounded-full transition-all translate-x-0 bg-slate-500"/>
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </section>
             </main>
