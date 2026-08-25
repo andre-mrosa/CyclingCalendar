@@ -351,19 +351,91 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
     const month = dateParts.find(p => monthAbbrs.includes(p.toUpperCase()))?.toUpperCase() || '';
 
     return (
-        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[9000] flex items-center justify-center p-2 sm:p-4 overflow-hidden" onClick={() => setSelectedEvent(null)}>
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-4xl h-[92vh] sm:h-[86vh] max-h-[92vh] flex flex-col shadow-2xl overflow-hidden relative transition-colors duration-200" onClick={(e) => e.stopPropagation()}>
-                <button className="absolute top-3 right-3 sm:top-4 sm:right-4 text-slate-400 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors z-10 p-1.5 sm:p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer" onClick={() => setSelectedEvent(null)} title="Fechar">
-                    <X size={18} className="sm:w-5 sm:h-5" />
-                </button>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9000] flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-hidden animate-fade-in" onClick={() => setSelectedEvent(null)}>
+            <div className="bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-2xl w-full max-w-4xl h-[92vh] sm:h-[86vh] max-h-[92vh] flex flex-col shadow-2xl overflow-hidden relative transition-colors duration-200" onClick={(e) => e.stopPropagation()}>
                 
-                {/* Header */}
-                <div className="flex items-center justify-start gap-2.5 sm:gap-3.5 pr-10 sm:pr-12 p-3 sm:p-5 pb-1 min-w-0">
-                    <div className="flex flex-col shrink-0 w-[44px] h-[44px] sm:w-[54px] sm:h-[54px] bg-slate-100 dark:bg-slate-950 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
-                        <div className="bg-rose-500 text-white text-[8px] sm:text-[10px] font-bold uppercase tracking-wider text-center py-0.5">
+                {/* Mobile Drag Indicator */}
+                <div className="w-12 h-1 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mt-2.5 mb-1 sm:hidden shrink-0" />
+
+                {/* Mobile Top Bar (sm:hidden) */}
+                <div className="sm:hidden flex items-center justify-between px-4 pt-1 pb-1 shrink-0">
+                    <div className="flex items-center gap-2.5">
+                        <div className="flex flex-col shrink-0 w-[42px] h-[42px] bg-slate-100 dark:bg-slate-950 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
+                            <div className="bg-rose-500 text-white text-[8px] font-bold uppercase tracking-wider text-center py-0.5">
+                                {month}
+                            </div>
+                            <div className="flex-1 flex items-center justify-center text-slate-900 dark:text-white text-sm font-bold">
+                                {day}
+                            </div>
+                        </div>
+                        {activeEvent.logo && (
+                            <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="flex shrink-0" title="Abrir página do evento">
+                                <SmartLogo 
+                                    src={activeEvent.logo} 
+                                    alt={`Logo ${activeEvent.title}`} 
+                                    className="h-7 w-auto object-contain" 
+                                    style={{ height: '28px', width: 'auto', objectFit: 'contain' }}
+                                />
+                            </a>
+                        )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        {(() => {
+                            const isEventFavorited = favorites.includes(activeEvent.id) || (activeEvent._allIds && activeEvent._allIds.some(id => favorites.includes(id)));
+                            return (
+                                <button 
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        toggleFavorite(activeEvent.id);
+                                    }}
+                                    className={`flex items-center justify-center w-8 h-8 rounded-full transition-all cursor-pointer ${isEventFavorited ? 'bg-amber-400/15 border border-amber-500/40 text-amber-400' : 'bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-400'}`}
+                                    title={isEventFavorited ? "Remover dos Favoritos" : "Adicionar aos Favoritos"}
+                                >
+                                    <Star 
+                                        size={15} 
+                                        fill={isEventFavorited ? "#fbbf24" : "none"}
+                                    />
+                                </button>
+                            );
+                        })()}
+                        <button 
+                            className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors p-1.5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 cursor-pointer" 
+                            onClick={() => setSelectedEvent(null)} 
+                            title="Fechar"
+                        >
+                            <X size={17} />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Mobile Title & Date (sm:hidden) */}
+                <div className="sm:hidden px-4 pt-1 pb-2 shrink-0">
+                    <h2 className="text-base font-bold text-slate-900 dark:text-white m-0 leading-snug line-clamp-2">
+                        {activeEvent.logo ? (
+                            <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="text-inherit no-underline hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                                {activeEvent.title}
+                            </a>
+                        ) : (
+                            <span>{activeEvent.title}</span>
+                        )}
+                    </h2>
+                    {isMultiDay && (
+                        <p className="text-slate-500 dark:text-slate-400 text-xs flex items-center gap-1.5 mt-1 mb-0 font-medium">
+                            <Calendar size={12} className="text-blue-500" /> {rawDate}
+                        </p>
+                    )}
+                </div>
+
+                {/* Desktop Header (hidden sm:flex) */}
+                <div className="hidden sm:flex items-center justify-start gap-3.5 pr-12 p-5 pb-2 min-w-0 shrink-0">
+                    <button className="absolute top-4 right-4 text-slate-400 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors z-10 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer" onClick={() => setSelectedEvent(null)} title="Fechar">
+                        <X size={20} />
+                    </button>
+                    <div className="flex flex-col shrink-0 w-[54px] h-[54px] bg-slate-100 dark:bg-slate-950 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
+                        <div className="bg-rose-500 text-white text-[10px] font-bold uppercase tracking-wider text-center py-0.5">
                             {month}
                         </div>
-                        <div className="flex-1 flex items-center justify-center text-slate-900 dark:text-white text-sm sm:text-lg font-bold">
+                        <div className="flex-1 flex items-center justify-center text-slate-900 dark:text-white text-lg font-bold">
                             {day}
                         </div>
                     </div>
@@ -372,19 +444,19 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             <SmartLogo 
                                 src={activeEvent.logo} 
                                 alt={`Logo ${activeEvent.title}`} 
-                                className="h-6 sm:h-8 w-auto object-contain" 
-                                style={{ height: '30px', width: 'auto', objectFit: 'contain' }}
+                                className="h-8 w-auto object-contain" 
+                                style={{ height: '32px', width: 'auto', objectFit: 'contain' }}
                             />
                         </a>
                     )}
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <h2 className="text-sm sm:text-xl font-bold text-slate-900 dark:text-white m-0 line-clamp-2 sm:truncate leading-tight">
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-white m-0 truncate">
                             {activeEvent.logo ? (
-                                <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="text-inherit no-underline hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                                <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="text-inherit no-underline hover:text-blue-600 dark:hover:text-blue-400 transition-colors truncate">
                                     {activeEvent.title}
                                 </a>
                             ) : (
-                                <span className="text-slate-900 dark:text-white">{activeEvent.title}</span>
+                                <span className="text-slate-900 dark:text-white truncate">{activeEvent.title}</span>
                             )}
                         </h2>
                         {(() => {
@@ -395,11 +467,11 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                         e.stopPropagation();
                                         toggleFavorite(activeEvent.id);
                                     }}
-                                    className={`flex shrink-0 items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full transition-all cursor-pointer ${isEventFavorited ? 'bg-amber-400/15 border border-amber-500/40 text-amber-400' : 'bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
+                                    className={`flex shrink-0 items-center justify-center w-7 h-7 rounded-full transition-all cursor-pointer ${isEventFavorited ? 'bg-amber-400/15 border border-amber-500/40 text-amber-400' : 'bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
                                     title={isEventFavorited ? "Remover dos Favoritos" : "Adicionar aos Favoritos"}
                                 >
                                     <Star 
-                                        size={13} 
+                                        size={14} 
                                         className="transition-transform"
                                         fill={isEventFavorited ? "#fbbf24" : "none"}
                                     />
@@ -410,16 +482,24 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 </div>
 
                 {isMultiDay && (
-                    <p className="text-slate-500 dark:text-slate-400 text-xs flex items-center gap-1.5 px-3 sm:px-5 mb-1.5 mt-0">
+                    <p className="hidden sm:flex text-slate-500 dark:text-slate-400 text-xs items-center gap-1.5 px-5 mb-1.5 mt-0 shrink-0">
                         <Calendar size={13} className="text-blue-500 dark:text-blue-400" /> {rawDate}
                     </p>
                 )}
                 
                 {/* Tabs Navigation */}
                 {availableTabs.length > 0 ? (
-                    <div className="flex gap-1.5 overflow-x-auto pb-2 mb-2 border-b border-slate-200 dark:border-slate-800/80 px-3 sm:px-5 no-scrollbar shrink-0 touch-pan-x overscroll-contain">
+                    <div className="flex gap-2 overflow-x-auto pb-2.5 pt-1 px-4 sm:px-5 border-b border-slate-200 dark:border-slate-800/80 no-scrollbar shrink-0 touch-pan-x overscroll-contain">
                         {availableTabs.map(tab => {
                             const labels = {
+                                info: 'Info',
+                                escaloes: 'Escalões',
+                                programa: activeEvent.source === 'FPC' ? 'Documentos' : 'Programa',
+                                inscricao: 'Inscrição & Preços',
+                                premios: 'Prémios & Seguro',
+                                localizacao: 'Localização'
+                            };
+                            const fullLabels = {
                                 info: 'Info do Evento',
                                 escaloes: 'Escalões Elegíveis',
                                 programa: activeEvent.source === 'FPC' ? 'Documentos & Detalhes' : 'Programa',
@@ -431,21 +511,26 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 <button 
                                     key={tab} 
                                     onClick={() => setActiveTab(tab)} 
-                                    className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap transition-colors cursor-pointer ${activeTab === tab ? 'bg-blue-600/10 dark:bg-blue-600/15 text-blue-600 dark:text-blue-400 border border-blue-500/30' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50 border border-transparent'}`}
+                                    className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                                        activeTab === tab 
+                                            ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/30' 
+                                            : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700/60'
+                                    }`}
                                 >
-                                    {labels[tab]}
+                                    <span className="sm:hidden">{labels[tab]}</span>
+                                    <span className="hidden sm:inline">{fullLabels[tab]}</span>
                                 </button>
                             );
                         })}
                     </div>
                 ) : (
-                    <div className="mb-2 pb-2 border-b border-slate-200 dark:border-slate-800/80 px-3 sm:px-5 shrink-0">
+                    <div className="mb-2 pb-2 border-b border-slate-200 dark:border-slate-800/80 px-4 sm:px-5 shrink-0">
                         <p className="text-slate-500 dark:text-slate-400 text-xs">Informação detalhada disponível na página oficial da organização.</p>
                     </div>
                 )}
 
                 {/* Tab content area */}
-                <div className="flex-grow overflow-hidden flex flex-col px-3 sm:px-5 min-h-0">
+                <div className="flex-grow overflow-hidden flex flex-col px-4 sm:px-5 min-h-0 pt-2">
                 
                 {availableTabs.length === 0 && (
                     <div className="flex flex-col items-center justify-center h-full gap-4 p-6 animate-fade-in">
@@ -465,7 +550,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 {/* Tab: INFO */}
                 {activeTab === 'info' && (
                     <div className="flex flex-col h-full animate-fade-in min-h-0">
-                        <div className="flex-1 overflow-y-auto min-h-0 pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent overscroll-contain touch-pan-y">
+                        <div className="flex-1 overflow-y-auto min-h-0 pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent overscroll-contain touch-pan-y space-y-4 pb-4">
                             {isLoadingFullEvent && (
                                 <div className="w-full h-48 sm:h-60 rounded-xl bg-slate-800/30 border border-slate-800/80 animate-pulse flex flex-col items-center justify-center gap-2 mb-2 text-slate-500">
                                     <div className="w-5 h-5 border-2 border-slate-600 border-t-blue-400 rounded-full animate-spin"></div>
@@ -481,35 +566,36 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             ) : !isLoadingFullEvent ? (
                                 <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">Descrição não disponível.</p>
                             ) : null}
-                        </div>
-                        
-                        <div className="shrink-0 mt-2 grid grid-cols-2 gap-2 pb-1">
-                            {activeEvent.licenca && (
-                                <div className="px-3 py-2 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200 dark:border-slate-800/80 flex items-center gap-2.5">
-                                    <div className="w-7 h-7 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
-                                        <FileText size={13} className="text-purple-500 dark:text-purple-400" />
+
+                            {/* Informações da Prova integradas no scroll */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+                                {activeEvent.licenca && (
+                                    <div className="px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200 dark:border-slate-800/80 flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
+                                            <FileText size={15} className="text-purple-500 dark:text-purple-400" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold block leading-tight">Licença</span>
+                                            <span className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200 truncate block">{activeEvent.licenca}</span>
+                                        </div>
                                     </div>
-                                    <div className="min-w-0">
-                                        <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold block leading-tight">Licença</span>
-                                        <span className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200 truncate block">{activeEvent.licenca}</span>
+                                )}
+                                {(activeEvent.organizador || activeEvent.source) && (
+                                    <div className="px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200 dark:border-slate-800/80 flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
+                                            <Users size={15} className="text-blue-500 dark:text-blue-400" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold block leading-tight">Organização</span>
+                                            <span className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200 truncate block">
+                                                {activeEvent.organizador 
+                                                    ? (activeEvent.organizador === 'U.V.P./F.P.C' ? 'FPC' : activeEvent.organizador) 
+                                                    : (activeEvent.source === 'Cabreira' ? 'Cabreira Solutions' : activeEvent.source)}
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
-                            )}
-                            {(activeEvent.organizador || activeEvent.source) && (
-                                <div className="px-3 py-2 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200 dark:border-slate-800/80 flex items-center gap-2.5">
-                                    <div className="w-7 h-7 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
-                                        <Users size={13} className="text-blue-500 dark:text-blue-400" />
-                                    </div>
-                                    <div className="min-w-0">
-                                        <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold block leading-tight">Organização</span>
-                                        <span className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200 truncate block">
-                                            {activeEvent.organizador 
-                                                ? (activeEvent.organizador === 'U.V.P./F.P.C' ? 'FPC' : activeEvent.organizador) 
-                                                : (activeEvent.source === 'Cabreira' ? 'Cabreira Solutions' : activeEvent.source)}
-                                        </span>
-                                    </div>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
                     </div>
                 )}
