@@ -48,7 +48,7 @@ export default function CalendarView({
     const [selectedTags, setSelectedTags] = useState([]);
     const [showFilters, setShowFilters] = useState(false);
     const [selectedType, setSelectedType] = useState('Todos');
-    const [hidePastEvents, setHidePastEvents] = useState(false);
+    const [pastEventsFilter, setPastEventsFilter] = useState('todos');
     const [visibleCount, setVisibleCount] = useState(16);
     const [selectedEvent, setSelectedEvent] = useState(null);
     const loaderRef = useRef(null);
@@ -103,15 +103,19 @@ export default function CalendarView({
             selectedType
         });
 
-        if (hidePastEvents) {
+        if (pastEventsFilter === 'futuros') {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             filtered = filtered.filter(e => !e.sortDate || new Date(e.sortDate) >= today);
+        } else if (pastEventsFilter === 'passados') {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            filtered = filtered.filter(e => e.sortDate && new Date(e.sortDate) < today);
         }
 
         setFilteredEvents(filtered);
         setVisibleCount(16); // Reset visible count on filter change
-    }, [events, searchTerm, selectedEscaloes, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, hidePastEvents, filterByFavorites, favorites, forceEscalao, forceAmbito, forceLicenca]);
+    }, [events, searchTerm, selectedEscaloes, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, filterByFavorites, favorites, forceEscalao, forceAmbito, forceLicenca]);
 
     const uniqueEscaloes = ['Elite', 'Elite Amador', 'Sub-23', 'Sub-19 (Juniores)', 'Sub-17 (Cadetes)', 'Sub-15 (Juvenis)', 'Masters / Veteranos', 'Femininas', 'Escolas', 'Profissional (UCI)', 'Todos (Aberto)', 'Geral / Vários'];
     const uniqueAmbitos = ['Todos', ...new Set(events.map(e => e.ambito))];
@@ -173,7 +177,7 @@ export default function CalendarView({
         setMonthTo(12);
         setSelectedTags([]);
         setSelectedType('Todos');
-        setHidePastEvents(false);
+        setPastEventsFilter('todos');
         setSearchTerm('');
     };
 
@@ -213,7 +217,7 @@ export default function CalendarView({
                             {showFilters ? 'Esconder Filtros' : 'Filtrar Calendário'}
                         </button>
                         
-                        {(selectedEscaloes.length > 0 || selectedDistrito !== 'Todos' || selectedRegiao !== 'Todas' || selectedTags.length > 0 || selectedType !== 'Todos' || monthFrom !== 1 || monthTo !== 12 || searchTerm !== '' || hidePastEvents) && (
+                        {(selectedEscaloes.length > 0 || selectedDistrito !== 'Todos' || selectedRegiao !== 'Todas' || selectedTags.length > 0 || selectedType !== 'Todos' || monthFrom !== 1 || monthTo !== 12 || searchTerm !== '' || pastEventsFilter !== 'todos') && (
                             <button 
                                 onClick={clearAllFilters}
                                 title="Repor todos os filtros"
@@ -368,14 +372,15 @@ export default function CalendarView({
                             </div>
 
                             <div className="flex flex-col gap-2">
-                                <label className="text-xs text-slate-400 uppercase tracking-wider font-bold ml-1">Eventos Passados</label>
+                                <label className="text-xs text-slate-400 uppercase tracking-wider font-bold ml-1">Eventos Passados / Futuros</label>
                                 <select 
                                     className="w-full h-9 px-3 text-sm rounded-lg border border-slate-700 bg-slate-800 text-slate-200 outline-none focus:border-blue-500 transition-colors"
-                                    value={hidePastEvents ? 'futuros' : 'todos'} 
-                                    onChange={(e) => setHidePastEvents(e.target.value === 'futuros')} 
+                                    value={pastEventsFilter} 
+                                    onChange={(e) => setPastEventsFilter(e.target.value)} 
                                 >
-                                    <option value="todos">Mostrar Todos</option>
-                                    <option value="futuros">Ocultar Passados</option>
+                                    <option value="todos">Todos os Eventos</option>
+                                    <option value="futuros">Apenas Futuros (Próximos)</option>
+                                    <option value="passados">Apenas Passados (Já Realizados)</option>
                                 </select>
                             </div>
                             
