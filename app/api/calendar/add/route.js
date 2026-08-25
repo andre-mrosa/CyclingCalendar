@@ -1,4 +1,4 @@
-import { auth, clerkClient } from '@clerk/nextjs/server';
+import { auth, getAuth, clerkClient } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
 function parsePtDate(dateStr) {
@@ -99,7 +99,24 @@ async function getTargetCalendarId(token) {
 
 export async function POST(req) {
     try {
-        const { userId } = await auth();
+        let userId;
+        try {
+            const authData = await auth();
+            userId = authData?.userId;
+        } catch (e) {
+            // Fallback for environments where middleware is bypassed
+            const authData = getAuth(req);
+            userId = authData?.userId;
+        }
+
+        if (!userId) {
+            try {
+                const authData = getAuth(req);
+                userId = authData?.userId;
+            } catch (e) {
+                // ignore
+            }
+        }
 
         if (!userId) {
             return NextResponse.json({ error: 'Não autorizado. Inicie sessão para continuar.' }, { status: 401 });
