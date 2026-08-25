@@ -96,8 +96,11 @@ export default function Navigation() {
                     <Menu size={24} />
                 </button>
 
-                <Link href="/" className="flex items-center gap-3 mr-6 no-underline">
-                    <img src="/icon.jpg" alt="Calendário Ciclismo Logo" className="w-9 h-9 rounded-lg object-cover" />
+                <Link href="/" className="flex items-center gap-2.5 mr-6 no-underline group shrink-0">
+                    <img src="/icon.jpg" alt="Cycling Calendar" className="w-8 h-8 rounded-lg object-cover ring-1 ring-blue-500/30 group-hover:ring-blue-400 transition-all shadow-[0_0_10px_rgba(59,130,246,0.2)]" />
+                    <span className="font-extrabold text-base tracking-tight text-white flex items-center group-hover:text-blue-400 transition-colors">
+                        Cycling<span className="text-blue-400 ml-0.5">Calendar</span>
+                    </span>
                 </Link>
 
                 <div className="hidden md:flex flex-1 items-center">
