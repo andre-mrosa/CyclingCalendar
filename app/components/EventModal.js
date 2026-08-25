@@ -586,8 +586,20 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
             </div>
 
             {fullscreenImage && (
-                <div className="fixed inset-0 bg-black/90 z-[9999] flex items-center justify-center p-4" onClick={() => setFullscreenImage(null)}>
-                    <button className="absolute top-6 right-6 bg-black/50 hover:bg-black/80 text-white p-2 rounded-full transition-colors cursor-pointer" onClick={() => setFullscreenImage(null)}>
+                <div 
+                    className="fixed inset-0 bg-black/90 z-[9999] flex items-center justify-center p-4" 
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setFullscreenImage(null);
+                    }}
+                >
+                    <button 
+                        className="absolute top-6 right-6 bg-black/50 hover:bg-black/80 text-white p-2 rounded-full transition-colors cursor-pointer" 
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setFullscreenImage(null);
+                        }}
+                    >
                         <X size={22} />
                     </button>
                     <img src={fullscreenImage} alt="Programa Detalhado" className="max-w-full max-h-full object-contain" onClick={(e) => e.stopPropagation()} />

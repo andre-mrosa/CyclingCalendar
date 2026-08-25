@@ -546,9 +546,21 @@ export default function CalendarView({
                                         </div>
 
                                         <div className="flex flex-col justify-center min-w-0 flex-1">
-                                            <h3 className="text-[0.95rem] font-bold text-slate-100 truncate mb-1">
-                                                {event.title}
-                                            </h3>
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <h3 className="text-[0.95rem] font-bold text-slate-100 truncate">
+                                                    {event.title}
+                                                </h3>
+                                                <button 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        toggleFavorite(event.id);
+                                                    }}
+                                                    className={`p-1 rounded-full transition-all flex items-center justify-center shrink-0 cursor-pointer ${isEventFavorited ? 'text-amber-400 bg-amber-400/10 hover:bg-amber-400/20' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'}`}
+                                                    title={isEventFavorited ? "Remover dos Favoritos" : "Adicionar aos Favoritos"}
+                                                >
+                                                    <Star size={14} fill={isEventFavorited ? "#fbbf24" : "none"} />
+                                                </button>
+                                            </div>
                                             <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[11px] text-slate-400 font-medium">
                                                 <span className="flex items-center gap-1.5 truncate max-w-[150px] sm:max-w-none">
                                                     <MapPin size={13} className="text-rose-500 shrink-0" />
@@ -582,23 +594,12 @@ export default function CalendarView({
                                             )}
                                         </div>
                                         
-                                        <div className="pl-3 border-l border-slate-800 flex items-center gap-2 shrink-0">
+                                        <div className="pl-3 border-l border-slate-800 flex items-center shrink-0">
                                             {event.source === 'Cabreira' ? (
                                                 <img src="/logo-cabreira.png" alt="Cabreira" className="h-5 object-contain opacity-90 drop-shadow-[0_0_8px_rgba(255,255,255,0.7)]" />
                                             ) : (
                                                 <img src="/logo-fpc.png" alt="FPC" className="h-5 object-contain opacity-90 drop-shadow-[0_0_8px_rgba(255,255,255,0.7)]" />
                                             )}
-
-                                            <button 
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    toggleFavorite(event.id);
-                                                }}
-                                                className={`p-1.5 rounded-full transition-all flex items-center justify-center cursor-pointer ${isEventFavorited ? 'text-amber-400 bg-amber-400/10 hover:bg-amber-400/20' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'}`}
-                                                title={isEventFavorited ? "Remover dos Favoritos" : "Adicionar aos Favoritos"}
-                                            >
-                                                <Star size={15} fill={isEventFavorited ? "#fbbf24" : "none"} />
-                                            </button>
                                         </div>
                                     </div>
                                 </div>
