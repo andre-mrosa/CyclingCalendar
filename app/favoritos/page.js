@@ -22,14 +22,14 @@ export default function Favoritos() {
         return (
             <div className="max-w-xl mx-auto py-16 px-4 text-center">
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 mb-6">
-                    <Star size={32} className="text-amber-400 opacity-60" />
+                    <Star size={32} className="text-amber-500 dark:text-amber-400 opacity-60" />
                 </div>
-                <h1 className="text-3xl font-bold text-white mb-3">Favoritos</h1>
-                <p className="text-slate-400 text-base leading-relaxed mb-6">
+                <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-3">Favoritos</h1>
+                <p className="text-slate-600 dark:text-slate-400 text-base leading-relaxed mb-6">
                     Inicia sessão para guardares as provas que não queres perder. Os teus favoritos serão sincronizados em todos os teus dispositivos.
                 </p>
-                <div className="p-4 bg-slate-900 border border-slate-800 rounded-xl inline-block">
-                    <p className="text-sm text-blue-400 font-semibold m-0">
+                <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl inline-block shadow-sm">
+                    <p className="text-sm text-blue-600 dark:text-blue-400 font-semibold m-0">
                         ↑ Usa o botão de "Entrar" no topo da página.
                     </p>
                 </div>
@@ -41,10 +41,10 @@ export default function Favoritos() {
         return (
             <div className="max-w-xl mx-auto py-16 px-4 text-center">
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 mb-6">
-                    <Star size={32} className="text-amber-400" />
+                    <Star size={32} className="text-amber-500 dark:text-amber-400" />
                 </div>
-                <h1 className="text-3xl font-bold text-white mb-3">Ainda não tens favoritos</h1>
-                <p className="text-slate-400 text-base leading-relaxed mb-8">
+                <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-3">Ainda não tens favoritos</h1>
+                <p className="text-slate-600 dark:text-slate-400 text-base leading-relaxed mb-8">
                     Navega pelo calendário e clica na Estrela ⭐ ao lado do nome de qualquer prova para a guardares aqui.
                 </p>
                 <Link href="/" className="inline-flex items-center justify-center px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-xl transition-colors shadow-lg shadow-blue-500/20">

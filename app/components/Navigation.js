@@ -205,7 +205,7 @@ export default function Navigation() {
                     }}
                 >
                     <div 
-                        className="bg-slate-900 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl relative border border-slate-800 text-slate-100"
+                        className="bg-slate-50 dark:bg-slate-900 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl relative border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 transition-colors duration-200"
                         onClick={e => e.stopPropagation()}
                     >
                         <button 
@@ -213,7 +213,7 @@ export default function Navigation() {
                                 setIsSettingsModalOpen(false);
                                 setIsHelpModalOpen(false);
                             }}
-                            className="absolute top-4 right-5 text-slate-400 hover:text-white transition-colors z-10 w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-800 border-none cursor-pointer"
+                            className="absolute top-4 right-5 text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors z-10 w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 border-none cursor-pointer"
                         >
                             <X size={20} />
                         </button>

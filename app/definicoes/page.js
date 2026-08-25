@@ -180,10 +180,10 @@ export default function Conta() {
                         if (e.target === e.currentTarget) setActiveModal(null);
                     }}
                 >
-                    <div className="bg-slate-900 border border-slate-800 rounded-xl relative max-w-[500px] w-full shadow-2xl overflow-hidden">
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl relative max-w-[500px] w-full shadow-2xl overflow-hidden text-slate-900 dark:text-slate-100 transition-colors duration-200">
                         <button 
                             onClick={() => setActiveModal(null)}
-                            className="absolute top-3 right-3 text-slate-400 hover:text-white transition-colors text-2xl leading-none z-10"
+                            className="absolute top-3 right-3 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors text-2xl leading-none z-10"
                         >×</button>
                         
                         <div className="max-h-[90vh] overflow-y-auto p-1">

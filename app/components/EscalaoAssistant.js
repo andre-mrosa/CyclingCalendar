@@ -66,47 +66,47 @@ export default function EscalaoAssistant({ onApply }) {
     };
 
     return (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl p-6 sm:p-8 relative">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl p-6 sm:p-8 relative text-slate-900 dark:text-slate-100 transition-colors duration-200">
             <div className="flex items-center gap-3 mb-6">
                 <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20">
                     <span className="text-xl">🧮</span>
                 </div>
                 <div>
-                    <h2 className="m-0 text-white text-xl font-bold tracking-tight">Assistente de Escalões</h2>
-                    <p className="text-slate-400 text-xs mt-0.5">Calcula o teu escalão oficial da FPC</p>
+                    <h2 className="m-0 text-slate-900 dark:text-white text-xl font-bold tracking-tight">Assistente de Escalões</h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">Calcula o teu escalão oficial da FPC</p>
                 </div>
             </div>
             
             <div className="flex flex-col gap-5">
                 <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Ano de Nascimento</label>
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Ano de Nascimento</label>
                     <input 
                         type="number" 
                         placeholder="Ex: 1990"
                         value={birthYear}
                         onChange={e => setBirthYear(e.target.value)}
-                        className="w-full py-3 px-4 rounded-xl border border-slate-700/80 bg-slate-950/60 text-slate-200 text-sm outline-none focus:border-blue-500 transition-colors shadow-inner"
+                        className="w-full py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 text-sm outline-none focus:border-blue-500 transition-colors shadow-inner"
                     />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-2">
-                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Género</label>
+                        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Género</label>
                         <select 
                             value={gender} 
                             onChange={e => setGender(e.target.value)}
-                            className="w-full py-3 px-4 rounded-xl border border-slate-700/80 bg-slate-950/60 text-slate-200 text-sm outline-none focus:border-blue-500 transition-colors shadow-inner"
+                            className="w-full py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 text-sm outline-none focus:border-blue-500 transition-colors shadow-inner"
                         >
                             <option value="M">Masculino</option>
                             <option value="F">Feminino</option>
                         </select>
                     </div>
                     <div className="flex flex-col gap-2">
-                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Licença</label>
+                        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Licença</label>
                         <select 
                             value={licenseType} 
                             onChange={e => setLicenseType(e.target.value)}
-                            className="w-full py-3 px-4 rounded-xl border border-slate-700/80 bg-slate-950/60 text-slate-200 text-sm outline-none focus:border-blue-500 transition-colors shadow-inner"
+                            className="w-full py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 text-sm outline-none focus:border-blue-500 transition-colors shadow-inner"
                         >
                             <option value="Competição">Competição</option>
                             <option value="CPT">CPT / Lazer</option>
@@ -115,11 +115,11 @@ export default function EscalaoAssistant({ onApply }) {
                 </div>
                 
                 <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Nível / Equipa</label>
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Nível / Equipa</label>
                     <select 
                         value={teamLevel} 
                         onChange={e => setTeamLevel(e.target.value)}
-                        className="w-full py-3 px-4 rounded-xl border border-slate-700/80 bg-slate-950/60 text-slate-200 text-sm outline-none focus:border-blue-500 transition-colors shadow-inner"
+                        className="w-full py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 text-sm outline-none focus:border-blue-500 transition-colors shadow-inner"
                     >
                         <option value="Clube">Equipa de Clube / Amadora</option>
                         <option value="Profissional">Equipa Profissional (Continental / WT)</option>
@@ -129,18 +129,18 @@ export default function EscalaoAssistant({ onApply }) {
 
                 <button 
                     onClick={calculateEscalao}
-                    className="w-full py-3.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold shadow-lg shadow-blue-500/20 transition-colors text-sm mt-1"
+                    className="w-full py-3.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold shadow-lg shadow-blue-500/20 transition-colors text-sm mt-1 cursor-pointer"
                 >
                     Calcular Escalão
                 </button>
 
                 {escalaoMessage && (
-                    <div className={`p-4 bg-slate-950/60 border rounded-xl mt-2 text-sm text-slate-200 flex flex-col gap-3 shadow-lg ${suggestedEscalao ? 'border-blue-500/40' : 'border-amber-500/40'}`}>
-                        <span className="font-medium text-slate-200">{escalaoMessage}</span>
+                    <div className={`p-4 bg-slate-50 dark:bg-slate-950/60 border rounded-xl mt-2 text-sm text-slate-800 dark:text-slate-200 flex flex-col gap-3 shadow-lg ${suggestedEscalao ? 'border-blue-500/40' : 'border-amber-500/40'}`}>
+                        <span className="font-medium text-slate-800 dark:text-slate-200">{escalaoMessage}</span>
                         {suggestedEscalao && (
                             <button 
                                 onClick={applyEscalao}
-                                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold text-sm transition-colors shadow-md"
+                                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold text-sm transition-colors shadow-md cursor-pointer"
                             >
                                 Aplicar {suggestedEscalao}
                             </button>

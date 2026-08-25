@@ -92,14 +92,14 @@ export default function RegionAssistant({ onApply }) {
     };
 
     return (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl p-6 sm:p-8">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl p-6 sm:p-8 text-slate-900 dark:text-slate-100 transition-colors duration-200">
             <div className="flex items-center gap-3 mb-6">
                 <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20">
                     <span className="text-xl">📍</span>
                 </div>
                 <div>
-                    <h2 className="m-0 text-white text-xl font-bold tracking-tight">Assistente de Região</h2>
-                    <p className="text-slate-400 text-xs mt-0.5">Descobre a tua Associação Regional</p>
+                    <h2 className="m-0 text-slate-900 dark:text-white text-xl font-bold tracking-tight">Assistente de Região</h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">Descobre a tua Associação Regional</p>
                 </div>
             </div>
             
@@ -113,9 +113,9 @@ export default function RegionAssistant({ onApply }) {
                 </button>
                 
                 <div className="flex items-center gap-3">
-                    <hr className="flex-1 border-slate-800" />
-                    <span className="text-slate-500 text-xs font-bold uppercase">OU</span>
-                    <hr className="flex-1 border-slate-800" />
+                    <hr className="flex-1 border-slate-200 dark:border-slate-800" />
+                    <span className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase">OU</span>
+                    <hr className="flex-1 border-slate-200 dark:border-slate-800" />
                 </div>
 
                 <div className="flex gap-2.5 w-full">
@@ -125,20 +125,20 @@ export default function RegionAssistant({ onApply }) {
                         value={addressInput}
                         onChange={e => setAddressInput(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleAddressSearch()}
-                        className="flex-1 py-3 px-4 rounded-xl border border-slate-700/80 bg-slate-950/60 text-slate-200 text-sm outline-none focus:border-blue-500 transition-colors shadow-inner placeholder-slate-500"
+                        className="flex-1 py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 text-sm outline-none focus:border-blue-500 transition-colors shadow-inner placeholder-slate-400 dark:placeholder-slate-500"
                     />
                     <button 
                         onClick={handleAddressSearch} 
                         disabled={isLocating} 
-                        className="py-3 px-5 rounded-xl border border-slate-700/80 hover:bg-slate-700 bg-slate-800 text-slate-200 font-semibold text-sm transition-colors cursor-pointer"
+                        className="py-3 px-5 rounded-xl border border-slate-200 dark:border-slate-700/80 hover:bg-slate-200 dark:hover:bg-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold text-sm transition-colors cursor-pointer"
                     >
                         Procurar
                     </button>
                 </div>
 
                 {locationMessage && (
-                    <div className={`p-4 bg-slate-950/60 border rounded-xl mt-2 text-sm text-slate-200 flex flex-col gap-3 shadow-lg ${suggestedRegiao ? 'border-blue-500/40' : 'border-amber-500/40'}`}>
-                        <span className="font-medium text-slate-200">{locationMessage}</span>
+                    <div className={`p-4 bg-slate-50 dark:bg-slate-950/60 border rounded-xl mt-2 text-sm text-slate-800 dark:text-slate-200 flex flex-col gap-3 shadow-lg ${suggestedRegiao ? 'border-blue-500/40' : 'border-amber-500/40'}`}>
+                        <span className="font-medium text-slate-800 dark:text-slate-200">{locationMessage}</span>
                         {suggestedRegiao && (
                             <button 
                                 onClick={applyRegiao}
