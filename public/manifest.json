@@ -1,7 +1,7 @@
 {
-  "name": "FPC & Cabreira",
-  "short_name": "Eventos FPC",
-  "description": "Agregador de Calendários de Ciclismo em Portugal",
+  "name": "Cycling Calendar Portugal",
+  "short_name": "Cycling Calendar",
+  "description": "O Calendário Unificado de Ciclismo em Portugal",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#121212",

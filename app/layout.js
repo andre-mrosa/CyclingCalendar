@@ -39,11 +39,22 @@ export const metadata = {
     index: true,
     follow: true,
   },
+  icons: {
+    icon: [
+      { url: '/icon.jpg' },
+      { url: '/icon-192x192.jpg', sizes: '192x192', type: 'image/jpeg' },
+      { url: '/icon-512x512.jpg', sizes: '512x512', type: 'image/jpeg' },
+    ],
+    apple: [
+      { url: '/icon-192x192.jpg', sizes: '192x192', type: 'image/jpeg' },
+    ],
+    shortcut: '/icon.jpg',
+  },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Calendário Ciclismo",
+    title: "Cycling Calendar",
   },
 };
 
