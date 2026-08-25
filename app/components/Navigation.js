@@ -161,20 +161,24 @@ export default function Navigation() {
                 onClick={() => setIsMobileMenuOpen(false)}
             />
 
-            <div className={`fixed top-0 left-0 bottom-0 w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 z-50 transform transition-transform duration-300 ease-in-out md:hidden text-slate-900 dark:text-slate-50 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-                <div className="flex justify-between items-center p-6 mb-4 border-b border-slate-100 dark:border-slate-800">
-                    <h2 className="text-lg text-slate-900 dark:text-slate-50 m-0 font-bold">Menu</h2>
+            <div className={`fixed top-0 left-0 bottom-0 w-72 max-w-[85vw] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 z-50 transform transition-transform duration-300 ease-in-out md:hidden text-slate-900 dark:text-slate-50 flex flex-col shadow-2xl ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                <div className="flex justify-between items-center px-5 py-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
+                    <div className="flex items-center gap-2.5">
+                        <DynamicLogo className="w-7 h-7 rounded-lg" />
+                        <h2 className="text-base text-slate-900 dark:text-slate-50 m-0 font-bold">Cycling Calendar</h2>
+                    </div>
                     <button 
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className="bg-transparent border-none text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer flex items-center justify-center transition-colors"
+                        className="bg-transparent border-none text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer flex items-center justify-center transition-colors p-1"
+                        title="Fechar menu"
                     >
-                        <X size={24} />
+                        <X size={22} />
                     </button>
                 </div>
                 
-                <div className="flex flex-col gap-4 px-6">
+                <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-4 flex flex-col gap-3.5 pb-10 scrollbar-thin">
                     {links.map(renderLink)}
-                    <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col gap-4">
+                    <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-800 flex flex-col gap-3.5">
                         <Show when="signed-out">
                             {rightLinks.map(renderLink)}
                             <div className="mt-2">
@@ -187,9 +191,9 @@ export default function Navigation() {
                             </div>
                         </Show>
                         <Show when="signed-in">
-                            <div className="flex items-center gap-2 py-2 text-slate-50 font-medium">
+                            <div className="flex items-center gap-3 py-2 text-slate-900 dark:text-slate-50 font-medium">
                                 <UserButton />
-                                <span>A minha conta</span>
+                                <span className="text-sm font-semibold">A minha conta</span>
                             </div>
                         </Show>
                     </div>

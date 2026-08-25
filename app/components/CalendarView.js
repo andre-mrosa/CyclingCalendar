@@ -210,16 +210,16 @@ export default function CalendarView({
     }, [filteredEvents.length, visibleCount]);
 
     return (
-        <div className="bg-slate-50 dark:bg-slate-950 min-h-screen text-slate-900 dark:text-slate-100 pt-8 pb-12 px-4 sm:px-8 transition-colors duration-200">
+        <div className="bg-slate-50 dark:bg-slate-950 min-h-screen text-slate-900 dark:text-slate-100 pt-4 sm:pt-8 pb-24 sm:pb-16 px-3 sm:px-8 transition-colors duration-200">
             <div className="w-full max-w-6xl mx-auto">
-            <header className="mb-8">
-                <div className="flex justify-between items-center w-full gap-4 flex-wrap">
-                    <div className="flex gap-4 items-center">
+            <header className="mb-6 sm:mb-8">
+                <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center w-full gap-3 sm:gap-4">
+                    <div className="flex justify-between items-center gap-3">
                         <button 
                             onClick={() => setShowFilters(!showFilters)}
-                            className={`inline-flex items-center gap-1.5 font-semibold transition-colors text-[0.95rem] ${showFilters ? 'text-blue-600 dark:text-blue-500' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'}`}
+                            className={`inline-flex items-center gap-1.5 font-semibold transition-colors text-xs sm:text-[0.95rem] py-1.5 sm:py-2 px-3 sm:px-3.5 rounded-xl border ${showFilters ? 'bg-blue-600/10 text-blue-600 dark:text-blue-400 border-blue-500/30' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 shadow-sm'}`}
                         >
-                            <Filter size={18} />
+                            <Filter size={16} />
                             {showFilters ? 'Esconder Filtros' : 'Filtrar Calendário'}
                         </button>
                         
@@ -227,20 +227,20 @@ export default function CalendarView({
                             <button 
                                 onClick={clearAllFilters}
                                 title="Repor todos os filtros"
-                                className="inline-flex items-center gap-1 font-medium text-sm text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-300 transition-colors"
+                                className="inline-flex items-center gap-1 font-medium text-xs sm:text-sm text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-300 transition-colors py-1 px-2"
                             >
                                 <X size={14} /> Limpar
                             </button>
                         )}
                     </div>
                     
-                    <div className="relative flex-[0_1_300px] w-full">
+                    <div className="relative w-full sm:w-auto sm:flex-[0_1_320px]">
                         <input 
                             type="text" 
                             placeholder="Pesquisar por nome ou localidade..." 
                             value={searchTerm} 
                             onChange={onSearchChange} 
-                            className="w-full py-2.5 pl-5 pr-10 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm outline-none transition-colors focus:border-blue-500 text-slate-900 dark:text-slate-50 placeholder-slate-400 dark:placeholder-slate-500 shadow-sm"
+                            className="w-full py-2 sm:py-2.5 pl-4 sm:pl-5 pr-10 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs sm:text-sm outline-none transition-colors focus:border-blue-500 text-slate-900 dark:text-slate-50 placeholder-slate-400 dark:placeholder-slate-500 shadow-sm"
                         />
                         {searchTerm && (
                             <button
@@ -550,21 +550,21 @@ export default function CalendarView({
                                 <div 
                                     key={event.id} 
                                     onClick={() => setSelectedEvent(event)} 
-                                    className={`group flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white dark:bg-slate-900 border ${cardBorderAndBg} rounded-xl py-2.5 px-3 sm:py-3 sm:px-4 cursor-pointer hover:border-blue-400 dark:hover:border-slate-600 shadow-sm transition-all`}
+                                    className={`group flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-4 bg-white dark:bg-slate-900 border ${cardBorderAndBg} rounded-xl p-3 sm:py-3 sm:px-4 cursor-pointer hover:border-blue-400 dark:hover:border-slate-600 shadow-sm transition-all overflow-hidden`}
                                 >
-                                    <div className="flex gap-4 flex-1 min-w-0">
-                                        <div className="flex flex-col shrink-0 w-[56px] h-[56px] bg-slate-100 dark:bg-slate-950 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800">
-                                            <div className="bg-rose-500 text-white text-[10px] font-bold uppercase tracking-wider text-center py-0.5">
+                                    <div className="flex gap-3 sm:gap-4 flex-1 min-w-0 w-full">
+                                        <div className="flex flex-col shrink-0 w-[50px] h-[50px] sm:w-[56px] sm:h-[56px] bg-slate-100 dark:bg-slate-950 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800">
+                                            <div className="bg-rose-500 text-white text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-center py-0.5">
                                                 {month}
                                             </div>
-                                            <div className="flex-1 flex items-center justify-center text-slate-900 dark:text-white text-lg font-bold">
+                                            <div className="flex-1 flex items-center justify-center text-slate-900 dark:text-white text-base sm:text-lg font-bold">
                                                 {day}
                                             </div>
                                         </div>
 
                                         <div className="flex flex-col justify-center min-w-0 flex-1">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <h3 className="text-[0.95rem] font-bold text-slate-900 dark:text-slate-100 truncate">
+                                            <div className="flex items-start justify-between gap-2 mb-1 min-w-0">
+                                                <h3 className="text-sm sm:text-[0.95rem] font-bold text-slate-900 dark:text-slate-100 line-clamp-2 leading-snug break-words">
                                                     {event.title}
                                                 </h3>
                                                 <button 
@@ -578,54 +578,54 @@ export default function CalendarView({
                                                     <Star size={14} fill={isEventFavorited ? "#facc15" : "none"} stroke={isEventFavorited ? "#eab308" : "currentColor"} />
                                                 </button>
                                             </div>
-                                            <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-                                                <span className="flex items-center gap-1.5 truncate max-w-[150px] sm:max-w-none">
-                                                    <MapPin size={13} className="text-rose-500 shrink-0" />
+                                            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2.5 text-[11px] text-slate-500 dark:text-slate-400 font-medium min-w-0">
+                                                <span className="flex items-center gap-1 min-w-0 max-w-[130px] sm:max-w-none truncate">
+                                                    <MapPin size={12} className="text-rose-500 shrink-0" />
                                                     <span className="truncate">{location}</span>
                                                 </span>
-                                                <span className="hidden sm:inline text-slate-300 dark:text-slate-700">•</span>
-                                                <span className="flex items-center gap-1.5 truncate">
-                                                    <Bike size={13} className="text-slate-400 dark:text-slate-500 shrink-0" />
+                                                <span className="text-slate-300 dark:text-slate-700">•</span>
+                                                <span className="flex items-center gap-1 min-w-0 flex-1 truncate">
+                                                    <Bike size={12} className="text-slate-400 dark:text-slate-500 shrink-0" />
                                                     <span className="truncate">{(event.escaloes || []).join(' | ')} {extraDetails ? `(${extraDetails})` : ''}</span>
                                                 </span>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-3 shrink-0 ml-[72px] md:ml-0">
-                                        <div className="flex flex-wrap items-center gap-1.5">
+                                    <div className="flex items-center justify-between gap-2 w-full md:w-auto md:justify-end border-t border-slate-100 dark:border-slate-800/60 md:border-0 pt-2 md:pt-0 pl-[62px] sm:pl-[70px] md:pl-0">
+                                        <div className="flex flex-wrap items-center gap-1.5 flex-1 min-w-0">
                                             {isEventMarked && (
-                                                <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                                                <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1 shrink-0">
                                                     <Check size={11} className="stroke-[3]" /> Na agenda
                                                 </span>
                                             )}
                                             {dateConflict.hasConflict && !isEventMarked && (
                                                 <span 
-                                                    className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-orange-500/15 text-orange-600 dark:text-orange-400 border border-orange-500/30 flex items-center gap-1"
+                                                    className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-orange-500/15 text-orange-600 dark:text-orange-400 border border-orange-500/30 flex items-center gap-1 shrink-0"
                                                     title={`Já tens uma prova marcada neste dia: "${dateConflict.conflictingTitle}"`}
                                                 >
                                                     <AlertTriangle size={11} className="stroke-[2.5] text-orange-500" /> Prova no mesmo dia
                                                 </span>
                                             )}
                                             {event.ambito && (
-                                                <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${event.ambito === 'Nacional' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : event.ambito === 'Prova Aberta' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : event.ambito === 'Taça de Portugal' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' : 'bg-slate-500/10 text-slate-400 border border-slate-500/20'}`}>
+                                                <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider shrink-0 ${event.ambito === 'Nacional' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : event.ambito === 'Prova Aberta' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : event.ambito === 'Taça de Portugal' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' : 'bg-slate-500/10 text-slate-400 border border-slate-500/20'}`}>
                                                     {event.ambito}
                                                 </span>
                                             )}
                                             {event.licenca && (
-                                                <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${event.licenca === 'Competição' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' : event.licenca === 'CPT / Lazer' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'}`}>
+                                                <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider shrink-0 ${event.licenca === 'Competição' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' : event.licenca === 'CPT / Lazer' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'}`}>
                                                     {event.licenca}
                                                 </span>
                                             )}
                                             {isMultiDay && (
-                                                <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                                                <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shrink-0">
                                                     Etapas
                                                 </span>
                                             )}
                                         </div>
                                         
-                                        <div className="pl-3 border-l border-slate-200 dark:border-slate-800 flex items-center shrink-0">
-                                            <OrganizationLogo source={event.source} className="h-5 w-auto object-contain" />
+                                        <div className="pl-2.5 sm:pl-3 md:border-l border-slate-200 dark:border-slate-800 flex items-center shrink-0">
+                                            <OrganizationLogo source={event.source} className="h-4 sm:h-5 w-auto object-contain" />
                                         </div>
                                     </div>
                                 </div>

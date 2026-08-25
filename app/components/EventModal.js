@@ -351,19 +351,19 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
     const month = dateParts.find(p => monthAbbrs.includes(p.toUpperCase()))?.toUpperCase() || '';
 
     return (
-        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[9000] flex items-center justify-center p-2 sm:p-4" onClick={() => setSelectedEvent(null)}>
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-4xl h-[90vh] sm:h-[86vh] flex flex-col shadow-2xl overflow-hidden relative transition-colors duration-200" onClick={(e) => e.stopPropagation()}>
-                <button className="absolute top-4 right-4 text-slate-400 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors z-10 p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer" onClick={() => setSelectedEvent(null)}>
-                    <X size={20} />
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[9000] flex items-center justify-center p-2 sm:p-4 overflow-hidden" onClick={() => setSelectedEvent(null)}>
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-4xl h-[92vh] sm:h-[86vh] max-h-[92vh] flex flex-col shadow-2xl overflow-hidden relative transition-colors duration-200" onClick={(e) => e.stopPropagation()}>
+                <button className="absolute top-3 right-3 sm:top-4 sm:right-4 text-slate-400 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors z-10 p-1.5 sm:p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer" onClick={() => setSelectedEvent(null)} title="Fechar">
+                    <X size={18} className="sm:w-5 sm:h-5" />
                 </button>
                 
                 {/* Header */}
-                <div className="flex items-center justify-start gap-3.5 pr-12 p-4 sm:p-5 pb-1">
-                    <div className="flex flex-col shrink-0 w-[48px] h-[48px] sm:w-[54px] sm:h-[54px] bg-slate-100 dark:bg-slate-950 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
-                        <div className="bg-rose-500 text-white text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-center py-0.5">
+                <div className="flex items-center justify-start gap-2.5 sm:gap-3.5 pr-10 sm:pr-12 p-3 sm:p-5 pb-1 min-w-0">
+                    <div className="flex flex-col shrink-0 w-[44px] h-[44px] sm:w-[54px] sm:h-[54px] bg-slate-100 dark:bg-slate-950 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
+                        <div className="bg-rose-500 text-white text-[8px] sm:text-[10px] font-bold uppercase tracking-wider text-center py-0.5">
                             {month}
                         </div>
-                        <div className="flex-1 flex items-center justify-center text-slate-900 dark:text-white text-base sm:text-lg font-bold">
+                        <div className="flex-1 flex items-center justify-center text-slate-900 dark:text-white text-sm sm:text-lg font-bold">
                             {day}
                         </div>
                     </div>
@@ -372,19 +372,19 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             <SmartLogo 
                                 src={activeEvent.logo} 
                                 alt={`Logo ${activeEvent.title}`} 
-                                className="h-8 w-auto object-contain" 
-                                style={{ height: '32px', width: 'auto', objectFit: 'contain' }}
+                                className="h-6 sm:h-8 w-auto object-contain" 
+                                style={{ height: '30px', width: 'auto', objectFit: 'contain' }}
                             />
                         </a>
                     )}
-                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        <h2 className="text-base sm:text-xl font-bold text-slate-900 dark:text-white m-0 truncate">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <h2 className="text-sm sm:text-xl font-bold text-slate-900 dark:text-white m-0 line-clamp-2 sm:truncate leading-tight">
                             {activeEvent.logo ? (
-                                <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="text-inherit no-underline hover:text-blue-600 dark:hover:text-blue-400 transition-colors truncate">
+                                <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="text-inherit no-underline hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                                     {activeEvent.title}
                                 </a>
                             ) : (
-                                <span className="text-slate-900 dark:text-white truncate">{activeEvent.title}</span>
+                                <span className="text-slate-900 dark:text-white">{activeEvent.title}</span>
                             )}
                         </h2>
                         {(() => {
@@ -395,11 +395,11 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                         e.stopPropagation();
                                         toggleFavorite(activeEvent.id);
                                     }}
-                                    className={`flex shrink-0 items-center justify-center w-7 h-7 rounded-full transition-all cursor-pointer ${isEventFavorited ? 'bg-amber-400/15 border border-amber-500/40 text-amber-400' : 'bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
+                                    className={`flex shrink-0 items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full transition-all cursor-pointer ${isEventFavorited ? 'bg-amber-400/15 border border-amber-500/40 text-amber-400' : 'bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
                                     title={isEventFavorited ? "Remover dos Favoritos" : "Adicionar aos Favoritos"}
                                 >
                                     <Star 
-                                        size={14} 
+                                        size={13} 
                                         className="transition-transform"
                                         fill={isEventFavorited ? "#fbbf24" : "none"}
                                     />
@@ -410,14 +410,14 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 </div>
 
                 {isMultiDay && (
-                    <p className="text-slate-500 dark:text-slate-400 text-xs flex items-center gap-1.5 px-4 sm:px-5 mb-1.5 mt-0">
+                    <p className="text-slate-500 dark:text-slate-400 text-xs flex items-center gap-1.5 px-3 sm:px-5 mb-1.5 mt-0">
                         <Calendar size={13} className="text-blue-500 dark:text-blue-400" /> {rawDate}
                     </p>
                 )}
                 
                 {/* Tabs Navigation */}
                 {availableTabs.length > 0 ? (
-                    <div className="flex gap-1.5 overflow-x-auto pb-2.5 mb-2 border-b border-slate-200 dark:border-slate-800/80 px-4 sm:px-5 no-scrollbar shrink-0">
+                    <div className="flex gap-1.5 overflow-x-auto pb-2 mb-2 border-b border-slate-200 dark:border-slate-800/80 px-3 sm:px-5 no-scrollbar shrink-0 touch-pan-x overscroll-contain">
                         {availableTabs.map(tab => {
                             const labels = {
                                 info: 'Info do Evento',
@@ -431,7 +431,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 <button 
                                     key={tab} 
                                     onClick={() => setActiveTab(tab)} 
-                                    className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap transition-colors cursor-pointer ${activeTab === tab ? 'bg-blue-600/10 dark:bg-blue-600/15 text-blue-600 dark:text-blue-400 border border-blue-500/30' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50 border border-transparent'}`}
+                                    className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap transition-colors cursor-pointer ${activeTab === tab ? 'bg-blue-600/10 dark:bg-blue-600/15 text-blue-600 dark:text-blue-400 border border-blue-500/30' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50 border border-transparent'}`}
                                 >
                                     {labels[tab]}
                                 </button>
@@ -439,13 +439,13 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         })}
                     </div>
                 ) : (
-                    <div className="mb-2 pb-2 border-b border-slate-200 dark:border-slate-800/80 px-4 sm:px-5 shrink-0">
+                    <div className="mb-2 pb-2 border-b border-slate-200 dark:border-slate-800/80 px-3 sm:px-5 shrink-0">
                         <p className="text-slate-500 dark:text-slate-400 text-xs">Informação detalhada disponível na página oficial da organização.</p>
                     </div>
                 )}
 
                 {/* Tab content area */}
-                <div className="flex-grow overflow-hidden flex flex-col px-4 sm:px-5 min-h-0">
+                <div className="flex-grow overflow-hidden flex flex-col px-3 sm:px-5 min-h-0">
                 
                 {availableTabs.length === 0 && (
                     <div className="flex flex-col items-center justify-center h-full gap-4 p-6 animate-fade-in">
@@ -465,7 +465,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 {/* Tab: INFO */}
                 {activeTab === 'info' && (
                     <div className="flex flex-col h-full animate-fade-in min-h-0">
-                        <div className="flex-1 overflow-y-auto min-h-0 pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+                        <div className="flex-1 overflow-y-auto min-h-0 pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent overscroll-contain touch-pan-y">
                             {isLoadingFullEvent && (
                                 <div className="w-full h-48 sm:h-60 rounded-xl bg-slate-800/30 border border-slate-800/80 animate-pulse flex flex-col items-center justify-center gap-2 mb-2 text-slate-500">
                                     <div className="w-5 h-5 border-2 border-slate-600 border-t-blue-400 rounded-full animate-spin"></div>
@@ -520,7 +520,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         {(!activeEvent.escaloes || activeEvent.escaloes.length === 0) ? (
                             <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">Informação de escalões não disponível.</p>
                         ) : (
-                            <div className="flex-1 overflow-y-auto min-h-0 pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent pb-2">
+                            <div className="flex-1 overflow-y-auto min-h-0 pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent pb-2 overscroll-contain touch-pan-y">
                                 <h4 className="mb-2.5 text-slate-900 dark:text-slate-200 flex items-center gap-2 text-sm font-semibold">
                                     <Bike size={16} className="text-blue-500 dark:text-blue-400" />
                                     Categorias de Participação
@@ -540,7 +540,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 {/* Tab: PROGRAMA */}
                 {activeTab === 'programa' && (
                     <div className="flex flex-col h-full animate-fade-in min-h-0">
-                        <div className="flex-1 overflow-y-auto min-h-0 pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+                        <div className="flex-1 overflow-y-auto min-h-0 pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent overscroll-contain touch-pan-y">
                             {parsedSchedule && parsedSchedule.type === 'timeline' ? (
                                 <div className="space-y-4 pb-3">
                                     {parsedSchedule.days.map((day, dIdx) => (
@@ -643,7 +643,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 {/* Tab: INSCRIÇÃO & PREÇOS */}
                 {activeTab === 'inscricao' && (
                     <div className="flex flex-col h-full animate-fade-in min-h-0">
-                        <div className="flex-1 overflow-y-auto min-h-0 pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent mb-2">
+                        <div className="flex-1 overflow-y-auto min-h-0 pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent mb-2 overscroll-contain touch-pan-y">
                             {activeEvent.prices ? (
                                 <div className="text-slate-700 dark:text-slate-300 text-xs sm:text-sm prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: activeEvent.prices }} />
                             ) : (
@@ -781,7 +781,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 {/* Tab: PREMIOS E SEGURO */}
                 {activeTab === 'premios' && (
                     <div className="flex flex-col h-full animate-fade-in min-h-0">
-                        <div className="flex-1 overflow-y-auto min-h-0 pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent grid grid-cols-1 md:grid-cols-2 gap-3 pb-2">
+                        <div className="flex-1 overflow-y-auto min-h-0 pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent grid grid-cols-1 md:grid-cols-2 gap-3 pb-2 overscroll-contain touch-pan-y">
                             <div className="bg-slate-50 dark:bg-slate-950/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800/80">
                                 <h4 className="mb-2 text-slate-800 dark:text-slate-200 flex items-center gap-2 text-sm font-semibold">
                                     <Trophy size={15} className="text-amber-500 dark:text-amber-400" /> Prémios
@@ -827,7 +827,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 </div> {/* end flex-grow tab area */}
 
                 {/* Action footer */}
-                <div className="flex gap-2 flex-wrap items-center justify-between p-3 sm:px-5 sm:py-3 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shrink-0 transition-colors duration-200">
+                <div className="flex gap-2 flex-wrap items-center justify-between p-2.5 sm:px-5 sm:py-3 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shrink-0 transition-colors duration-200">
                     {programaData.loading ? (
                         <div className="px-3 py-1.5 flex items-center gap-2 text-slate-400 text-xs">
                             <div className="w-3.5 h-3.5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
