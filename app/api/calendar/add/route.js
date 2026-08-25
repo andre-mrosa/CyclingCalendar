@@ -1,4 +1,4 @@
-import { auth, getAuth, clerkClient } from '@clerk/nextjs/server';
+import { auth, getAuth, verifyToken, clerkClient } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
 function parsePtDate(dateStr) {
@@ -100,26 +100,45 @@ async function getTargetCalendarId(token) {
 export async function POST(req) {
     try {
         let userId;
+
+        // 1. Try standard auth()
         try {
             const authData = await auth();
             userId = authData?.userId;
         } catch (e) {
-            // Fallback for environments where middleware is bypassed
-            const authData = getAuth(req);
-            userId = authData?.userId;
+            // Middleware bypassed or not yet initialized
         }
 
+        // 2. Try getAuth(req) inside safe block
         if (!userId) {
             try {
                 const authData = getAuth(req);
                 userId = authData?.userId;
             } catch (e) {
-                // ignore
+                // Ignore missing middleware header
+            }
+        }
+
+        // 3. Resilient fallback: direct JWT cookie verification via Clerk secret key
+        if (!userId) {
+            try {
+                const sessionCookie = req.cookies?.get?.('__session')?.value;
+                const authHeader = req.headers?.get?.('authorization')?.replace(/^Bearer\s+/i, '');
+                const tokenToVerify = sessionCookie || authHeader;
+
+                if (tokenToVerify) {
+                    const verified = await verifyToken(tokenToVerify, {
+                        secretKey: process.env.CLERK_SECRET_KEY,
+                    });
+                    userId = verified?.sub;
+                }
+            } catch (e) {
+                console.warn("Falha na verificação direta do token:", e);
             }
         }
 
         if (!userId) {
-            return NextResponse.json({ error: 'Não autorizado. Inicie sessão para continuar.' }, { status: 401 });
+            return NextResponse.json({ error: 'Não autorizado. Inicie sessão com Google para continuar.' }, { status: 401 });
         }
 
         const body = await req.json();
