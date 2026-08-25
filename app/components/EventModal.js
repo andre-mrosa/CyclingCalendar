@@ -27,6 +27,11 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
     const [activeTab, setActiveTab] = useState('info');
     const [isClosing, setIsClosing] = useState(false);
     const [isOpenAnimated, setIsOpenAnimated] = useState(false);
+    const [dragY, setDragY] = useState(0);
+    const [isDragging, setIsDragging] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(false);
+    const touchStartY = useRef(0);
+    const currentDragY = useRef(0);
 
     useEffect(() => {
         const raf = requestAnimationFrame(() => {
@@ -40,7 +45,42 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
         setTimeout(() => {
             setSelectedEvent(null);
             setIsClosing(false);
+            setDragY(0);
+            setIsDragging(false);
+            setIsExpanded(false);
         }, 260);
+    };
+
+    const handleTouchStart = (e) => {
+        touchStartY.current = e.touches[0].clientY;
+        currentDragY.current = 0;
+        setIsDragging(true);
+    };
+
+    const handleTouchMove = (e) => {
+        const currentY = e.touches[0].clientY;
+        const diff = currentY - touchStartY.current;
+        if (diff > 0) {
+            currentDragY.current = diff;
+            setDragY(diff);
+        } else if (diff < 0 && !isExpanded) {
+            currentDragY.current = diff;
+            setDragY(diff * 0.25);
+        }
+    };
+
+    const handleTouchEnd = () => {
+        setIsDragging(false);
+        if (currentDragY.current > 75) {
+            closeModal();
+        } else if (currentDragY.current < -50) {
+            setIsExpanded(true);
+            setDragY(0);
+            currentDragY.current = 0;
+        } else {
+            setDragY(0);
+            currentDragY.current = 0;
+        }
     };
 
     useEffect(() => {
@@ -382,25 +422,41 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
             className={`fixed inset-0 bg-black/80 backdrop-blur-sm z-[9000] flex items-end sm:items-center justify-center p-0 pt-8 sm:p-4 overflow-hidden transition-opacity duration-300 ${
                 isClosing || !isOpenAnimated ? 'opacity-0 pointer-events-none' : 'opacity-100'
             }`} 
+            style={{
+                opacity: isDragging && dragY > 0 ? Math.max(0.2, 1 - (dragY / 400)) : undefined
+            }}
             onClick={closeModal}
         >
             <div 
-                className={`bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-2xl w-full max-w-4xl h-[88dvh] sm:h-[86vh] max-h-[calc(100dvh-2.5rem)] sm:max-h-[86vh] flex flex-col shadow-2xl overflow-hidden relative transition-all duration-300 ease-out transform ${
+                className={`bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-2xl w-full max-w-4xl ${
+                    isExpanded ? 'h-[96dvh] max-h-[96dvh]' : 'h-[88dvh] sm:h-[86vh] max-h-[calc(100dvh-2.5rem)] sm:max-h-[86vh]'
+                } flex flex-col shadow-2xl overflow-hidden relative ${
+                    isDragging ? 'transition-none' : 'transition-all duration-300 ease-out'
+                } transform ${
                     isClosing || !isOpenAnimated 
                         ? 'translate-y-full sm:translate-y-6 sm:scale-95 sm:opacity-0' 
                         : 'translate-y-0 sm:scale-100 sm:opacity-100'
                 }`} 
+                style={{
+                    transform: isDragging ? `translateY(${Math.max(-40, dragY)}px)` : undefined
+                }}
                 onClick={(e) => e.stopPropagation()}
             >
                 
                 {/* Mobile Drag / Dismiss Handle */}
-                <button 
-                    onClick={closeModal}
-                    className="w-full pt-2.5 pb-1 flex items-center justify-center sm:hidden shrink-0 group cursor-pointer border-none bg-transparent active:opacity-60 transition-opacity"
-                    title="Fechar"
+                <div 
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                    onClick={() => {
+                        if (isExpanded) setIsExpanded(false);
+                        else closeModal();
+                    }}
+                    className="w-full pt-3 pb-2 flex items-center justify-center sm:hidden shrink-0 group cursor-grab active:cursor-grabbing touch-none select-none"
+                    title="Arrastar para baixo para fechar ou para cima para expandir"
                 >
                     <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 group-hover:bg-slate-400 dark:group-hover:bg-slate-500 rounded-full transition-colors" />
-                </button>
+                </div>
 
                 {/* Mobile Top Bar (sm:hidden) */}
                 <div className="sm:hidden flex items-center justify-between px-4 pt-1 pb-1 shrink-0">
