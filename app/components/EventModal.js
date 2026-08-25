@@ -3,11 +3,13 @@ import { Calendar, Star, X, CalendarPlus, Check, Bike, FileText, CreditCard, Tro
 import { useTheme } from 'next-themes';
 import SmartLogo from './SmartLogo';
 import { parsePrograma } from '../utils/parsePrograma';
+import { useCalendarEvents } from '../hooks/useCalendarEvents';
 
 const eventDetailsCache = new Map();
 
 export default function EventModal({ selectedEvent, setSelectedEvent, favorites, toggleFavorite, isSignedIn }) {
     const { resolvedTheme } = useTheme();
+    const { isMarked, refreshCalendar } = useCalendarEvents();
     const [programaData, setProgramaData] = useState({ loading: false, html: null, error: null, additionalLinks: [] });
     const [fullscreenImage, setFullscreenImage] = useState(null);
     const [isImageZoomed, setIsImageZoomed] = useState(false);
@@ -181,12 +183,17 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
             return;
         }
 
-        setCalendarStatus(null);
-        setCalendarMsg('');
-        setRegOpenCalStatus(null);
-        setRegOpenCalMsg('');
-        setRegCloseCalStatus(null);
-        setRegCloseCalMsg('');
+        const allIds = [selectedEvent.id, ...(selectedEvent._allIds || [])];
+        const eventMarked = isMarked(selectedEvent.id, 'event', allIds);
+        const regOpenMarked = isMarked(selectedEvent.id, 'registration_open', allIds);
+        const regCloseMarked = isMarked(selectedEvent.id, 'registration_close', allIds);
+
+        setCalendarStatus(eventMarked ? 'exists' : null);
+        setCalendarMsg(eventMarked ? 'Já no calendário' : '');
+        setRegOpenCalStatus(regOpenMarked ? 'exists' : null);
+        setRegOpenCalMsg(regOpenMarked ? 'Marcado ✓' : '');
+        setRegCloseCalStatus(regCloseMarked ? 'exists' : null);
+        setRegCloseCalMsg(regCloseMarked ? 'Marcado ✓' : '');
         setShowCalMenu(false);
 
         if (activeEvent.programa && activeEvent.programa.trim().length > 0 && activeEvent.programa !== 'Não disponível') {
@@ -194,7 +201,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
         } else {
             setProgramaData({ loading: false, html: null, error: null, additionalLinks: [] });
         }
-    }, [selectedEvent]);
+    }, [selectedEvent, isMarked]);
 
     // Fechar menu do calendário ao clicar fora
     useEffect(() => {
@@ -254,6 +261,11 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 } else {
                     setCalendarStatus(isExists ? 'exists' : 'success');
                     setCalendarMsg(isExists ? 'Já no calendário!' : 'Adicionado com sucesso!');
+                }
+
+                // Sincronizar o estado global do calendário
+                if (refreshCalendar) {
+                    refreshCalendar();
                 }
             } else {
                 const errMsg = data.error || 'Erro ao adicionar ao calendário';

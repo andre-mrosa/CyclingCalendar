@@ -3,8 +3,9 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { useSettingsStore } from '../store/useSettingsStore';
 import useSWR from 'swr';
 
-import { Calendar, MapPin, Search, X, ChevronLeft, ChevronRight, Users, Heart, Star, LayoutGrid, List, HelpCircle, Filter, Bike } from 'lucide-react';
+import { Calendar, MapPin, Search, X, ChevronLeft, ChevronRight, Users, Heart, Star, LayoutGrid, List, HelpCircle, Filter, Bike, AlertTriangle, Check, CalendarCheck } from 'lucide-react';
 import { useFavorites } from '../hooks/useFavorites';
+import { useCalendarEvents } from '../hooks/useCalendarEvents';
 import { filterEvents } from '../utils/filterEvents';
 import { mergeEvents } from '../utils/mergeEvents';
 import EventModal from './EventModal';
@@ -55,6 +56,7 @@ export default function CalendarView({
     const loaderRef = useRef(null);
 
     const { favorites, toggleFavorite, isSignedIn } = useFavorites();
+    const { isMarked, getDateConflict } = useCalendarEvents();
 
     // Sync settings on mount
     useEffect(() => {
@@ -528,13 +530,25 @@ export default function CalendarView({
                                 const day = dateParts[0] ? dateParts[0].replace(/,/g, '') : '';
                                 const month = dateParts.find(p => monthAbbrs.includes(p.toUpperCase()))?.toUpperCase() || '';
 
+                                const allIds = [event.id, ...(event._allIds || [])];
+                                const isEventMarked = isMarked(event.id, 'event', allIds);
+                                const dateConflict = getDateConflict(event);
                                 const isEventFavorited = favorites.includes(event.id) || (event._allIds && event._allIds.some(id => favorites.includes(id)));
+
+                                let cardBorderAndBg = 'border-slate-200 dark:border-slate-800';
+                                if (isEventMarked) {
+                                    cardBorderAndBg = 'border-emerald-500/70 dark:border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.12)] bg-emerald-500/[0.02] dark:bg-emerald-500/[0.04]';
+                                } else if (dateConflict.hasConflict) {
+                                    cardBorderAndBg = 'border-amber-500/70 dark:border-amber-500/60 shadow-[0_0_15px_rgba(245,158,11,0.12)] bg-amber-500/[0.02] dark:bg-amber-500/[0.04]';
+                                } else if (isEventFavorited) {
+                                    cardBorderAndBg = 'border-amber-500/50 shadow-[0_0_12px_rgba(245,158,11,0.08)]';
+                                }
 
                                 return (
                                 <div 
                                     key={event.id} 
                                     onClick={() => setSelectedEvent(event)} 
-                                    className={`group flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white dark:bg-slate-900 border ${isEventFavorited ? 'border-amber-500/50 shadow-[0_0_12px_rgba(245,158,11,0.08)]' : 'border-slate-200 dark:border-slate-800'} rounded-xl py-2.5 px-3 sm:py-3 sm:px-4 cursor-pointer hover:border-blue-400 dark:hover:border-slate-600 shadow-sm transition-all`}
+                                    className={`group flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white dark:bg-slate-900 border ${cardBorderAndBg} rounded-xl py-2.5 px-3 sm:py-3 sm:px-4 cursor-pointer hover:border-blue-400 dark:hover:border-slate-600 shadow-sm transition-all`}
                                 >
                                     <div className="flex gap-4 flex-1 min-w-0">
                                         <div className="flex flex-col shrink-0 w-[56px] h-[56px] bg-slate-100 dark:bg-slate-950 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800">
@@ -578,6 +592,19 @@ export default function CalendarView({
 
                                     <div className="flex items-center gap-3 shrink-0 ml-[72px] md:ml-0">
                                         <div className="flex flex-wrap items-center gap-1.5">
+                                            {isEventMarked && (
+                                                <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                                                    <Check size={11} className="stroke-[3]" /> Na agenda
+                                                </span>
+                                            )}
+                                            {dateConflict.hasConflict && !isEventMarked && (
+                                                <span 
+                                                    className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 flex items-center gap-1"
+                                                    title={`Já tens uma prova marcada neste dia: "${dateConflict.conflictingTitle}"`}
+                                                >
+                                                    <AlertTriangle size={11} className="stroke-[2.5]" /> Prova no mesmo dia
+                                                </span>
+                                            )}
                                             {event.ambito && (
                                                 <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${event.ambito === 'Nacional' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : event.ambito === 'Prova Aberta' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : event.ambito === 'Taça de Portugal' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' : 'bg-slate-500/10 text-slate-400 border border-slate-500/20'}`}>
                                                     {event.ambito}
