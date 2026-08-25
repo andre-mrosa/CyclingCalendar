@@ -71,7 +71,7 @@ import FaviconManager from "./components/FaviconManager";
 export default function RootLayout({ children }) {
   return (
     <html lang="pt" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-200 selection:bg-blue-500/30 selection:text-blue-200 transition-colors duration-200`} suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-200 selection:bg-blue-600 selection:text-white transition-colors duration-200`} suppressHydrationWarning>
         <FaviconManager />
         <ThemeProvider attribute="class" defaultTheme="dark">
           <ThemeClerkProvider>

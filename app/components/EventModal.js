@@ -357,32 +357,32 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 <div className="mb-2 text-center" dangerouslySetInnerHTML={{ __html: fpcBannerHtml }} onClick={handleHtmlClick} />
                             )}
                             {activeEvent.description ? (
-                                <div className="text-slate-300 text-xs sm:text-sm leading-relaxed prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: activeEvent.description }} />
+                                <div className="text-slate-700 dark:text-slate-300 text-xs sm:text-sm leading-relaxed prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: activeEvent.description }} />
                             ) : !isLoadingFullEvent ? (
-                                <p className="text-slate-400 text-xs sm:text-sm">Descrição não disponível.</p>
+                                <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">Descrição não disponível.</p>
                             ) : null}
                         </div>
                         
                         <div className="shrink-0 mt-2 grid grid-cols-2 gap-2 pb-1">
                             {activeEvent.licenca && (
-                                <div className="px-3 py-2 bg-slate-950/60 rounded-xl border border-slate-800/80 flex items-center gap-2.5">
+                                <div className="px-3 py-2 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200 dark:border-slate-800/80 flex items-center gap-2.5">
                                     <div className="w-7 h-7 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
-                                        <FileText size={13} className="text-purple-400" />
+                                        <FileText size={13} className="text-purple-500 dark:text-purple-400" />
                                     </div>
                                     <div className="min-w-0">
                                         <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold block leading-tight">Licença</span>
-                                        <span className="text-xs sm:text-sm font-semibold text-slate-200 truncate block">{activeEvent.licenca}</span>
+                                        <span className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200 truncate block">{activeEvent.licenca}</span>
                                     </div>
                                 </div>
                             )}
                             {(activeEvent.organizador || activeEvent.source) && (
-                                <div className="px-3 py-2 bg-slate-950/60 rounded-xl border border-slate-800/80 flex items-center gap-2.5">
+                                <div className="px-3 py-2 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200 dark:border-slate-800/80 flex items-center gap-2.5">
                                     <div className="w-7 h-7 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
-                                        <Users size={13} className="text-blue-400" />
+                                        <Users size={13} className="text-blue-500 dark:text-blue-400" />
                                     </div>
                                     <div className="min-w-0">
                                         <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold block leading-tight">Organização</span>
-                                        <span className="text-xs sm:text-sm font-semibold text-slate-200 truncate block">
+                                        <span className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200 truncate block">
                                             {activeEvent.organizador 
                                                 ? (activeEvent.organizador === 'U.V.P./F.P.C' ? 'FPC' : activeEvent.organizador) 
                                                 : (activeEvent.source === 'Cabreira' ? 'Cabreira Solutions' : activeEvent.source)}
@@ -398,16 +398,16 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 {activeTab === 'escaloes' && (
                     <div className="flex flex-col h-full animate-fade-in min-h-0">
                         {(!activeEvent.escaloes || activeEvent.escaloes.length === 0) ? (
-                            <p className="text-slate-400 text-xs sm:text-sm">Informação de escalões não disponível.</p>
+                            <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">Informação de escalões não disponível.</p>
                         ) : (
                             <div className="flex-1 overflow-y-auto min-h-0 pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent pb-2">
-                                <h4 className="mb-2.5 text-slate-200 flex items-center gap-2 text-sm font-semibold">
-                                    <Bike size={16} className="text-blue-400" />
+                                <h4 className="mb-2.5 text-slate-900 dark:text-slate-200 flex items-center gap-2 text-sm font-semibold">
+                                    <Bike size={16} className="text-blue-500 dark:text-blue-400" />
                                     Categorias de Participação
                                 </h4>
                                 <div className="flex flex-wrap gap-2">
                                     {activeEvent.escaloes.map((esc, idx) => (
-                                        <div key={`esc-${idx}`} className="inline-flex items-center px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-300 text-xs font-semibold shadow-sm cursor-default">
+                                        <div key={`esc-${idx}`} className="inline-flex items-center px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-blue-700 dark:text-blue-300 text-xs font-semibold shadow-sm cursor-default">
                                             <span>{esc}</span>
                                         </div>
                                     ))}
@@ -424,19 +424,19 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             {parsedSchedule && parsedSchedule.type === 'timeline' ? (
                                 <div className="space-y-4 pb-3">
                                     {parsedSchedule.days.map((day, dIdx) => (
-                                        <div key={`day-${dIdx}`} className="bg-slate-950/50 border border-slate-800/80 rounded-2xl p-3.5 sm:p-4 shadow-sm">
+                                        <div key={`day-${dIdx}`} className="bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-3.5 sm:p-4 shadow-sm">
                                             {/* Day Header */}
-                                            <div className="flex items-center gap-2.5 mb-3.5 pb-2.5 border-b border-slate-800/80">
-                                                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
+                                            <div className="flex items-center gap-2.5 mb-3.5 pb-2.5 border-b border-slate-200 dark:border-slate-800/80">
+                                                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500 dark:text-blue-400 shrink-0">
                                                     <Calendar size={15} />
                                                 </div>
-                                                <h3 className="text-xs sm:text-sm font-bold text-slate-100 m-0">
+                                                <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 m-0">
                                                     {day.dayTitle}
                                                 </h3>
                                             </div>
 
                                             {/* Timeline items */}
-                                            <div className="relative pl-3.5 sm:pl-5 space-y-3 before:absolute before:left-[17px] sm:before:left-[23px] before:top-2.5 before:bottom-2.5 before:w-[2px] before:bg-slate-800">
+                                            <div className="relative pl-3.5 sm:pl-5 space-y-3 before:absolute before:left-[17px] sm:before:left-[23px] before:top-2.5 before:bottom-2.5 before:w-[2px] before:bg-slate-200 dark:before:bg-slate-800">
                                                 {day.activities.map((act, aIdx) => {
                                                     const isStartOrFinish = /partida|chegada|início/i.test(act.title);
                                                     const isPodium = /pódio|podio|prémio|premio/i.test(act.title);
@@ -455,17 +455,17 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                                                     ? 'bg-blue-500 border-blue-400'
                                                                     : isLunch
                                                                     ? 'bg-orange-500 border-orange-400'
-                                                                    : 'bg-slate-700 border-slate-500'
+                                                                    : 'bg-slate-400 dark:bg-slate-700 border-slate-300 dark:border-slate-500'
                                                             }`} />
 
                                                             {/* Activity Card */}
-                                                            <div className="flex-1 bg-slate-900/90 border border-slate-800 rounded-xl p-3 hover:border-slate-700 transition-colors shadow-sm">
+                                                            <div className="flex-1 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl p-3 hover:border-slate-300 dark:hover:border-slate-700 transition-colors shadow-sm">
                                                                 <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
-                                                                    <h4 className="text-xs sm:text-sm font-bold text-white m-0 flex items-center gap-1.5">
+                                                                    <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white m-0 flex items-center gap-1.5">
                                                                         {act.title}
                                                                     </h4>
                                                                     {act.time && (
-                                                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[11px] font-semibold tracking-wide">
+                                                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-blue-700 dark:text-blue-400 text-[11px] font-semibold tracking-wide">
                                                                             <Clock size={11} />
                                                                             {act.time}
                                                                         </span>
@@ -473,28 +473,28 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                                                 </div>
 
                                                                 {act.desc && (
-                                                                    <p className="text-xs text-slate-300 m-0 mb-1.5 leading-relaxed">
+                                                                    <p className="text-xs text-slate-600 dark:text-slate-300 m-0 mb-1.5 leading-relaxed">
                                                                         {act.desc}
                                                                     </p>
                                                                 )}
 
                                                                 {act.location && (
-                                                                    <div className="pt-1.5 border-t border-slate-800/60 mt-1.5 flex items-center justify-between">
+                                                                    <div className="pt-1.5 border-t border-slate-100 dark:border-slate-800/60 mt-1.5 flex items-center justify-between">
                                                                         {act.locationUrl ? (
                                                                             <a 
                                                                                 href={act.locationUrl} 
                                                                                 target="_blank" 
                                                                                 rel="noopener noreferrer"
-                                                                                className="inline-flex items-center gap-1.5 text-[11px] text-slate-400 hover:text-blue-400 transition-colors group/link"
+                                                                                className="inline-flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors group/link"
                                                                                 title="Abrir no Google Maps"
                                                                             >
-                                                                                <MapPin size={12} className="text-rose-400 shrink-0" />
+                                                                                <MapPin size={12} className="text-rose-500 dark:text-rose-400 shrink-0" />
                                                                                 <span className="truncate">{act.location}</span>
                                                                                 <ExternalLink size={10} className="opacity-60 group-hover/link:opacity-100 shrink-0" />
                                                                             </a>
                                                                         ) : (
-                                                                            <span className="inline-flex items-center gap-1.5 text-[11px] text-slate-400">
-                                                                                <MapPin size={12} className="text-rose-400 shrink-0" />
+                                                                            <span className="inline-flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                                                                                <MapPin size={12} className="text-rose-500 dark:text-rose-400 shrink-0" />
                                                                                 <span className="truncate">{act.location}</span>
                                                                             </span>
                                                                         )}
@@ -509,10 +509,10 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                     ))}
                                 </div>
                             ) : programaCleanHtml ? (
-                                <div className="prose prose-invert max-w-none text-xs sm:text-sm leading-relaxed" dangerouslySetInnerHTML={{ __html: programaCleanHtml }} onClick={handleHtmlClick} />
+                                <div className="prose dark:prose-invert max-w-none text-xs sm:text-sm leading-relaxed text-slate-700 dark:text-slate-300" dangerouslySetInnerHTML={{ __html: programaCleanHtml }} onClick={handleHtmlClick} />
                             ) : (
-                                <div className="p-4 bg-slate-950/50 border border-slate-800 rounded-xl text-slate-400 text-xs flex items-center gap-2.5">
-                                    <FileText size={16} className="text-slate-500 shrink-0" />
+                                <div className="p-4 bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-500 dark:text-slate-400 text-xs flex items-center gap-2.5">
+                                    <FileText size={16} className="text-slate-400 dark:text-slate-500 shrink-0" />
                                     <span>Programa detalhado não disponível na Base de Dados. A aguardar recolha do sistema.</span>
                                 </div>
                             )}
@@ -525,21 +525,21 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                     <div className="flex flex-col h-full animate-fade-in min-h-0">
                         <div className="flex-1 overflow-y-auto min-h-0 pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent mb-2">
                             {activeEvent.prices ? (
-                                <div className="text-slate-300 text-xs sm:text-sm prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: activeEvent.prices }} />
+                                <div className="text-slate-700 dark:text-slate-300 text-xs sm:text-sm prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: activeEvent.prices }} />
                             ) : (
-                                <p className="text-slate-400 text-xs sm:text-sm">Informação não disponível.</p>
+                                <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">Informação não disponível.</p>
                             )}
                         </div>
                         <div className="shrink-0 grid grid-cols-1 sm:grid-cols-2 gap-2 pb-1">
-                            <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+                            <div className="bg-slate-50 dark:bg-slate-950/60 p-3 rounded-xl border border-slate-200 dark:border-slate-800/80">
                                 <h4 className="mb-1 text-slate-500 text-[10px] uppercase tracking-wider font-semibold">Abertura das Inscrições</h4>
-                                <p className="text-slate-200 text-xs sm:text-sm font-semibold">
+                                <p className="text-slate-800 dark:text-slate-200 text-xs sm:text-sm font-semibold">
                                     {activeEvent.registrationOpensAt ? formatRegDate(activeEvent.registrationOpensAt) : 'A definir'}
                                 </p>
                             </div>
-                            <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+                            <div className="bg-slate-50 dark:bg-slate-950/60 p-3 rounded-xl border border-slate-200 dark:border-slate-800/80">
                                 <h4 className="mb-1 text-slate-500 text-[10px] uppercase tracking-wider font-semibold">Fecho das Inscrições</h4>
-                                <p className="text-slate-200 text-xs sm:text-sm font-semibold">
+                                <p className="text-slate-800 dark:text-slate-200 text-xs sm:text-sm font-semibold">
                                     {activeEvent.registrationClosesAt ? formatRegDate(activeEvent.registrationClosesAt) : 'A definir'}
                                 </p>
                             </div>
@@ -551,24 +551,24 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 {activeTab === 'premios' && (
                     <div className="flex flex-col h-full animate-fade-in min-h-0">
                         <div className="flex-1 overflow-y-auto min-h-0 pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent grid grid-cols-1 md:grid-cols-2 gap-3 pb-2">
-                            <div className="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800/80">
-                                <h4 className="mb-2 text-slate-200 flex items-center gap-2 text-sm font-semibold">
-                                    <Trophy size={15} className="text-amber-400" /> Prémios
+                            <div className="bg-slate-50 dark:bg-slate-950/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800/80">
+                                <h4 className="mb-2 text-slate-800 dark:text-slate-200 flex items-center gap-2 text-sm font-semibold">
+                                    <Trophy size={15} className="text-amber-500 dark:text-amber-400" /> Prémios
                                 </h4>
                                 {activeEvent.prizes ? (
-                                    <div className="text-slate-300 text-xs sm:text-sm prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: activeEvent.prizes }} />
+                                    <div className="text-slate-700 dark:text-slate-300 text-xs sm:text-sm prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: activeEvent.prizes }} />
                                 ) : (
-                                    <p className="text-slate-400 text-xs">Informação não disponível.</p>
+                                    <p className="text-slate-500 dark:text-slate-400 text-xs">Informação não disponível.</p>
                                 )}
                             </div>
-                            <div className="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800/80">
-                                <h4 className="mb-2 text-slate-200 flex items-center gap-2 text-sm font-semibold">
-                                    <Shield size={15} className="text-emerald-400" /> Seguro
+                            <div className="bg-slate-50 dark:bg-slate-950/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800/80">
+                                <h4 className="mb-2 text-slate-800 dark:text-slate-200 flex items-center gap-2 text-sm font-semibold">
+                                    <Shield size={15} className="text-emerald-500 dark:text-emerald-400" /> Seguro
                                 </h4>
                                 {activeEvent.insurance ? (
-                                    <div className="text-slate-300 text-xs sm:text-sm prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: activeEvent.insurance }} />
+                                    <div className="text-slate-700 dark:text-slate-300 text-xs sm:text-sm prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: activeEvent.insurance }} />
                                 ) : (
-                                    <p className="text-slate-400 text-xs">Informação não disponível.</p>
+                                    <p className="text-slate-500 dark:text-slate-400 text-xs">Informação não disponível.</p>
                                 )}
                             </div>
                         </div>
@@ -579,16 +579,16 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 {activeTab === 'localizacao' && (
                     <div className="flex flex-col h-full animate-fade-in pb-2 min-h-0">
                         {activeEvent.details && activeEvent.details !== 'A definir' ? (
-                            <div className="w-full h-full min-h-[220px] rounded-xl overflow-hidden border border-slate-800">
+                            <div className="w-full h-full min-h-[220px] rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm">
                                 <iframe 
-                                    className="w-full h-full border-0 grayscale invert opacity-80"
+                                    className="w-full h-full border-0 dark:[filter:invert(90%)_hue-rotate(180deg)] transition-all duration-300"
                                     loading="lazy" 
                                     allowFullScreen 
                                     src={`https://maps.google.com/maps?q=${encodeURIComponent(activeEvent.details.split('|')[0] + ', Portugal')}&output=embed`}
                                 ></iframe>
                             </div>
                         ) : (
-                            <p className="text-slate-400 text-xs sm:text-sm">Localização a definir.</p>
+                            <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">Localização a definir.</p>
                         )}
                     </div>
                 )}
