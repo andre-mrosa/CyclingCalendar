@@ -8,6 +8,7 @@ import { Home, Trophy, MapPin, Bike, HelpCircle, Settings, Menu, X, Moon, Sun, F
 import SettingsPage from '../definicoes/page';
 import HelpPage from '../ajuda/page';
 import { useSettingsStore } from '../store/useSettingsStore';
+import DynamicLogo from './DynamicLogo';
 
 export default function Navigation() {
     const pathname = usePathname();
@@ -97,7 +98,7 @@ export default function Navigation() {
                 </button>
 
                 <Link href="/" className="flex items-center mr-6 no-underline group shrink-0" title="Cycling Calendar">
-                    <img src="/icon.jpg" alt="Cycling Calendar" className="w-8 h-8 rounded-lg object-cover ring-1 ring-blue-500/30 group-hover:ring-blue-400 transition-all shadow-[0_0_10px_rgba(59,130,246,0.2)]" />
+                    <DynamicLogo className="w-8 h-8 rounded-lg shadow-[0_0_12px_rgba(59,130,246,0.25)] transition-transform group-hover:scale-105" />
                 </Link>
 
                 <div className="hidden md:flex flex-1 items-center">
