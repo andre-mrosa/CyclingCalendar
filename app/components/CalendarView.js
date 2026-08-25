@@ -76,15 +76,15 @@ export default function CalendarView({
         }
     }, [defaultEscalao, defaultRegiao, forceEscalao, forceAmbito, forceLicenca, applyDefaultRegiao]);
 
+    const effectiveSources = (selectedSources && selectedSources.length > 0) ? selectedSources : ['FPC', 'Cabreira'];
     const yearsQuery = (filterByFavorites || filterByAgenda) ? 'all' : selectedYears.join(',');
     const { data: fetchedEvents, error, isLoading: loading, mutate } = useSWR(
-        selectedSources && selectedSources.length > 0 
-            ? `/api/events?years=${yearsQuery}&sources=${selectedSources.join(',')}` 
-            : null,
+        `/api/events?years=${yearsQuery}&sources=${effectiveSources.join(',')}`,
         fetcher,
         {
-            revalidateOnFocus: false, // Don't refetch just by switching tabs, saves FPC servers
-            dedupingInterval: 60000 // Cache for 1 minute in memory
+            revalidateOnFocus: false, // Don't refetch on tab switch
+            revalidateIfStale: false,
+            dedupingInterval: 120000 // Cache for 2 minutes in memory
         }
     );
 

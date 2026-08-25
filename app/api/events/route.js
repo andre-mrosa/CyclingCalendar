@@ -33,6 +33,25 @@ export async function GET(request) {
             where: {
                 AND: andConditions
             },
+            select: {
+                id: true,
+                title: true,
+                date: true,
+                sortDate: true,
+                details: true,
+                tag: true,
+                ambito: true,
+                escaloes: true,
+                licenca: true,
+                regiao: true,
+                distrito: true,
+                source: true,
+                link: true,
+                organizador: true,
+                registrationOpensAt: true,
+                registrationClosesAt: true,
+                logo: true
+            },
             orderBy: {
                 sortDate: 'asc'
             }
@@ -41,15 +60,14 @@ export async function GET(request) {
         // Convert stringified arrays back to arrays for frontend
         const formattedEvents = events.map(e => ({
             ...e,
-            escaloes: e.escaloes ? (typeof e.escaloes === 'string' ? JSON.parse(e.escaloes) : e.escaloes) : [],
-            extraLinks: e.extraLinks ? (typeof e.extraLinks === 'string' ? JSON.parse(e.extraLinks) : e.extraLinks) : []
+            escaloes: e.escaloes ? (typeof e.escaloes === 'string' ? JSON.parse(e.escaloes) : e.escaloes) : []
         }));
 
         return Response.json(
             { success: true, events: formattedEvents },
             {
                 headers: {
-                    'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300'
+                    'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=86400'
                 }
             }
         );
