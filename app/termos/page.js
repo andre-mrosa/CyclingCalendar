@@ -65,9 +65,10 @@ export default function TermsOfService() {
       title: '5. Propriedade Intelectual',
       content: (
         <ul className="space-y-2">
-          <li className="flex gap-2"><span className="text-blue-400 mt-1">•</span><span>Todo o código-fonte, design, logótipos e infraestrutura do Cycling Calendar são propriedade exclusiva dos seus criadores e estão protegidos por direitos de autor.</span></li>
-          <li className="flex gap-2"><span className="text-blue-400 mt-1">•</span><span>Os nomes dos eventos, logótipos institucionais (FPC, associações regionais, etc.) e conteúdo original dos organizadores pertencem aos respetivos titulares.</span></li>
-          <li className="flex gap-2"><span className="text-blue-400 mt-1">•</span><span>É proibida a reprodução, redistribuição ou uso comercial dos dados agregados pelo Cycling Calendar sem autorização prévia por escrito.</span></li>
+          <li className="flex gap-2"><span className="text-blue-400 mt-1">•</span><span>O código-fonte, design e interface do Cycling Calendar são da autoria do seu criador e estão protegidos por direitos de autor ao abrigo da legislação portuguesa e europeia.</span></li>
+          <li className="flex gap-2"><span className="text-blue-400 mt-1">•</span><span>O nome "Cycling Calendar" e o domínio <strong className="text-slate-200">cyclingcalendar.pt</strong> são utilizados pelo projeto, embora não constituam uma marca registada.</span></li>
+          <li className="flex gap-2"><span className="text-blue-400 mt-1">•</span><span>Os dados dos eventos são de origem pública (FPC, Cabreira Solutions, etc.) e pertencem às respetivas entidades organizadoras. O Cycling Calendar limita-se a agregá-los para consulta.</span></li>
+          <li className="flex gap-2"><span className="text-blue-400 mt-1">•</span><span>Os nomes, logótipos e conteúdo original dos organizadores pertencem aos respetivos titulares.</span></li>
         </ul>
       ),
     },
@@ -118,7 +119,7 @@ export default function TermsOfService() {
       icon: Scale,
       title: '9. Lei Aplicável e Jurisdição',
       content: (
-        <p>Estes Termos de Serviço são regidos e interpretados de acordo com as leis da República Portuguesa. Para a resolução de quaisquer litígios emergentes da utilização da Plataforma, será competente o foro da comarca de Braga, com renúncia expressa a qualquer outro.</p>
+        <p>Estes Termos de Serviço são regidos e interpretados de acordo com as leis da República Portuguesa. Quaisquer litígios serão resolvidos nos tribunais portugueses competentes.</p>
       ),
     },
   ];
@@ -166,7 +167,7 @@ export default function TermsOfService() {
 
         {/* Footer */}
         <div className="mt-8 text-center">
-          <p className="text-sm text-slate-500">Última atualização: 24 de agosto de 2026</p>
+          <p className="text-sm text-slate-500">Última atualização: 25 de agosto de 2026</p>
           <a href="/contacto" className="inline-flex items-center gap-2 mt-3 text-sm text-blue-400 hover:text-blue-300 transition-colors">
             <Mail size={14} /> Dúvidas? Contacte-nos
           </a>
