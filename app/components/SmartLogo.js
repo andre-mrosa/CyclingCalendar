@@ -72,7 +72,7 @@ export default function SmartLogo({ src, alt, style, className }) {
 
     if (needsLightCapsule) {
         return (
-            <div className="bg-white/95 px-1.5 py-0.5 rounded-lg shadow-sm flex items-center justify-center shrink-0">
+            <div className="bg-slate-100/90 px-1.5 py-0.5 rounded-md flex items-center justify-center shrink-0">
                 <img 
                     src={src} 
                     alt={alt} 
@@ -86,7 +86,7 @@ export default function SmartLogo({ src, alt, style, className }) {
 
     if (needsDarkCapsule) {
         return (
-            <div className="bg-slate-900 px-1.5 py-0.5 rounded-lg shadow-sm flex items-center justify-center shrink-0">
+            <div className="bg-slate-900/85 px-1.5 py-0.5 rounded-md flex items-center justify-center shrink-0 border border-slate-800/60">
                 <img 
                     src={src} 
                     alt={alt} 

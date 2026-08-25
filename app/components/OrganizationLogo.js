@@ -2,10 +2,16 @@
 
 import React from 'react';
 
-export default function OrganizationLogo({ source, className = "h-3.5 w-auto object-contain" }) {
+export default function OrganizationLogo({ source, className = "h-4 w-auto object-contain" }) {
     if (source === 'Cabreira') {
         return (
-            <div className="bg-slate-800/40 border border-slate-700/50 px-1.5 py-0.5 rounded-md flex items-center justify-center h-5 shrink-0 transition-all hover:bg-slate-800/60" title="Cabreira Solutions">
+            /* Cabreira logo has white text.
+               In Dark Mode: white text on dark card -> no pill needed!
+               In Light Mode: white text on white card -> subtle dark capsule */
+            <div 
+                className="flex items-center justify-center h-6 shrink-0 transition-all rounded-md bg-slate-900/85 dark:bg-transparent px-1.5 py-0.5 dark:p-0 border border-slate-800/60 dark:border-transparent" 
+                title="Cabreira Solutions"
+            >
                 <img 
                     src="/logo-cabreira.png" 
                     alt="Cabreira Solutions" 
@@ -16,9 +22,14 @@ export default function OrganizationLogo({ source, className = "h-3.5 w-auto obj
         );
     }
 
-    // FPC and default: Official original untouched logo inside subtle soft reserve area badge
+    /* FPC logo has black text.
+       In Light Mode: black text on light card -> no pill needed!
+       In Dark Mode: black text on dark card -> subtle soft light capsule */
     return (
-        <div className="bg-white/85 border border-white/30 px-1.5 py-0.5 rounded-md flex items-center justify-center h-5 shrink-0 transition-all hover:bg-white/95 shadow-[0_1px_3px_rgba(0,0,0,0.2)]" title="Federação Portuguesa de Ciclismo">
+        <div 
+            className="flex items-center justify-center h-6 shrink-0 transition-all rounded-md bg-transparent dark:bg-slate-100/90 p-0 dark:px-1.5 dark:py-0.5 border-0" 
+            title="Federação Portuguesa de Ciclismo"
+        >
             <img 
                 src="/logo-fpc.png" 
                 alt="Federação Portuguesa de Ciclismo" 

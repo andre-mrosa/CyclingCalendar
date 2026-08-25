@@ -622,8 +622,8 @@ export default function CalendarView({
             </main>
             {showEscalaoHelp && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1100] flex items-center justify-center p-4" onClick={() => setShowEscalaoHelp(false)}>
-                    <div className="relative w-full max-w-[500px] bg-slate-900 rounded-xl shadow-2xl border border-slate-700 flex flex-col max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
-                        <button className="absolute top-4 right-4 text-slate-400 hover:text-slate-200 z-10 p-1" onClick={() => setShowEscalaoHelp(false)}>✕</button>
+                    <div className="relative w-full max-w-[500px] bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col max-h-[90vh] text-slate-900 dark:text-slate-100 transition-colors duration-200" onClick={(e) => e.stopPropagation()}>
+                        <button className="absolute top-4 right-4 text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 z-10 p-1 cursor-pointer" onClick={() => setShowEscalaoHelp(false)}>✕</button>
                         <div className="overflow-y-auto flex-1 p-0 rounded-xl">
                             <EscalaoAssistant onApply={(esc) => {
                                 if (!selectedEscaloes.includes(esc)) {
