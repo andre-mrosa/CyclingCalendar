@@ -142,7 +142,7 @@ export async function POST(req) {
         }
 
         const body = await req.json();
-        const { event } = body;
+        const { event, target = 'event' } = body;
 
         if (!event || !event.id) {
             return NextResponse.json({ error: 'Dados do evento em falta' }, { status: 400 });
@@ -174,45 +174,6 @@ export async function POST(req) {
         // 1. Obter ou criar o calendário dedicado "Cycling Calendar"
         const targetCalendarId = await getTargetCalendarId(token);
 
-        // 2. Verificar se o evento já existe no calendário destino
-        const checkUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(targetCalendarId)}/events?privateExtendedProperty=cyclingCalendarEventId=${event.id}`;
-        
-        const checkRes = await fetch(checkUrl, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        if (!checkRes.ok) {
-            const err = await checkRes.text();
-            console.error("Google API check error:", err);
-            if (checkRes.status === 401 || checkRes.status === 403) {
-                return NextResponse.json({ 
-                    error: 'A sua sessão do Google expirou ou não tem permissões para gerir o calendário. Termine sessão e volte a entrar.' 
-                }, { status: 403 });
-            }
-            return NextResponse.json({ error: 'Erro ao verificar o Google Calendar' }, { status: 500 });
-        }
-
-        const checkData = await checkRes.json();
-        if (checkData.items && checkData.items.length > 0) {
-            return NextResponse.json({ success: true, message: 'exists' });
-        }
-
-        // 3. Formatar datas (evento de dia inteiro)
-        const startDateStr = parsePtDate(event.date);
-        let endDateStr = parsePtDate(event.endDate) || startDateStr;
-
-        if (!startDateStr) {
-            return NextResponse.json({ error: 'Não é possível marcar este evento porque a data ainda não está definida ou foi adiada.' }, { status: 400 });
-        }
-
-        // Para eventos de dia inteiro, o Google Calendar exige data final exclusiva (+1 dia)
-        const endDt = new Date(endDateStr);
-        endDt.setDate(endDt.getDate() + 1);
-        endDateStr = endDt.toISOString().split('T')[0];
-
-        // 4. Montar evento com alertas de 2 dias e 1 semana antes
         let location = 'Portugal';
         if (event.details && event.details !== 'A definir') {
             location = event.details.split('|')[0] + ', Portugal';
@@ -220,8 +181,154 @@ export async function POST(req) {
             location = event.location + ', Portugal';
         }
 
+        // Helper para criar ou verificar evento
+        const createOrCheckEvent = async (gEvent, eventIdentifier) => {
+            const checkUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(targetCalendarId)}/events?privateExtendedProperty=cyclingCalendarEventId=${encodeURIComponent(eventIdentifier)}`;
+            const checkRes = await fetch(checkUrl, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (checkRes.ok) {
+                const checkData = await checkRes.json();
+                if (checkData.items && checkData.items.length > 0) {
+                    return { success: true, message: 'exists' };
+                }
+            }
+
+            const createRes = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(targetCalendarId)}/events`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(gEvent)
+            });
+
+            if (!createRes.ok) {
+                const err = await createRes.text();
+                console.error("Google API create error for", eventIdentifier, err);
+                if (createRes.status === 401 || createRes.status === 403) {
+                    throw new Error('AUTH_EXPIRED');
+                }
+                return { error: 'Erro ao criar evento no calendário' };
+            }
+
+            return { success: true, message: 'created' };
+        };
+
+        // Helper para montar payload de data/hora
+        const buildDatePayload = (dateValue) => {
+            if (!dateValue) return null;
+            const d = new Date(dateValue);
+            if (isNaN(d.getTime())) return null;
+
+            const str = String(dateValue);
+            const hasExplicitTime = str.includes('T') && (d.getUTCHours() !== 0 || d.getUTCMinutes() !== 0);
+
+            if (hasExplicitTime) {
+                const startIso = d.toISOString();
+                const endIso = new Date(d.getTime() + 60 * 60 * 1000).toISOString();
+                return {
+                    start: { dateTime: startIso, timeZone: 'Europe/Lisbon' },
+                    end: { dateTime: endIso, timeZone: 'Europe/Lisbon' }
+                };
+            } else {
+                const dateStr = d.toISOString().split('T')[0];
+                const nextD = new Date(d);
+                nextD.setDate(nextD.getDate() + 1);
+                return {
+                    start: { date: dateStr },
+                    end: { date: nextD.toISOString().split('T')[0] }
+                };
+            }
+        };
+
+        // CASO 1: Abertura das Inscrições
+        if (target === 'registration_open') {
+            if (!event.registrationOpensAt) {
+                return NextResponse.json({ error: 'A data de abertura das inscrições ainda não foi definida para este evento.' }, { status: 400 });
+            }
+
+            const datePayload = buildDatePayload(event.registrationOpensAt);
+            if (!datePayload) {
+                return NextResponse.json({ error: 'Formato de data de abertura inválido.' }, { status: 400 });
+            }
+
+            const gEvent = {
+                summary: `📝 Abertura Inscrições: ${event.title}`,
+                description: `Abertura oficial das inscrições para ${event.title}.\n\nInscrições e regulamento: ${event.link || 'https://cyclingcalendar.pt'}\nOrganização: ${event.organizador || event.source || '-'}`,
+                location: location,
+                ...datePayload,
+                extendedProperties: {
+                    private: {
+                        cyclingCalendarEventId: `${event.id}_reg_open`
+                    }
+                },
+                reminders: {
+                    useDefault: false,
+                    overrides: [
+                        // 1 dia antes (24h = 1440 min)
+                        { method: 'popup', minutes: 1440 },
+                        // No dia, 1 hora antes (60 min)
+                        { method: 'popup', minutes: 60 }
+                    ]
+                }
+            };
+
+            const result = await createOrCheckEvent(gEvent, `${event.id}_reg_open`);
+            return NextResponse.json({ ...result, calendar: targetCalendarId, target: 'registration_open' });
+        }
+
+        // CASO 2: Fecho das Inscrições
+        if (target === 'registration_close') {
+            if (!event.registrationClosesAt) {
+                return NextResponse.json({ error: 'A data de fecho das inscrições ainda não foi definida para este evento.' }, { status: 400 });
+            }
+
+            const datePayload = buildDatePayload(event.registrationClosesAt);
+            if (!datePayload) {
+                return NextResponse.json({ error: 'Formato de data de fecho inválido.' }, { status: 400 });
+            }
+
+            const gEvent = {
+                summary: `⏳ Fecho Inscrições: ${event.title}`,
+                description: `Último dia para inscrições no evento: ${event.title}.\n\nInscrever agora: ${event.link || 'https://cyclingcalendar.pt'}\nOrganização: ${event.organizador || event.source || '-'}`,
+                location: location,
+                ...datePayload,
+                extendedProperties: {
+                    private: {
+                        cyclingCalendarEventId: `${event.id}_reg_close`
+                    }
+                },
+                reminders: {
+                    useDefault: false,
+                    overrides: [
+                        // 1 dia antes (24h = 1440 min)
+                        { method: 'popup', minutes: 1440 },
+                        // No dia, 1 hora antes (60 min)
+                        { method: 'popup', minutes: 60 }
+                    ]
+                }
+            };
+
+            const result = await createOrCheckEvent(gEvent, `${event.id}_reg_close`);
+            return NextResponse.json({ ...result, calendar: targetCalendarId, target: 'registration_close' });
+        }
+
+        // CASO 3: Prova (Dia do Evento - default)
+        const startDateStr = parsePtDate(event.date);
+        let endDateStr = parsePtDate(event.endDate) || startDateStr;
+
+        if (!startDateStr) {
+            return NextResponse.json({ error: 'Não é possível marcar este evento porque a data ainda não está definida ou foi adiada.' }, { status: 400 });
+        }
+
+        const endDt = new Date(endDateStr);
+        endDt.setDate(endDt.getDate() + 1);
+        endDateStr = endDt.toISOString().split('T')[0];
+
         const gEvent = {
-            summary: event.title,
+            summary: `🚴 ${event.title}`,
             description: `Mais informações: ${event.link || 'App Cycling Calendar'}\n\nEscalão: ${event.escalao || '-'}\nÂmbito: ${event.ambito || '-'}`,
             location: location,
             start: { date: startDateStr },
@@ -234,38 +341,24 @@ export async function POST(req) {
             reminders: {
                 useDefault: false,
                 overrides: [
-                    // 2 dias antes às 10:00h da manhã (38 horas antes do evento de dia inteiro) = 2280 minutos
+                    // 2 dias antes às 10:00h
                     { method: 'popup', minutes: 2280 },
-                    // 1 semana antes às 10:00h da manhã (158 horas antes do evento de dia inteiro) = 9480 minutos
+                    // 1 semana antes às 10:00h
                     { method: 'popup', minutes: 9480 }
                 ]
             }
         };
 
-        const createRes = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(targetCalendarId)}/events`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(gEvent)
-        });
-
-        if (!createRes.ok) {
-            const err = await createRes.text();
-            console.error("Google API create error:", err);
-            if (createRes.status === 401 || createRes.status === 403) {
-                return NextResponse.json({ 
-                    error: 'Permissões insuficientes no Google Calendar. Termine sessão e volte a entrar autorizando o acesso ao calendário.' 
-                }, { status: 403 });
-            }
-            return NextResponse.json({ error: 'Erro ao criar evento no calendário' }, { status: 500 });
-        }
-
-        return NextResponse.json({ success: true, message: 'created', calendar: targetCalendarId });
+        const result = await createOrCheckEvent(gEvent, event.id.toString());
+        return NextResponse.json({ ...result, calendar: targetCalendarId, target: 'event' });
 
     } catch (error) {
         console.error("Calendar API Error:", error);
+        if (error.message === 'AUTH_EXPIRED') {
+            return NextResponse.json({ 
+                error: 'Permissões insuficientes no Google Calendar. Termine sessão e volte a entrar autorizando o acesso ao calendário.' 
+            }, { status: 403 });
+        }
         return NextResponse.json({ error: error?.message || 'Erro interno ao processar pedido de calendário' }, { status: 500 });
     }
 }
