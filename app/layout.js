@@ -66,11 +66,13 @@ import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import WelcomeModal from "./components/WelcomeModal";
 import CookieBanner from "./components/CookieBanner";
+import FaviconManager from "./components/FaviconManager";
 
 export default function RootLayout({ children }) {
   return (
     <html lang="pt" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-950 text-slate-200 selection:bg-blue-500/30 selection:text-blue-200`} suppressHydrationWarning>
+        <FaviconManager />
         <ThemeProvider attribute="class" defaultTheme="dark">
           <ThemeClerkProvider>
             <Navigation />
