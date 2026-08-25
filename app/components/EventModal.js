@@ -9,6 +9,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
     const { resolvedTheme } = useTheme();
     const [programaData, setProgramaData] = useState({ loading: false, html: null, error: null, additionalLinks: [] });
     const [fullscreenImage, setFullscreenImage] = useState(null);
+    const [isImageZoomed, setIsImageZoomed] = useState(false);
     const [isAddingToCalendar, setIsAddingToCalendar] = useState(false);
     const [calendarStatus, setCalendarStatus] = useState(null); // 'success', 'exists', 'error'
     const [calendarMsg, setCalendarMsg] = useState('');
@@ -169,6 +170,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
     const handleHtmlClick = (e) => {
         if (e.target.tagName === 'IMG') {
             setFullscreenImage(e.target.src);
+            setIsImageZoomed(false);
         }
     };
 
@@ -587,22 +589,38 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
             {fullscreenImage && (
                 <div 
-                    className="fixed inset-0 bg-black/90 z-[9999] flex items-center justify-center p-4" 
+                    className="fixed inset-0 bg-black/95 z-[9999] flex items-center justify-center p-2 sm:p-4 overflow-auto" 
                     onClick={(e) => {
                         e.stopPropagation();
                         setFullscreenImage(null);
+                        setIsImageZoomed(false);
                     }}
                 >
                     <button 
-                        className="absolute top-6 right-6 bg-black/50 hover:bg-black/80 text-white p-2 rounded-full transition-colors cursor-pointer" 
+                        className="fixed top-4 right-4 sm:top-6 sm:right-6 bg-slate-900/80 hover:bg-slate-800 text-white p-2.5 rounded-full transition-colors cursor-pointer z-[10000] border border-slate-700 shadow-xl" 
                         onClick={(e) => {
                             e.stopPropagation();
                             setFullscreenImage(null);
+                            setIsImageZoomed(false);
                         }}
+                        title="Fechar imagem"
                     >
-                        <X size={22} />
+                        <X size={20} />
                     </button>
-                    <img src={fullscreenImage} alt="Programa Detalhado" className="max-w-full max-h-full object-contain" onClick={(e) => e.stopPropagation()} />
+                    <div 
+                        className={`transition-transform duration-300 ease-out flex items-center justify-center m-auto ${isImageZoomed ? 'scale-150 sm:scale-[1.75] cursor-zoom-out' : 'cursor-zoom-in'}`}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setIsImageZoomed(!isImageZoomed);
+                        }}
+                        title={isImageZoomed ? "Clica para reduzir" : "Clica para ampliar"}
+                    >
+                        <img 
+                            src={fullscreenImage} 
+                            alt="Programa Detalhado" 
+                            className="max-w-[90vw] max-h-[85vh] object-contain rounded-xl select-none shadow-2xl transition-all duration-300" 
+                        />
+                    </div>
                 </div>
             )}
         </div>
