@@ -351,11 +351,11 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
     const month = dateParts.find(p => monthAbbrs.includes(p.toUpperCase()))?.toUpperCase() || '';
 
     return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9000] flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-hidden animate-fade-in" onClick={() => setSelectedEvent(null)}>
-            <div className="bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-2xl w-full max-w-4xl h-[92vh] sm:h-[86vh] max-h-[92vh] flex flex-col shadow-2xl overflow-hidden relative transition-colors duration-200" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9000] flex items-end sm:items-center justify-center p-0 pt-8 sm:p-4 overflow-hidden animate-fade-in" onClick={() => setSelectedEvent(null)}>
+            <div className="bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-2xl w-full max-w-4xl h-[88dvh] sm:h-[86vh] max-h-[calc(100dvh-2.5rem)] sm:max-h-[86vh] flex flex-col shadow-2xl overflow-hidden relative transition-colors duration-200" onClick={(e) => e.stopPropagation()}>
                 
                 {/* Mobile Drag Indicator */}
-                <div className="w-12 h-1 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mt-2.5 mb-1 sm:hidden shrink-0" />
+                <div className="w-10 h-1 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mt-2.5 mb-1 sm:hidden shrink-0" />
 
                 {/* Mobile Top Bar (sm:hidden) */}
                 <div className="sm:hidden flex items-center justify-between px-4 pt-1 pb-1 shrink-0">
