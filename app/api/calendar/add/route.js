@@ -198,10 +198,10 @@ export async function POST(req) {
             reminders: {
                 useDefault: false,
                 overrides: [
-                    // 2 dias antes = 2880 minutos
-                    { method: 'popup', minutes: 2880 },
-                    // 1 semana antes = 10080 minutos
-                    { method: 'popup', minutes: 10080 }
+                    // 2 dias antes às 10:00h da manhã (38 horas antes do evento de dia inteiro) = 2280 minutos
+                    { method: 'popup', minutes: 2280 },
+                    // 1 semana antes às 10:00h da manhã (158 horas antes do evento de dia inteiro) = 9480 minutos
+                    { method: 'popup', minutes: 9480 }
                 ]
             }
         };
