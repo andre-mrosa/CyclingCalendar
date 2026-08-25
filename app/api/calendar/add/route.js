@@ -56,6 +56,47 @@ function parsePtDate(dateStr) {
     return null;
 }
 
+async function getTargetCalendarId(token) {
+    try {
+        // 1. Procurar calendário "Cycling Calendar" existente
+        const listRes = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (listRes.ok) {
+            const listData = await listRes.json();
+            const existing = listData.items?.find(c => /^cycling\s*calendar$/i.test(c.summary));
+            if (existing) {
+                return existing.id;
+            }
+
+            // 2. Se não existir, criar calendário dedicado "Cycling Calendar"
+            const createRes = await fetch('https://www.googleapis.com/calendar/v3/calendars', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    summary: 'Cycling Calendar',
+                    description: 'Provas e eventos de ciclismo sincronizados pelo CyclingCalendar.pt',
+                    timeZone: 'Europe/Lisbon'
+                })
+            });
+
+            if (createRes.ok) {
+                const newCal = await createRes.json();
+                return newCal.id;
+            }
+        }
+    } catch (e) {
+        console.warn("Não foi possível aceder ou criar calendário secundário, fallback para primary:", e);
+    }
+    
+    // Fallback para o calendário principal se as permissões forem restritas
+    return 'primary';
+}
+
 export async function POST(req) {
     try {
         const { userId } = await auth();
@@ -94,8 +135,11 @@ export async function POST(req) {
             }, { status: 403 });
         }
 
-        // 1. Check if event already exists via extendedProperties
-        const checkUrl = `https://www.googleapis.com/calendar/v3/calendars/primary/events?privateExtendedProperty=cyclingCalendarEventId=${event.id}`;
+        // 1. Obter ou criar o calendário dedicado "Cycling Calendar"
+        const targetCalendarId = await getTargetCalendarId(token);
+
+        // 2. Verificar se o evento já existe no calendário destino
+        const checkUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(targetCalendarId)}/events?privateExtendedProperty=cyclingCalendarEventId=${event.id}`;
         
         const checkRes = await fetch(checkUrl, {
             headers: {
@@ -119,7 +163,7 @@ export async function POST(req) {
             return NextResponse.json({ success: true, message: 'exists' });
         }
 
-        // 2. Parse dates
+        // 3. Formatar datas (evento de dia inteiro)
         const startDateStr = parsePtDate(event.date);
         let endDateStr = parsePtDate(event.endDate) || startDateStr;
 
@@ -127,12 +171,12 @@ export async function POST(req) {
             return NextResponse.json({ error: 'Não é possível marcar este evento porque a data ainda não está definida ou foi adiada.' }, { status: 400 });
         }
 
-        // Google Calendar expects the end date of an all-day event to be exclusive (+1 day)
+        // Para eventos de dia inteiro, o Google Calendar exige data final exclusiva (+1 dia)
         const endDt = new Date(endDateStr);
         endDt.setDate(endDt.getDate() + 1);
         endDateStr = endDt.toISOString().split('T')[0];
 
-        // 3. Create the event
+        // 4. Montar evento com alertas de 2 dias e 1 semana antes
         let location = 'Portugal';
         if (event.details && event.details !== 'A definir') {
             location = event.details.split('|')[0] + ', Portugal';
@@ -154,13 +198,15 @@ export async function POST(req) {
             reminders: {
                 useDefault: false,
                 overrides: [
-                    // 12240 minutos = 8.5 dias.
-                    { method: 'popup', minutes: 12240 }
+                    // 2 dias antes = 2880 minutos
+                    { method: 'popup', minutes: 2880 },
+                    // 1 semana antes = 10080 minutos
+                    { method: 'popup', minutes: 10080 }
                 ]
             }
         };
 
-        const createRes = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+        const createRes = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(targetCalendarId)}/events`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -180,7 +226,7 @@ export async function POST(req) {
             return NextResponse.json({ error: 'Erro ao criar evento no calendário' }, { status: 500 });
         }
 
-        return NextResponse.json({ success: true, message: 'created' });
+        return NextResponse.json({ success: true, message: 'created', calendar: targetCalendarId });
 
     } catch (error) {
         console.error("Calendar API Error:", error);
