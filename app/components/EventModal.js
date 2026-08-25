@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Calendar, Star, X, CalendarPlus, Check, Bike, FileText, CreditCard, Trophy, Shield, Users, Globe } from 'lucide-react';
+import { Calendar, Star, X, CalendarPlus, Check, Bike, FileText, CreditCard, Trophy, Shield, Users, Globe, Clock, MapPin, ExternalLink } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import SmartLogo from './SmartLogo';
+import { parsePrograma } from '../utils/parsePrograma';
 
 const eventDetailsCache = new Map();
 
@@ -128,6 +129,11 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
     programaCleanHtml = programaCleanHtml.replace(/<h4[^>]*>.*?<\/h4>/g, '');
     programaCleanHtml = programaCleanHtml.replace(/width="24" height="24"/g, 'width="18" height="18"');
     programaCleanHtml = programaCleanHtml.replace(/color: var\(--accent-primary\);/g, 'color: var(--text-secondary);');
+
+    // Parse do programa em formato cronológico estruturado
+    const parsedSchedule = useMemo(() => {
+        return parsePrograma(programaCleanHtml);
+    }, [programaCleanHtml]);
 
     // Calcula as tabs ativas baseadas nos dados reais do evento
     const availableTabs = useMemo(() => {
@@ -408,11 +414,99 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 {activeTab === 'programa' && (
                     <div className="flex flex-col h-full animate-fade-in min-h-0">
                         <div className="flex-1 overflow-y-auto min-h-0 pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
-                            {programaCleanHtml ? (
-                                <div className="prose prose-invert max-w-none text-xs sm:text-sm" dangerouslySetInnerHTML={{ __html: programaCleanHtml }} onClick={handleHtmlClick} />
+                            {parsedSchedule && parsedSchedule.type === 'timeline' ? (
+                                <div className="space-y-4 pb-3">
+                                    {parsedSchedule.days.map((day, dIdx) => (
+                                        <div key={`day-${dIdx}`} className="bg-slate-950/50 border border-slate-800/80 rounded-2xl p-3.5 sm:p-4 shadow-sm">
+                                            {/* Day Header */}
+                                            <div className="flex items-center gap-2.5 mb-3.5 pb-2.5 border-b border-slate-800/80">
+                                                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
+                                                    <Calendar size={15} />
+                                                </div>
+                                                <h3 className="text-xs sm:text-sm font-bold text-slate-100 m-0">
+                                                    {day.dayTitle}
+                                                </h3>
+                                            </div>
+
+                                            {/* Timeline items */}
+                                            <div className="relative pl-3.5 sm:pl-5 space-y-3 before:absolute before:left-[17px] sm:before:left-[23px] before:top-2.5 before:bottom-2.5 before:w-[2px] before:bg-slate-800">
+                                                {day.activities.map((act, aIdx) => {
+                                                    const isStartOrFinish = /partida|chegada|início/i.test(act.title);
+                                                    const isPodium = /pódio|podio|prémio|premio/i.test(act.title);
+                                                    const isSecretariado = /secretariado|frontais/i.test(act.title);
+                                                    const isLunch = /almoço|almoco|reforço/i.test(act.title);
+
+                                                    return (
+                                                        <div key={`act-${aIdx}`} className="relative flex items-start gap-3 group">
+                                                            {/* Dot on timeline */}
+                                                            <div className={`relative z-10 w-3 h-3 rounded-full mt-1.5 shrink-0 border-2 transition-transform group-hover:scale-125 ${
+                                                                isStartOrFinish 
+                                                                    ? 'bg-rose-500 border-rose-400 shadow-[0_0_8px_rgba(244,63,94,0.5)]'
+                                                                    : isPodium 
+                                                                    ? 'bg-amber-400 border-amber-300 shadow-[0_0_8px_rgba(251,191,36,0.5)]'
+                                                                    : isSecretariado
+                                                                    ? 'bg-blue-500 border-blue-400'
+                                                                    : isLunch
+                                                                    ? 'bg-orange-500 border-orange-400'
+                                                                    : 'bg-slate-700 border-slate-500'
+                                                            }`} />
+
+                                                            {/* Activity Card */}
+                                                            <div className="flex-1 bg-slate-900/90 border border-slate-800 rounded-xl p-3 hover:border-slate-700 transition-colors shadow-sm">
+                                                                <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+                                                                    <h4 className="text-xs sm:text-sm font-bold text-white m-0 flex items-center gap-1.5">
+                                                                        {act.title}
+                                                                    </h4>
+                                                                    {act.time && (
+                                                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[11px] font-semibold tracking-wide">
+                                                                            <Clock size={11} />
+                                                                            {act.time}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+
+                                                                {act.desc && (
+                                                                    <p className="text-xs text-slate-300 m-0 mb-1.5 leading-relaxed">
+                                                                        {act.desc}
+                                                                    </p>
+                                                                )}
+
+                                                                {act.location && (
+                                                                    <div className="pt-1.5 border-t border-slate-800/60 mt-1.5 flex items-center justify-between">
+                                                                        {act.locationUrl ? (
+                                                                            <a 
+                                                                                href={act.locationUrl} 
+                                                                                target="_blank" 
+                                                                                rel="noopener noreferrer"
+                                                                                className="inline-flex items-center gap-1.5 text-[11px] text-slate-400 hover:text-blue-400 transition-colors group/link"
+                                                                                title="Abrir no Google Maps"
+                                                                            >
+                                                                                <MapPin size={12} className="text-rose-400 shrink-0" />
+                                                                                <span className="truncate">{act.location}</span>
+                                                                                <ExternalLink size={10} className="opacity-60 group-hover/link:opacity-100 shrink-0" />
+                                                                            </a>
+                                                                        ) : (
+                                                                            <span className="inline-flex items-center gap-1.5 text-[11px] text-slate-400">
+                                                                                <MapPin size={12} className="text-rose-400 shrink-0" />
+                                                                                <span className="truncate">{act.location}</span>
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : programaCleanHtml ? (
+                                <div className="prose prose-invert max-w-none text-xs sm:text-sm leading-relaxed" dangerouslySetInnerHTML={{ __html: programaCleanHtml }} onClick={handleHtmlClick} />
                             ) : (
-                                <div className="p-3 bg-slate-950/50 border border-slate-800 rounded-xl text-slate-400 text-xs">
-                                    <em>Programa não disponível na Base de Dados. A aguardar recolha do sistema.</em>
+                                <div className="p-4 bg-slate-950/50 border border-slate-800 rounded-xl text-slate-400 text-xs flex items-center gap-2.5">
+                                    <FileText size={16} className="text-slate-500 shrink-0" />
+                                    <span>Programa detalhado não disponível na Base de Dados. A aguardar recolha do sistema.</span>
                                 </div>
                             )}
                         </div>
