@@ -3,9 +3,9 @@ import { useState, useEffect, useRef } from 'react';
 import { useTheme } from 'next-themes';
 
 export default function SmartLogo({ src, alt, style, className }) {
-    const { theme } = useTheme();
+    const { resolvedTheme } = useTheme();
+    const isDark = resolvedTheme === 'dark';
     const [logoType, setLogoType] = useState('unknown'); // 'dark', 'light', 'mixed'
-    const imgRef = useRef(null);
 
     useEffect(() => {
         if (!src) return;
@@ -16,11 +16,10 @@ export default function SmartLogo({ src, alt, style, className }) {
                 img.crossOrigin = "Anonymous";
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    // Resize for performance
                     const maxSize = 50;
                     const scale = Math.min(maxSize / img.width, maxSize / img.height, 1);
-                    canvas.width = img.width * scale;
-                    canvas.height = img.height * scale;
+                    canvas.width = Math.max(1, Math.floor(img.width * scale));
+                    canvas.height = Math.max(1, Math.floor(img.height * scale));
                     
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
@@ -50,7 +49,7 @@ export default function SmartLogo({ src, alt, style, className }) {
                     // YIQ brightness formula
                     const brightness = (r * 299 + g * 587 + b * 114) / 1000;
                     
-                    if (brightness < 100) {
+                    if (brightness < 80) {
                         setLogoType('dark');
                     } else if (brightness > 200) {
                         setLogoType('light');
@@ -60,37 +59,52 @@ export default function SmartLogo({ src, alt, style, className }) {
                 };
                 img.src = src;
             } catch (e) {
-                console.error("Error analyzing image", e);
+                // Silently fallback on CORS restrictions
             }
         };
         
         analyzeImage();
     }, [src]);
 
-    let applyShadow = false;
-    let shadowClass = '';
-    
-    // In dark mode, if the logo is dark, we need a white shadow
-    if (theme === 'dark' && logoType === 'dark') {
-        applyShadow = true;
-        shadowClass = 'drop-shadow-light';
+    // Apply a clean capsule background rather than a blurry bloom
+    const needsLightCapsule = isDark && logoType === 'dark';
+    const needsDarkCapsule = !isDark && logoType === 'light';
+
+    if (needsLightCapsule) {
+        return (
+            <div className="bg-white/95 px-1.5 py-0.5 rounded-lg shadow-sm flex items-center justify-center shrink-0">
+                <img 
+                    src={src} 
+                    alt={alt} 
+                    className={`${className || ''} object-contain`}
+                    style={style} 
+                    loading="lazy"
+                />
+            </div>
+        );
     }
-    // In light mode, if the logo is light (white), we need a dark shadow
-    else if (theme !== 'dark' && logoType === 'light') {
-        applyShadow = true;
-        shadowClass = 'drop-shadow-dark';
+
+    if (needsDarkCapsule) {
+        return (
+            <div className="bg-slate-900 px-1.5 py-0.5 rounded-lg shadow-sm flex items-center justify-center shrink-0">
+                <img 
+                    src={src} 
+                    alt={alt} 
+                    className={`${className || ''} object-contain`}
+                    style={style} 
+                    loading="lazy"
+                />
+            </div>
+        );
     }
 
     return (
         <img 
-            ref={imgRef}
             src={src} 
             alt={alt} 
-            className={`${className || ''} ${applyShadow ? shadowClass : ''}`.trim()}
-            style={{ 
-                ...style, 
-                transition: 'filter 0.3s ease' 
-            }} 
+            className={className || ''}
+            style={style} 
+            loading="lazy"
         />
     );
 }

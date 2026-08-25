@@ -9,6 +9,7 @@ import { filterEvents } from '../utils/filterEvents';
 import { mergeEvents } from '../utils/mergeEvents';
 import EventModal from './EventModal';
 import EscalaoAssistant from './EscalaoAssistant';
+import OrganizationLogo from './OrganizationLogo';
 
 const fetcher = (url) => fetch(url).then((res) => res.json()).then((data) => {
     if (!data.success) throw new Error(data.error || 'Failed to load events');
@@ -595,11 +596,7 @@ export default function CalendarView({
                                         </div>
                                         
                                         <div className="pl-3 border-l border-slate-800 flex items-center shrink-0">
-                                            {event.source === 'Cabreira' ? (
-                                                <img src="/logo-cabreira.png" alt="Cabreira" className="h-5 object-contain opacity-90 drop-shadow-[0_0_8px_rgba(255,255,255,0.7)]" />
-                                            ) : (
-                                                <img src="/logo-fpc.png" alt="FPC" className="h-5 object-contain opacity-90 drop-shadow-[0_0_8px_rgba(255,255,255,0.7)]" />
-                                            )}
+                                            <OrganizationLogo source={event.source} className="h-5 w-auto object-contain" />
                                         </div>
                                     </div>
                                 </div>
