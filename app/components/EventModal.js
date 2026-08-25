@@ -54,6 +54,17 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
         loadFullEvent();
     }, [selectedEvent]);
 
+    // Bloquear o scroll da página de fundo quando o modal ou imagem em ecrã inteiro estiver aberto
+    useEffect(() => {
+        if (selectedEvent || fullscreenImage) {
+            const originalOverflow = document.body.style.overflow;
+            document.body.style.overflow = 'hidden';
+            return () => {
+                document.body.style.overflow = originalOverflow || '';
+            };
+        }
+    }, [selectedEvent, fullscreenImage]);
+
 
     // Formata datas de inscrição em pt-PT sem segundos (usa UTC para preservar hora original)
     const formatRegDate = (isoStr) => {

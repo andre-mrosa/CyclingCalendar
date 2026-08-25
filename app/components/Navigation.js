@@ -27,6 +27,16 @@ export default function Navigation() {
         setIsMobileMenuOpen(false);
     }, [pathname]);
 
+    useEffect(() => {
+        if (isSettingsModalOpen || isHelpModalOpen || isMobileMenuOpen) {
+            const originalOverflow = document.body.style.overflow;
+            document.body.style.overflow = 'hidden';
+            return () => {
+                document.body.style.overflow = originalOverflow || '';
+            };
+        }
+    }, [isSettingsModalOpen, isHelpModalOpen, isMobileMenuOpen]);
+
     const { hiddenTabs } = useSettingsStore();
 
     const allLinks = [

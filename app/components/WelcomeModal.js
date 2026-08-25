@@ -20,6 +20,16 @@ export default function WelcomeModal() {
         }
     }, []);
 
+    useEffect(() => {
+        if (isOpen) {
+            const originalOverflow = document.body.style.overflow;
+            document.body.style.overflow = 'hidden';
+            return () => {
+                document.body.style.overflow = originalOverflow || '';
+            };
+        }
+    }, [isOpen]);
+
     const handleClose = () => {
         if (neverShow) {
             localStorage.setItem(`hideWelcomeModal_v${appVersion}`, 'true');
