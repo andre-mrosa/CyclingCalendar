@@ -15,27 +15,33 @@ export async function GET(request) {
     try {
         const { searchParams } = new URL(request.url);
         const yearsParam = searchParams.get('years') || searchParams.get('year') || new Date().getFullYear().toString();
-        const years = yearsParam.split(',').filter(Boolean).map(y => y.trim());
+        const isAllYears = yearsParam === 'all';
+        const years = isAllYears ? [] : yearsParam.split(',').filter(Boolean).map(y => y.trim());
         
         const sourcesParam = searchParams.get('sources') || 'FPC,Cabreira';
         const activeSources = sourcesParam.split(',');
 
+        const andConditions = [
+            {
+                source: {
+                    in: activeSources
+                }
+            }
+        ];
+
+        if (!isAllYears && years.length > 0) {
+            andConditions.push({
+                OR: years.map(year => ({
+                    date: {
+                        contains: year
+                    }
+                }))
+            });
+        }
+
         const events = await prisma.event.findMany({
             where: {
-                AND: [
-                    {
-                        OR: years.map(year => ({
-                            date: {
-                                contains: year
-                            }
-                        }))
-                    },
-                    {
-                        source: {
-                            in: activeSources
-                        }
-                    }
-                ]
+                AND: andConditions
             },
             select: {
                 id: true,

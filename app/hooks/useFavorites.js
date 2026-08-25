@@ -6,16 +6,27 @@ export function useFavorites() {
     const { user, isLoaded, isSignedIn } = useUser();
     const [favorites, setFavorites] = useState([]);
     
-    // Sincronizar com os metadados do Clerk ao carregar
+    // Sincronizar com os metadados do Clerk e cache local ao carregar
     useEffect(() => {
-        if (isLoaded && isSignedIn && user?.unsafeMetadata?.favorites) {
-            setFavorites(user.unsafeMetadata.favorites);
+        if (isLoaded && isSignedIn) {
+            if (user?.unsafeMetadata?.favorites && Array.isArray(user.unsafeMetadata.favorites)) {
+                setFavorites(user.unsafeMetadata.favorites);
+                try {
+                    localStorage.setItem('cycling-favorites-cache', JSON.stringify(user.unsafeMetadata.favorites));
+                } catch (e) {}
+            } else {
+                try {
+                    const cached = localStorage.getItem('cycling-favorites-cache');
+                    if (cached) setFavorites(JSON.parse(cached));
+                } catch (e) {}
+            }
         } else if (isLoaded && !isSignedIn) {
             setFavorites([]);
         }
     }, [user, isLoaded, isSignedIn]);
 
     const toggleFavorite = async (eventId) => {
+        if (!eventId) return;
         if (!isSignedIn || !user) {
             alert('Precisas de iniciar sessão para guardar favoritos!');
             return;
@@ -28,6 +39,9 @@ export function useFavorites() {
         
         // Atualização Otimista UI (imediata)
         setFavorites(newFavorites);
+        try {
+            localStorage.setItem('cycling-favorites-cache', JSON.stringify(newFavorites));
+        } catch (e) {}
 
         try {
             // Guardar no Clerk

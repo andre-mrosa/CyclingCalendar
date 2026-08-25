@@ -72,9 +72,10 @@ export default function CalendarView({
         }
     }, [defaultEscalao, defaultRegiao, forceEscalao, forceAmbito, forceLicenca, applyDefaultRegiao]);
 
+    const yearsQuery = filterByFavorites ? 'all' : selectedYears.join(',');
     const { data: fetchedEvents, error, isLoading: loading, mutate } = useSWR(
         selectedSources && selectedSources.length > 0 
-            ? `/api/events?years=${selectedYears.join(',')}&sources=${selectedSources.join(',')}` 
+            ? `/api/events?years=${yearsQuery}&sources=${selectedSources.join(',')}` 
             : null,
         fetcher,
         {
@@ -526,11 +527,13 @@ export default function CalendarView({
                                 const day = dateParts[0] ? dateParts[0].replace(/,/g, '') : '';
                                 const month = dateParts.find(p => monthAbbrs.includes(p.toUpperCase()))?.toUpperCase() || '';
 
+                                const isEventFavorited = favorites.includes(event.id) || (event._allIds && event._allIds.some(id => favorites.includes(id)));
+
                                 return (
                                 <div 
                                     key={event.id} 
                                     onClick={() => setSelectedEvent(event)} 
-                                    className={`group flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-slate-900 border ${favorites.includes(event.id) ? 'border-yellow-500/50' : 'border-slate-800'} rounded-xl py-2.5 px-3 sm:py-3 sm:px-4 cursor-pointer hover:border-slate-600 transition-all`}
+                                    className={`group flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-slate-900 border ${isEventFavorited ? 'border-amber-500/50 shadow-[0_0_12px_rgba(245,158,11,0.08)]' : 'border-slate-800'} rounded-xl py-2.5 px-3 sm:py-3 sm:px-4 cursor-pointer hover:border-slate-600 transition-all`}
                                 >
                                     <div className="flex gap-4 flex-1 min-w-0">
                                         <div className="flex flex-col shrink-0 w-[56px] h-[56px] bg-slate-950 rounded-lg overflow-hidden border border-slate-800">
@@ -579,12 +582,23 @@ export default function CalendarView({
                                             )}
                                         </div>
                                         
-                                        <div className="pl-3 border-l border-slate-800 flex items-center shrink-0">
+                                        <div className="pl-3 border-l border-slate-800 flex items-center gap-2 shrink-0">
                                             {event.source === 'Cabreira' ? (
                                                 <img src="/logo-cabreira.png" alt="Cabreira" className="h-5 object-contain opacity-90 drop-shadow-[0_0_8px_rgba(255,255,255,0.7)]" />
                                             ) : (
                                                 <img src="/logo-fpc.png" alt="FPC" className="h-5 object-contain opacity-90 drop-shadow-[0_0_8px_rgba(255,255,255,0.7)]" />
                                             )}
+
+                                            <button 
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    toggleFavorite(event.id);
+                                                }}
+                                                className={`p-1.5 rounded-full transition-all flex items-center justify-center cursor-pointer ${isEventFavorited ? 'text-amber-400 bg-amber-400/10 hover:bg-amber-400/20' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'}`}
+                                                title={isEventFavorited ? "Remover dos Favoritos" : "Adicionar aos Favoritos"}
+                                            >
+                                                <Star size={15} fill={isEventFavorited ? "#fbbf24" : "none"} />
+                                            </button>
                                         </div>
                                     </div>
                                 </div>

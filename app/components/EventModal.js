@@ -222,22 +222,25 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             <span className="text-slate-50">{activeEvent.title}</span>
                         )}
                     </h2>
-                    {isSignedIn && (
-                        <button 
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                toggleFavorite(activeEvent.id);
-                            }}
-                            className={`flex shrink-0 items-center justify-center w-8 h-8 rounded-full transition-all duration-300 ${favorites.includes(activeEvent.id) ? 'bg-slate-800 border border-yellow-500/30 shadow-[0_0_10px_rgba(234,179,8,0.1)]' : 'bg-slate-800/50 border border-transparent hover:bg-slate-700'}`}
-                            title={favorites.includes(activeEvent.id) ? "Remover dos Favoritos" : "Adicionar aos Favoritos"}
-                        >
-                            <Star 
-                                size={16} 
-                                className={`transition-all duration-300 ${favorites.includes(activeEvent.id) ? 'text-yellow-400 drop-shadow-[0_0_5px_rgba(250,204,21,0.4)]' : 'text-slate-400'}`}
-                                fill={favorites.includes(activeEvent.id) ? "#facc15" : "none"}
-                            />
-                        </button>
-                    )}
+                    {(() => {
+                        const isEventFavorited = favorites.includes(activeEvent.id) || (activeEvent._allIds && activeEvent._allIds.some(id => favorites.includes(id)));
+                        return (
+                            <button 
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleFavorite(activeEvent.id);
+                                }}
+                                className={`flex shrink-0 items-center justify-center w-8 h-8 rounded-full transition-all duration-300 cursor-pointer ${isEventFavorited ? 'bg-slate-800 border border-amber-500/40 shadow-[0_0_10px_rgba(245,158,11,0.2)]' : 'bg-slate-800/50 border border-transparent hover:bg-slate-700'}`}
+                                title={isEventFavorited ? "Remover dos Favoritos" : "Adicionar aos Favoritos"}
+                            >
+                                <Star 
+                                    size={16} 
+                                    className={`transition-all duration-300 ${isEventFavorited ? 'text-amber-400 drop-shadow-[0_0_5px_rgba(251,191,36,0.5)]' : 'text-slate-400'}`}
+                                    fill={isEventFavorited ? "#fbbf24" : "none"}
+                                />
+                            </button>
+                        );
+                    })()}
                 </div>
 
                 {isMultiDay ? (

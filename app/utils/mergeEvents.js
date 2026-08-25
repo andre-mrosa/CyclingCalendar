@@ -51,6 +51,7 @@ export function mergeEvents(events) {
         
         if (duplicates.length > 1) {
             bestEvent = { ...bestEvent };
+            bestEvent._allIds = duplicates.map(d => d.id);
             const allExtraLinks = [];
             const allEscaloes = new Set();
             
@@ -69,6 +70,8 @@ export function mergeEvents(events) {
             
             if (allEscaloes.size > 0) bestEvent.escaloes = Array.from(allEscaloes);
             bestEvent._mergedSources = duplicates.map(d => d.source);
+        } else {
+            bestEvent._allIds = [bestEvent.id];
         }
 
         merged.push(bestEvent);

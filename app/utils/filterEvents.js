@@ -15,7 +15,9 @@ export function filterEvents(events, filters) {
     } = filters;
 
     if (filterByFavorites && favorites) {
-        filtered = filtered.filter(event => favorites.includes(event.id));
+        filtered = filtered.filter(event => 
+            favorites.includes(event.id) || (event._allIds && event._allIds.some(id => favorites.includes(id)))
+        );
     }
     
     if (searchTerm) {
