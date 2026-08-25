@@ -241,9 +241,9 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
             });
             const data = await res.json();
             
-            if (res.ok) {
+            if (res.ok && data.success) {
                 const isExists = data.message === 'exists';
-                const successMsg = isExists ? 'Já existe no calendário!' : 'Adicionado com sucesso!';
+                const successMsg = isExists ? 'Já no calendário' : 'Marcado!';
                 
                 if (target === 'registration_open') {
                     setRegOpenCalStatus(isExists ? 'exists' : 'success');
@@ -253,7 +253,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                     setRegCloseCalMsg(successMsg);
                 } else {
                     setCalendarStatus(isExists ? 'exists' : 'success');
-                    setCalendarMsg(successMsg);
+                    setCalendarMsg(isExists ? 'Já no calendário!' : 'Adicionado com sucesso!');
                 }
             } else {
                 const errMsg = data.error || 'Erro ao adicionar ao calendário';
@@ -270,15 +270,16 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
             }
         } catch (error) {
             console.error("Error adding to calendar:", error);
+            const errMsg = error?.message || 'Erro de rede';
             if (target === 'registration_open') {
                 setRegOpenCalStatus('error');
-                setRegOpenCalMsg('Erro de rede');
+                setRegOpenCalMsg(errMsg);
             } else if (target === 'registration_close') {
                 setRegCloseCalStatus('error');
-                setRegCloseCalMsg('Erro de rede');
+                setRegCloseCalMsg(errMsg);
             } else {
                 setCalendarStatus('error');
-                setCalendarMsg('Erro de rede');
+                setCalendarMsg(errMsg);
             }
         } finally {
             if (target === 'event') {
@@ -612,9 +613,11 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                             className={`shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
                                                 regOpenCalStatus === 'success' || regOpenCalStatus === 'exists'
                                                     ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 cursor-default'
+                                                    : regOpenCalStatus === 'error'
+                                                    ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30'
                                                     : 'bg-white hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 text-blue-600 dark:text-blue-400 border border-slate-200 dark:border-slate-700 shadow-sm'
                                             } ${regOpenCalStatus === 'loading' ? 'opacity-70 cursor-default' : ''}`}
-                                            title="Avisar no Google Calendar (1 dia antes e 1 hora antes)"
+                                            title={regOpenCalMsg || "Avisar no Google Calendar (1 dia antes e 1 hora antes)"}
                                         >
                                             {regOpenCalStatus === 'loading' ? (
                                                 <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
@@ -623,7 +626,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                             ) : (
                                                 <CalendarPlus size={13} />
                                             )}
-                                            <span>{regOpenCalStatus === 'success' ? 'Marcado!' : regOpenCalStatus === 'exists' ? 'Marcado ✓' : 'Lembrar abertura'}</span>
+                                            <span>{regOpenCalStatus === 'success' ? 'Marcado!' : regOpenCalStatus === 'exists' ? 'Marcado ✓' : regOpenCalStatus === 'error' ? (regOpenCalMsg || 'Erro!') : 'Lembrar abertura'}</span>
                                         </button>
                                     )}
                                 </div>
@@ -649,9 +652,11 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                             className={`shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
                                                 regCloseCalStatus === 'success' || regCloseCalStatus === 'exists'
                                                     ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 cursor-default'
+                                                    : regCloseCalStatus === 'error'
+                                                    ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30'
                                                     : 'bg-white hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 text-blue-600 dark:text-blue-400 border border-slate-200 dark:border-slate-700 shadow-sm'
                                             } ${regCloseCalStatus === 'loading' ? 'opacity-70 cursor-default' : ''}`}
-                                            title="Avisar no Google Calendar (1 dia antes e 1 hora antes)"
+                                            title={regCloseCalMsg || "Avisar no Google Calendar (1 dia antes e 1 hora antes)"}
                                         >
                                             {regCloseCalStatus === 'loading' ? (
                                                 <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
@@ -660,7 +665,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                             ) : (
                                                 <CalendarPlus size={13} />
                                             )}
-                                            <span>{regCloseCalStatus === 'success' ? 'Marcado!' : regCloseCalStatus === 'exists' ? 'Marcado ✓' : 'Lembrar fecho'}</span>
+                                            <span>{regCloseCalStatus === 'success' ? 'Marcado!' : regCloseCalStatus === 'exists' ? 'Marcado ✓' : regCloseCalStatus === 'error' ? (regCloseCalMsg || 'Erro!') : 'Lembrar fecho'}</span>
                                         </button>
                                     )}
                                 </div>

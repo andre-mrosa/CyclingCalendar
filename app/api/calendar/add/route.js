@@ -1,5 +1,6 @@
 import { auth, getAuth, verifyToken, clerkClient } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
+import { prisma } from '@/app/lib/db';
 
 function parsePtDate(dateStr) {
     if (!dateStr || typeof dateStr !== 'string') return null;
@@ -148,6 +149,20 @@ export async function POST(req) {
             return NextResponse.json({ error: 'Dados do evento em falta' }, { status: 400 });
         }
 
+        // Carregar dados completos da base de dados caso disponíveis
+        let dbEvent = null;
+        try {
+            if (event.id) {
+                dbEvent = await prisma.event.findUnique({
+                    where: { id: event.id.toString() }
+                });
+            }
+        } catch (e) {
+            console.warn("Não foi possível carregar dbEvent para o calendário:", e);
+        }
+
+        const fullEvent = { ...event, ...(dbEvent || {}) };
+
         let token;
         try {
             const client = typeof clerkClient === 'function' ? await clerkClient() : clerkClient;
@@ -175,24 +190,28 @@ export async function POST(req) {
         const targetCalendarId = await getTargetCalendarId(token);
 
         let location = 'Portugal';
-        if (event.details && event.details !== 'A definir') {
-            location = event.details.split('|')[0] + ', Portugal';
-        } else if (event.location && event.location !== 'A definir') {
-            location = event.location + ', Portugal';
+        if (fullEvent.details && fullEvent.details !== 'A definir') {
+            location = fullEvent.details.split('|')[0] + ', Portugal';
+        } else if (fullEvent.location && fullEvent.location !== 'A definir') {
+            location = fullEvent.location + ', Portugal';
         }
 
         // Helper para criar ou verificar evento
         const createOrCheckEvent = async (gEvent, eventIdentifier) => {
-            const checkUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(targetCalendarId)}/events?privateExtendedProperty=cyclingCalendarEventId=${encodeURIComponent(eventIdentifier)}`;
-            const checkRes = await fetch(checkUrl, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            try {
+                const checkUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(targetCalendarId)}/events?privateExtendedProperty=cyclingCalendarEventId=${encodeURIComponent(eventIdentifier)}`;
+                const checkRes = await fetch(checkUrl, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
 
-            if (checkRes.ok) {
-                const checkData = await checkRes.json();
-                if (checkData.items && checkData.items.length > 0) {
-                    return { success: true, message: 'exists' };
+                if (checkRes.ok) {
+                    const checkData = await checkRes.json();
+                    if (checkData.items && checkData.items.length > 0) {
+                        return { success: true, message: 'exists' };
+                    }
                 }
+            } catch (e) {
+                console.warn("Erro a verificar se evento existe:", e);
             }
 
             const createRes = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(targetCalendarId)}/events`, {
@@ -210,58 +229,70 @@ export async function POST(req) {
                 if (createRes.status === 401 || createRes.status === 403) {
                     throw new Error('AUTH_EXPIRED');
                 }
-                return { error: 'Erro ao criar evento no calendário' };
+                let cleanMsg = 'Erro ao criar evento no calendário';
+                try {
+                    const parsedErr = JSON.parse(err);
+                    if (parsedErr.error?.message) cleanMsg = parsedErr.error.message;
+                } catch {
+                    cleanMsg = err;
+                }
+                throw new Error(cleanMsg);
             }
 
             return { success: true, message: 'created' };
         };
 
-        // Helper para montar payload de data/hora
+        // Helper para montar payload de data/hora (sempre como dateTime para suportar lembretes precisos)
         const buildDatePayload = (dateValue) => {
             if (!dateValue) return null;
-            const d = new Date(dateValue);
+            let d = dateValue instanceof Date ? dateValue : new Date(dateValue);
+            if (isNaN(d.getTime())) {
+                const parsedIso = parsePtDate(String(dateValue));
+                if (parsedIso) d = new Date(parsedIso);
+            }
             if (isNaN(d.getTime())) return null;
 
             const str = String(dateValue);
-            const hasExplicitTime = str.includes('T') && (d.getUTCHours() !== 0 || d.getUTCMinutes() !== 0);
+            const isMidnight = (d.getUTCHours() === 0 && d.getUTCMinutes() === 0) && (!str.includes('T') || str.includes('00:00:00'));
 
-            if (hasExplicitTime) {
-                const startIso = d.toISOString();
-                const endIso = new Date(d.getTime() + 60 * 60 * 1000).toISOString();
-                return {
-                    start: { dateTime: startIso, timeZone: 'Europe/Lisbon' },
-                    end: { dateTime: endIso, timeZone: 'Europe/Lisbon' }
-                };
+            let startIso, endIso;
+            if (isMidnight) {
+                const y = d.getUTCFullYear();
+                const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+                const day = String(d.getUTCDate()).padStart(2, '0');
+                startIso = `${y}-${m}-${day}T09:00:00Z`;
+                endIso = `${y}-${m}-${day}T10:00:00Z`;
             } else {
-                const dateStr = d.toISOString().split('T')[0];
-                const nextD = new Date(d);
-                nextD.setDate(nextD.getDate() + 1);
-                return {
-                    start: { date: dateStr },
-                    end: { date: nextD.toISOString().split('T')[0] }
-                };
+                startIso = d.toISOString();
+                endIso = new Date(d.getTime() + 60 * 60 * 1000).toISOString();
             }
+
+            return {
+                start: { dateTime: startIso },
+                end: { dateTime: endIso }
+            };
         };
 
         // CASO 1: Abertura das Inscrições
         if (target === 'registration_open') {
-            if (!event.registrationOpensAt) {
+            const rawDate = fullEvent.registrationOpensAt;
+            if (!rawDate) {
                 return NextResponse.json({ error: 'A data de abertura das inscrições ainda não foi definida para este evento.' }, { status: 400 });
             }
 
-            const datePayload = buildDatePayload(event.registrationOpensAt);
+            const datePayload = buildDatePayload(rawDate);
             if (!datePayload) {
                 return NextResponse.json({ error: 'Formato de data de abertura inválido.' }, { status: 400 });
             }
 
             const gEvent = {
-                summary: `📝 Abertura Inscrições: ${event.title}`,
-                description: `Abertura oficial das inscrições para ${event.title}.\n\nInscrições e regulamento: ${event.link || 'https://cyclingcalendar.pt'}\nOrganização: ${event.organizador || event.source || '-'}`,
+                summary: `📝 Abertura Inscrições: ${fullEvent.title}`,
+                description: `Abertura oficial das inscrições para ${fullEvent.title}.\n\nInscrições e regulamento: ${fullEvent.link || 'https://cyclingcalendar.pt'}\nOrganização: ${fullEvent.organizador || fullEvent.source || '-'}`,
                 location: location,
                 ...datePayload,
                 extendedProperties: {
                     private: {
-                        cyclingCalendarEventId: `${event.id}_reg_open`
+                        cyclingCalendarEventId: `${fullEvent.id}_reg_open`
                     }
                 },
                 reminders: {
@@ -275,29 +306,30 @@ export async function POST(req) {
                 }
             };
 
-            const result = await createOrCheckEvent(gEvent, `${event.id}_reg_open`);
+            const result = await createOrCheckEvent(gEvent, `${fullEvent.id}_reg_open`);
             return NextResponse.json({ ...result, calendar: targetCalendarId, target: 'registration_open' });
         }
 
         // CASO 2: Fecho das Inscrições
         if (target === 'registration_close') {
-            if (!event.registrationClosesAt) {
+            const rawDate = fullEvent.registrationClosesAt;
+            if (!rawDate) {
                 return NextResponse.json({ error: 'A data de fecho das inscrições ainda não foi definida para este evento.' }, { status: 400 });
             }
 
-            const datePayload = buildDatePayload(event.registrationClosesAt);
+            const datePayload = buildDatePayload(rawDate);
             if (!datePayload) {
                 return NextResponse.json({ error: 'Formato de data de fecho inválido.' }, { status: 400 });
             }
 
             const gEvent = {
-                summary: `⏳ Fecho Inscrições: ${event.title}`,
-                description: `Último dia para inscrições no evento: ${event.title}.\n\nInscrever agora: ${event.link || 'https://cyclingcalendar.pt'}\nOrganização: ${event.organizador || event.source || '-'}`,
+                summary: `⏳ Fecho Inscrições: ${fullEvent.title}`,
+                description: `Último dia para inscrições no evento: ${fullEvent.title}.\n\nInscrever agora: ${fullEvent.link || 'https://cyclingcalendar.pt'}\nOrganização: ${fullEvent.organizador || fullEvent.source || '-'}`,
                 location: location,
                 ...datePayload,
                 extendedProperties: {
                     private: {
-                        cyclingCalendarEventId: `${event.id}_reg_close`
+                        cyclingCalendarEventId: `${fullEvent.id}_reg_close`
                     }
                 },
                 reminders: {
@@ -311,13 +343,13 @@ export async function POST(req) {
                 }
             };
 
-            const result = await createOrCheckEvent(gEvent, `${event.id}_reg_close`);
+            const result = await createOrCheckEvent(gEvent, `${fullEvent.id}_reg_close`);
             return NextResponse.json({ ...result, calendar: targetCalendarId, target: 'registration_close' });
         }
 
         // CASO 3: Prova (Dia do Evento - default)
-        const startDateStr = parsePtDate(event.date);
-        let endDateStr = parsePtDate(event.endDate) || startDateStr;
+        const startDateStr = parsePtDate(fullEvent.date);
+        let endDateStr = parsePtDate(fullEvent.endDate) || startDateStr;
 
         if (!startDateStr) {
             return NextResponse.json({ error: 'Não é possível marcar este evento porque a data ainda não está definida ou foi adiada.' }, { status: 400 });
@@ -328,28 +360,28 @@ export async function POST(req) {
         endDateStr = endDt.toISOString().split('T')[0];
 
         const gEvent = {
-            summary: `🚴 ${event.title}`,
-            description: `Mais informações: ${event.link || 'App Cycling Calendar'}\n\nEscalão: ${event.escalao || '-'}\nÂmbito: ${event.ambito || '-'}`,
+            summary: `🚴 ${fullEvent.title}`,
+            description: `Mais informações: ${fullEvent.link || 'App Cycling Calendar'}\n\nEscalão: ${fullEvent.escalao || '-'}\nÂmbito: ${fullEvent.ambito || '-'}`,
             location: location,
             start: { date: startDateStr },
             end: { date: endDateStr },
             extendedProperties: {
                 private: {
-                    cyclingCalendarEventId: event.id.toString()
+                    cyclingCalendarEventId: fullEvent.id.toString()
                 }
             },
             reminders: {
                 useDefault: false,
                 overrides: [
-                    // 2 dias antes às 10:00h
-                    { method: 'popup', minutes: 2280 },
-                    // 1 semana antes às 10:00h
-                    { method: 'popup', minutes: 9480 }
+                    // 2 dias antes (2880 min)
+                    { method: 'popup', minutes: 2880 },
+                    // 1 semana antes (10080 min)
+                    { method: 'popup', minutes: 10080 }
                 ]
             }
         };
 
-        const result = await createOrCheckEvent(gEvent, event.id.toString());
+        const result = await createOrCheckEvent(gEvent, fullEvent.id.toString());
         return NextResponse.json({ ...result, calendar: targetCalendarId, target: 'event' });
 
     } catch (error) {
