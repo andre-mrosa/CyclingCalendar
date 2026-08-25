@@ -191,9 +191,48 @@ export default function Navigation() {
                             </div>
                         </Show>
                         <Show when="signed-in">
-                            <div className="flex items-center gap-3 py-2 text-slate-900 dark:text-slate-50 font-medium">
-                                <UserButton />
-                                <span className="text-sm font-semibold">A minha conta</span>
+                            <div 
+                                className="flex items-center gap-3 py-2 px-1 rounded-xl text-slate-900 dark:text-slate-50 font-medium cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors"
+                                onClick={(e) => {
+                                    const trigger = e.currentTarget.querySelector('button');
+                                    if (trigger && !e.target.closest('button')) {
+                                        trigger.click();
+                                    }
+                                }}
+                            >
+                                <UserButton 
+                                    appearance={{
+                                        elements: {
+                                            avatarBox: {
+                                                width: '32px',
+                                                height: '32px'
+                                            },
+                                            userPreviewAvatarContainer: {
+                                                display: 'none'
+                                            }
+                                        }
+                                    }}
+                                >
+                                    <UserButton.MenuItems>
+                                        <UserButton.Action 
+                                            label="Definições"
+                                            labelIcon={<Settings size={16} className="mr-2" />}
+                                            onClick={() => {
+                                                setIsMobileMenuOpen(false);
+                                                setIsSettingsModalOpen(true);
+                                            }}
+                                        />
+                                        <UserButton.Action 
+                                            label="Ajuda"
+                                            labelIcon={<HelpCircle size={16} className="mr-2" />}
+                                            onClick={() => {
+                                                setIsMobileMenuOpen(false);
+                                                setIsHelpModalOpen(true);
+                                            }}
+                                        />
+                                    </UserButton.MenuItems>
+                                </UserButton>
+                                <span className="text-sm font-semibold select-none flex-1">A minha conta</span>
                             </div>
                         </Show>
                     </div>
