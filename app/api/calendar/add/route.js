@@ -230,6 +230,6 @@ export async function POST(req) {
 
     } catch (error) {
         console.error("Calendar API Error:", error);
-        return NextResponse.json({ error: 'Erro interno ao processar pedido de calendário' }, { status: 500 });
+        return NextResponse.json({ error: error?.message || 'Erro interno ao processar pedido de calendário' }, { status: 500 });
     }
 }
