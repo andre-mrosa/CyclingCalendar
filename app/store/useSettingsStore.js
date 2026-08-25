@@ -6,16 +6,11 @@ export const useSettingsStore = create(
         (set) => ({
             defaultEscalao: 'Todos',
             defaultRegiao: 'Todas',
-            useCurrentMonth: false,
             selectedSources: ['FPC', 'Cabreira'],
             hiddenTabs: [],
 
             setDefaultEscalao: (val) => set({ defaultEscalao: val }),
             setDefaultRegiao: (val) => set({ defaultRegiao: val }),
-            
-            toggleUseCurrentMonth: () => set((state) => ({ 
-                useCurrentMonth: !state.useCurrentMonth 
-            })),
             
             toggleSource: (source) => set((state) => {
                 const newSources = state.selectedSources.includes(source)

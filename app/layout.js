@@ -54,6 +54,7 @@ export const viewport = {
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import WelcomeModal from "./components/WelcomeModal";
+import CookieBanner from "./components/CookieBanner";
 
 export default function RootLayout({ children }) {
   return (
@@ -67,6 +68,7 @@ export default function RootLayout({ children }) {
             </main>
             <Footer />
             <WelcomeModal />
+            <CookieBanner />
             <Analytics />
             <SpeedInsights />
           </ThemeClerkProvider>

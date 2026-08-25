@@ -30,7 +30,6 @@ export default function CalendarView({
     const { 
         defaultEscalao, 
         defaultRegiao,
-        useCurrentMonth,
         selectedSources 
     } = useSettingsStore();
     
@@ -49,6 +48,7 @@ export default function CalendarView({
     const [selectedTags, setSelectedTags] = useState([]);
     const [showFilters, setShowFilters] = useState(false);
     const [selectedType, setSelectedType] = useState('Todos');
+    const [hidePastEvents, setHidePastEvents] = useState(false);
     const [visibleCount, setVisibleCount] = useState(16);
     const [selectedEvent, setSelectedEvent] = useState(null);
     const loaderRef = useRef(null);
@@ -70,11 +70,7 @@ export default function CalendarView({
         if (defaultRegiao && applyDefaultRegiao) {
             setSelectedRegiao(defaultRegiao);
         }
-        if (useCurrentMonth) {
-            const currentMonth = new Date().getMonth() + 1;
-            setMonthFrom(currentMonth);
-        }
-    }, [defaultEscalao, defaultRegiao, useCurrentMonth, forceEscalao, forceAmbito, forceLicenca, applyDefaultRegiao]);
+    }, [defaultEscalao, defaultRegiao, forceEscalao, forceAmbito, forceLicenca, applyDefaultRegiao]);
 
     const { data: fetchedEvents, error, isLoading: loading, mutate } = useSWR(
         selectedSources && selectedSources.length > 0 
@@ -93,7 +89,7 @@ export default function CalendarView({
     }, [fetchedEvents]);
 
     useEffect(() => {
-        const filtered = filterEvents(events, {
+        let filtered = filterEvents(events, {
             filterByFavorites, favorites,
             searchTerm,
             selectedEscaloes: forceEscalao ? [forceEscalao] : selectedEscaloes,
@@ -107,9 +103,15 @@ export default function CalendarView({
             selectedType
         });
 
+        if (hidePastEvents) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            filtered = filtered.filter(e => !e.sortDate || new Date(e.sortDate) >= today);
+        }
+
         setFilteredEvents(filtered);
         setVisibleCount(16); // Reset visible count on filter change
-    }, [events, searchTerm, selectedEscaloes, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, filterByFavorites, favorites, forceEscalao, forceAmbito, forceLicenca]);
+    }, [events, searchTerm, selectedEscaloes, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, hidePastEvents, filterByFavorites, favorites, forceEscalao, forceAmbito, forceLicenca]);
 
     const uniqueEscaloes = ['Elite', 'Elite Amador', 'Sub-23', 'Sub-19 (Juniores)', 'Sub-17 (Cadetes)', 'Sub-15 (Juvenis)', 'Masters / Veteranos', 'Femininas', 'Escolas', 'Profissional (UCI)', 'Todos (Aberto)', 'Geral / Vários'];
     const uniqueAmbitos = ['Todos', ...new Set(events.map(e => e.ambito))];
@@ -161,16 +163,17 @@ export default function CalendarView({
     };
 
     const clearAllFilters = () => {
-        setSelectedEscaloes([]);
-        setSelectedAmbito('Todos');
-        setSelectedLicenca('Todas');
-        setSelectedRegiao('Todas');
+        setSelectedEscaloes(forceEscalao ? [forceEscalao] : (defaultEscalao && defaultEscalao !== 'Todos' ? [defaultEscalao] : []));
+        setSelectedAmbito(forceAmbito || 'Todos');
+        setSelectedLicenca(forceLicenca || 'Todas');
+        setSelectedRegiao((defaultRegiao && applyDefaultRegiao) ? defaultRegiao : 'Todas');
         setSelectedDistrito('Todos');
         setSelectedYears([new Date().getFullYear().toString()]);
         setMonthFrom(1);
         setMonthTo(12);
         setSelectedTags([]);
         setSelectedType('Todos');
+        setHidePastEvents(false);
         setSearchTerm('');
     };
 
@@ -210,7 +213,7 @@ export default function CalendarView({
                             {showFilters ? 'Esconder Filtros' : 'Filtrar Calendário'}
                         </button>
                         
-                        {(selectedEscaloes.length > 0 || selectedDistrito !== 'Todos' || selectedRegiao !== 'Todas' || selectedTags.length > 0 || selectedType !== 'Todos' || monthFrom !== 1 || monthTo !== 12 || searchTerm !== '') && (
+                        {(selectedEscaloes.length > 0 || selectedDistrito !== 'Todos' || selectedRegiao !== 'Todas' || selectedTags.length > 0 || selectedType !== 'Todos' || monthFrom !== 1 || monthTo !== 12 || searchTerm !== '' || hidePastEvents) && (
                             <button 
                                 onClick={clearAllFilters}
                                 title="Repor todos os filtros"
@@ -361,6 +364,18 @@ export default function CalendarView({
                                     <option value="Todos">Todos</option>
                                     <option value="Etapas">Etapas (Multi-dia)</option>
                                     <option value="Um Dia">Um Dia</option>
+                                </select>
+                            </div>
+
+                            <div className="flex flex-col gap-2">
+                                <label className="text-xs text-slate-400 uppercase tracking-wider font-bold ml-1">Eventos Passados</label>
+                                <select 
+                                    className="w-full h-9 px-3 text-sm rounded-lg border border-slate-700 bg-slate-800 text-slate-200 outline-none focus:border-blue-500 transition-colors"
+                                    value={hidePastEvents ? 'futuros' : 'todos'} 
+                                    onChange={(e) => setHidePastEvents(e.target.value === 'futuros')} 
+                                >
+                                    <option value="todos">Mostrar Todos</option>
+                                    <option value="futuros">Ocultar Passados</option>
                                 </select>
                             </div>
                             

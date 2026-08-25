@@ -10,7 +10,6 @@ export default function Conta() {
     const { 
         defaultEscalao, setDefaultEscalao,
         defaultRegiao, setDefaultRegiao,
-        useCurrentMonth, toggleUseCurrentMonth,
         selectedSources, toggleSource, reorderSources,
         hiddenTabs, toggleHiddenTab
     } = useSettingsStore();
@@ -74,18 +73,6 @@ export default function Conta() {
                         </select>
                     </div>
 
-                    <div className="flex flex-col md:flex-row md:items-center justify-between py-4 border-b border-slate-800/50 last:border-0 gap-4">
-                        <div>
-                            <h3 className="font-semibold text-slate-200 mb-1">Ocultar Eventos Passados</h3>
-                            <p className="text-sm text-slate-400">Inicia o calendário no mês atual, escondendo provas que já decorreram.</p>
-                        </div>
-                        <div 
-                            className={`w-11 h-6 shrink-0 rounded-full transition-all flex items-center px-1 cursor-pointer border ${useCurrentMonth ? 'bg-blue-500/20 border-blue-500/50 shadow-[0_0_8px_rgba(59,130,246,0.3)]' : 'bg-slate-800 border-slate-700'}`} 
-                            onClick={toggleUseCurrentMonth}
-                        >
-                            <div className={`w-4 h-4 rounded-full transition-all ${useCurrentMonth ? 'translate-x-5 bg-blue-400 shadow-[0_0_8px_rgba(59,130,246,0.8)]' : 'translate-x-0 bg-slate-500'}`}/>
-                        </div>
-                    </div>
                 </section>
 
                 <section className="bg-slate-900 border border-slate-800 rounded-xl px-6 py-4 backdrop-blur shadow-xl">
