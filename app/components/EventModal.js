@@ -550,7 +550,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 {/* Tab: INFO */}
                 {activeTab === 'info' && (
                     <div className="flex flex-col h-full animate-fade-in min-h-0">
-                        <div className="flex-1 overflow-y-auto min-h-0 pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent overscroll-contain touch-pan-y space-y-4 pb-4">
+                        <div className="flex-1 overflow-y-auto min-h-0 pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent overscroll-contain touch-pan-y">
                             {isLoadingFullEvent && (
                                 <div className="w-full h-48 sm:h-60 rounded-xl bg-slate-800/30 border border-slate-800/80 animate-pulse flex flex-col items-center justify-center gap-2 mb-2 text-slate-500">
                                     <div className="w-5 h-5 border-2 border-slate-600 border-t-blue-400 rounded-full animate-spin"></div>
@@ -566,36 +566,35 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             ) : !isLoadingFullEvent ? (
                                 <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">Descrição não disponível.</p>
                             ) : null}
-
-                            {/* Informações da Prova integradas no scroll */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-800/80">
-                                {activeEvent.licenca && (
-                                    <div className="px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200 dark:border-slate-800/80 flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
-                                            <FileText size={15} className="text-purple-500 dark:text-purple-400" />
-                                        </div>
-                                        <div className="min-w-0">
-                                            <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold block leading-tight">Licença</span>
-                                            <span className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200 truncate block">{activeEvent.licenca}</span>
-                                        </div>
+                        </div>
+                        
+                        <div className="shrink-0 mt-2 grid grid-cols-2 gap-2 pb-1">
+                            {activeEvent.licenca && (
+                                <div className="px-3 py-2 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200 dark:border-slate-800/80 flex items-center gap-2.5">
+                                    <div className="w-7 h-7 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
+                                        <FileText size={13} className="text-purple-500 dark:text-purple-400" />
                                     </div>
-                                )}
-                                {(activeEvent.organizador || activeEvent.source) && (
-                                    <div className="px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200 dark:border-slate-800/80 flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
-                                            <Users size={15} className="text-blue-500 dark:text-blue-400" />
-                                        </div>
-                                        <div className="min-w-0">
-                                            <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold block leading-tight">Organização</span>
-                                            <span className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200 truncate block">
-                                                {activeEvent.organizador 
-                                                    ? (activeEvent.organizador === 'U.V.P./F.P.C' ? 'FPC' : activeEvent.organizador) 
-                                                    : (activeEvent.source === 'Cabreira' ? 'Cabreira Solutions' : activeEvent.source)}
-                                            </span>
-                                        </div>
+                                    <div className="min-w-0">
+                                        <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold block leading-tight">Licença</span>
+                                        <span className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200 truncate block">{activeEvent.licenca}</span>
                                     </div>
-                                )}
-                            </div>
+                                </div>
+                            )}
+                            {(activeEvent.organizador || activeEvent.source) && (
+                                <div className="px-3 py-2 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200 dark:border-slate-800/80 flex items-center gap-2.5">
+                                    <div className="w-7 h-7 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
+                                        <Users size={13} className="text-blue-500 dark:text-blue-400" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold block leading-tight">Organização</span>
+                                        <span className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200 truncate block">
+                                            {activeEvent.organizador 
+                                                ? (activeEvent.organizador === 'U.V.P./F.P.C' ? 'FPC' : activeEvent.organizador) 
+                                                : (activeEvent.source === 'Cabreira' ? 'Cabreira Solutions' : activeEvent.source)}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
