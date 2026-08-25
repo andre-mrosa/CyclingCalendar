@@ -98,7 +98,7 @@ export default function Navigation() {
                     <Menu size={24} />
                 </button>
 
-                <Link href="/" className="flex items-center mr-6 no-underline group shrink-0" title="Cycling Calendar">
+                <Link href="/" className="hidden md:flex items-center mr-6 no-underline group shrink-0" title="Cycling Calendar">
                     <DynamicLogo className="w-8 h-8 rounded-lg shadow-[0_0_12px_rgba(59,130,246,0.25)] transition-transform group-hover:scale-105" />
                 </Link>
 

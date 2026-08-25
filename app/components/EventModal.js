@@ -25,6 +25,33 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
     const [showCalMenu, setShowCalMenu] = useState(false);
     const calMenuRef = useRef(null);
     const [activeTab, setActiveTab] = useState('info');
+    const [isClosing, setIsClosing] = useState(false);
+    const [isOpenAnimated, setIsOpenAnimated] = useState(false);
+
+    useEffect(() => {
+        const raf = requestAnimationFrame(() => {
+            setIsOpenAnimated(true);
+        });
+        return () => cancelAnimationFrame(raf);
+    }, []);
+
+    const closeModal = () => {
+        setIsClosing(true);
+        setTimeout(() => {
+            setSelectedEvent(null);
+            setIsClosing(false);
+        }, 260);
+    };
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
 
     const [fullEvent, setFullEvent] = useState(null);
     const [isLoadingFullEvent, setIsLoadingFullEvent] = useState(false);
@@ -351,12 +378,24 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
     const month = dateParts.find(p => monthAbbrs.includes(p.toUpperCase()))?.toUpperCase() || '';
 
     return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9000] flex items-end sm:items-center justify-center p-0 pt-8 sm:p-4 overflow-hidden animate-fade-in" onClick={() => setSelectedEvent(null)}>
-            <div className="bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-2xl w-full max-w-4xl h-[88dvh] sm:h-[86vh] max-h-[calc(100dvh-2.5rem)] sm:max-h-[86vh] flex flex-col shadow-2xl overflow-hidden relative transition-colors duration-200" onClick={(e) => e.stopPropagation()}>
+        <div 
+            className={`fixed inset-0 bg-black/80 backdrop-blur-sm z-[9000] flex items-end sm:items-center justify-center p-0 pt-8 sm:p-4 overflow-hidden transition-opacity duration-300 ${
+                isClosing || !isOpenAnimated ? 'opacity-0 pointer-events-none' : 'opacity-100'
+            }`} 
+            onClick={closeModal}
+        >
+            <div 
+                className={`bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-2xl w-full max-w-4xl h-[88dvh] sm:h-[86vh] max-h-[calc(100dvh-2.5rem)] sm:max-h-[86vh] flex flex-col shadow-2xl overflow-hidden relative transition-all duration-300 ease-out transform ${
+                    isClosing || !isOpenAnimated 
+                        ? 'translate-y-full sm:translate-y-6 sm:scale-95 sm:opacity-0' 
+                        : 'translate-y-0 sm:scale-100 sm:opacity-100'
+                }`} 
+                onClick={(e) => e.stopPropagation()}
+            >
                 
                 {/* Mobile Drag / Dismiss Handle */}
                 <button 
-                    onClick={() => setSelectedEvent(null)}
+                    onClick={closeModal}
                     className="w-full pt-2.5 pb-1 flex items-center justify-center sm:hidden shrink-0 group cursor-pointer border-none bg-transparent active:opacity-60 transition-opacity"
                     title="Fechar"
                 >
@@ -406,7 +445,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         })()}
                         <button 
                             className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors p-1.5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 cursor-pointer" 
-                            onClick={() => setSelectedEvent(null)} 
+                            onClick={closeModal} 
                             title="Fechar"
                         >
                             <X size={17} />
@@ -434,7 +473,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                 {/* Desktop Header (hidden sm:flex) */}
                 <div className="hidden sm:flex items-center justify-start gap-3.5 pr-12 p-5 pb-2 min-w-0 shrink-0">
-                    <button className="absolute top-4 right-4 text-slate-400 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors z-10 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer" onClick={() => setSelectedEvent(null)} title="Fechar">
+                    <button className="absolute top-4 right-4 text-slate-400 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors z-10 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer" onClick={closeModal} title="Fechar">
                         <X size={20} />
                     </button>
                     <div className="flex flex-col shrink-0 w-[54px] h-[54px] bg-slate-100 dark:bg-slate-950 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
