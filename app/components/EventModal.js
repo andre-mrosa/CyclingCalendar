@@ -74,7 +74,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
         if (bannerMatch) {
             fpcBannerHtml = bannerMatch[0]
                 .replace(/style="[^"]*"/g, '')
-                .replace(/<img /g, '<img class="max-h-[300px] sm:max-h-[340px] w-auto max-w-full rounded-xl mx-auto object-contain shadow-md border border-slate-800" ');
+                .replace(/<img /g, '<img title="Clica para ampliar o cartaz" class="max-h-[440px] sm:max-h-[480px] w-auto max-w-full rounded-xl mx-auto object-contain shadow-lg border border-slate-800 cursor-zoom-in hover:scale-[1.01] transition-transform" ');
             programaCleanHtml = programaContentFull.replace(bannerMatch[0], '');
         }
     }
@@ -200,6 +200,8 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
     const rawDate = activeEvent.date || '';
     const isMultiDay = rawDate.includes(',') || rawDate.includes(' e ') || rawDate.includes(' a ');
     const dateParts = rawDate.split(' ');
+    const monthAbbrs = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+    const day = dateParts[0] ? dateParts[0].replace(/,/g, '') : '';
     const month = dateParts.find(p => monthAbbrs.includes(p.toUpperCase()))?.toUpperCase() || '';
 
     return (
@@ -324,7 +326,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             )}
 
                             {fpcBannerHtml && !isLoadingFullEvent && (
-                                <div className="mb-2 text-center" dangerouslySetInnerHTML={{ __html: fpcBannerHtml }} />
+                                <div className="mb-2 text-center" dangerouslySetInnerHTML={{ __html: fpcBannerHtml }} onClick={handleHtmlClick} />
                             )}
                             {activeEvent.description ? (
                                 <div className="text-slate-300 text-xs sm:text-sm leading-relaxed prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: activeEvent.description }} />
