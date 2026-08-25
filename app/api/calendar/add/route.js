@@ -242,7 +242,7 @@ export async function POST(req) {
             return { success: true, message: 'created' };
         };
 
-        // Helper para montar payload de data/hora (sempre como dateTime para suportar lembretes precisos)
+        // Helper para montar payload de data/hora (sempre como dateTime local em Europe/Lisbon)
         const buildDatePayload = (dateValue) => {
             if (!dateValue) return null;
             let d = dateValue instanceof Date ? dateValue : new Date(dateValue);
@@ -252,24 +252,36 @@ export async function POST(req) {
             }
             if (isNaN(d.getTime())) return null;
 
-            const str = String(dateValue);
-            const isMidnight = (d.getUTCHours() === 0 && d.getUTCMinutes() === 0) && (!str.includes('T') || str.includes('00:00:00'));
+            // Os dígitos da hora portuguesa foram gravados no banco em UTC
+            const y = d.getUTCFullYear();
+            const m = d.getUTCMonth();
+            const day = d.getUTCDate();
+            let hh = d.getUTCHours();
+            const mm = d.getUTCMinutes();
+            const ss = d.getUTCSeconds();
 
-            let startIso, endIso;
+            const isMidnight = (hh === 0 && mm === 0 && ss === 0);
             if (isMidnight) {
-                const y = d.getUTCFullYear();
-                const m = String(d.getUTCMonth() + 1).padStart(2, '0');
-                const day = String(d.getUTCDate()).padStart(2, '0');
-                startIso = `${y}-${m}-${day}T09:00:00Z`;
-                endIso = `${y}-${m}-${day}T10:00:00Z`;
-            } else {
-                startIso = d.toISOString();
-                endIso = new Date(d.getTime() + 60 * 60 * 1000).toISOString();
+                hh = 9; // Se não tiver hora definida, marca para as 09:00 de Lisboa
             }
 
+            const startDate = new Date(Date.UTC(y, m, day, hh, mm, ss));
+            const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+
+            const pad = (n) => String(n).padStart(2, '0');
+
+            const startLocal = `${startDate.getUTCFullYear()}-${pad(startDate.getUTCMonth() + 1)}-${pad(startDate.getUTCDate())}T${pad(startDate.getUTCHours())}:${pad(startDate.getUTCMinutes())}:${pad(startDate.getUTCSeconds())}`;
+            const endLocal = `${endDate.getUTCFullYear()}-${pad(endDate.getUTCMonth() + 1)}-${pad(endDate.getUTCDate())}T${pad(endDate.getUTCHours())}:${pad(endDate.getUTCMinutes())}:${pad(endDate.getUTCSeconds())}`;
+
             return {
-                start: { dateTime: startIso },
-                end: { dateTime: endIso }
+                start: {
+                    dateTime: startLocal,
+                    timeZone: 'Europe/Lisbon'
+                },
+                end: {
+                    dateTime: endLocal,
+                    timeZone: 'Europe/Lisbon'
+                }
             };
         };
 
