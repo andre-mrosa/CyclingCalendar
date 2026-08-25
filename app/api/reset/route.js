@@ -1,4 +1,4 @@
-import prisma from '@/app/lib/db';
+import { prisma } from '@/app/lib/db';
 
 export async function GET() {
     await prisma.event.updateMany({
