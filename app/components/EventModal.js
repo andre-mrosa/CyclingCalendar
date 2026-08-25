@@ -231,34 +231,36 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             />
                         </a>
                     )}
-                    <h2 className="text-base sm:text-xl font-bold text-white m-0 min-w-0 flex-1 truncate">
-                        {activeEvent.logo ? (
-                            <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="text-inherit no-underline hover:text-blue-400 transition-colors truncate block">
-                                {activeEvent.title}
-                            </a>
-                        ) : (
-                            <span className="text-white truncate block">{activeEvent.title}</span>
-                        )}
-                    </h2>
-                    {(() => {
-                        const isEventFavorited = favorites.includes(activeEvent.id) || (activeEvent._allIds && activeEvent._allIds.some(id => favorites.includes(id)));
-                        return (
-                            <button 
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    toggleFavorite(activeEvent.id);
-                                }}
-                                className={`flex shrink-0 items-center justify-center w-8 h-8 rounded-full transition-all duration-200 cursor-pointer ${isEventFavorited ? 'bg-amber-400/15 border border-amber-500/40 text-amber-400' : 'bg-slate-800/80 border border-slate-700/80 text-slate-400 hover:text-slate-200'}`}
-                                title={isEventFavorited ? "Remover dos Favoritos" : "Adicionar aos Favoritos"}
-                            >
-                                <Star 
-                                    size={15} 
-                                    className="transition-transform"
-                                    fill={isEventFavorited ? "#fbbf24" : "none"}
-                                />
-                            </button>
-                        );
-                    })()}
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <h2 className="text-base sm:text-xl font-bold text-white m-0 truncate">
+                            {activeEvent.logo ? (
+                                <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="text-inherit no-underline hover:text-blue-400 transition-colors truncate">
+                                    {activeEvent.title}
+                                </a>
+                            ) : (
+                                <span className="text-white truncate">{activeEvent.title}</span>
+                            )}
+                        </h2>
+                        {(() => {
+                            const isEventFavorited = favorites.includes(activeEvent.id) || (activeEvent._allIds && activeEvent._allIds.some(id => favorites.includes(id)));
+                            return (
+                                <button 
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        toggleFavorite(activeEvent.id);
+                                    }}
+                                    className={`flex shrink-0 items-center justify-center w-7 h-7 rounded-full transition-all cursor-pointer ${isEventFavorited ? 'bg-amber-400/15 border border-amber-500/40 text-amber-400' : 'bg-slate-800/80 border border-slate-700/80 text-slate-400 hover:text-slate-200 hover:bg-slate-700'}`}
+                                    title={isEventFavorited ? "Remover dos Favoritos" : "Adicionar aos Favoritos"}
+                                >
+                                    <Star 
+                                        size={14} 
+                                        className="transition-transform"
+                                        fill={isEventFavorited ? "#fbbf24" : "none"}
+                                    />
+                                </button>
+                            );
+                        })()}
+                    </div>
                 </div>
 
                 {isMultiDay && (
