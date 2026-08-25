@@ -12,23 +12,24 @@ export default function Favoritos() {
 
     if (!isLoaded) {
         return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
-                <div className="spinner"></div>
+            <div className="flex justify-center items-center h-[50vh]">
+                <div className="w-8 h-8 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin"></div>
             </div>
         );
     }
 
     if (!isSignedIn) {
         return (
-            <div className="app-container" style={{ padding: '2rem', textAlign: 'center', marginTop: '4rem' }}>
-                <Star size={64} color="var(--text-secondary)" style={{ marginBottom: '1.5rem', opacity: 0.5 }} />
-                <h1 style={{ fontSize: '2rem', marginBottom: '1rem', color: 'var(--text-primary)' }}>Favoritos</h1>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', maxWidth: '500px', margin: '0 auto 2rem' }}>
+            <div className="max-w-xl mx-auto py-16 px-4 text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 mb-6">
+                    <Star size={32} className="text-amber-400 opacity-60" />
+                </div>
+                <h1 className="text-3xl font-bold text-white mb-3">Favoritos</h1>
+                <p className="text-slate-400 text-base leading-relaxed mb-6">
                     Inicia sessão para guardares as provas que não queres perder. Os teus favoritos serão sincronizados em todos os teus dispositivos.
                 </p>
-                <div style={{ display: 'flex', justifyContent: 'center' }}>
-                    {/* The SignIn button is handled in the Navigation bar, so we can just prompt them or show a native clerk button */}
-                    <p style={{ fontSize: '0.9rem', color: 'var(--accent-primary)', fontWeight: 'bold' }}>
+                <div className="p-4 bg-slate-900 border border-slate-800 rounded-xl inline-block">
+                    <p className="text-sm text-blue-400 font-semibold m-0">
                         ↑ Usa o botão de "Entrar" no topo da página.
                     </p>
                 </div>
@@ -38,13 +39,15 @@ export default function Favoritos() {
 
     if (favorites.length === 0) {
         return (
-            <div className="app-container" style={{ padding: '2rem', textAlign: 'center', marginTop: '4rem' }}>
-                <Star size={64} color="#eab308" style={{ marginBottom: '1.5rem', opacity: 0.8 }} />
-                <h1 style={{ fontSize: '2.5rem', marginBottom: '1rem', color: 'var(--text-primary)' }}>Ainda não tens favoritos</h1>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', maxWidth: '600px', margin: '0 auto 2rem', lineHeight: '1.5' }}>
+            <div className="max-w-xl mx-auto py-16 px-4 text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 mb-6">
+                    <Star size={32} className="text-amber-400" />
+                </div>
+                <h1 className="text-3xl font-bold text-white mb-3">Ainda não tens favoritos</h1>
+                <p className="text-slate-400 text-base leading-relaxed mb-8">
                     Navega pelo calendário e clica na Estrela ⭐ ao lado do nome de qualquer prova para a guardares aqui.
                 </p>
-                <Link href="/" className="modal-btn primary" style={{ display: 'inline-flex', padding: '0.75rem 2rem' }}>
+                <Link href="/" className="inline-flex items-center justify-center px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-xl transition-colors shadow-lg shadow-blue-500/20">
                     Explorar Calendário
                 </Link>
             </div>

@@ -204,7 +204,7 @@ export default function CalendarView({
     }, [filteredEvents.length, visibleCount]);
 
     return (
-        <div className="bg-[#0B1120] min-h-screen text-slate-50 pt-8 pb-12 px-4 sm:px-8">
+        <div className="bg-slate-950 min-h-screen text-slate-100 pt-8 pb-12 px-4 sm:px-8">
             <div className="w-full max-w-6xl mx-auto">
             <header className="mb-8">
                 <div className="flex justify-between items-center w-full gap-4 flex-wrap">

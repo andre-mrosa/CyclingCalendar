@@ -16,8 +16,8 @@ export default function Ajuda() {
     };
 
     return (
-        <div className="min-h-screen p-8 bg-slate-900 backdrop-blur border border-white/10 text-slate-300">
-            <header className="mb-8 text-center">
+        <div className="p-8 text-slate-300">
+            <header className="mb-10 text-center">
                 <h1 className="text-4xl mb-2 font-bold text-white">Central de Ajuda</h1>
                 <p className="text-lg text-slate-400">
                     Usa os nossos assistentes para descobrir a tua associação ou calcular o teu escalão oficial.
