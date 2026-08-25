@@ -539,9 +539,9 @@ export default function CalendarView({
                                 if (isEventMarked) {
                                     cardBorderAndBg = 'border-emerald-500/70 dark:border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.12)] bg-emerald-500/[0.02] dark:bg-emerald-500/[0.04]';
                                 } else if (dateConflict.hasConflict) {
-                                    cardBorderAndBg = 'border-amber-500/70 dark:border-amber-500/60 shadow-[0_0_15px_rgba(245,158,11,0.12)] bg-amber-500/[0.02] dark:bg-amber-500/[0.04]';
+                                    cardBorderAndBg = 'border-orange-500/80 dark:border-orange-500/70 shadow-[0_0_15px_rgba(249,115,22,0.16)] bg-orange-500/[0.03] dark:bg-orange-500/[0.05]';
                                 } else if (isEventFavorited) {
-                                    cardBorderAndBg = 'border-amber-500/50 shadow-[0_0_12px_rgba(245,158,11,0.08)]';
+                                    cardBorderAndBg = 'border-yellow-400/70 dark:border-yellow-400/60 shadow-[0_0_15px_rgba(250,204,21,0.12)] bg-yellow-400/[0.02] dark:bg-yellow-400/[0.03]';
                                 }
 
                                 return (
@@ -570,10 +570,10 @@ export default function CalendarView({
                                                         e.stopPropagation();
                                                         toggleFavorite(event.id);
                                                     }}
-                                                    className={`p-1 rounded-full transition-all flex items-center justify-center shrink-0 cursor-pointer ${isEventFavorited ? 'text-amber-400 bg-amber-400/10 hover:bg-amber-400/20' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                                                    className={`p-1 rounded-full transition-all flex items-center justify-center shrink-0 cursor-pointer ${isEventFavorited ? 'text-yellow-500 dark:text-yellow-400 bg-yellow-400/15 hover:bg-yellow-400/25' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
                                                     title={isEventFavorited ? "Remover dos Favoritos" : "Adicionar aos Favoritos"}
                                                 >
-                                                    <Star size={14} fill={isEventFavorited ? "#fbbf24" : "none"} />
+                                                    <Star size={14} fill={isEventFavorited ? "#facc15" : "none"} stroke={isEventFavorited ? "#eab308" : "currentColor"} />
                                                 </button>
                                             </div>
                                             <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[11px] text-slate-500 dark:text-slate-400 font-medium">
@@ -599,10 +599,10 @@ export default function CalendarView({
                                             )}
                                             {dateConflict.hasConflict && !isEventMarked && (
                                                 <span 
-                                                    className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 flex items-center gap-1"
+                                                    className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-orange-500/15 text-orange-600 dark:text-orange-400 border border-orange-500/30 flex items-center gap-1"
                                                     title={`Já tens uma prova marcada neste dia: "${dateConflict.conflictingTitle}"`}
                                                 >
-                                                    <AlertTriangle size={11} className="stroke-[2.5]" /> Prova no mesmo dia
+                                                    <AlertTriangle size={11} className="stroke-[2.5] text-orange-500" /> Prova no mesmo dia
                                                 </span>
                                             )}
                                             {event.ambito && (

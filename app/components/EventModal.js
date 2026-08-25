@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Calendar, Star, X, CalendarPlus, Check, Bike, FileText, CreditCard, Trophy, Shield, Users, Globe, Clock, MapPin, ExternalLink, ChevronDown, Bell, Sparkles } from 'lucide-react';
+import { Calendar, Star, X, CalendarPlus, Check, Bike, FileText, CreditCard, Trophy, Shield, Users, Globe, Clock, MapPin, ExternalLink, ChevronDown, Bell, Sparkles, Trash2 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import SmartLogo from './SmartLogo';
 import { parsePrograma } from '../utils/parsePrograma';
@@ -14,6 +14,8 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
     const [fullscreenImage, setFullscreenImage] = useState(null);
     const [isImageZoomed, setIsImageZoomed] = useState(false);
     const [isAddingToCalendar, setIsAddingToCalendar] = useState(false);
+    const [isDeletingFromCalendar, setIsDeletingFromCalendar] = useState(false);
+    const [deleteConfirmation, setDeleteConfirmation] = useState(null); // { target, label }
     const [calendarStatus, setCalendarStatus] = useState(null); // 'success', 'exists', 'error'
     const [calendarMsg, setCalendarMsg] = useState('');
     const [regOpenCalStatus, setRegOpenCalStatus] = useState(null);
@@ -297,6 +299,45 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
             if (target === 'event') {
                 setIsAddingToCalendar(false);
             }
+        }
+    };
+
+    const handleRemoveFromCalendar = async (target = 'event') => {
+        if (!isSignedIn || !selectedEvent) return;
+        setIsDeletingFromCalendar(true);
+
+        try {
+            const res = await fetch('/api/calendar/remove', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ event: activeEvent, target })
+            });
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                if (target === 'registration_open') {
+                    setRegOpenCalStatus(null);
+                    setRegOpenCalMsg('');
+                } else if (target === 'registration_close') {
+                    setRegCloseCalStatus(null);
+                    setRegCloseCalMsg('');
+                } else {
+                    setCalendarStatus(null);
+                    setCalendarMsg('');
+                }
+
+                if (refreshCalendar) {
+                    refreshCalendar();
+                }
+                setDeleteConfirmation(null);
+            } else {
+                alert(data.error || 'Erro ao remover do calendário');
+            }
+        } catch (error) {
+            console.error("Error removing from calendar:", error);
+            alert('Erro de comunicação ao remover do calendário');
+        } finally {
+            setIsDeletingFromCalendar(false);
         }
     };
 
@@ -618,29 +659,52 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                             {activeEvent.registrationOpensAt ? formatRegDate(activeEvent.registrationOpensAt) : 'A definir'}
                                         </p>
                                     </div>
-                                    {activeEvent.registrationOpensAt && isSignedIn && (
-                                        <button 
-                                            onClick={() => handleAddToCalendar('registration_open')}
-                                            disabled={regOpenCalStatus === 'loading' || regOpenCalStatus === 'success' || regOpenCalStatus === 'exists'}
-                                            className={`shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-                                                regOpenCalStatus === 'success' || regOpenCalStatus === 'exists'
-                                                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 cursor-default'
-                                                    : regOpenCalStatus === 'error'
-                                                    ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30'
-                                                    : 'bg-white hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 text-blue-600 dark:text-blue-400 border border-slate-200 dark:border-slate-700 shadow-sm'
-                                            } ${regOpenCalStatus === 'loading' ? 'opacity-70 cursor-default' : ''}`}
-                                            title={regOpenCalMsg || "Avisar no Google Calendar (1 dia antes e 1 hora antes)"}
-                                        >
-                                            {regOpenCalStatus === 'loading' ? (
-                                                <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                                            ) : regOpenCalStatus === 'success' || regOpenCalStatus === 'exists' ? (
-                                                <Check size={13} />
-                                            ) : (
-                                                <CalendarPlus size={13} />
-                                            )}
-                                            <span>{regOpenCalStatus === 'success' ? 'Marcado!' : regOpenCalStatus === 'exists' ? 'Marcado ✓' : regOpenCalStatus === 'error' ? (regOpenCalMsg || 'Erro!') : 'Lembrar abertura'}</span>
-                                        </button>
-                                    )}
+                                    {activeEvent.registrationOpensAt && isSignedIn && (() => {
+                                        const isRegOpenMarked = regOpenCalStatus === 'success' || regOpenCalStatus === 'exists';
+                                        return (
+                                            <button 
+                                                onClick={() => {
+                                                    if (isRegOpenMarked) {
+                                                        setDeleteConfirmation({ target: 'registration_open', label: 'o lembrete de abertura das inscrições' });
+                                                    } else {
+                                                        handleAddToCalendar('registration_open');
+                                                    }
+                                                }}
+                                                disabled={regOpenCalStatus === 'loading'}
+                                                className={`group shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                                                    isRegOpenMarked
+                                                        ? 'bg-emerald-500/10 hover:bg-rose-500/10 text-emerald-600 hover:text-rose-600 dark:text-emerald-400 dark:hover:text-rose-400 border border-emerald-500/20 hover:border-rose-500/30'
+                                                        : regOpenCalStatus === 'error'
+                                                        ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30'
+                                                        : 'bg-white hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 text-blue-600 dark:text-blue-400 border border-slate-200 dark:border-slate-700 shadow-sm'
+                                                } ${regOpenCalStatus === 'loading' ? 'opacity-70 cursor-default' : ''}`}
+                                                title={isRegOpenMarked ? "Clica para remover este lembrete do Google Calendar" : regOpenCalMsg || "Avisar no Google Calendar (1 dia antes e 1 hora antes)"}
+                                            >
+                                                {regOpenCalStatus === 'loading' ? (
+                                                    <>
+                                                        <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                                                        <span>A marcar...</span>
+                                                    </>
+                                                ) : isRegOpenMarked ? (
+                                                    <>
+                                                        <span className="flex items-center gap-1.5 group-hover:hidden">
+                                                            <Check size={13} />
+                                                            <span>Marcado ✓</span>
+                                                        </span>
+                                                        <span className="hidden group-hover:flex items-center gap-1.5">
+                                                            <Trash2 size={13} />
+                                                            <span>Remover?</span>
+                                                        </span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <CalendarPlus size={13} />
+                                                        <span>{regOpenCalStatus === 'error' ? (regOpenCalMsg || 'Erro!') : 'Lembrar abertura'}</span>
+                                                    </>
+                                                )}
+                                            </button>
+                                        );
+                                    })()}
                                 </div>
                                 {activeEvent.registrationOpensAt && (
                                     <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
@@ -657,29 +721,52 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                             {activeEvent.registrationClosesAt ? formatRegDate(activeEvent.registrationClosesAt) : 'A definir'}
                                         </p>
                                     </div>
-                                    {activeEvent.registrationClosesAt && isSignedIn && (
-                                        <button 
-                                            onClick={() => handleAddToCalendar('registration_close')}
-                                            disabled={regCloseCalStatus === 'loading' || regCloseCalStatus === 'success' || regCloseCalStatus === 'exists'}
-                                            className={`shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-                                                regCloseCalStatus === 'success' || regCloseCalStatus === 'exists'
-                                                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 cursor-default'
-                                                    : regCloseCalStatus === 'error'
-                                                    ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30'
-                                                    : 'bg-white hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 text-blue-600 dark:text-blue-400 border border-slate-200 dark:border-slate-700 shadow-sm'
-                                            } ${regCloseCalStatus === 'loading' ? 'opacity-70 cursor-default' : ''}`}
-                                            title={regCloseCalMsg || "Avisar no Google Calendar (1 dia antes e 1 hora antes)"}
-                                        >
-                                            {regCloseCalStatus === 'loading' ? (
-                                                <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                                            ) : regCloseCalStatus === 'success' || regCloseCalStatus === 'exists' ? (
-                                                <Check size={13} />
-                                            ) : (
-                                                <CalendarPlus size={13} />
-                                            )}
-                                            <span>{regCloseCalStatus === 'success' ? 'Marcado!' : regCloseCalStatus === 'exists' ? 'Marcado ✓' : regCloseCalStatus === 'error' ? (regCloseCalMsg || 'Erro!') : 'Lembrar fecho'}</span>
-                                        </button>
-                                    )}
+                                    {activeEvent.registrationClosesAt && isSignedIn && (() => {
+                                        const isRegCloseMarked = regCloseCalStatus === 'success' || regCloseCalStatus === 'exists';
+                                        return (
+                                            <button 
+                                                onClick={() => {
+                                                    if (isRegCloseMarked) {
+                                                        setDeleteConfirmation({ target: 'registration_close', label: 'o lembrete de fecho das inscrições' });
+                                                    } else {
+                                                        handleAddToCalendar('registration_close');
+                                                    }
+                                                }}
+                                                disabled={regCloseCalStatus === 'loading'}
+                                                className={`group shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                                                    isRegCloseMarked
+                                                        ? 'bg-emerald-500/10 hover:bg-rose-500/10 text-emerald-600 hover:text-rose-600 dark:text-emerald-400 dark:hover:text-rose-400 border border-emerald-500/20 hover:border-rose-500/30'
+                                                        : regCloseCalStatus === 'error'
+                                                        ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30'
+                                                        : 'bg-white hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 text-blue-600 dark:text-blue-400 border border-slate-200 dark:border-slate-700 shadow-sm'
+                                                } ${regCloseCalStatus === 'loading' ? 'opacity-70 cursor-default' : ''}`}
+                                                title={isRegCloseMarked ? "Clica para remover este lembrete do Google Calendar" : regCloseCalMsg || "Avisar no Google Calendar (1 dia antes e 1 hora antes)"}
+                                            >
+                                                {regCloseCalStatus === 'loading' ? (
+                                                    <>
+                                                        <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                                                        <span>A marcar...</span>
+                                                    </>
+                                                ) : isRegCloseMarked ? (
+                                                    <>
+                                                        <span className="flex items-center gap-1.5 group-hover:hidden">
+                                                            <Check size={13} />
+                                                            <span>Marcado ✓</span>
+                                                        </span>
+                                                        <span className="hidden group-hover:flex items-center gap-1.5">
+                                                            <Trash2 size={13} />
+                                                            <span>Remover?</span>
+                                                        </span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <CalendarPlus size={13} />
+                                                        <span>{regCloseCalStatus === 'error' ? (regCloseCalMsg || 'Erro!') : 'Lembrar fecho'}</span>
+                                                    </>
+                                                )}
+                                            </button>
+                                        );
+                                    })()}
                                 </div>
                                 {activeEvent.registrationClosesAt && (
                                     <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
@@ -809,26 +896,52 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         );
                     })()}
 
-                    {isSignedIn && (
+                    {isSignedIn && (() => {
+                        const isEventAlreadyMarked = calendarStatus === 'success' || calendarStatus === 'exists';
+                        const isRegOpenMarked = regOpenCalStatus === 'success' || regOpenCalStatus === 'exists';
+                        const isRegCloseMarked = regCloseCalStatus === 'success' || regCloseCalStatus === 'exists';
+
+                        return (
                         <div className="relative inline-flex items-center" ref={calMenuRef}>
                             <div className="inline-flex rounded-xl shadow-sm">
                                 <button 
-                                    onClick={() => handleAddToCalendar('event')}
-                                    disabled={isAddingToCalendar || calendarStatus === 'success' || calendarStatus === 'exists'}
-                                    className={`px-3.5 py-2 rounded-xl ${(activeEvent.registrationOpensAt || activeEvent.registrationClosesAt) ? 'rounded-r-none border-r-0' : ''} text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-                                        calendarStatus === 'success' || calendarStatus === 'exists'
-                                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 cursor-default'
+                                    onClick={() => {
+                                        if (isEventAlreadyMarked) {
+                                            setDeleteConfirmation({ target: 'event', label: 'a data desta prova' });
+                                        } else {
+                                            handleAddToCalendar('event');
+                                        }
+                                    }}
+                                    disabled={isAddingToCalendar}
+                                    className={`group px-3.5 py-2 rounded-xl ${(activeEvent.registrationOpensAt || activeEvent.registrationClosesAt) ? 'rounded-r-none border-r-0' : ''} text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                                        isEventAlreadyMarked
+                                            ? 'bg-emerald-500/10 hover:bg-rose-500/10 text-emerald-600 hover:text-rose-600 dark:text-emerald-400 dark:hover:text-rose-400 border border-emerald-500/20 hover:border-rose-500/30'
                                             : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700'
                                     } ${isAddingToCalendar ? 'opacity-70 cursor-default' : ''}`}
+                                    title={isEventAlreadyMarked ? "Clica para remover este evento do Google Calendar" : "Marcar no Google Calendar"}
                                 >
                                     {isAddingToCalendar ? (
-                                        <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                                    ) : calendarStatus === 'success' || calendarStatus === 'exists' ? (
-                                        <Check size={15} />
+                                        <>
+                                            <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                                            <span>A marcar...</span>
+                                        </>
+                                    ) : isEventAlreadyMarked ? (
+                                        <>
+                                            <span className="flex items-center gap-1.5 group-hover:hidden">
+                                                <Check size={15} />
+                                                <span>{calendarMsg || 'Já no calendário'}</span>
+                                            </span>
+                                            <span className="hidden group-hover:flex items-center gap-1.5">
+                                                <Trash2 size={15} />
+                                                <span>Remover da agenda?</span>
+                                            </span>
+                                        </>
                                     ) : (
-                                        <CalendarPlus size={15} />
+                                        <>
+                                            <CalendarPlus size={15} />
+                                            <span>Marcar prova</span>
+                                        </>
                                     )}
-                                    {calendarMsg || 'Marcar prova'}
                                 </button>
 
                                 {(activeEvent.registrationOpensAt || activeEvent.registrationClosesAt) && (
@@ -849,56 +962,157 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                     </div>
 
                                     <button
-                                        onClick={() => handleAddToCalendar('event')}
-                                        className="w-full text-left px-2.5 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs flex items-center justify-between transition-colors cursor-pointer"
+                                        onClick={() => {
+                                            if (isEventAlreadyMarked) {
+                                                setShowCalMenu(false);
+                                                setDeleteConfirmation({ target: 'event', label: 'a data desta prova' });
+                                            } else {
+                                                handleAddToCalendar('event');
+                                            }
+                                        }}
+                                        className={`w-full text-left px-2.5 py-2 rounded-lg text-xs flex items-center justify-between transition-colors cursor-pointer ${
+                                            isEventAlreadyMarked 
+                                                ? 'hover:bg-rose-500/10 text-emerald-600 hover:text-rose-600 dark:text-emerald-400 dark:hover:text-rose-400' 
+                                                : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200'
+                                        }`}
                                     >
                                         <div className="flex items-center gap-2">
-                                            <Calendar size={14} className="text-blue-500 shrink-0" />
+                                            <Calendar size={14} className={isEventAlreadyMarked ? "text-emerald-500 shrink-0" : "text-blue-500 shrink-0"} />
                                             <div>
                                                 <span className="font-semibold block leading-tight">Data da Prova</span>
                                                 <span className="text-[10px] text-slate-400">Avisa 2 dias e 1 semana antes</span>
                                             </div>
                                         </div>
-                                        {calendarStatus === 'success' || calendarStatus === 'exists' ? <Check size={13} className="text-emerald-500 shrink-0" /> : null}
+                                        {isEventAlreadyMarked && (
+                                            <Check size={13} className="text-emerald-500 shrink-0" />
+                                        )}
                                     </button>
 
                                     {activeEvent.registrationOpensAt && (
                                         <button
-                                            onClick={() => handleAddToCalendar('registration_open')}
-                                            className="w-full text-left px-2.5 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs flex items-center justify-between transition-colors cursor-pointer"
+                                            onClick={() => {
+                                                if (isRegOpenMarked) {
+                                                    setShowCalMenu(false);
+                                                    setDeleteConfirmation({ target: 'registration_open', label: 'o lembrete de abertura das inscrições' });
+                                                } else {
+                                                    handleAddToCalendar('registration_open');
+                                                }
+                                            }}
+                                            className={`w-full text-left px-2.5 py-2 rounded-lg text-xs flex items-center justify-between transition-colors cursor-pointer ${
+                                                isRegOpenMarked 
+                                                    ? 'hover:bg-rose-500/10 text-emerald-600 hover:text-rose-600 dark:text-emerald-400 dark:hover:text-rose-400' 
+                                                    : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200'
+                                            }`}
                                         >
                                             <div className="flex items-center gap-2">
-                                                <Clock size={14} className="text-blue-500 shrink-0" />
+                                                <Clock size={14} className={isRegOpenMarked ? "text-emerald-500 shrink-0" : "text-blue-500 shrink-0"} />
                                                 <div>
                                                     <span className="font-semibold block leading-tight">Abertura de Inscrições</span>
                                                     <span className="text-[10px] text-slate-400">Avisa 1 dia antes e 1h antes</span>
                                                 </div>
                                             </div>
-                                            {regOpenCalStatus === 'success' || regOpenCalStatus === 'exists' ? <Check size={13} className="text-emerald-500 shrink-0" /> : null}
+                                            {isRegOpenMarked && (
+                                                <Check size={13} className="text-emerald-500 shrink-0" />
+                                            )}
                                         </button>
                                     )}
 
                                     {activeEvent.registrationClosesAt && (
                                         <button
-                                            onClick={() => handleAddToCalendar('registration_close')}
-                                            className="w-full text-left px-2.5 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs flex items-center justify-between transition-colors cursor-pointer"
+                                            onClick={() => {
+                                                if (isRegCloseMarked) {
+                                                    setShowCalMenu(false);
+                                                    setDeleteConfirmation({ target: 'registration_close', label: 'o lembrete de fecho das inscrições' });
+                                                } else {
+                                                    handleAddToCalendar('registration_close');
+                                                }
+                                            }}
+                                            className={`w-full text-left px-2.5 py-2 rounded-lg text-xs flex items-center justify-between transition-colors cursor-pointer ${
+                                                isRegCloseMarked 
+                                                    ? 'hover:bg-rose-500/10 text-emerald-600 hover:text-rose-600 dark:text-emerald-400 dark:hover:text-rose-400' 
+                                                    : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200'
+                                            }`}
                                         >
                                             <div className="flex items-center gap-2">
-                                                <Clock size={14} className="text-amber-500 shrink-0" />
+                                                <Clock size={14} className={isRegCloseMarked ? "text-emerald-500 shrink-0" : "text-amber-500 shrink-0"} />
                                                 <div>
                                                     <span className="font-semibold block leading-tight">Fecho de Inscrições</span>
                                                     <span className="text-[10px] text-slate-400">Avisa 1 dia antes e 1h antes</span>
                                                 </div>
                                             </div>
-                                            {regCloseCalStatus === 'success' || regCloseCalStatus === 'exists' ? <Check size={13} className="text-emerald-500 shrink-0" /> : null}
+                                            {isRegCloseMarked && (
+                                                <Check size={13} className="text-emerald-500 shrink-0" />
+                                            )}
                                         </button>
                                     )}
                                 </div>
                             )}
                         </div>
-                    )}
+                        );
+                    })()}
                 </div>
             </div>
+
+            {/* Modal de Confirmação de Remoção do Google Calendar */}
+            {deleteConfirmation && (
+                <div 
+                    className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[99999] flex items-center justify-center p-4 animate-fade-in"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isDeletingFromCalendar) setDeleteConfirmation(null);
+                    }}
+                >
+                    <div 
+                        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 max-w-md w-full shadow-2xl relative animate-scale-in text-slate-800 dark:text-slate-100"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex items-center gap-3.5 mb-4 text-rose-500">
+                            <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center shrink-0">
+                                <Trash2 size={20} />
+                            </div>
+                            <div>
+                                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                                    Remover do Google Calendar?
+                                </h3>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate max-w-[280px]">
+                                    {activeEvent.title}
+                                </p>
+                            </div>
+                        </div>
+
+                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
+                            Tens a certeza de que pretendes remover <strong className="text-slate-900 dark:text-slate-100 font-semibold">{deleteConfirmation.label || 'este evento'}</strong> do teu Google Calendar?
+                        </p>
+
+                        <div className="flex items-center justify-end gap-2.5">
+                            <button
+                                disabled={isDeletingFromCalendar}
+                                onClick={() => setDeleteConfirmation(null)}
+                                className="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                disabled={isDeletingFromCalendar}
+                                onClick={() => handleRemoveFromCalendar(deleteConfirmation.target)}
+                                className="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-rose-600 hover:bg-rose-700 text-white transition-colors flex items-center gap-2 cursor-pointer shadow-sm shadow-rose-600/30"
+                            >
+                                {isDeletingFromCalendar ? (
+                                    <>
+                                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        <span>A remover...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Trash2 size={14} />
+                                        <span>Sim, Remover</span>
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {fullscreenImage && (
                 <div 
