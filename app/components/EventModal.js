@@ -354,8 +354,14 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9000] flex items-end sm:items-center justify-center p-0 pt-8 sm:p-4 overflow-hidden animate-fade-in" onClick={() => setSelectedEvent(null)}>
             <div className="bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-2xl w-full max-w-4xl h-[88dvh] sm:h-[86vh] max-h-[calc(100dvh-2.5rem)] sm:max-h-[86vh] flex flex-col shadow-2xl overflow-hidden relative transition-colors duration-200" onClick={(e) => e.stopPropagation()}>
                 
-                {/* Mobile Drag Indicator */}
-                <div className="w-10 h-1 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mt-2.5 mb-1 sm:hidden shrink-0" />
+                {/* Mobile Drag / Dismiss Handle */}
+                <button 
+                    onClick={() => setSelectedEvent(null)}
+                    className="w-full pt-2.5 pb-1 flex items-center justify-center sm:hidden shrink-0 group cursor-pointer border-none bg-transparent active:opacity-60 transition-opacity"
+                    title="Fechar"
+                >
+                    <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 group-hover:bg-slate-400 dark:group-hover:bg-slate-500 rounded-full transition-colors" />
+                </button>
 
                 {/* Mobile Top Bar (sm:hidden) */}
                 <div className="sm:hidden flex items-center justify-between px-4 pt-1 pb-1 shrink-0">
