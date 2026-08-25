@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Calendar, Star, X, CalendarPlus, Check, Bike, FileText, CreditCard, Trophy, Shield, Users, Globe, Clock, MapPin, ExternalLink, ChevronDown, Bell, Sparkles, Trash2 } from 'lucide-react';
+import { Calendar, Star, X, CalendarPlus, Check, Bike, FileText, CreditCard, Trophy, Shield, Users, Globe, Clock, MapPin, ExternalLink, ChevronDown, Bell, Sparkles, Trash2, Info, Tag } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import SmartLogo from './SmartLogo';
 import { parsePrograma } from '../utils/parsePrograma';
@@ -489,39 +489,51 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 
                 {/* Tabs Navigation */}
                 {availableTabs.length > 0 ? (
-                    <div className="flex gap-2 overflow-x-auto pb-2.5 pt-1 px-4 sm:px-5 border-b border-slate-200 dark:border-slate-800/80 no-scrollbar shrink-0 touch-pan-x overscroll-contain">
-                        {availableTabs.map(tab => {
-                            const labels = {
-                                info: 'Info',
-                                escaloes: 'Escalões',
-                                programa: activeEvent.source === 'FPC' ? 'Documentos' : 'Programa',
-                                inscricao: 'Inscrição & Preços',
-                                premios: 'Prémios & Seguro',
-                                localizacao: 'Localização'
-                            };
-                            const fullLabels = {
-                                info: 'Info do Evento',
-                                escaloes: 'Escalões Elegíveis',
-                                programa: activeEvent.source === 'FPC' ? 'Documentos & Detalhes' : 'Programa',
-                                inscricao: 'Inscrição & Preços',
-                                premios: 'Prémios & Seguro',
-                                localizacao: 'Localização'
-                            };
-                            return (
-                                <button 
-                                    key={tab} 
-                                    onClick={() => setActiveTab(tab)} 
-                                    className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                                        activeTab === tab 
-                                            ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/30' 
-                                            : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700/60'
-                                    }`}
-                                >
-                                    <span className="sm:hidden">{labels[tab]}</span>
-                                    <span className="hidden sm:inline">{fullLabels[tab]}</span>
-                                </button>
-                            );
-                        })}
+                    <div className="px-3 sm:px-5 pb-2 pt-1 border-b border-slate-200 dark:border-slate-800/80 shrink-0">
+                        <div className="grid grid-flow-col auto-cols-fr gap-1 bg-slate-100 dark:bg-slate-950/80 p-1 rounded-2xl border border-slate-200 dark:border-slate-800/80">
+                            {availableTabs.map(tab => {
+                                const tabIcons = {
+                                    info: <Info size={13} className="shrink-0" />,
+                                    escaloes: <Users size={13} className="shrink-0" />,
+                                    programa: <Clock size={13} className="shrink-0" />,
+                                    inscricao: <Tag size={13} className="shrink-0" />,
+                                    premios: <Trophy size={13} className="shrink-0" />,
+                                    localizacao: <MapPin size={13} className="shrink-0" />
+                                };
+                                const shortLabels = {
+                                    info: 'Info',
+                                    escaloes: 'Escalões',
+                                    programa: activeEvent.source === 'FPC' ? 'Docs' : 'Programa',
+                                    inscricao: 'Inscrição',
+                                    premios: 'Prémios',
+                                    localizacao: 'Mapa'
+                                };
+                                const fullLabels = {
+                                    info: 'Info do Evento',
+                                    escaloes: 'Escalões Elegíveis',
+                                    programa: activeEvent.source === 'FPC' ? 'Documentos & Detalhes' : 'Programa',
+                                    inscricao: 'Inscrição & Preços',
+                                    premios: 'Prémios & Seguro',
+                                    localizacao: 'Localização'
+                                };
+                                const isActive = activeTab === tab;
+                                return (
+                                    <button 
+                                        key={tab} 
+                                        onClick={() => setActiveTab(tab)} 
+                                        className={`flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 py-1.5 px-0.5 sm:px-3 rounded-xl text-[10px] sm:text-xs font-semibold transition-all cursor-pointer ${
+                                            isActive 
+                                                ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm font-bold border border-slate-200/60 dark:border-slate-700/60' 
+                                                : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
+                                        }`}
+                                    >
+                                        {tabIcons[tab]}
+                                        <span className="sm:hidden leading-none truncate max-w-full">{shortLabels[tab]}</span>
+                                        <span className="hidden sm:inline">{fullLabels[tab]}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
                 ) : (
                     <div className="mb-2 pb-2 border-b border-slate-200 dark:border-slate-800/80 px-4 sm:px-5 shrink-0">
