@@ -9,7 +9,7 @@ export default function DynamicLogo({ className = "w-8 h-8", dayNumber }) {
         const currentDay = new Date().getDate();
         setToday(currentDay);
 
-        // Update favicon dynamically in real-time in browser tab (Google Calendar Style)
+        // Update favicon dynamically in real-time in browser tab
         try {
             const canvas = document.createElement('canvas');
             canvas.width = 64;
@@ -22,9 +22,9 @@ export default function DynamicLogo({ className = "w-8 h-8", dayNumber }) {
                 ctx.roundRect(0, 0, 64, 64, 15);
                 ctx.fill();
 
-                // 2. Scott Foil RC Bike Silhouette (Bold & High Visibility)
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
-                ctx.lineWidth = 3.2;
+                // 2. Scott Foil RC Bike Silhouette in Dark Midnight Slate
+                ctx.strokeStyle = '#091833';
+                ctx.lineWidth = 3.5;
                 ctx.lineCap = 'round';
                 ctx.lineJoin = 'round';
 
@@ -53,17 +53,17 @@ export default function DynamicLogo({ className = "w-8 h-8", dayNumber }) {
                 ctx.lineTo(49, 16);
                 ctx.stroke();
 
-                // 3. Foreground: HUGE PURE WHITE BOLD DAY NUMBER (with subtle shadow)
-                ctx.shadowColor = 'rgba(15, 23, 42, 0.9)';
+                // 3. Foreground: HUGE PURE WHITE BOLD DAY NUMBER
+                ctx.shadowColor = 'rgba(5, 19, 41, 0.9)';
                 ctx.shadowBlur = 4;
                 ctx.shadowOffsetX = 0;
                 ctx.shadowOffsetY = 2;
 
                 ctx.fillStyle = '#ffffff';
-                ctx.font = '900 36px system-ui, -apple-system, sans-serif';
+                ctx.font = '900 38px system-ui, -apple-system, sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(currentDay.toString(), 32, 35);
+                ctx.fillText(currentDay.toString(), 32, 34);
 
                 // Update link icon in head
                 let link = document.querySelector("link[rel*='icon']");
@@ -86,66 +86,61 @@ export default function DynamicLogo({ className = "w-8 h-8", dayNumber }) {
             className={className}
         >
             <defs>
-                <linearGradient id="solidBlueGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <linearGradient id="opt1BgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
                     <stop offset="0%" stopColor="#3b82f6"/>
                     <stop offset="100%" stopColor="#1d4ed8"/>
                 </linearGradient>
 
-                <linearGradient id="topGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+                <linearGradient id="opt1TopGlow" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stopColor="#ffffff" stopOpacity="0.18"/>
                     <stop offset="50%" stopColor="#ffffff" stopOpacity="0"/>
                 </linearGradient>
 
-                <filter id="bikeShadow" x="-15%" y="-15%" width="130%" height="130%">
-                    <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="#0f172a" floodOpacity="0.4"/>
-                </filter>
-
-                <filter id="strongNumShadow" x="-20%" y="-20%" width="140%" height="140%">
-                    <feDropShadow dx="0" dy="3" stdDeviation="4" floodColor="#0f172a" floodOpacity="0.85"/>
-                    <feDropShadow dx="0" dy="1" stdDeviation="2" floodColor="#0f172a" floodOpacity="0.9"/>
+                <filter id="opt1Shadow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#051329" floodOpacity="0.75"/>
                 </filter>
             </defs>
 
-            {/* 1. Solid Blue Squircle Base */}
-            <rect width="120" height="120" rx="26" ry="26" fill="url(#solidBlueGrad)"/>
-            <rect width="120" height="120" rx="26" ry="26" fill="url(#topGlow)"/>
+            {/* 1. Squircle Base Canvas */}
+            <rect width="120" height="120" rx="26" ry="26" fill="url(#opt1BgGrad)"/>
+            <rect width="120" height="120" rx="26" ry="26" fill="url(#opt1TopGlow)"/>
 
-            {/* 2. SCOTT FOIL RC 2026 Silhouette: BOLD, CRISP, HIGH-VISIBILITY PURE WHITE */}
-            <g stroke="#ffffff" strokeOpacity="0.88" strokeLinecap="round" strokeLinejoin="round" fill="none" filter="url(#bikeShadow)">
+            {/* 2. Scott Foil RC 2026 Silhouette in Dark Midnight Slate */}
+            <g stroke="#091833" strokeLinecap="round" strokeLinejoin="round" fill="none">
                 {/* Deep Section 50mm Carbon Aero Wheels */}
-                <circle cx="28" cy="64" r="19" strokeWidth="5.5"/>
+                <circle cx="28" cy="64" r="19" strokeWidth="6"/>
                 <circle cx="28" cy="64" r="13.5" strokeWidth="2"/>
                 
-                <circle cx="92" cy="64" r="19" strokeWidth="5.5"/>
+                <circle cx="92" cy="64" r="19" strokeWidth="6"/>
                 <circle cx="92" cy="64" r="13.5" strokeWidth="2"/>
 
                 {/* Scott Foil Frame lines */}
-                <line x1="28" y1="64" x2="52" y2="64" strokeWidth="5.5"/>
-                <line x1="28" y1="64" x2="43" y2="47" strokeWidth="4.8"/>
-                <path d="M43 47 C44 53, 48 59, 52 64" strokeWidth="6"/>
-                <line x1="43" y1="47" x2="46" y2="30" strokeWidth="6"/>
+                <line x1="28" y1="64" x2="52" y2="64" strokeWidth="6"/>
+                <line x1="28" y1="64" x2="43" y2="47" strokeWidth="5"/>
+                <path d="M43 47 C44 53, 48 59, 52 64" strokeWidth="6.5"/>
+                <line x1="43" y1="47" x2="46" y2="30" strokeWidth="6.5"/>
 
-                <line x1="46" y1="30" x2="80" y2="30" strokeWidth="5.8"/>
-                <line x1="52" y1="64" x2="80" y2="30" strokeWidth="6.5"/>
-                <line x1="80" y1="30" x2="92" y2="64" strokeWidth="5.8"/>
+                <line x1="46" y1="30" x2="80" y2="30" strokeWidth="6"/>
+                <line x1="52" y1="64" x2="80" y2="30" strokeWidth="7"/>
+                <line x1="80" y1="30" x2="92" y2="64" strokeWidth="6"/>
 
                 {/* Cockpit & Seatpost */}
-                <path d="M78 30 L83 22 L90 22 C92 22, 93 25, 92 28 L87 32" strokeWidth="4.8"/>
-                <line x1="46" y1="30" x2="44.5" y2="22" strokeWidth="5.5"/>
-                <path d="M35 20 C39 19, 49 19, 52 21 C50 23, 45 23, 39 22 Z" fill="#ffffff" fillOpacity="0.88" strokeWidth="1"/>
+                <path d="M78 30 L83 22 L90 22 C92 22, 93 25, 92 28 L87 32" strokeWidth="5"/>
+                <line x1="46" y1="30" x2="44.5" y2="22" strokeWidth="6"/>
+                <path d="M35 20 C39 19, 49 19, 52 21 C50 23, 45 23, 39 22 Z" fill="#091833" strokeWidth="1"/>
             </g>
 
-            {/* 3. Foreground: HUGE PURE WHITE DAY NUMBER (Exact Google Calendar Style) */}
+            {/* 3. Foreground: HUGE PURE WHITE DAY NUMBER (Maximum Contrast) */}
             <text 
                 x="60" 
-                y="79" 
+                y="81" 
                 fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" 
-                fontSize="62" 
+                fontSize="64" 
                 fontWeight="900" 
                 fill="#ffffff" 
                 textAnchor="middle" 
                 letterSpacing="-3"
-                filter="url(#strongNumShadow)"
+                filter="url(#opt1Shadow)"
             >
                 {today}
             </text>
