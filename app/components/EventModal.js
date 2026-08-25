@@ -27,6 +27,13 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
             return;
         }
 
+        // Instant load if selectedEvent already has full details from API
+        if (selectedEvent.description || selectedEvent.programa || selectedEvent.prices || selectedEvent.logo || selectedEvent.image) {
+            setFullEvent(selectedEvent);
+            setIsLoadingFullEvent(false);
+            return;
+        }
+
         // Instant load from cache if available
         if (eventDetailsCache.has(selectedEvent.id)) {
             setFullEvent(eventDetailsCache.get(selectedEvent.id));

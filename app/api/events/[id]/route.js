@@ -1,14 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-import { Pool } from 'pg';
-import { PrismaPg } from '@prisma/adapter-pg';
-
-const connectionString = process.env.POSTGRES_PRISMA_URL ? process.env.POSTGRES_PRISMA_URL.replace('sslmode=require', '') : '';
-const pool = new Pool({ 
-    connectionString,
-    ssl: { rejectUnauthorized: false } 
-});
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
+import { prisma } from '@/app/lib/db';
 
 export async function GET(request, { params }) {
     try {
@@ -30,11 +20,18 @@ export async function GET(request, { params }) {
         // Convert stringified arrays back to arrays for frontend
         const formattedEvent = {
             ...event,
-            escaloes: event.escaloes ? JSON.parse(event.escaloes) : [],
-            extraLinks: event.extraLinks ? JSON.parse(event.extraLinks) : []
+            escaloes: event.escaloes ? (typeof event.escaloes === 'string' ? JSON.parse(event.escaloes) : event.escaloes) : [],
+            extraLinks: event.extraLinks ? (typeof event.extraLinks === 'string' ? JSON.parse(event.extraLinks) : event.extraLinks) : []
         };
 
-        return Response.json({ success: true, event: formattedEvent });
+        return Response.json(
+            { success: true, event: formattedEvent },
+            {
+                headers: {
+                    'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=600'
+                }
+            }
+        );
 
     } catch (error) {
         console.error('Error fetching single event:', error);
