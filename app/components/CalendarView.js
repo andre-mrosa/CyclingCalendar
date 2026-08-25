@@ -26,6 +26,7 @@ export default function CalendarView({
     forceLicenca = null,
     forceEscalao = null,
     filterByFavorites = false,
+    filterByAgenda = false,
     activeFilters = ['search', 'year', 'month', 'escalao', 'ambito', 'licenca', 'regiao'],
     applyDefaultRegiao = false
 }) {
@@ -56,7 +57,7 @@ export default function CalendarView({
     const loaderRef = useRef(null);
 
     const { favorites, toggleFavorite, isSignedIn } = useFavorites();
-    const { isMarked, getDateConflict } = useCalendarEvents();
+    const { markedSet, isMarked, getDateConflict } = useCalendarEvents();
 
     // Sync settings on mount
     useEffect(() => {
@@ -75,7 +76,7 @@ export default function CalendarView({
         }
     }, [defaultEscalao, defaultRegiao, forceEscalao, forceAmbito, forceLicenca, applyDefaultRegiao]);
 
-    const yearsQuery = filterByFavorites ? 'all' : selectedYears.join(',');
+    const yearsQuery = (filterByFavorites || filterByAgenda) ? 'all' : selectedYears.join(',');
     const { data: fetchedEvents, error, isLoading: loading, mutate } = useSWR(
         selectedSources && selectedSources.length > 0 
             ? `/api/events?years=${yearsQuery}&sources=${selectedSources.join(',')}` 
@@ -95,6 +96,7 @@ export default function CalendarView({
     useEffect(() => {
         let filtered = filterEvents(events, {
             filterByFavorites, favorites,
+            filterByAgenda, markedSet,
             searchTerm,
             selectedEscaloes: forceEscalao ? [forceEscalao] : selectedEscaloes,
             selectedAmbito: forceAmbito || selectedAmbito,

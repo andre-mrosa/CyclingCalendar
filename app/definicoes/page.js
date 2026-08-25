@@ -85,7 +85,7 @@ export default function Conta() {
                     </div>
                     
                     <div className="pt-2">
-                        {['Nacionais', 'Internacionais', 'Taças', 'Regionais', 'Lazer', 'Favoritos'].map(tab => {
+                        {['Minha Agenda', 'Nacionais', 'Internacionais', 'Taças', 'Regionais', 'Lazer', 'Favoritos'].map(tab => {
                             const isVisible = !hiddenTabs.includes(tab);
                             return (
                                 <div key={tab} className="flex flex-col md:flex-row md:items-center justify-between py-3.5 border-b border-slate-100 dark:border-slate-800/60 last:border-0 gap-4">

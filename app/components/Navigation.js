@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
 import { SignInButton, Show, UserButton } from '@clerk/nextjs';
-import { Home, Trophy, MapPin, Bike, HelpCircle, Settings, Menu, X, Moon, Sun, Flag, Star, Globe, LogIn } from 'lucide-react';
+import { Home, Trophy, MapPin, Bike, HelpCircle, Settings, Menu, X, Moon, Sun, Flag, Star, Globe, LogIn, CalendarCheck } from 'lucide-react';
 import SettingsPage from '../definicoes/page';
 import HelpPage from '../ajuda/page';
 import { useSettingsStore } from '../store/useSettingsStore';
@@ -42,6 +42,7 @@ export default function Navigation() {
 
     const allLinks = [
         { href: "/", label: "Geral", icon: <Home size={18} />, exact: true },
+        { href: "/agenda", label: "Minha Agenda", icon: <CalendarCheck size={18} /> },
         { href: "/nacionais", label: "Nacionais", icon: <Flag size={18} /> },
         { href: "/internacionais", label: "Internacionais", icon: <Globe size={18} /> },
         { href: "/tacas", label: "Taças", icon: <Trophy size={18} /> },

@@ -2,6 +2,7 @@ export function filterEvents(events, filters) {
     let filtered = events;
     const {
         filterByFavorites, favorites,
+        filterByAgenda, markedSet,
         searchTerm,
         selectedEscaloes,
         selectedAmbito,
@@ -17,6 +18,12 @@ export function filterEvents(events, filters) {
     if (filterByFavorites && favorites) {
         filtered = filtered.filter(event => 
             favorites.includes(event.id) || (event._allIds && event._allIds.some(id => favorites.includes(id)))
+        );
+    }
+
+    if (filterByAgenda && markedSet) {
+        filtered = filtered.filter(event => 
+            markedSet.has(String(event.id)) || (event._allIds && event._allIds.some(id => markedSet.has(String(id))))
         );
     }
     
