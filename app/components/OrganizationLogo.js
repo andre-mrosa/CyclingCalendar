@@ -1,32 +1,30 @@
 'use client';
 
 import React from 'react';
-import { useTheme } from 'next-themes';
 
-export default function OrganizationLogo({ source, className = "h-5 object-contain" }) {
-    const { resolvedTheme } = useTheme();
-    const isDark = resolvedTheme === 'dark';
-
+export default function OrganizationLogo({ source, className = "h-4 w-auto object-contain" }) {
     if (source === 'Cabreira') {
-        const src = isDark ? '/logo-cabreira.png' : '/logo-cabreira-dark.png';
         return (
-            <img 
-                src={src} 
-                alt="Cabreira Solutions" 
-                className={`${className} transition-opacity duration-200`} 
-                loading="lazy"
-            />
+            <div className="bg-slate-900/90 border border-slate-800 px-2 py-0.5 rounded-md flex items-center justify-center h-6 shrink-0 shadow-sm" title="Cabreira Solutions">
+                <img 
+                    src="/logo-cabreira.png" 
+                    alt="Cabreira Solutions" 
+                    className={className} 
+                    loading="lazy"
+                />
+            </div>
         );
     }
 
-    // Default to FPC
-    const src = isDark ? '/logo-fpc-white.png' : '/logo-fpc.png';
+    // FPC and default: Official original untouched logo inside clean white reserve area badge
     return (
-        <img 
-            src={src} 
-            alt="Federação Portuguesa de Ciclismo" 
-            className={`${className} transition-opacity duration-200`} 
-            loading="lazy"
-        />
+        <div className="bg-white px-2 py-0.5 rounded-md flex items-center justify-center h-6 shrink-0 shadow-sm" title="Federação Portuguesa de Ciclismo">
+            <img 
+                src="/logo-fpc.png" 
+                alt="Federação Portuguesa de Ciclismo" 
+                className={className} 
+                loading="lazy"
+            />
+        </div>
     );
 }
