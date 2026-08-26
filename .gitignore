@@ -64,7 +64,9 @@ next-env.d.ts
 
 # Media testing
 banner.jpg
-logo.jpg
+!public/logo.jpg
+!public/*.jpg
+!app/*.jpg
 
 *.txt
 *.py
