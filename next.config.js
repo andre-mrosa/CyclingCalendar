@@ -8,6 +8,11 @@ const withPWA = withPWAInit({
   cacheOnFrontEndNav: true,
   aggressiveFrontEndNavCaching: true,
   reloadOnOnline: true,
+  dynamicStartUrl: true,
+  extendDefaultRuntimeCaching: true,
+  fallbacks: {
+    document: "/",
+  },
   workboxOptions: {
     runtimeCaching: [
       {
