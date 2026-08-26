@@ -257,38 +257,41 @@ export default function CalendarView({
                     </div>
                 )}
                 <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center w-full gap-3 sm:gap-4">
-                    <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+                    <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
                         <button 
                             onClick={() => setShowFilters(!showFilters)}
-                            className={`inline-flex items-center gap-2 h-10 px-3.5 rounded-xl border font-semibold text-xs sm:text-sm transition-all cursor-pointer ${
+                            className={`inline-flex items-center justify-center gap-2 h-10 px-2.5 sm:px-3.5 rounded-xl border font-semibold text-xs sm:text-sm transition-all cursor-pointer whitespace-nowrap ${
                                 showFilters 
                                     ? 'bg-blue-600/10 text-blue-600 dark:text-blue-400 border-blue-500/30' 
                                     : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 shadow-sm hover:border-slate-300 dark:hover:border-slate-700'
                             }`}
                         >
-                            <Filter size={15} />
-                            <span>{showFilters ? 'Esconder Filtros' : 'Filtrar Calendário'}</span>
+                            <Filter size={15} className="shrink-0" />
+                            <span className="truncate">{showFilters ? 'Filtros' : 'Filtrar'}</span>
+                            <span className="hidden sm:inline">{showFilters ? 'Ativos' : 'Calendário'}</span>
                         </button>
 
                         {/* Toggle Switch integrado com estilo idêntico */}
                         <button 
                             type="button"
                             onClick={() => setPastEventsFilter(prev => prev === 'futuros' ? 'todos' : 'futuros')}
-                            className={`inline-flex items-center gap-2.5 h-10 px-3.5 rounded-xl border text-xs sm:text-sm font-semibold transition-all cursor-pointer select-none ${
+                            className={`inline-flex items-center justify-between sm:justify-center gap-2 sm:gap-2.5 h-10 px-2.5 sm:px-3.5 rounded-xl border text-xs sm:text-sm font-semibold transition-all cursor-pointer select-none whitespace-nowrap ${
                                 pastEventsFilter === 'futuros' 
-                                    ? 'bg-blue-600/10 text-blue-600 dark:text-blue-400 border-blue-500/30 shadow-sm' 
-                                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 shadow-sm hover:border-slate-300 dark:hover:border-slate-700'
+                                ? 'bg-blue-600/10 text-blue-600 dark:text-blue-400 border-blue-500/30 shadow-sm' 
+                                : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 shadow-sm hover:border-slate-300 dark:hover:border-slate-700'
                             }`}
                             title={pastEventsFilter === 'futuros' ? "A ocultar provas passadas. Clica para mostrar todas." : "Clica para ocultar provas que já passaram."}
                         >
-                            <History size={15} className={pastEventsFilter === 'futuros' ? 'text-blue-500 dark:text-blue-400' : 'text-slate-400'} />
-                            <span>Ocultar passados</span>
+                            <div className="flex items-center gap-1.5 sm:gap-2 truncate">
+                                <History size={15} className={`shrink-0 ${pastEventsFilter === 'futuros' ? 'text-blue-500 dark:text-blue-400' : 'text-slate-400'}`} />
+                                <span className="truncate">Passados</span>
+                            </div>
                             
                             {/* Smooth Pill Switch */}
-                            <div className={`w-8 h-4.5 rounded-full p-0.5 transition-colors duration-200 ease-in-out flex items-center ${
+                            <div className={`w-7 sm:w-8 h-4 sm:h-4.5 rounded-full p-0.5 transition-colors duration-200 ease-in-out flex items-center shrink-0 ${
                                 pastEventsFilter === 'futuros' ? 'bg-blue-600 justify-end' : 'bg-slate-200 dark:bg-slate-700 justify-start'
                             }`}>
-                                <div className="w-3.5 h-3.5 rounded-full bg-white shadow-sm"></div>
+                                <div className="w-3 sm:w-3.5 h-3 sm:h-3.5 rounded-full bg-white shadow-sm"></div>
                             </div>
                         </button>
                         
@@ -296,9 +299,9 @@ export default function CalendarView({
                             <button 
                                 onClick={clearAllFilters}
                                 title="Repor todos os filtros"
-                                className="inline-flex items-center gap-1 font-medium text-xs sm:text-sm text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-300 transition-colors h-10 px-2 cursor-pointer"
+                                className="col-span-2 sm:col-auto inline-flex items-center justify-center gap-1 font-medium text-xs sm:text-sm text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-300 transition-colors h-8 sm:h-10 px-2 cursor-pointer"
                             >
-                                <X size={14} /> Limpar
+                                <X size={14} /> Limpar filtros
                             </button>
                         )}
                     </div>
