@@ -51,7 +51,7 @@ export default function CalendarView({
     const [selectedTags, setSelectedTags] = useState([]);
     const [showFilters, setShowFilters] = useState(false);
     const [selectedType, setSelectedType] = useState('Todos');
-    const [pastEventsFilter, setPastEventsFilter] = useState('todos');
+    const [pastEventsFilter, setPastEventsFilter] = useState('futuros');
     const [visibleCount, setVisibleCount] = useState(16);
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [isOffline, setIsOffline] = useState(false);
@@ -220,7 +220,7 @@ export default function CalendarView({
         setMonthTo(12);
         setSelectedTags([]);
         setSelectedType('Todos');
-        setPastEventsFilter('todos');
+        setPastEventsFilter('futuros');
         setSearchTerm('');
     };
 
@@ -271,31 +271,31 @@ export default function CalendarView({
                             <span className="hidden sm:inline">{showFilters ? 'Ativos' : 'Calendário'}</span>
                         </button>
 
-                        {/* Toggle Switch integrado com estilo idêntico */}
+                        {/* Toggle Switch para Ver Provas Passadas (Default: Futuros) */}
                         <button 
                             type="button"
-                            onClick={() => setPastEventsFilter(prev => prev === 'futuros' ? 'todos' : 'futuros')}
-                            className={`inline-flex items-center justify-between sm:justify-center gap-2 sm:gap-2.5 h-10 px-2.5 sm:px-3.5 rounded-xl border text-xs sm:text-sm font-semibold transition-all cursor-pointer select-none whitespace-nowrap ${
-                                pastEventsFilter === 'futuros' 
+                            onClick={() => setPastEventsFilter(prev => prev === 'passados' ? 'futuros' : 'passados')}
+                            className={`inline-flex items-center justify-between sm:justify-center gap-1.5 sm:gap-2.5 h-10 px-2.5 sm:px-3.5 rounded-xl border text-[11.5px] min-[380px]:text-xs sm:text-sm font-semibold transition-all cursor-pointer select-none whitespace-nowrap ${
+                                pastEventsFilter === 'passados' 
                                 ? 'bg-blue-600/10 text-blue-600 dark:text-blue-400 border-blue-500/30 shadow-sm' 
                                 : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 shadow-sm hover:border-slate-300 dark:hover:border-slate-700'
                             }`}
-                            title={pastEventsFilter === 'futuros' ? "A ocultar provas passadas. Clica para mostrar todas." : "Clica para ocultar provas que já passaram."}
+                            title={pastEventsFilter === 'passados' ? "A mostrar apenas eventos passados. Clica para voltar aos futuros." : "Clica para ver o histórico de provas que já passaram."}
                         >
                             <div className="flex items-center gap-1.5 sm:gap-2 truncate">
-                                <History size={15} className={`shrink-0 ${pastEventsFilter === 'futuros' ? 'text-blue-500 dark:text-blue-400' : 'text-slate-400'}`} />
-                                <span className="truncate">Passados</span>
+                                <History size={14} className={`shrink-0 ${pastEventsFilter === 'passados' ? 'text-blue-500 dark:text-blue-400' : 'text-slate-400'}`} />
+                                <span className="truncate">{pastEventsFilter === 'passados' ? 'A ver passados' : 'Ver passados'}</span>
                             </div>
                             
                             {/* Smooth Pill Switch */}
                             <div className={`w-7 sm:w-8 h-4 sm:h-4.5 rounded-full p-0.5 transition-colors duration-200 ease-in-out flex items-center shrink-0 ${
-                                pastEventsFilter === 'futuros' ? 'bg-blue-600 justify-end' : 'bg-slate-200 dark:bg-slate-700 justify-start'
+                                pastEventsFilter === 'passados' ? 'bg-blue-600 justify-end' : 'bg-slate-200 dark:bg-slate-700 justify-start'
                             }`}>
                                 <div className="w-3 sm:w-3.5 h-3 sm:h-3.5 rounded-full bg-white shadow-sm"></div>
                             </div>
                         </button>
                         
-                        {(selectedEscaloes.length > 0 || selectedDistrito !== 'Todos' || selectedRegiao !== 'Todas' || selectedTags.length > 0 || selectedType !== 'Todos' || monthFrom !== 1 || monthTo !== 12 || searchTerm !== '' || pastEventsFilter !== 'todos') && (
+                        {(selectedEscaloes.length > 0 || selectedDistrito !== 'Todos' || selectedRegiao !== 'Todas' || selectedTags.length > 0 || selectedType !== 'Todos' || monthFrom !== 1 || monthTo !== 12 || searchTerm !== '' || pastEventsFilter !== 'futuros') && (
                             <button 
                                 onClick={clearAllFilters}
                                 title="Repor todos os filtros"
