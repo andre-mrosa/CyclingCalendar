@@ -52,7 +52,7 @@ function parsePtDate(dateStr) {
 export function useCalendarEvents() {
     const { isSignedIn } = useUser();
 
-    const { data, mutate, isLoading } = useSWR(
+    const { data: remoteData, mutate, isLoading } = useSWR(
         isSignedIn ? '/api/calendar/events' : null,
         fetcher,
         {
@@ -62,6 +62,22 @@ export function useCalendarEvents() {
             shouldRetryOnError: false
         }
     );
+
+    const data = useMemo(() => {
+        if (remoteData && remoteData.success) {
+            try {
+                localStorage.setItem('cycling-agenda-cache', JSON.stringify(remoteData));
+            } catch (e) {}
+            return remoteData;
+        }
+        if (typeof window !== 'undefined') {
+            try {
+                const cached = localStorage.getItem('cycling-agenda-cache');
+                if (cached) return JSON.parse(cached);
+            } catch (e) {}
+        }
+        return remoteData || { markedEventIds: [], markedDates: {} };
+    }, [remoteData]);
 
     const markedSet = useMemo(() => {
         return new Set(data?.markedEventIds || []);
