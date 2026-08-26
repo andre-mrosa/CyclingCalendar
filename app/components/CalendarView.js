@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { useSettingsStore } from '../store/useSettingsStore';
 import useSWR from 'swr';
 
-import { Calendar, MapPin, Search, X, ChevronLeft, ChevronRight, Users, Heart, Star, LayoutGrid, List, HelpCircle, Filter, Bike, AlertTriangle, Check, CalendarCheck } from 'lucide-react';
+import { Calendar, MapPin, Search, X, ChevronLeft, ChevronRight, Users, Heart, Star, LayoutGrid, List, HelpCircle, Filter, Bike, AlertTriangle, Check, CalendarCheck, History } from 'lucide-react';
 import { useFavorites } from '../hooks/useFavorites';
 import { useCalendarEvents } from '../hooks/useCalendarEvents';
 import { filterEvents } from '../utils/filterEvents';
@@ -214,20 +214,33 @@ export default function CalendarView({
             <div className="w-full max-w-6xl mx-auto">
             <header className="mb-6 sm:mb-8">
                 <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center w-full gap-3 sm:gap-4">
-                    <div className="flex justify-between items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
                         <button 
                             onClick={() => setShowFilters(!showFilters)}
-                            className={`inline-flex items-center gap-1.5 font-semibold transition-colors text-xs sm:text-[0.95rem] py-1.5 sm:py-2 px-3 sm:px-3.5 rounded-xl border ${showFilters ? 'bg-blue-600/10 text-blue-600 dark:text-blue-400 border-blue-500/30' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 shadow-sm'}`}
+                            className={`inline-flex items-center gap-1.5 font-semibold transition-colors text-xs sm:text-[0.95rem] py-1.5 sm:py-2 px-3 sm:px-3.5 rounded-xl border cursor-pointer ${showFilters ? 'bg-blue-600/10 text-blue-600 dark:text-blue-400 border-blue-500/30' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 shadow-sm'}`}
                         >
                             <Filter size={16} />
                             {showFilters ? 'Esconder Filtros' : 'Filtrar Calendário'}
+                        </button>
+
+                        <button 
+                            onClick={() => setPastEventsFilter(prev => prev === 'futuros' ? 'todos' : 'futuros')}
+                            className={`inline-flex items-center gap-1.5 font-semibold transition-all text-xs sm:text-[0.95rem] py-1.5 sm:py-2 px-3 sm:px-3.5 rounded-xl border cursor-pointer ${
+                                pastEventsFilter === 'futuros' 
+                                    ? 'bg-blue-600/10 text-blue-600 dark:text-blue-400 border-blue-500/30' 
+                                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 shadow-sm'
+                            }`}
+                            title={pastEventsFilter === 'futuros' ? "A mostrar apenas provas futuras. Clica para mostrar todas." : "Clica para ocultar provas que já passaram."}
+                        >
+                            <History size={16} className={pastEventsFilter === 'futuros' ? 'text-blue-500' : 'text-slate-400'} />
+                            <span>{pastEventsFilter === 'futuros' ? 'Apenas Futuros' : 'Ocultar Passados'}</span>
                         </button>
                         
                         {(selectedEscaloes.length > 0 || selectedDistrito !== 'Todos' || selectedRegiao !== 'Todas' || selectedTags.length > 0 || selectedType !== 'Todos' || monthFrom !== 1 || monthTo !== 12 || searchTerm !== '' || pastEventsFilter !== 'todos') && (
                             <button 
                                 onClick={clearAllFilters}
                                 title="Repor todos os filtros"
-                                className="inline-flex items-center gap-1 font-medium text-xs sm:text-sm text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-300 transition-colors py-1 px-2"
+                                className="inline-flex items-center gap-1 font-medium text-xs sm:text-sm text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-300 transition-colors py-1 px-2 cursor-pointer"
                             >
                                 <X size={14} /> Limpar
                             </button>
