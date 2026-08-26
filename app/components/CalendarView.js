@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { useSettingsStore } from '../store/useSettingsStore';
 import useSWR from 'swr';
 
-import { Calendar, MapPin, Search, X, ChevronLeft, ChevronRight, Users, Heart, Star, LayoutGrid, List, HelpCircle, Filter, Bike, AlertTriangle, Check, CalendarCheck, History } from 'lucide-react';
+import { Calendar, MapPin, Search, X, ChevronLeft, ChevronRight, Users, Heart, Star, LayoutGrid, List, HelpCircle, Filter, Bike, AlertTriangle, Check, CalendarCheck, History, WifiOff } from 'lucide-react';
 import { useFavorites } from '../hooks/useFavorites';
 import { useCalendarEvents } from '../hooks/useCalendarEvents';
 import { filterEvents } from '../utils/filterEvents';
@@ -54,10 +54,24 @@ export default function CalendarView({
     const [pastEventsFilter, setPastEventsFilter] = useState('todos');
     const [visibleCount, setVisibleCount] = useState(16);
     const [selectedEvent, setSelectedEvent] = useState(null);
+    const [isOffline, setIsOffline] = useState(false);
     const loaderRef = useRef(null);
 
     const { favorites, toggleFavorite, isSignedIn } = useFavorites();
     const { markedSet, isMarked, getDateConflict } = useCalendarEvents();
+
+    // Offline detection
+    useEffect(() => {
+        setIsOffline(typeof navigator !== 'undefined' ? !navigator.onLine : false);
+        const handleOnline = () => setIsOffline(false);
+        const handleOffline = () => setIsOffline(true);
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, []);
 
     // Sync settings on mount
     useEffect(() => {
@@ -88,9 +102,32 @@ export default function CalendarView({
         }
     );
 
+    // Save fetched events to offline localStorage cache
+    useEffect(() => {
+        if (fetchedEvents && Array.isArray(fetchedEvents) && fetchedEvents.length > 0) {
+            try {
+                localStorage.setItem('cycling_calendar_cached_events', JSON.stringify(fetchedEvents));
+            } catch (e) {}
+        }
+    }, [fetchedEvents]);
+
     const events = useMemo(() => {
-        const raw = fetchedEvents || EMPTY_EVENTS;
-        return mergeEvents(raw);
+        if (fetchedEvents && fetchedEvents.length > 0) {
+            return mergeEvents(fetchedEvents);
+        }
+        // Fallback to offline localStorage cache when offline or network fails
+        if (typeof window !== 'undefined') {
+            try {
+                const cached = localStorage.getItem('cycling_calendar_cached_events');
+                if (cached) {
+                    const parsed = JSON.parse(cached);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        return mergeEvents(parsed);
+                    }
+                }
+            } catch (e) {}
+        }
+        return EMPTY_EVENTS;
     }, [fetchedEvents]);
 
     useEffect(() => {
@@ -213,6 +250,12 @@ export default function CalendarView({
         <div className="bg-slate-50 dark:bg-slate-950 min-h-screen text-slate-900 dark:text-slate-100 pt-4 sm:pt-8 pb-24 sm:pb-16 px-3 sm:px-8 transition-colors duration-200">
             <div className="w-full max-w-6xl mx-auto">
             <header className="mb-6 sm:mb-8">
+                {isOffline && (
+                    <div className="mb-3.5 py-2 px-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs sm:text-sm font-medium flex items-center justify-center gap-2 animate-fade-in shadow-sm">
+                        <WifiOff size={15} className="text-amber-500 shrink-0" />
+                        <span>Modo Offline — A mostrar o calendário guardado no teu telemóvel.</span>
+                    </div>
+                )}
                 <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center w-full gap-3 sm:gap-4">
                     <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
                         <button 
