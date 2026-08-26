@@ -2,16 +2,18 @@
 
 import { useState } from 'react';
 import { useSettingsStore } from '../store/useSettingsStore';
-import { HelpCircle, Settings } from 'lucide-react';
+import { HelpCircle, Settings, ChevronUp, ChevronDown, RotateCcw } from 'lucide-react';
 import RegionAssistant from '../components/RegionAssistant';
 import EscalaoAssistant from '../components/EscalaoAssistant';
 
 export default function Conta() {
     const { 
+        defaultPage, setDefaultPage,
         defaultEscalao, setDefaultEscalao,
         defaultRegiao, setDefaultRegiao,
         selectedSources, toggleSource,
-        hiddenTabs, toggleHiddenTab
+        hiddenTabs, toggleHiddenTab,
+        tabsOrder, moveTab, resetTabsOrder
     } = useSettingsStore();
 
     const [activeModal, setActiveModal] = useState(null);
@@ -31,6 +33,29 @@ export default function Conta() {
             <main className="flex flex-col gap-6">
                 <section className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/5 rounded-2xl p-6 sm:p-8 shadow-sm dark:shadow-xl">
                     <div className="flex flex-col md:flex-row md:items-center justify-between pb-6 border-b border-slate-100 dark:border-slate-800/60 gap-4">
+                        <div>
+                            <h3 className="font-semibold text-slate-900 dark:text-slate-200 flex items-center mb-1 text-base">
+                                Página Principal Predefinida
+                            </h3>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Escolhe a página que abre automaticamente ao entrar na aplicação.</p>
+                        </div>
+                        <select 
+                            className="h-10 px-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors w-full md:w-auto" 
+                            value={defaultPage || '/'} 
+                            onChange={(e) => setDefaultPage(e.target.value)}
+                        >
+                            <option value="/">Geral (Todas as Provas)</option>
+                            <option value="/agenda">A Minha Agenda</option>
+                            <option value="/favoritos">Favoritos</option>
+                            <option value="/nacionais">Campeonatos Nacionais</option>
+                            <option value="/tacas">Taças de Portugal</option>
+                            <option value="/regionais">Regionais</option>
+                            <option value="/internacionais">Internacionais</option>
+                            <option value="/lazer">Lazer / CPT</option>
+                        </select>
+                    </div>
+
+                    <div className="flex flex-col md:flex-row md:items-center justify-between py-6 border-b border-slate-100 dark:border-slate-800/60 gap-4">
                         <div>
                             <h3 className="font-semibold text-slate-900 dark:text-slate-200 flex items-center mb-1 text-base">
                                 Região Predefinida
@@ -79,24 +104,65 @@ export default function Conta() {
                 </section>
 
                 <section className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/5 rounded-2xl p-6 sm:p-8 shadow-sm dark:shadow-xl">
-                    <div className="pb-4">
-                        <h3 className="font-semibold text-slate-900 dark:text-slate-200 mb-1 text-base">Menu de Navegação</h3>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">Personaliza os separadores visíveis no topo da página. Desativa o que não usas.</p>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800/60 gap-2">
+                        <div>
+                            <h3 className="font-semibold text-slate-900 dark:text-slate-200 mb-1 text-base">Menu de Navegação & Ordem dos Separadores</h3>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Reordena os separadores ou desativa os que não utilizas.</p>
+                        </div>
+                        <button 
+                            onClick={resetTabsOrder}
+                            className="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors py-1 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-blue-500/40 shrink-0 self-start sm:self-auto cursor-pointer"
+                            title="Repor ordem original dos separadores"
+                        >
+                            <RotateCcw size={13} />
+                            <span>Repor ordem padrão</span>
+                        </button>
                     </div>
                     
-                    <div className="pt-2">
-                        {['Minha Agenda', 'Nacionais', 'Internacionais', 'Taças', 'Regionais', 'Lazer', 'Favoritos'].map(tab => {
+                    <div className="pt-3 flex flex-col gap-2">
+                        {(tabsOrder && tabsOrder.length > 0 ? tabsOrder : ['Geral', 'Minha Agenda', 'Nacionais', 'Internacionais', 'Taças', 'Regionais', 'Lazer', 'Favoritos']).map((tab, idx, arr) => {
                             const isVisible = !hiddenTabs.includes(tab);
+                            const isFirst = idx === 0;
+                            const isLast = idx === arr.length - 1;
+
                             return (
-                                <div key={tab} className="flex flex-col md:flex-row md:items-center justify-between py-3.5 border-b border-slate-100 dark:border-slate-800/60 last:border-0 gap-4">
-                                    <span className={`text-sm ${isVisible ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 dark:text-slate-500'}`}>
-                                        Separador <strong className="font-semibold">{tab}</strong>
-                                    </span>
-                                    <div 
-                                        className={`w-11 h-6 shrink-0 rounded-full transition-all flex items-center px-1 cursor-pointer border ${isVisible ? 'bg-blue-500/20 border-blue-500/50 shadow-[0_0_8px_rgba(59,130,246,0.3)]' : 'bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-700'}`} 
-                                        onClick={() => toggleHiddenTab(tab)}
-                                    >
-                                        <div className={`w-4 h-4 rounded-full transition-all ${isVisible ? 'translate-x-5 bg-blue-500 dark:bg-blue-400 shadow-[0_0_8px_rgba(59,130,246,0.8)]' : 'translate-x-0 bg-slate-400 dark:bg-slate-500'}`}/>
+                                <div key={tab} className="flex items-center justify-between py-2.5 px-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60 gap-3">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        {/* Reorder Arrows */}
+                                        <div className="flex items-center gap-0.5 shrink-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-0.5">
+                                            <button 
+                                                onClick={() => moveTab(idx, -1)}
+                                                disabled={isFirst}
+                                                className={`p-1 rounded transition-colors ${isFirst ? 'opacity-25 cursor-not-allowed' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer'}`}
+                                                title="Mover para cima / esquerda"
+                                            >
+                                                <ChevronUp size={15} />
+                                            </button>
+                                            <button 
+                                                onClick={() => moveTab(idx, 1)}
+                                                disabled={isLast}
+                                                className={`p-1 rounded transition-colors ${isLast ? 'opacity-25 cursor-not-allowed' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer'}`}
+                                                title="Mover para baixo / direita"
+                                            >
+                                                <ChevronDown size={15} />
+                                            </button>
+                                        </div>
+
+                                        <span className={`text-sm font-semibold truncate ${isVisible ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 dark:text-slate-500 line-through'}`}>
+                                            {tab}
+                                        </span>
+                                    </div>
+
+                                    {/* Visibility Toggle */}
+                                    <div className="flex items-center gap-2.5 shrink-0">
+                                        <span className="text-xs text-slate-400 hidden sm:inline">{isVisible ? 'Ativo' : 'Oculto'}</span>
+                                        <div 
+                                            className={`w-11 h-6 shrink-0 rounded-full transition-all flex items-center px-1 cursor-pointer border ${isVisible ? 'bg-blue-500/20 border-blue-500/50 shadow-[0_0_8px_rgba(59,130,246,0.3)]' : 'bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-700'}`} 
+                                            onClick={() => toggleHiddenTab(tab)}
+                                            title={isVisible ? "Ocultar separador" : "Mostrar separador"}
+                                        >
+                                            <div className={`w-4 h-4 rounded-full transition-all ${isVisible ? 'translate-x-5 bg-blue-500 dark:bg-blue-400 shadow-[0_0_8px_rgba(59,130,246,0.8)]' : 'translate-x-0 bg-slate-400 dark:bg-slate-500'}`}/>
+                                        </div>
                                     </div>
                                 </div>
                             );

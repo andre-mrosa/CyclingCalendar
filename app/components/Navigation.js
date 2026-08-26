@@ -38,7 +38,7 @@ export default function Navigation() {
         }
     }, [isSettingsModalOpen, isHelpModalOpen, isMobileMenuOpen]);
 
-    const { hiddenTabs } = useSettingsStore();
+    const { hiddenTabs, tabsOrder } = useSettingsStore();
 
     const allLinks = [
         { href: "/", label: "Geral", icon: <Home size={18} />, exact: true },
@@ -51,7 +51,17 @@ export default function Navigation() {
         { href: "/favoritos", label: "Favoritos", icon: <Star size={18} /> }
     ];
 
-    const links = allLinks.filter(link => !hiddenTabs.includes(link.label));
+    const sortedLinks = [...allLinks].sort((a, b) => {
+        const order = tabsOrder || [];
+        const indexA = order.indexOf(a.label);
+        const indexB = order.indexOf(b.label);
+        if (indexA === -1 && indexB === -1) return 0;
+        if (indexA === -1) return 1;
+        if (indexB === -1) return -1;
+        return indexA - indexB;
+    });
+
+    const links = sortedLinks.filter(link => !hiddenTabs.includes(link.label));
     
     const rightLinks = [
         { href: "/ajuda", label: "Ajuda", icon: <HelpCircle size={18} /> },
