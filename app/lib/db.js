@@ -2,7 +2,8 @@ import { PrismaClient } from '@prisma/client';
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 
-const connectionString = process.env.POSTGRES_PRISMA_URL ? process.env.POSTGRES_PRISMA_URL.replace('sslmode=require', '') : '';
+const rawConn = process.env.POSTGRES_PRISMA_URL || process.env.DATABASE_URL || '';
+const connectionString = rawConn.replace('sslmode=require', '').replace('sslmode=prefer', '');
 const pool = new Pool({ 
     connectionString,
     ssl: { rejectUnauthorized: false } 

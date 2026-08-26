@@ -217,30 +217,43 @@ export default function CalendarView({
                     <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
                         <button 
                             onClick={() => setShowFilters(!showFilters)}
-                            className={`inline-flex items-center gap-1.5 font-semibold transition-colors text-xs sm:text-[0.95rem] py-1.5 sm:py-2 px-3 sm:px-3.5 rounded-xl border cursor-pointer ${showFilters ? 'bg-blue-600/10 text-blue-600 dark:text-blue-400 border-blue-500/30' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 shadow-sm'}`}
+                            className={`inline-flex items-center gap-2 h-10 px-3.5 rounded-xl border font-semibold text-xs sm:text-sm transition-all cursor-pointer ${
+                                showFilters 
+                                    ? 'bg-blue-600/10 text-blue-600 dark:text-blue-400 border-blue-500/30' 
+                                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 shadow-sm hover:border-slate-300 dark:hover:border-slate-700'
+                            }`}
                         >
-                            <Filter size={16} />
-                            {showFilters ? 'Esconder Filtros' : 'Filtrar Calendário'}
+                            <Filter size={15} />
+                            <span>{showFilters ? 'Esconder Filtros' : 'Filtrar Calendário'}</span>
                         </button>
 
+                        {/* Toggle Switch integrado com estilo idêntico */}
                         <button 
+                            type="button"
                             onClick={() => setPastEventsFilter(prev => prev === 'futuros' ? 'todos' : 'futuros')}
-                            className={`inline-flex items-center gap-1.5 font-semibold transition-all text-xs sm:text-[0.95rem] py-1.5 sm:py-2 px-3 sm:px-3.5 rounded-xl border cursor-pointer ${
+                            className={`inline-flex items-center gap-2.5 h-10 px-3.5 rounded-xl border text-xs sm:text-sm font-semibold transition-all cursor-pointer select-none ${
                                 pastEventsFilter === 'futuros' 
-                                    ? 'bg-blue-600/10 text-blue-600 dark:text-blue-400 border-blue-500/30' 
-                                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 shadow-sm'
+                                    ? 'bg-blue-600/10 text-blue-600 dark:text-blue-400 border-blue-500/30 shadow-sm' 
+                                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 shadow-sm hover:border-slate-300 dark:hover:border-slate-700'
                             }`}
-                            title={pastEventsFilter === 'futuros' ? "A mostrar apenas provas futuras. Clica para mostrar todas." : "Clica para ocultar provas que já passaram."}
+                            title={pastEventsFilter === 'futuros' ? "A ocultar provas passadas. Clica para mostrar todas." : "Clica para ocultar provas que já passaram."}
                         >
-                            <History size={16} className={pastEventsFilter === 'futuros' ? 'text-blue-500' : 'text-slate-400'} />
-                            <span>{pastEventsFilter === 'futuros' ? 'Apenas Futuros' : 'Ocultar Passados'}</span>
+                            <History size={15} className={pastEventsFilter === 'futuros' ? 'text-blue-500 dark:text-blue-400' : 'text-slate-400'} />
+                            <span>Ocultar passados</span>
+                            
+                            {/* Smooth Pill Switch */}
+                            <div className={`w-8 h-4.5 rounded-full p-0.5 transition-colors duration-200 ease-in-out flex items-center ${
+                                pastEventsFilter === 'futuros' ? 'bg-blue-600 justify-end' : 'bg-slate-200 dark:bg-slate-700 justify-start'
+                            }`}>
+                                <div className="w-3.5 h-3.5 rounded-full bg-white shadow-sm"></div>
+                            </div>
                         </button>
                         
                         {(selectedEscaloes.length > 0 || selectedDistrito !== 'Todos' || selectedRegiao !== 'Todas' || selectedTags.length > 0 || selectedType !== 'Todos' || monthFrom !== 1 || monthTo !== 12 || searchTerm !== '' || pastEventsFilter !== 'todos') && (
                             <button 
                                 onClick={clearAllFilters}
                                 title="Repor todos os filtros"
-                                className="inline-flex items-center gap-1 font-medium text-xs sm:text-sm text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-300 transition-colors py-1 px-2 cursor-pointer"
+                                className="inline-flex items-center gap-1 font-medium text-xs sm:text-sm text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-300 transition-colors h-10 px-2 cursor-pointer"
                             >
                                 <X size={14} /> Limpar
                             </button>
