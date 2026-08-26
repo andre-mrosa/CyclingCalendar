@@ -97,16 +97,41 @@ export default function Navigation() {
         </button>
     );
 
+    const getPageInfo = (path) => {
+        if (path === '/') return { label: 'Geral', icon: <Home size={17} className="text-blue-500 dark:text-blue-400" /> };
+        if (path.startsWith('/agenda')) return { label: 'Minha Agenda', icon: <CalendarCheck size={17} className="text-blue-500 dark:text-blue-400" /> };
+        if (path.startsWith('/nacionais')) return { label: 'Nacionais', icon: <Flag size={17} className="text-blue-500 dark:text-blue-400" /> };
+        if (path.startsWith('/internacionais')) return { label: 'Internacionais', icon: <Globe size={17} className="text-blue-500 dark:text-blue-400" /> };
+        if (path.startsWith('/tacas')) return { label: 'Taças', icon: <Trophy size={17} className="text-blue-500 dark:text-blue-400" /> };
+        if (path.startsWith('/regionais')) return { label: 'Regionais', icon: <MapPin size={17} className="text-blue-500 dark:text-blue-400" /> };
+        if (path.startsWith('/lazer')) return { label: 'Lazer', icon: <Bike size={17} className="text-blue-500 dark:text-blue-400" /> };
+        if (path.startsWith('/favoritos')) return { label: 'Favoritos', icon: <Star size={17} className="text-blue-500 dark:text-blue-400" /> };
+        if (path.startsWith('/definicoes')) return { label: 'Definições', icon: <Settings size={17} className="text-blue-500 dark:text-blue-400" /> };
+        if (path.startsWith('/ajuda')) return { label: 'Ajuda', icon: <HelpCircle size={17} className="text-blue-500 dark:text-blue-400" /> };
+        return { label: 'Calendário', icon: <DynamicLogo className="w-5 h-5 rounded" /> };
+    };
+
+    const currentPage = getPageInfo(pathname);
+
     return (
         <>
-            <nav className="no-scrollbar flex items-center px-8 py-4 bg-white/85 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50 text-slate-800 dark:text-slate-50 transition-colors duration-200">
-                <button 
-                    className="md:hidden mr-4 text-slate-700 dark:text-slate-50 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" 
-                    onClick={() => setIsMobileMenuOpen(true)}
-                    title="Menu"
-                >
-                    <Menu size={24} />
-                </button>
+            <nav className="no-scrollbar flex items-center justify-between px-4 sm:px-8 py-3.5 sm:py-4 bg-white/85 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50 text-slate-800 dark:text-slate-50 transition-colors duration-200">
+                <div className="flex items-center gap-2.5 md:hidden">
+                    <button 
+                        className="text-slate-700 dark:text-slate-50 hover:text-blue-600 dark:hover:text-blue-400 transition-colors p-1 -ml-1 rounded-lg focus:outline-none" 
+                        onClick={() => setIsMobileMenuOpen(true)}
+                        title="Menu"
+                    >
+                        <Menu size={24} />
+                    </button>
+
+                    <div className="flex items-center gap-2">
+                        {currentPage.icon}
+                        <span className="font-bold text-base text-slate-900 dark:text-white tracking-tight">
+                            {currentPage.label}
+                        </span>
+                    </div>
+                </div>
 
                 <Link href="/" className="hidden md:flex items-center mr-6 no-underline group shrink-0" title="Cycling Calendar">
                     <DynamicLogo className="w-8 h-8 rounded-lg shadow-[0_0_12px_rgba(59,130,246,0.25)] transition-transform group-hover:scale-105" />

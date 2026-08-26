@@ -130,6 +130,21 @@ export default function CalendarView({
         return EMPTY_EVENTS;
     }, [fetchedEvents]);
 
+    const hasCachedEvents = events && events.length > 0;
+    const isInitialLoading = loading && !hasCachedEvents;
+    const [slowNetwork, setSlowNetwork] = useState(false);
+
+    useEffect(() => {
+        if (loading && !hasCachedEvents) {
+            const timer = setTimeout(() => {
+                setSlowNetwork(true);
+            }, 2500);
+            return () => clearTimeout(timer);
+        } else {
+            setSlowNetwork(false);
+        }
+    }, [loading, hasCachedEvents]);
+
     useEffect(() => {
         let filtered = filterEvents(events, {
             filterByFavorites, favorites,
@@ -523,14 +538,14 @@ export default function CalendarView({
             </header>
 
             <main>
-                {loading && (
+                {isInitialLoading && (
                     <div className="flex flex-col items-center justify-center py-16 text-slate-400">
                         <div className="w-8 h-8 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin mb-4"></div>
-                        <p>A carregar o calendário unificado...</p>
+                        <p>{slowNetwork ? 'Ligação lenta detetada... A tentar sincronizar.' : 'A carregar o calendário unificado...'}</p>
                     </div>
                 )}
 
-                {!loading && error && (
+                {!isInitialLoading && error && !hasCachedEvents && (
                     <div className="flex flex-col items-center justify-center py-16 text-slate-400">
                         <p className="text-red-400">Ocorreu um erro: {error.message || error}</p>
                         <button 
@@ -542,7 +557,7 @@ export default function CalendarView({
                     </div>
                 )}
 
-                {!loading && !error && filteredEvents.length === 0 && (() => {
+                {!isInitialLoading && (!error || hasCachedEvents) && filteredEvents.length === 0 && (() => {
                     const associationLinks = {
                         'AC Minho': 'https://www.acm.pt/',
                         'AC Porto': 'https://acporto.org/',
