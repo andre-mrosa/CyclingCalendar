@@ -73,7 +73,7 @@ export default function RootLayout({ children }) {
     <html lang="pt" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-200 selection:bg-blue-600 selection:text-white transition-colors duration-200`} suppressHydrationWarning>
         <FaviconManager />
-        <ThemeProvider attribute="class" defaultTheme="dark">
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
           <ThemeClerkProvider>
             <Navigation />
             <main className="min-h-[calc(100vh-120px)] w-full overflow-x-hidden">

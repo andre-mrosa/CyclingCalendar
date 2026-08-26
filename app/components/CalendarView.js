@@ -52,7 +52,7 @@ export default function CalendarView({
     const [showFilters, setShowFilters] = useState(false);
     const [selectedType, setSelectedType] = useState('Todos');
     const [pastEventsFilter, setPastEventsFilter] = useState('futuros');
-    const [visibleCount, setVisibleCount] = useState(16);
+    const [visibleCount, setVisibleCount] = useState(60);
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [isOffline, setIsOffline] = useState(false);
     const loaderRef = useRef(null);
@@ -102,6 +102,25 @@ export default function CalendarView({
         }
     );
 
+    const [mounted, setMounted] = useState(false);
+    const [localCachedEvents, setLocalCachedEvents] = useState([]);
+
+    // Load offline cache on mount to prevent SSR hydration mismatch
+    useEffect(() => {
+        setMounted(true);
+        if (typeof window !== 'undefined') {
+            try {
+                const cached = localStorage.getItem('cycling_calendar_cached_events');
+                if (cached) {
+                    const parsed = JSON.parse(cached);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        setLocalCachedEvents(parsed);
+                    }
+                }
+            } catch (e) {}
+        }
+    }, []);
+
     // Save fetched events to offline localStorage cache
     useEffect(() => {
         if (fetchedEvents && Array.isArray(fetchedEvents) && fetchedEvents.length > 0) {
@@ -115,35 +134,13 @@ export default function CalendarView({
         if (fetchedEvents && fetchedEvents.length > 0) {
             return mergeEvents(fetchedEvents);
         }
-        // Fallback to offline localStorage cache when offline or network fails
-        if (typeof window !== 'undefined') {
-            try {
-                const cached = localStorage.getItem('cycling_calendar_cached_events');
-                if (cached) {
-                    const parsed = JSON.parse(cached);
-                    if (Array.isArray(parsed) && parsed.length > 0) {
-                        return mergeEvents(parsed);
-                    }
-                }
-            } catch (e) {}
+        if (localCachedEvents && localCachedEvents.length > 0) {
+            return mergeEvents(localCachedEvents);
         }
         return EMPTY_EVENTS;
-    }, [fetchedEvents]);
+    }, [fetchedEvents, localCachedEvents]);
 
-    const hasCachedEvents = events && events.length > 0;
-    const isInitialLoading = loading && !hasCachedEvents;
-    const [slowNetwork, setSlowNetwork] = useState(false);
-
-    useEffect(() => {
-        if (loading && !hasCachedEvents) {
-            const timer = setTimeout(() => {
-                setSlowNetwork(true);
-            }, 2500);
-            return () => clearTimeout(timer);
-        } else {
-            setSlowNetwork(false);
-        }
-    }, [loading, hasCachedEvents]);
+    const isInitialLoading = !mounted || (loading && events.length === 0);
 
     useEffect(() => {
         let filtered = filterEvents(events, {
@@ -243,10 +240,10 @@ export default function CalendarView({
         const observer = new IntersectionObserver(
             (entries) => {
                 if (entries[0].isIntersecting && filteredEvents.length > visibleCount) {
-                    setVisibleCount((prev) => Math.min(prev + 16, filteredEvents.length));
+                    setVisibleCount((prev) => Math.min(prev + 60, filteredEvents.length));
                 }
             },
-            { threshold: 0.1 }
+            { rootMargin: '600px 0px', threshold: 0 }
         );
 
         const currentLoader = loaderRef.current;
@@ -541,11 +538,11 @@ export default function CalendarView({
                 {isInitialLoading && (
                     <div className="flex flex-col items-center justify-center py-16 text-slate-400">
                         <div className="w-8 h-8 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin mb-4"></div>
-                        <p>{slowNetwork ? 'Ligação lenta detetada... A tentar sincronizar.' : 'A carregar o calendário unificado...'}</p>
+                        <p>A carregar o calendário unificado...</p>
                     </div>
                 )}
 
-                {!isInitialLoading && error && !hasCachedEvents && (
+                {!isInitialLoading && error && events.length === 0 && (
                     <div className="flex flex-col items-center justify-center py-16 text-slate-400">
                         <p className="text-red-400">Ocorreu um erro: {error.message || error}</p>
                         <button 
@@ -557,7 +554,7 @@ export default function CalendarView({
                     </div>
                 )}
 
-                {!isInitialLoading && (!error || hasCachedEvents) && filteredEvents.length === 0 && (() => {
+                {!isInitialLoading && (!error || events.length > 0) && filteredEvents.length === 0 && (() => {
                     const associationLinks = {
                         'AC Minho': 'https://www.acm.pt/',
                         'AC Porto': 'https://acporto.org/',
@@ -604,7 +601,7 @@ export default function CalendarView({
                     );
                 })()}
 
-                {!loading && !error && filteredEvents.length > 0 && (
+                {!isInitialLoading && filteredEvents.length > 0 && (
                     <>
                         <div className="flex flex-col gap-2">
                             {filteredEvents.slice(0, visibleCount).map(event => {
