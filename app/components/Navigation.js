@@ -4,11 +4,12 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
 import { SignInButton, Show, UserButton, useUser } from '@clerk/nextjs';
-import { Home, Trophy, MapPin, Bike, HelpCircle, Settings, Menu, X, Moon, Sun, Flag, Star, Globe, LogIn, CalendarCheck, Shield } from 'lucide-react';
+import { Home, Trophy, MapPin, Bike, HelpCircle, Settings, Menu, X, Moon, Sun, Flag, Star, Globe, LogIn, CalendarCheck, Shield, Trash2, RotateCcw } from 'lucide-react';
 import SettingsPage from '../definicoes/page';
 import HelpPage from '../ajuda/page';
 import { useSettingsStore } from '../store/useSettingsStore';
 import DynamicLogo from './DynamicLogo';
+import ClerkPrivacyProfilePage from './ClerkPrivacyProfilePage';
 
 export default function Navigation() {
     const pathname = usePathname();
@@ -18,6 +19,8 @@ export default function Navigation() {
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
     const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [adminPendingCount, setAdminPendingCount] = useState(0);
+    const [dismissedAdminBanner, setDismissedAdminBanner] = useState(false);
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
@@ -27,31 +30,76 @@ export default function Navigation() {
     useEffect(() => {
         if (!isLoaded || !isSignedIn) {
             setIsAdmin(false);
+            setAdminPendingCount(0);
             return;
         }
 
-        // 1. Verificação instantânea no lado do cliente
-        const primaryEmail = (user?.primaryEmailAddress?.emailAddress || user?.emailAddresses?.[0]?.emailAddress || '').toLowerCase();
-        const masterDefaults = ['andre.rosa1603@gmail.com', 'andremrosa@gmail.com', 'andre_rosa', 'andrerosa'];
-        const isMaster = masterDefaults.some(m => primaryEmail.includes(m));
-        const hasAdminRole = user?.publicMetadata?.role === 'admin';
+        // 1. Verificação instantânea e abrangente no lado do cliente
+        const userEmails = [
+            user?.primaryEmailAddress?.emailAddress,
+            user?.email,
+            ...(user?.emailAddresses || []).map(e => typeof e === 'string' ? e : e?.emailAddress),
+            ...(user?.externalAccounts || []).map(a => a?.emailAddress)
+        ].filter(Boolean).map(e => String(e).toLowerCase().trim());
 
-        if (isMaster || hasAdminRole) {
+        const masterList = ['andre.rosa1603@gmail.com', 'andremrosa@gmail.com', 'andre_rosa', 'andrerosa', 'user_3HoiHwpGl9suYXrYx0QFhDMXHWD'];
+        const isMaster = !!user && (
+            masterList.includes(user.id) ||
+            userEmails.some(e => masterList.some(m => e === m || e.includes(m) || m.includes(e))) ||
+            (user.username && masterList.some(m => user.username.toLowerCase().includes(m)))
+        );
+        const hasAdminRole = user?.publicMetadata?.role === 'admin';
+        const isLocalAdmin = isMaster || hasAdminRole;
+
+        if (isLocalAdmin) {
             setIsAdmin(true);
         }
 
-        // 2. Confirmação com o backend
+        const fetchNotifications = () => {
+            fetch('/api/admin/notifications')
+                .then(r => r.json())
+                .then(notifData => {
+                    if (notifData.success && notifData.notifications) {
+                        setAdminPendingCount(notifData.notifications.deletionRequests?.count || 0);
+                    }
+                })
+                .catch(() => {});
+        };
+
+        // 2. Carrega as notificações imediatamente no arranque se for admin
+        if (isLocalAdmin) {
+            fetchNotifications();
+        }
+
+        // 3. Confirmação com o backend
         fetch('/api/admin/me')
             .then(res => res.json())
             .then(data => {
                 if (data.success && data.isAdmin) {
                     setIsAdmin(true);
-                } else if (!isMaster && !hasAdminRole) {
+                    fetchNotifications();
+                } else if (!isLocalAdmin) {
                     setIsAdmin(false);
+                    setAdminPendingCount(0);
                 }
             })
             .catch(() => {});
-    }, [isLoaded, isSignedIn, user]);
+
+        // 4. Polling periódico em segundo plano a cada 15 segundos
+        const pollInterval = setInterval(() => {
+            if (isLocalAdmin) {
+                fetchNotifications();
+            }
+        }, 15000);
+
+        const handleNotifUpdate = () => fetchNotifications();
+        window.addEventListener('admin-notif-update', handleNotifUpdate);
+
+        return () => {
+            clearInterval(pollInterval);
+            window.removeEventListener('admin-notif-update', handleNotifUpdate);
+        };
+    }, [isLoaded, isSignedIn, user, pathname]);
 
     const isDarkMode = mounted ? theme === 'dark' : true; // Default to dark for SSR to match defaultTheme
 
@@ -146,6 +194,33 @@ export default function Navigation() {
 
     return (
         <>
+            {/* Top Admin Alert Banner for Pending Requests */}
+            {isAdmin && adminPendingCount > 0 && !dismissedAdminBanner && pathname !== '/admin' && (
+                <div className="bg-amber-500 text-slate-950 px-4 py-2 text-xs font-bold flex items-center justify-between shadow-md relative z-50 animate-fade-in">
+                    <div className="flex items-center gap-2 max-w-7xl mx-auto flex-1">
+                        <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-950 text-amber-400 text-[10px] font-black shrink-0">
+                            {adminPendingCount}
+                        </span>
+                        <span>
+                            Aviso de Administração: Tens {adminPendingCount} {adminPendingCount === 1 ? 'pedido' : 'pedidos'} de eliminação de conta pendente{adminPendingCount === 1 ? '' : 's'} de revisão.
+                        </span>
+                        <Link 
+                            href="/admin" 
+                            className="inline-flex items-center gap-1 underline font-black text-slate-950 hover:text-white transition-colors ml-2"
+                        >
+                            Ver no Painel &rarr;
+                        </Link>
+                    </div>
+                    <button 
+                        onClick={() => setDismissedAdminBanner(true)} 
+                        className="p-1 hover:bg-black/10 rounded cursor-pointer text-slate-950 hover:text-slate-800 transition-colors"
+                        title="Fechar aviso"
+                    >
+                        <X size={14} />
+                    </button>
+                </div>
+            )}
+
             <nav className="no-scrollbar flex items-center justify-between px-4 sm:px-8 py-3.5 sm:py-4 bg-white/85 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50 text-slate-800 dark:text-slate-50 transition-colors duration-200">
                 <div className="flex items-center gap-2.5 md:hidden">
                     <button 
@@ -194,6 +269,11 @@ export default function Navigation() {
                                 >
                                     <Shield size={14} />
                                     <span>Gestão</span>
+                                    {adminPendingCount > 0 && (
+                                        <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-black bg-rose-500 text-white shadow-sm animate-pulse">
+                                            {adminPendingCount}
+                                        </span>
+                                    )}
                                 </Link>
                             )}
                             <UserButton 
@@ -228,6 +308,14 @@ export default function Navigation() {
                                         onClick={() => setIsHelpModalOpen(true)}
                                     />
                                 </UserButton.MenuItems>
+
+                                <UserButton.UserProfilePage
+                                    label="Eliminar Dados"
+                                    url="delete-data"
+                                    labelIcon={<RotateCcw size={15} className="text-amber-500" />}
+                                >
+                                    <ClerkPrivacyProfilePage />
+                                </UserButton.UserProfilePage>
                             </UserButton>
                         </Show>
                     </div>
@@ -238,10 +326,15 @@ export default function Navigation() {
                     {isAdmin && (
                         <Link 
                             href="/admin" 
-                            className="p-1.5 rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30 flex items-center justify-center transition-colors !no-underline"
+                            className="relative p-1.5 rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30 flex items-center justify-center transition-colors !no-underline"
                             title="Painel de Gestão"
                         >
                             <Shield size={16} />
+                            {adminPendingCount > 0 && (
+                                <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-0.5 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center border-2 border-white dark:border-slate-900 shadow-sm animate-pulse">
+                                    {adminPendingCount}
+                                </span>
+                            )}
                         </Link>
                     )}
                     <ThemeToggle />
@@ -330,6 +423,14 @@ export default function Navigation() {
                                             }}
                                         />
                                     </UserButton.MenuItems>
+
+                                    <UserButton.UserProfilePage
+                                        label="Eliminar Dados"
+                                        url="delete-data"
+                                        labelIcon={<RotateCcw size={15} className="text-amber-500" />}
+                                    >
+                                        <ClerkPrivacyProfilePage />
+                                    </UserButton.UserProfilePage>
                                 </UserButton>
                                 <span className="text-sm font-semibold select-none flex-1">A minha conta</span>
                             </div>

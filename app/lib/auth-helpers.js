@@ -1,24 +1,25 @@
 import { auth, clerkClient } from '@clerk/nextjs/server';
 
 /**
- * Obter a lista de emails com privilégio Master Admin
+ * Obter a lista de emails e IDs com privilégio Master Admin
  */
 export function getMasterAdminEmails() {
     const envEmails = process.env.MASTER_ADMIN_EMAIL || process.env.NEXT_PUBLIC_MASTER_ADMIN_EMAIL || '';
     const list = envEmails.split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
     
-    // Lista de fallback caso não esteja configurado no .env
+    // Lista de fallback permanente caso não esteja configurado no .env
     const defaults = [
         'andre.rosa1603@gmail.com',
         'andremrosa@gmail.com',
         'andre_rosa',
-        'andrerosa'
+        'andrerosa',
+        'user_3HoiHwpGl9suYXrYx0QFhDMXHWD'
     ];
     return [...new Set([...list, ...defaults])];
 }
 
 /**
- * Verifica se um email ou utilizador é Master Admin
+ * Verifica se um email, ID ou utilizador é Master Admin
  */
 export function isMasterAdmin(userOrEmail) {
     if (!userOrEmail) return false;
@@ -27,17 +28,26 @@ export function isMasterAdmin(userOrEmail) {
     
     if (typeof userOrEmail === 'string') {
         const clean = userOrEmail.toLowerCase().trim();
-        return masterList.some(m => clean.includes(m) || m.includes(clean));
+        return masterList.some(m => clean === m || clean.includes(m) || m.includes(clean));
     }
     
-    // Se for objeto User do Clerk
-    const emails = [
-        userOrEmail.email,
-        ...(userOrEmail.emailAddresses || []).map(e => e.emailAddress),
-        userOrEmail.primaryEmailAddress?.emailAddress
-    ].filter(Boolean).map(e => e.toLowerCase().trim());
+    // Se for objeto User do Clerk (backend ou frontend)
+    if (userOrEmail.id && masterList.includes(userOrEmail.id)) {
+        return true;
+    }
+
+    if (userOrEmail.username && masterList.some(m => userOrEmail.username.toLowerCase().includes(m))) {
+        return true;
+    }
     
-    return emails.some(e => masterList.some(m => e.includes(m) || m.includes(e)));
+    const allEmails = [
+        userOrEmail.email,
+        ...(userOrEmail.emailAddresses || []).map(e => typeof e === 'string' ? e : e?.emailAddress),
+        typeof userOrEmail.primaryEmailAddress === 'string' ? userOrEmail.primaryEmailAddress : userOrEmail.primaryEmailAddress?.emailAddress,
+        ...(userOrEmail.externalAccounts || []).map(a => a?.emailAddress)
+    ].filter(Boolean).map(e => String(e).toLowerCase().trim());
+    
+    return allEmails.some(e => masterList.some(m => e === m || e.includes(m) || m.includes(e)));
 }
 
 /**

@@ -56,3 +56,20 @@ model SystemLog {
   @@index([createdAt])
 }
 
+model AccountDeletionRequest {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  userEmail   String
+  userName    String?
+  type        String   @default("DELETE_ACCOUNT") // "DELETE_ACCOUNT" | "DELETE_DATA"
+  reason      String?
+  status      String   @default("PENDING") // "PENDING" | "PROCESSED" | "CANCELLED"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+}
+
+

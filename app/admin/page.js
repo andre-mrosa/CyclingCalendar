@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
     Users, FileText, Activity, Shield, AlertTriangle, CheckCircle2, 
     XCircle, Info, RefreshCw, Search, Trash2, Download, ExternalLink, 
-    Clock, Calendar, UserCheck, UserX, Database, Play, Check, ChevronDown, ChevronRight, Copy
+    Clock, Calendar, UserCheck, UserX, Database, Play, Check, ChevronDown, ChevronRight, Copy, RotateCcw
 } from 'lucide-react';
 
 export default function AdminDashboardPage() {
@@ -18,10 +18,14 @@ export default function AdminDashboardPage() {
     const [users, setUsers] = useState([]);
     const [isLoadingUsers, setIsLoadingUsers] = useState(false);
     const [userSearch, setUserSearch] = useState('');
-    const [userRoleFilter, setUserRoleFilter] = useState('ALL'); // 'ALL' | 'admin' | 'user'
+    const [userRoleFilter, setUserRoleFilter] = useState('ALL'); // 'ALL' | 'admin' | 'user' | 'deletions'
     const [roleChangeTarget, setRoleChangeTarget] = useState(null); // { user, newRole }
     const [isUpdatingRole, setIsUpdatingRole] = useState(false);
     const [roleActionMsg, setRoleActionMsg] = useState(null);
+    const [deleteTarget, setDeleteTarget] = useState(null); // { user, mode: 'delete_data' | 'delete_account' }
+    const [isDeletingUser, setIsDeletingUser] = useState(false);
+    const [deleteActionMsg, setDeleteActionMsg] = useState(null);
+    const [pendingDeletionsCount, setPendingDeletionsCount] = useState(0);
 
     // Logs State
     const [logs, setLogs] = useState([]);
@@ -62,6 +66,7 @@ export default function AdminDashboardPage() {
             const data = await res.json();
             if (data.success) {
                 setUsers(data.users || []);
+                setPendingDeletionsCount(data.pendingDeletionsCount || 0);
             }
         } catch (e) {
             console.error('Error loading users:', e);
@@ -188,11 +193,37 @@ export default function AdminDashboardPage() {
         setTimeout(() => setCopiedLogId(null), 2000);
     };
 
+    // Delete user data or permanent account action
+    const handleExecuteUserDeletion = async () => {
+        if (!deleteTarget) return;
+        setIsDeletingUser(true);
+        setDeleteActionMsg(null);
+        try {
+            const res = await fetch(`/api/admin/users/${deleteTarget.user.id}?mode=${deleteTarget.mode}`, {
+                method: 'DELETE'
+            });
+            const data = await res.json();
+            if (data.success) {
+                setDeleteActionMsg({ type: 'success', text: data.message });
+                await loadUsers();
+                await loadStats();
+                setTimeout(() => setDeleteTarget(null), 1200);
+            } else {
+                setDeleteActionMsg({ type: 'error', text: data.error || 'Erro ao processar eliminação.' });
+            }
+        } catch (e) {
+            setDeleteActionMsg({ type: 'error', text: e.message || 'Erro de rede.' });
+        } finally {
+            setIsDeletingUser(false);
+        }
+    };
+
     // Filtered Users List
     const filteredUsers = useMemo(() => {
         return users.filter(u => {
             if (userRoleFilter === 'admin' && u.role !== 'admin' && !u.isMaster) return false;
             if (userRoleFilter === 'user' && (u.role === 'admin' || u.isMaster)) return false;
+            if (userRoleFilter === 'deletions' && !u.deletionRequested) return false;
             if (userSearch.trim()) {
                 const q = userSearch.toLowerCase();
                 const matchName = u.fullName?.toLowerCase().includes(q);
@@ -309,6 +340,24 @@ export default function AdminDashboardPage() {
             {/* TAB 1: UTILIZADORES */}
             {activeTab === 'users' && (
                 <div className="space-y-4">
+                    {/* Deletion Requests Alert Banner */}
+                    {pendingDeletionsCount > 0 && (
+                        <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-rose-700 dark:text-rose-300 animate-fade-in shadow-sm">
+                            <div className="flex items-center gap-2.5">
+                                <AlertTriangle size={18} className="shrink-0 text-rose-600 dark:text-rose-400" />
+                                <span>
+                                    <strong>Atenção:</strong> Existem <strong>{pendingDeletionsCount}</strong> utilizador(es) com pedido de eliminação de conta pendente de processamento.
+                                </span>
+                            </div>
+                            <button 
+                                onClick={() => setUserRoleFilter(userRoleFilter === 'deletions' ? 'ALL' : 'deletions')}
+                                className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow transition-colors cursor-pointer shrink-0"
+                            >
+                                {userRoleFilter === 'deletions' ? 'Mostrar Todos' : 'Filtrar Pedidos Pendentes'}
+                            </button>
+                        </div>
+                    )}
+
                     {/* Filter Bar */}
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800">
                         <div className="relative flex-1">
@@ -326,14 +375,17 @@ export default function AdminDashboardPage() {
                             {[
                                 { key: 'ALL', label: 'Todos' },
                                 { key: 'admin', label: '🛡️ Admins' },
-                                { key: 'user', label: '👤 Users' }
+                                { key: 'user', label: '👤 Users' },
+                                ...(pendingDeletionsCount > 0 ? [{ key: 'deletions', label: `🚨 Pedidos (${pendingDeletionsCount})` }] : [])
                             ].map(filter => (
                                 <button
                                     key={filter.key}
                                     onClick={() => setUserRoleFilter(filter.key)}
                                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                                         userRoleFilter === filter.key
-                                            ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30'
+                                            ? filter.key === 'deletions'
+                                                ? 'bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30'
+                                                : 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30'
                                             : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
                                     }`}
                                 >
@@ -362,7 +414,7 @@ export default function AdminDashboardPage() {
                                         <th className="py-3 px-4">Cargo / Role</th>
                                         <th className="py-3 px-4 hidden md:table-cell">Adesão</th>
                                         <th className="py-3 px-4 hidden lg:table-cell">Último Acesso</th>
-                                        <th className="py-3 px-4 text-right">Ação</th>
+                                        <th className="py-3 px-4 text-right">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
@@ -387,20 +439,36 @@ export default function AdminDashboardPage() {
                                             const lastAccess = u.lastSignInAt ? new Date(u.lastSignInAt).toLocaleDateString('pt-PT') : '—';
 
                                             return (
-                                                <tr key={u.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+                                                <tr key={u.id} className={`transition-colors ${u.deletionRequested ? 'bg-rose-500/[0.04] hover:bg-rose-500/[0.08]' : 'hover:bg-slate-50/70 dark:hover:bg-slate-800/40'}`}>
                                                     <td className="py-3 px-4">
                                                         <div className="flex items-center gap-3">
                                                             {u.imageUrl ? (
-                                                                <img src={u.imageUrl} alt={u.fullName} className="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-slate-700" />
+                                                                <img src={u.imageUrl} alt={u.fullName} className="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-slate-700 shrink-0" />
                                                             ) : (
-                                                                <div className="w-8 h-8 rounded-full bg-blue-500/10 text-blue-600 flex items-center justify-center font-bold text-xs">
+                                                                <div className="w-8 h-8 rounded-full bg-blue-500/10 text-blue-600 flex items-center justify-center font-bold text-xs shrink-0">
                                                                     {u.firstName?.[0] || u.email?.[0] || 'U'}
                                                                 </div>
                                                             )}
                                                             <div className="min-w-0">
-                                                                <span className="font-bold text-slate-900 dark:text-slate-100 block truncate">
-                                                                    {u.fullName}
-                                                                </span>
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="font-bold text-slate-900 dark:text-slate-100 block truncate">
+                                                                        {u.fullName}
+                                                                    </span>
+                                                                </div>
+                                                                {u.deletionRequested && (
+                                                                    <div className="mt-1 flex flex-col gap-0.5">
+                                                                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black w-fit shadow-sm ${
+                                                                            u.deletionType === 'DELETE_DATA' ? 'bg-amber-500 text-slate-950' : 'bg-rose-500 text-white'
+                                                                        }`}>
+                                                                            {u.deletionType === 'DELETE_DATA' ? '🧹 Pedido: Eliminar Dados' : '🗑️ Pedido: Eliminar Conta'}
+                                                                        </span>
+                                                                        {u.deletionReason && (
+                                                                            <span className="text-[10px] text-slate-500 italic max-w-xs truncate" title={u.deletionReason}>
+                                                                                "{u.deletionReason}"
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                )}
                                                                 <span className="text-[10px] text-slate-400 block font-mono truncate">
                                                                     {u.id}
                                                                 </span>
@@ -437,23 +505,70 @@ export default function AdminDashboardPage() {
                                                     </td>
 
                                                     <td className="py-3 px-4 text-right">
-                                                        {isMaster ? (
-                                                            <span className="text-[11px] text-slate-400 italic">Inalterável</span>
-                                                        ) : isAdmin ? (
-                                                            <button
-                                                                onClick={() => setRoleChangeTarget({ user: u, newRole: 'user' })}
-                                                                className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 transition-colors cursor-pointer"
-                                                            >
-                                                                Despromover
-                                                            </button>
-                                                        ) : (
-                                                            <button
-                                                                onClick={() => setRoleChangeTarget({ user: u, newRole: 'admin' })}
-                                                                className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30 transition-colors cursor-pointer"
-                                                            >
-                                                                Tornar Admin
-                                                            </button>
-                                                        )}
+                                                        <div className="flex items-center justify-end gap-1.5">
+                                                            {isMaster ? (
+                                                                <span className="text-[11px] text-slate-400 italic">Inalterável</span>
+                                                            ) : (
+                                                                <>
+                                                                    {/* Botão de Ação Direta para Pedidos Pendentes */}
+                                                                    {u.deletionRequested && (
+                                                                        <button
+                                                                            onClick={() => setDeleteTarget({ 
+                                                                                user: u, 
+                                                                                mode: u.deletionType === 'DELETE_DATA' ? 'delete_data' : 'delete_account' 
+                                                                            })}
+                                                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                                                                                u.deletionType === 'DELETE_DATA'
+                                                                                    ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-amber-500/20'
+                                                                                    : 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-500/20 animate-pulse'
+                                                                            }`}
+                                                                            title={`Aceitar e executar pedido de ${u.deletionType === 'DELETE_DATA' ? 'eliminação de dados' : 'eliminação de conta'}`}
+                                                                        >
+                                                                            {u.deletionType === 'DELETE_DATA' ? <RotateCcw size={13} /> : <Trash2 size={13} />}
+                                                                            <span>{u.deletionType === 'DELETE_DATA' ? 'Aceitar & Limpar Dados' : 'Aceitar & Eliminar Conta'}</span>
+                                                                        </button>
+                                                                    )}
+
+                                                                    {isAdmin ? (
+                                                                        <button
+                                                                            onClick={() => setRoleChangeTarget({ user: u, newRole: 'user' })}
+                                                                            className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
+                                                                            title="Remover privilégios de Administrador"
+                                                                        >
+                                                                            Despromover
+                                                                        </button>
+                                                                    ) : (
+                                                                        <button
+                                                                            onClick={() => setRoleChangeTarget({ user: u, newRole: 'admin' })}
+                                                                            className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30 transition-colors cursor-pointer"
+                                                                            title="Tornar este utilizador Administrador"
+                                                                        >
+                                                                            Tornar Admin
+                                                                        </button>
+                                                                    )}
+
+                                                                    {!u.deletionRequested && (
+                                                                        <>
+                                                                            <button
+                                                                                onClick={() => setDeleteTarget({ user: u, mode: 'delete_data' })}
+                                                                                className="p-1.5 rounded-lg text-slate-400 hover:text-amber-500 hover:bg-amber-500/10 border border-slate-200 dark:border-slate-800 hover:border-amber-500/30 transition-colors cursor-pointer"
+                                                                                title="Limpar todos os dados e favoritos do utilizador"
+                                                                            >
+                                                                                <RotateCcw size={14} />
+                                                                            </button>
+
+                                                                            <button
+                                                                                onClick={() => setDeleteTarget({ user: u, mode: 'delete_account' })}
+                                                                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-500/10 border border-slate-200 dark:border-slate-800 hover:border-rose-500/30 transition-colors cursor-pointer"
+                                                                                title="Eliminar permanentemente a conta do utilizador"
+                                                                            >
+                                                                                <Trash2 size={14} />
+                                                                            </button>
+                                                                        </>
+                                                                    )}
+                                                                </>
+                                                            )}
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             );
@@ -517,6 +632,67 @@ export default function AdminDashboardPage() {
                                     >
                                         {isUpdatingRole && <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
                                         <span>Confirmar Alteração</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Delete Target Modal (Delete Data vs Delete Permanent Account) */}
+                    {deleteTarget && (
+                        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+                            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+                                        {deleteTarget.mode === 'delete_data' ? <RotateCcw size={20} /> : <Trash2 size={20} />}
+                                    </div>
+                                    <div>
+                                        <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                                            {deleteTarget.mode === 'delete_data' ? 'Limpar Dados do Utilizador' : 'Eliminar Conta Permanentemente'}
+                                        </h3>
+                                        <p className="text-xs text-slate-500">
+                                            {deleteTarget.mode === 'delete_data' ? 'Remoção de favoritos e metadados' : 'Eliminação definitiva do perfil no Clerk'}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-700 dark:text-rose-300 leading-relaxed space-y-1">
+                                    <p className="font-bold m-0">Utilizador: {deleteTarget.user.fullName} ({deleteTarget.user.email})</p>
+                                    {deleteTarget.user.deletionReason && (
+                                        <p className="m-0 italic">Motivo indicado: "{deleteTarget.user.deletionReason}"</p>
+                                    )}
+                                    <p className="m-0 mt-2">
+                                        {deleteTarget.mode === 'delete_data'
+                                            ? 'Esta ação vai limpar todos os favoritos e preferências, mantendo a conta ativa.'
+                                            : 'ATENÇÃO: A conta será apagada permanentemente do sistema de autenticação e não poderá ser recuperada.'}
+                                    </p>
+                                </div>
+
+                                {deleteActionMsg && (
+                                    <div className={`p-3 rounded-xl text-xs font-semibold ${
+                                        deleteActionMsg.type === 'success' ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/30' : 'bg-rose-500/10 text-rose-600 border border-rose-500/30'
+                                    }`}>
+                                        {deleteActionMsg.text}
+                                    </div>
+                                )}
+
+                                <div className="flex items-center justify-end gap-2.5 pt-2">
+                                    <button
+                                        onClick={() => { setDeleteTarget(null); setDeleteActionMsg(null); }}
+                                        disabled={isDeletingUser}
+                                        className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={handleExecuteUserDeletion}
+                                        disabled={isDeletingUser}
+                                        className={`px-4 py-2 rounded-xl text-xs font-bold text-white shadow-md transition-all cursor-pointer flex items-center gap-2 ${
+                                            deleteTarget.mode === 'delete_data' ? 'bg-amber-600 hover:bg-amber-500' : 'bg-rose-600 hover:bg-rose-500'
+                                        }`}
+                                    >
+                                        {isDeletingUser && <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
+                                        <span>{deleteTarget.mode === 'delete_data' ? 'Confirmar Limpeza' : 'Eliminar Permanentemente'}</span>
                                     </button>
                                 </div>
                             </div>
@@ -601,6 +777,7 @@ export default function AdminDashboardPage() {
                                     <option value="CALENDAR">CALENDAR (Google Sync)</option>
                                     <option value="AUTH">AUTH (Perfis & Permissões)</option>
                                     <option value="API">API (Endpoints)</option>
+                                    <option value="CLIENT">CLIENT (Frontend & Navegador)</option>
                                     <option value="CRON">CRON (Tarefas Automáticas)</option>
                                     <option value="SYSTEM">SYSTEM (Geral)</option>
                                 </select>

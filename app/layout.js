@@ -68,11 +68,13 @@ import WelcomeModal from "./components/WelcomeModal";
 import CookieBanner from "./components/CookieBanner";
 import FaviconManager from "./components/FaviconManager";
 import PWAUpdateHandler from "./components/PWAUpdateHandler";
+import ClientErrorLogger from "./components/ClientErrorLogger";
 
 export default function RootLayout({ children }) {
   return (
     <html lang="pt" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-200 selection:bg-blue-600 selection:text-white transition-colors duration-200`} suppressHydrationWarning>
+        <ClientErrorLogger />
         <PWAUpdateHandler />
         <FaviconManager />
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>

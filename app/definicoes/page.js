@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useUser } from '@clerk/nextjs';
 import { useSettingsStore } from '../store/useSettingsStore';
-import { HelpCircle, Settings, ChevronUp, ChevronDown, RotateCcw, Shield } from 'lucide-react';
+import { HelpCircle, Settings, ChevronUp, ChevronDown, RotateCcw, Shield, Trash2, AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
 import RegionAssistant from '../components/RegionAssistant';
 import EscalaoAssistant from '../components/EscalaoAssistant';
 
@@ -20,11 +20,92 @@ export default function Conta() {
 
     const { isLoaded, isSignedIn, user } = useUser();
     const [activeModal, setActiveModal] = useState(null);
+    
+    // Deletion Request State
+    const [deletionRequest, setDeletionRequest] = useState(null);
+    const [deleteModalType, setDeleteModalType] = useState('DELETE_ACCOUNT'); // 'DELETE_DATA' | 'DELETE_ACCOUNT'
+    const [isLoadingDeletion, setIsLoadingDeletion] = useState(false);
+    const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+    const [deleteReason, setDeleteReason] = useState('');
+    const [deleteFeedback, setDeleteFeedback] = useState(null);
 
     const primaryEmail = (user?.primaryEmailAddress?.emailAddress || user?.emailAddresses?.[0]?.emailAddress || '').toLowerCase();
-    const masterDefaults = ['andre.rosa1603@gmail.com', 'andremrosa@gmail.com', 'andre_rosa', 'andrerosa'];
-    const isMaster = masterDefaults.some(m => primaryEmail.includes(m));
+    const masterDefaults = ['andre.rosa1603@gmail.com', 'andremrosa@gmail.com', 'andre_rosa', 'andrerosa', 'user_3HoiHwpGl9suYXrYx0QFhDMXHWD'];
+    const isMaster = masterDefaults.some(m => primaryEmail.includes(m) || user?.id === m);
     const isAdmin = isMaster || user?.publicMetadata?.role === 'admin';
+
+    // Verificar se utilizador tem pedido pendente
+    useEffect(() => {
+        if (!isLoaded || !isSignedIn) return;
+
+        const checkDeletionStatus = async () => {
+            try {
+                const res = await fetch('/api/user/delete-request');
+                const data = await res.json();
+                if (data.success && data.request) {
+                    setDeletionRequest(data.request);
+                }
+            } catch (e) {}
+        };
+
+        checkDeletionStatus();
+    }, [isLoaded, isSignedIn]);
+
+    const handleConfirmDeletionRequest = async () => {
+        setIsDeletingAccount(true);
+        setDeleteFeedback(null);
+        try {
+            const res = await fetch('/api/user/delete-request', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    type: deleteModalType,
+                    reason: deleteReason 
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                setDeletionRequest(data.request);
+                setDeleteFeedback({ type: 'success', text: data.message });
+                if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new Event('admin-notif-update'));
+                }
+                setTimeout(() => {
+                    setActiveModal(null);
+                    setDeleteFeedback(null);
+                    setDeleteReason('');
+                }, 1500);
+            } else {
+                setDeleteFeedback({ type: 'error', text: data.error || 'Erro ao submeter pedido.' });
+            }
+        } catch (e) {
+            setDeleteFeedback({ type: 'error', text: e.message || 'Erro de ligação.' });
+        } finally {
+            setIsDeletingAccount(false);
+        }
+    };
+
+    const handleCancelDeletionRequest = async () => {
+        const confirmMsg = deletionRequest?.type === 'DELETE_DATA'
+            ? 'Tem a certeza que deseja cancelar o pedido de eliminação dos seus dados?'
+            : 'Tem a certeza que deseja cancelar o pedido de eliminação da sua conta?';
+        if (!window.confirm(confirmMsg)) return;
+        setIsLoadingDeletion(true);
+        try {
+            const res = await fetch('/api/user/delete-request', { method: 'DELETE' });
+            const data = await res.json();
+            if (data.success) {
+                setDeletionRequest(null);
+                if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new Event('admin-notif-update'));
+                }
+            }
+        } catch (e) {
+            console.error('Error cancelling deletion request:', e);
+        } finally {
+            setIsLoadingDeletion(false);
+        }
+    };
 
     return (
         <div className="max-w-3xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
@@ -231,25 +312,170 @@ export default function Conta() {
                         })}
                     </div>
                 </section>
+
+                {/* Zona de Privacidade • Eliminação de Dados */}
+                {isSignedIn && !isMaster && (
+                    <section className="bg-amber-500/[0.04] border border-amber-500/20 dark:border-amber-500/20 rounded-2xl p-6 sm:p-8 shadow-sm">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div className="flex items-start gap-3.5">
+                                <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
+                                    <RotateCcw size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-slate-900 dark:text-slate-100 text-base">
+                                        Eliminação de Dados e Favoritos (RGPD)
+                                    </h3>
+                                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                                        Podes solicitar a eliminação dos teus favoritos, histórico e preferências da plataforma mantendo a tua conta ativa. (Para encerrares a conta definitivamente, usa a opção <em>Eliminar conta</em> no menu de Segurança do perfil).
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Estado do Pedido */}
+                        <div className="mt-5 pt-5 border-t border-amber-500/15">
+                            {deletionRequest?.status === 'PENDING' ? (
+                                <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fade-in">
+                                    <div className="flex items-start gap-3">
+                                        <Clock size={18} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                                        <div>
+                                            <span className="font-bold text-xs sm:text-sm text-amber-700 dark:text-amber-300 block">
+                                                🧹 Pedido de Eliminação de Dados Pendente
+                                            </span>
+                                            <span className="text-[11px] sm:text-xs text-amber-600/90 dark:text-amber-400/80 block mt-0.5">
+                                                Submetido a {new Date(deletionRequest.createdAt).toLocaleDateString('pt-PT')}. A administração irá processar a limpeza dos teus dados em breve.
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={handleCancelDeletionRequest}
+                                        disabled={isLoadingDeletion}
+                                        className="px-4 py-2 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 transition-all cursor-pointer shrink-0 shadow-sm"
+                                    >
+                                        {isLoadingDeletion ? 'A cancelar...' : 'Cancelar Pedido'}
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                    <span className="text-xs text-slate-500">
+                                        Envia um pedido à equipa de administração para limpar os teus dados:
+                                    </span>
+                                    <button
+                                        onClick={() => {
+                                            setDeleteModalType('DELETE_DATA');
+                                            setActiveModal('delete_request');
+                                        }}
+                                        className="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer shrink-0 flex items-center justify-center gap-1.5"
+                                    >
+                                        <RotateCcw size={14} />
+                                        <span>Pedir Eliminação de Dados</span>
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </section>
+                )}
             </main>
 
             {/* Modals */}
             {activeModal && (
                 <div 
-                    className="fixed inset-0 bg-black/60 flex items-center justify-center z-[1000] p-4 backdrop-blur-sm"
+                    className="fixed inset-0 bg-black/60 flex items-center justify-center z-[1000] p-4 backdrop-blur-sm animate-fade-in"
                     onClick={(e) => {
-                        if (e.target === e.currentTarget) setActiveModal(null);
+                        if (e.target === e.currentTarget && !isDeletingAccount) setActiveModal(null);
                     }}
                 >
-                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl relative max-w-[500px] w-full shadow-2xl overflow-hidden text-slate-900 dark:text-slate-100 transition-colors duration-200">
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl relative max-w-[480px] w-full shadow-2xl overflow-hidden text-slate-900 dark:text-slate-100 transition-colors duration-200">
                         <button 
-                            onClick={() => setActiveModal(null)}
-                            className="absolute top-3 right-3 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors text-2xl leading-none z-10"
+                            onClick={() => !isDeletingAccount && setActiveModal(null)}
+                            className="absolute top-3.5 right-3.5 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors text-2xl leading-none z-10 cursor-pointer"
                         >×</button>
                         
-                        <div className="max-h-[90vh] overflow-y-auto p-1">
+                        <div className="max-h-[90vh] overflow-y-auto p-5 sm:p-6">
                             {activeModal === 'regiao' && <RegionAssistant onApply={(val) => { setDefaultRegiao(val); setActiveModal(null); }} />}
                             {activeModal === 'escalao' && <EscalaoAssistant onApply={(val) => { setDefaultEscalao(val); setActiveModal(null); }} />}
+                            
+                            {activeModal === 'delete_request' && (
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                                            deleteModalType === 'DELETE_DATA' 
+                                                ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' 
+                                                : 'bg-rose-500/15 text-rose-600 dark:text-rose-400'
+                                        }`}>
+                                            {deleteModalType === 'DELETE_DATA' ? <RotateCcw size={20} /> : <Trash2 size={20} />}
+                                        </div>
+                                        <div>
+                                            <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                                                {deleteModalType === 'DELETE_DATA' ? 'Requisitar Eliminação de Dados' : 'Requisitar Eliminação de Conta'}
+                                            </h3>
+                                            <p className="text-xs text-slate-500">
+                                                {deleteModalType === 'DELETE_DATA' ? 'Limpeza de favoritos e preferências' : 'Encerramento definitivo de conta'}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className={`p-3.5 rounded-xl border text-xs leading-relaxed space-y-1.5 ${
+                                        deleteModalType === 'DELETE_DATA'
+                                            ? 'bg-amber-500/10 border-amber-500/20 text-amber-800 dark:text-amber-300'
+                                            : 'bg-rose-500/10 border-rose-500/20 text-rose-700 dark:text-rose-300'
+                                    }`}>
+                                        <p className="font-bold m-0">
+                                            {deleteModalType === 'DELETE_DATA'
+                                                ? 'O que acontece ao eliminar os dados?'
+                                                : 'Atenção: A eliminação de conta é irreversível.'}
+                                        </p>
+                                        <p className="m-0">
+                                            {deleteModalType === 'DELETE_DATA'
+                                                ? 'Todos os teus favoritos, histórico de eventos e configurações salvas serão eliminados. A tua conta permanecerá ativa para poderes continuar a utilizar a plataforma.'
+                                                : 'Após o processamento pela administração, o teu perfil, favoritos e permissões serão apagados permanentemente do sistema de autenticação.'}
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                                            Justificação / Motivo (opcional):
+                                        </label>
+                                        <textarea
+                                            value={deleteReason}
+                                            onChange={(e) => setDeleteReason(e.target.value)}
+                                            placeholder={deleteModalType === 'DELETE_DATA' ? "Ex: Pretendo reiniciar a minha lista de favoritos do zero..." : "Ex: Não pretendo continuar a utilizar o calendário..."}
+                                            rows={3}
+                                            className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 transition-colors"
+                                        />
+                                    </div>
+
+                                    {deleteFeedback && (
+                                        <div className={`p-3 rounded-xl text-xs font-semibold ${
+                                            deleteFeedback.type === 'success' ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/30' : 'bg-rose-500/10 text-rose-600 border border-rose-500/30'
+                                        }`}>
+                                            {deleteFeedback.text}
+                                        </div>
+                                    )}
+
+                                    <div className="flex items-center justify-end gap-2.5 pt-2">
+                                        <button
+                                            onClick={() => setActiveModal(null)}
+                                            disabled={isDeletingAccount}
+                                            className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                                        >
+                                            Cancelar
+                                        </button>
+                                        <button
+                                            onClick={handleConfirmDeletionRequest}
+                                            disabled={isDeletingAccount}
+                                            className={`px-5 py-2 rounded-xl text-xs font-bold text-white shadow-md transition-all cursor-pointer flex items-center gap-2 ${
+                                                deleteModalType === 'DELETE_DATA'
+                                                    ? 'bg-amber-600 hover:bg-amber-500'
+                                                    : 'bg-rose-600 hover:bg-rose-500'
+                                            }`}
+                                        >
+                                            {isDeletingAccount && <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
+                                            <span>Submeter Pedido</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
