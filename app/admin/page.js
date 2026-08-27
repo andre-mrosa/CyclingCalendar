@@ -49,8 +49,17 @@ export default function AdminDashboardPage() {
     const loadStats = useCallback(async () => {
         setIsLoadingStats(true);
         try {
-            const res = await fetch('/api/admin/stats');
-            const data = await res.json();
+            const res = await fetch('/api/admin/stats', {
+                headers: { 'Accept': 'application/json' }
+            });
+            const text = await res.text();
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch {
+                data = { success: false, error: text || `Erro no servidor (${res.status})` };
+            }
+
             if (data.success) {
                 setStats(data.stats);
                 setApiError(null);
@@ -70,8 +79,17 @@ export default function AdminDashboardPage() {
     const loadUsers = useCallback(async () => {
         setIsLoadingUsers(true);
         try {
-            const res = await fetch('/api/admin/users');
-            const data = await res.json();
+            const res = await fetch('/api/admin/users', {
+                headers: { 'Accept': 'application/json' }
+            });
+            const text = await res.text();
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch {
+                data = { success: false, error: text || `Erro no servidor (${res.status})` };
+            }
+
             if (data.success) {
                 setUsers(data.users || []);
                 setPendingDeletionsCount(data.pendingDeletionsCount || 0);
@@ -98,8 +116,17 @@ export default function AdminDashboardPage() {
             if (logSearch.trim()) params.set('search', logSearch.trim());
             params.set('limit', '150');
 
-            const res = await fetch(`/api/admin/logs?${params.toString()}`);
-            const data = await res.json();
+            const res = await fetch(`/api/admin/logs?${params.toString()}`, {
+                headers: { 'Accept': 'application/json' }
+            });
+            const text = await res.text();
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch {
+                data = { success: false, error: text || `Erro no servidor (${res.status})` };
+            }
+
             if (data.success) {
                 setLogs(data.logs || []);
                 setApiError(null);
