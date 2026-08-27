@@ -64,9 +64,19 @@ export function getUserRole(user) {
  * Middleware auxiliar para APIs que requerem privilégios de Administrador
  */
 export async function requireAdmin() {
-    const authSession = await auth();
-    const userId = authSession.userId;
-    
+    let authSession;
+    try {
+        authSession = await auth();
+    } catch (err) {
+        console.error('Error getting auth session:', err);
+        return {
+            authorized: false,
+            status: 401,
+            error: 'Sessão não iniciada ou expirada.'
+        };
+    }
+
+    const userId = authSession?.userId;
     if (!userId) {
         return {
             authorized: false,
@@ -75,22 +85,45 @@ export async function requireAdmin() {
         };
     }
 
-    const isMasterById = isMasterAdmin(userId);
+    // Extrair claims do token de sessão (email, username, metadados)
+    const claims = authSession?.sessionClaims || {};
+    const claimsEmail = claims.email || claims.primary_email_address || claims.email_address || claims.user?.email || claims.user?.primaryEmail || '';
+    const claimsUsername = claims.username || claims.preferred_username || '';
+
+    // Verifica se já é Master Admin por ID, email nas claims ou username
+    const isMasterDirect = isMasterAdmin(userId) || isMasterAdmin(claimsEmail) || isMasterAdmin(claimsUsername);
 
     try {
-        const client = await clerkClient();
-        const user = await client.users.getUser(userId);
+        let user = null;
+        try {
+            const client = await clerkClient();
+            user = await client.users.getUser(userId);
+        } catch (clerkErr) {
+            console.error('Aviso: Não foi possível obter detalhes do Clerk via REST API:', clerkErr?.message);
+        }
         
         if (!user) {
-            if (isMasterById) {
+            if (isMasterDirect) {
                 return {
                     authorized: true,
                     userId,
-                    userEmail: 'andre.rosa1603@gmail.com',
+                    userEmail: claimsEmail || 'andre.rosa1603@gmail.com',
                     role: 'master_admin',
                     isMaster: true
                 };
             }
+
+            const claimsRole = claims.metadata?.role || claims.public_metadata?.role || claims.publicMetadata?.role;
+            if (claimsRole === 'admin') {
+                return {
+                    authorized: true,
+                    userId,
+                    userEmail: claimsEmail || '',
+                    role: 'admin',
+                    isMaster: false
+                };
+            }
+
             return {
                 authorized: false,
                 status: 401,
@@ -98,7 +131,7 @@ export async function requireAdmin() {
             };
         }
 
-        const isMaster = isMasterById || isMasterAdmin(user);
+        const isMaster = isMasterDirect || isMasterAdmin(user);
         const isAdmin = isMaster || user.publicMetadata?.role === 'admin';
 
         if (!isAdmin) {
@@ -109,7 +142,7 @@ export async function requireAdmin() {
             };
         }
 
-        const primaryEmail = user.emailAddresses?.find(e => e.id === user.primaryEmailAddressId)?.emailAddress || user.emailAddresses?.[0]?.emailAddress || '';
+        const primaryEmail = user.emailAddresses?.find(e => e.id === user.primaryEmailAddressId)?.emailAddress || user.emailAddresses?.[0]?.emailAddress || claimsEmail || '';
 
         return {
             authorized: true,
@@ -121,11 +154,11 @@ export async function requireAdmin() {
         };
     } catch (e) {
         console.error('Erro ao verificar permissões de admin:', e);
-        if (isMasterById) {
+        if (isMasterDirect) {
             return {
                 authorized: true,
                 userId,
-                userEmail: 'andre.rosa1603@gmail.com',
+                userEmail: claimsEmail || 'andre.rosa1603@gmail.com',
                 role: 'master_admin',
                 isMaster: true
             };
