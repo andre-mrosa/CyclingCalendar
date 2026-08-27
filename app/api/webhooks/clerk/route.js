@@ -49,17 +49,26 @@ export async function POST(req) {
         if (eventType === 'user.deleted') {
             const userId = data.id;
 
+            // Tentar obter o email a partir de pedidos de eliminação registados
+            const existingReq = await prisma.accountDeletionRequest.findUnique({
+                where: { userId }
+            });
+
+            const emailLabel = existingReq?.userEmail || 'Utilizador';
+
             // Atualizar pedido de eliminação na base de dados se existir
             await prisma.accountDeletionRequest.updateMany({
                 where: { userId },
                 data: { status: 'PROCESSED', updatedAt: new Date() }
             });
 
-            await logWarn('AUTH', `Conta de utilizador (${userId}) foi eliminada diretamente através do Clerk`, {
+            await logWarn('AUTH', `Conta de utilizador ${emailLabel} (${userId}) foi eliminada através do Clerk`, {
                 userId,
+                userEmail: existingReq?.userEmail || null,
+                userName: existingReq?.userName || null,
                 deleted: data.deleted,
                 eventData: data
-            }, { id: userId, email: 'Conta Eliminada' });
+            }, { id: userId, email: existingReq?.userEmail || 'Conta Eliminada' });
 
         } else if (eventType === 'user.created') {
             const primaryEmail = data.email_addresses?.find(e => e.id === data.primary_email_address_id)?.email_address || data.email_addresses?.[0]?.email_address || 'Sem email';
