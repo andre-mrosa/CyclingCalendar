@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Shield, ArrowLeft, Lock, AlertTriangle, Users, FileText, Activity, RefreshCw } from 'lucide-react';
-import { useUser } from '@clerk/nextjs';
+import { useUser, useAuth } from '@clerk/nextjs';
 
 export default function AdminLayout({ children }) {
     const { isLoaded, isSignedIn, user } = useUser();
+    const { getToken } = useAuth();
     const [adminData, setAdminData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -32,7 +33,13 @@ export default function AdminLayout({ children }) {
     const verifyAdmin = async () => {
         setIsLoading(true);
         try {
-            const res = await fetch('/api/admin/me');
+            const token = await getToken().catch(() => null);
+            const res = await fetch('/api/admin/me', {
+                headers: {
+                    'Accept': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                }
+            });
             const data = await res.json();
             if (data.success) {
                 setAdminData(data);

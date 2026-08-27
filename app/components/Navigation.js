@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
-import { SignInButton, Show, UserButton, useUser } from '@clerk/nextjs';
+import { SignInButton, Show, UserButton, useUser, useAuth } from '@clerk/nextjs';
 import { Home, Trophy, MapPin, Bike, HelpCircle, Settings, Menu, X, Moon, Sun, Flag, Star, Globe, LogIn, CalendarCheck, Shield, Trash2, RotateCcw } from 'lucide-react';
 import SettingsPage from '../definicoes/page';
 import HelpPage from '../ajuda/page';
@@ -15,6 +15,7 @@ export default function Navigation() {
     const pathname = usePathname();
     const { theme, setTheme } = useTheme();
     const { isLoaded, isSignedIn, user } = useUser();
+    const { getToken } = useAuth();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
     const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
@@ -55,15 +56,20 @@ export default function Navigation() {
             setIsAdmin(true);
         }
 
-        const fetchNotifications = () => {
-            fetch('/api/admin/notifications')
-                .then(r => r.json())
-                .then(notifData => {
-                    if (notifData.success && notifData.notifications) {
-                        setAdminPendingCount(notifData.notifications.deletionRequests?.count || 0);
+        const fetchNotifications = async () => {
+            try {
+                const token = await getToken().catch(() => null);
+                const r = await fetch('/api/admin/notifications', {
+                    headers: {
+                        'Accept': 'application/json',
+                        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                     }
-                })
-                .catch(() => {});
+                });
+                const notifData = await r.json();
+                if (notifData.success && notifData.notifications) {
+                    setAdminPendingCount(notifData.notifications.deletionRequests?.count || 0);
+                }
+            } catch (e) {}
         };
 
         // 2. Carrega as notificações imediatamente no arranque se for admin
@@ -72,18 +78,25 @@ export default function Navigation() {
         }
 
         // 3. Confirmação com o backend
-        fetch('/api/admin/me')
-            .then(res => res.json())
-            .then(data => {
-                if (data.success && data.isAdmin) {
-                    setIsAdmin(true);
-                    fetchNotifications();
-                } else if (!isLocalAdmin) {
-                    setIsAdmin(false);
-                    setAdminPendingCount(0);
+        getToken().then(token => {
+            fetch('/api/admin/me', {
+                headers: {
+                    'Accept': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                 }
             })
-            .catch(() => {});
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.isAdmin) {
+                        setIsAdmin(true);
+                        fetchNotifications();
+                    } else if (!isLocalAdmin) {
+                        setIsAdmin(false);
+                        setAdminPendingCount(0);
+                    }
+                })
+                .catch(() => {});
+        });
 
         // 4. Polling periódico em segundo plano a cada 15 segundos
         const pollInterval = setInterval(() => {

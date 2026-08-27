@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useUser } from '@clerk/nextjs';
+import { useUser, useAuth } from '@clerk/nextjs';
 import { 
     Users, FileText, Activity, Shield, AlertTriangle, CheckCircle2, 
     XCircle, Info, RefreshCw, Search, Trash2, Download, ExternalLink, 
@@ -10,9 +10,31 @@ import {
 
 export default function AdminDashboardPage() {
     const { isLoaded, isSignedIn, user } = useUser();
+    const { getToken } = useAuth();
     const [activeTab, setActiveTab] = useState('users'); // 'users' | 'logs' | 'operations'
     const [apiError, setApiError] = useState(null);
     
+    // Authenticated fetch wrapper with Bearer token
+    const authFetch = useCallback(async (url, options = {}) => {
+        let token = null;
+        try {
+            token = await getToken();
+        } catch (e) {
+            console.error('Error obtaining Clerk token:', e);
+        }
+
+        const headers = {
+            'Accept': 'application/json',
+            ...(options.headers || {}),
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        };
+
+        return fetch(url, {
+            ...options,
+            headers
+        });
+    }, [getToken]);
+
     // Stats State
     const [stats, setStats] = useState(null);
     const [isLoadingStats, setIsLoadingStats] = useState(true);
@@ -49,9 +71,7 @@ export default function AdminDashboardPage() {
     const loadStats = useCallback(async () => {
         setIsLoadingStats(true);
         try {
-            const res = await fetch('/api/admin/stats', {
-                headers: { 'Accept': 'application/json' }
-            });
+            const res = await authFetch('/api/admin/stats');
             const text = await res.text();
             let data;
             try {
@@ -73,15 +93,13 @@ export default function AdminDashboardPage() {
         } finally {
             setIsLoadingStats(false);
         }
-    }, []);
+    }, [authFetch]);
 
     // 2. Fetch Users
     const loadUsers = useCallback(async () => {
         setIsLoadingUsers(true);
         try {
-            const res = await fetch('/api/admin/users', {
-                headers: { 'Accept': 'application/json' }
-            });
+            const res = await authFetch('/api/admin/users');
             const text = await res.text();
             let data;
             try {
@@ -104,7 +122,7 @@ export default function AdminDashboardPage() {
         } finally {
             setIsLoadingUsers(false);
         }
-    }, []);
+    }, [authFetch]);
 
     // 3. Fetch Logs
     const loadLogs = useCallback(async () => {
@@ -116,9 +134,7 @@ export default function AdminDashboardPage() {
             if (logSearch.trim()) params.set('search', logSearch.trim());
             params.set('limit', '150');
 
-            const res = await fetch(`/api/admin/logs?${params.toString()}`, {
-                headers: { 'Accept': 'application/json' }
-            });
+            const res = await authFetch(`/api/admin/logs?${params.toString()}`);
             const text = await res.text();
             let data;
             try {
@@ -140,7 +156,7 @@ export default function AdminDashboardPage() {
         } finally {
             setIsLoadingLogs(false);
         }
-    }, [logLevelFilter, logSourceFilter, logSearch]);
+    }, [authFetch, logLevelFilter, logSourceFilter, logSearch]);
 
     // Initial load once user session is loaded
     useEffect(() => {
@@ -165,7 +181,7 @@ export default function AdminDashboardPage() {
         setIsUpdatingRole(true);
         setRoleActionMsg(null);
         try {
-            const res = await fetch(`/api/admin/users/${roleChangeTarget.user.id}/role`, {
+            const res = await authFetch(`/api/admin/users/${roleChangeTarget.user.id}/role`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ newRole: roleChangeTarget.newRole })
@@ -191,7 +207,7 @@ export default function AdminDashboardPage() {
         if (!window.confirm(clearAll ? 'Tem a certeza que deseja eliminar TODOS os logs do sistema?' : 'Eliminar logs com mais de 30 dias?')) return;
         setIsClearingLogs(true);
         try {
-            const res = await fetch(`/api/admin/logs?${clearAll ? 'all=true' : 'days=30'}`, { method: 'DELETE' });
+            const res = await authFetch(`/api/admin/logs?${clearAll ? 'all=true' : 'days=30'}`, { method: 'DELETE' });
             const data = await res.json();
             if (data.success) {
                 await loadLogs();
@@ -209,7 +225,7 @@ export default function AdminDashboardPage() {
         setRunningOp(opKey);
         setOpOutput({ label, status: 'loading', message: `A executar "${label}"...` });
         try {
-            const res = await fetch(endpoint);
+            const res = await authFetch(endpoint);
             const data = await res.json();
             setOpOutput({
                 label,
@@ -245,7 +261,7 @@ export default function AdminDashboardPage() {
         setIsDeletingUser(true);
         setDeleteActionMsg(null);
         try {
-            const res = await fetch(`/api/admin/users/${deleteTarget.user.id}?mode=${deleteTarget.mode}`, {
+            const res = await authFetch(`/api/admin/users/${deleteTarget.user.id}?mode=${deleteTarget.mode}`, {
                 method: 'DELETE'
             });
             const data = await res.json();

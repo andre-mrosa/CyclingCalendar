@@ -1,51 +1,33 @@
-import { auth, clerkClient } from '@clerk/nextjs/server';
-import { isMasterAdmin, getUserRole } from '@/app/lib/auth-helpers';
+import { requireAdmin } from '@/app/lib/auth-helpers';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
     try {
-        const { userId } = await auth();
+        const adminCheck = await requireAdmin();
         
-        if (!userId) {
+        if (!adminCheck.authorized) {
             return Response.json({
                 success: true,
                 isSignedIn: false,
                 isAdmin: false,
                 isMaster: false,
-                role: 'guest'
+                role: 'guest',
+                error: adminCheck.error
             });
         }
-
-        const client = await clerkClient();
-        const user = await client.users.getUser(userId);
-        
-        if (!user) {
-            return Response.json({
-                success: true,
-                isSignedIn: false,
-                isAdmin: false,
-                isMaster: false,
-                role: 'guest'
-            });
-        }
-
-        const isMaster = isMasterAdmin(user);
-        const role = getUserRole(user);
-        const isAdmin = isMaster || role === 'admin';
-        const primaryEmail = user.emailAddresses?.find(e => e.id === user.primaryEmailAddressId)?.emailAddress || user.emailAddresses?.[0]?.emailAddress || '';
 
         return Response.json({
             success: true,
             isSignedIn: true,
-            isAdmin,
-            isMaster,
-            role,
+            isAdmin: true,
+            isMaster: adminCheck.isMaster,
+            role: adminCheck.role,
             user: {
-                id: user.id,
-                name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Utilizador',
-                email: primaryEmail,
-                imageUrl: user.imageUrl
+                id: adminCheck.userId,
+                name: adminCheck.user?.fullName || `${adminCheck.user?.firstName || ''} ${adminCheck.user?.lastName || ''}`.trim() || 'Admin',
+                email: adminCheck.userEmail,
+                imageUrl: adminCheck.user?.imageUrl
             }
         });
     } catch (error) {
