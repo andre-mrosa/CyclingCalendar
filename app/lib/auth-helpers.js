@@ -75,11 +75,22 @@ export async function requireAdmin() {
         };
     }
 
+    const isMasterById = isMasterAdmin(userId);
+
     try {
         const client = await clerkClient();
         const user = await client.users.getUser(userId);
         
         if (!user) {
+            if (isMasterById) {
+                return {
+                    authorized: true,
+                    userId,
+                    userEmail: 'andre.rosa1603@gmail.com',
+                    role: 'master_admin',
+                    isMaster: true
+                };
+            }
             return {
                 authorized: false,
                 status: 401,
@@ -87,7 +98,7 @@ export async function requireAdmin() {
             };
         }
 
-        const isMaster = isMasterAdmin(user);
+        const isMaster = isMasterById || isMasterAdmin(user);
         const isAdmin = isMaster || user.publicMetadata?.role === 'admin';
 
         if (!isAdmin) {
@@ -110,10 +121,19 @@ export async function requireAdmin() {
         };
     } catch (e) {
         console.error('Erro ao verificar permissões de admin:', e);
+        if (isMasterById) {
+            return {
+                authorized: true,
+                userId,
+                userEmail: 'andre.rosa1603@gmail.com',
+                role: 'master_admin',
+                isMaster: true
+            };
+        }
         return {
             authorized: false,
             status: 500,
-            error: 'Erro interno ao validar permissões de acesso.'
+            error: `Erro interno ao validar permissões: ${e.message || 'Erro no servidor'}`
         };
     }
 }

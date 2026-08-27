@@ -37,18 +37,28 @@ export async function GET(request) {
             ];
         }
 
-        const [logs, total, totalErrors, totalWarns, totalInfos] = await Promise.all([
-            prisma.systemLog.findMany({
-                where,
-                orderBy: { createdAt: 'desc' },
-                take: limit,
-                skip
-            }),
-            prisma.systemLog.count({ where }),
-            prisma.systemLog.count({ where: { level: 'ERROR' } }),
-            prisma.systemLog.count({ where: { level: 'WARN' } }),
-            prisma.systemLog.count({ where: { level: 'INFO' } })
-        ]);
+        let logs = [], total = 0, totalErrors = 0, totalWarns = 0, totalInfos = 0;
+        try {
+            const [l, t, e, w, i] = await Promise.all([
+                prisma.systemLog.findMany({
+                    where,
+                    orderBy: { createdAt: 'desc' },
+                    take: limit,
+                    skip
+                }).catch(() => []),
+                prisma.systemLog.count({ where }).catch(() => 0),
+                prisma.systemLog.count({ where: { level: 'ERROR' } }).catch(() => 0),
+                prisma.systemLog.count({ where: { level: 'WARN' } }).catch(() => 0),
+                prisma.systemLog.count({ where: { level: 'INFO' } }).catch(() => 0)
+            ]);
+            logs = l || [];
+            total = t || 0;
+            totalErrors = e || 0;
+            totalWarns = w || 0;
+            totalInfos = i || 0;
+        } catch (err) {
+            console.error('Error in logs Promise.all:', err);
+        }
 
         return Response.json({
             success: true,
