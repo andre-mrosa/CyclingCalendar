@@ -67,11 +67,13 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import WelcomeModal from "./components/WelcomeModal";
 import CookieBanner from "./components/CookieBanner";
 import FaviconManager from "./components/FaviconManager";
+import PWAUpdateHandler from "./components/PWAUpdateHandler";
 
 export default function RootLayout({ children }) {
   return (
     <html lang="pt" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-200 selection:bg-blue-600 selection:text-white transition-colors duration-200`} suppressHydrationWarning>
+        <PWAUpdateHandler />
         <FaviconManager />
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
           <ThemeClerkProvider>

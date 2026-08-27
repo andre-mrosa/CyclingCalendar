@@ -52,7 +52,7 @@ export default function CalendarView({
     const [showFilters, setShowFilters] = useState(false);
     const [selectedType, setSelectedType] = useState('Todos');
     const [pastEventsFilter, setPastEventsFilter] = useState('futuros');
-    const [visibleCount, setVisibleCount] = useState(60);
+    const [visibleCount, setVisibleCount] = useState(35);
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [isOffline, setIsOffline] = useState(false);
     const loaderRef = useRef(null);
@@ -169,7 +169,7 @@ export default function CalendarView({
         }
 
         setFilteredEvents(filtered);
-        setVisibleCount(16); // Reset visible count on filter change
+        setVisibleCount(35); // Reset visible count on filter change
     }, [events, searchTerm, selectedEscaloes, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, filterByFavorites, favorites, forceEscalao, forceAmbito, forceLicenca]);
 
     const uniqueEscaloes = ['Elite', 'Elite Amador', 'Sub-23', 'Sub-19 (Juniores)', 'Sub-17 (Cadetes)', 'Sub-15 (Juvenis)', 'Masters / Veteranos', 'Femininas', 'Escolas', 'Profissional (UCI)', 'Todos (Aberto)', 'Geral / Vários'];
@@ -198,7 +198,7 @@ export default function CalendarView({
 
     const handleFilterChange = (key, value) => {
         setFilters(prev => ({ ...prev, [key]: value }));
-        setVisibleCount(16);
+        setVisibleCount(35);
     };
     
     const onMonthToChange = (e) => {

@@ -5,24 +5,13 @@ const withPWA = withPWAInit({
   disable: process.env.NODE_ENV === "development",
   register: true,
   skipWaiting: true,
-  cacheOnFrontEndNav: true,
+  cacheOnFrontEndNav: false,
+  reloadOnOnline: false,
   extendDefaultRuntimeCaching: true,
   workboxOptions: {
     cleanupOutdatedCaches: true,
     clientsClaim: true,
     runtimeCaching: [
-      {
-        urlPattern: /\/(agenda|nacionais|internacionais|tacas|regionais|lazer|favoritos|definicoes|ajuda)?(\?.*)?$/i,
-        handler: "NetworkFirst",
-        options: {
-          cacheName: "pages-cache",
-          networkTimeoutSeconds: 2,
-          expiration: {
-            maxEntries: 30,
-            maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
-          },
-        },
-      },
       {
         urlPattern: /^https:\/\/.*\.(?:png|jpg|jpeg|svg|webp|gif|ico)/i,
         handler: "CacheFirst",

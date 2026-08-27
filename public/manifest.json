@@ -2,16 +2,25 @@
   "name": "Cycling Calendar Portugal",
   "short_name": "Cycling Calendar",
   "description": "O Calendário Unificado de Ciclismo em Portugal",
+  "id": "/",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#1d4ed8",
-  "orientation": "portrait-primary",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "/icon-192x192.jpg",
       "sizes": "192x192",
-      "type": "image/jpeg"
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512x512.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
     },
     {
       "src": "/icon-512x512.jpg",
