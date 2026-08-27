@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from 'react';
+import Link from 'next/link';
+import { useUser } from '@clerk/nextjs';
 import { useSettingsStore } from '../store/useSettingsStore';
-import { HelpCircle, Settings, ChevronUp, ChevronDown, RotateCcw } from 'lucide-react';
+import { HelpCircle, Settings, ChevronUp, ChevronDown, RotateCcw, Shield } from 'lucide-react';
 import RegionAssistant from '../components/RegionAssistant';
 import EscalaoAssistant from '../components/EscalaoAssistant';
 
@@ -16,7 +18,13 @@ export default function Conta() {
         tabsOrder, moveTab, resetTabsOrder
     } = useSettingsStore();
 
+    const { isLoaded, isSignedIn, user } = useUser();
     const [activeModal, setActiveModal] = useState(null);
+
+    const primaryEmail = (user?.primaryEmailAddress?.emailAddress || user?.emailAddresses?.[0]?.emailAddress || '').toLowerCase();
+    const masterDefaults = ['andre.rosa1603@gmail.com', 'andremrosa@gmail.com', 'andre_rosa', 'andrerosa'];
+    const isMaster = masterDefaults.some(m => primaryEmail.includes(m));
+    const isAdmin = isMaster || user?.publicMetadata?.role === 'admin';
 
     return (
         <div className="max-w-3xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
@@ -31,6 +39,26 @@ export default function Conta() {
             </header>
 
             <main className="flex flex-col gap-6">
+                {isAdmin && (
+                    <section className="bg-blue-500/10 border border-blue-500/30 rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm animate-fade-in">
+                        <div className="flex items-center gap-3.5">
+                            <div className="w-11 h-11 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                                <Shield size={22} />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-slate-900 dark:text-white text-base">Painel de Gestão & Backoffice</h3>
+                                <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">Gere utilizadores, consulta os logs do sistema e executa scrapers.</p>
+                            </div>
+                        </div>
+                        <Link
+                            href="/admin"
+                            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-bold shadow-md transition-all !no-underline shrink-0"
+                        >
+                            <Shield size={16} />
+                            Abrir Gestão
+                        </Link>
+                    </section>
+                )}
                 <section className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/5 rounded-2xl p-6 sm:p-8 shadow-sm dark:shadow-xl">
                     <div className="flex flex-col md:flex-row md:items-center justify-between pb-6 border-b border-slate-100 dark:border-slate-800/60 gap-4">
                         <div>

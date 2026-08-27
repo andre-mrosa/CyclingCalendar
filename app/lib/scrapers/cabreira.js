@@ -4,6 +4,7 @@ import {
     formatDateStr, parseSortDate, getAmbito, getTag, getRegiao, 
     getDistrito, toTitleCase, parsePTDateToISO, sanitizeHtml, fetchImageAsBase64 
 } from './utils';
+import { logInfo, logError } from '../logger';
 
 export const deepScrapeCabreira = async (link) => {
     if (!link) return { opensAt: null, closesAt: null, description: null, prices: null, insurance: null, prizes: null, programa: null, additionalLinks: [] };
@@ -238,97 +239,109 @@ export const deepScrapeCabreira = async (link) => {
 };
 
 export const scrapeCabreira = async (year) => {
-    const response = await fetch(`https://cabreirasolutions.com/eventos/`, {
-        headers: { 'User-Agent': 'Mozilla/5.0' }
-    });
+    try {
+        logInfo('SCRAPER', `Início da sincronização Cabreira Solutions (Ano: ${year || 'Todos'})`);
+        const response = await fetch(`https://cabreirasolutions.com/eventos/`, {
+            headers: { 'User-Agent': 'Mozilla/5.0' }
+        });
 
-    if (!response.ok) return;
-
-    const html = await response.text();
-    const $ = cheerio.load(html);
-    const items = $('.evento-grid-item').toArray();
-    
-    for (const element of items) {
-        const aTag = $(element).find('.evento-item-image-container a');
-        let href = aTag.attr('href') || '';
-        
-        let title = 'Evento Cabreira';
-        if (href) {
-            const parts = href.split('/').filter(Boolean);
-            const slug = parts[parts.length - 1];
-            if (slug) {
-                title = slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-            }
+        if (!response.ok) {
+            logError('SCRAPER', `Falha ao aceder ao portal Cabreira Solutions (HTTP ${response.status})`);
+            return;
         }
-        
-        let logoUrl = $(element).find('.evento-item-image-container .evento-item-logo').attr('src') || null;
-        let imageUrl = null;
-        const styleAttr = $(element).find('.evento-item-image-container .evento-item-image').attr('style');
-        if (styleAttr) {
-            const match = styleAttr.match(/url\(['"]?(.*?)['"]?\)/);
-            if (match) imageUrl = match[1];
-        }
-        
-        // Fetch and convert to base64
-        const logo = await fetchImageAsBase64(logoUrl);
-        const image = await fetchImageAsBase64(imageUrl);
 
-        let dateText = $(element).find('.evento-item-data').text().trim().toUpperCase() || 'DATA A DEFINIR';
-        const rawDateForSort = dateText;
-        dateText = formatDateStr(dateText, year);
+        const html = await response.text();
+        const $ = cheerio.load(html);
+        const items = $('.evento-grid-item').toArray();
+        let processedCount = 0;
         
-        let locText = $(element).find('.evento-item-local').text().trim() || 'A DEFINIR';
-        if (locText !== 'A DEFINIR') locText = toTitleCase(locText);
-        
-        const yearInDateMatch = dateText.match(/202\d/);
-        const eventYear = yearInDateMatch ? yearInDateMatch[0] : (year || new Date().getFullYear().toString());
-
-        if (!year || dateText.includes(year)) {
-            const ambitoVal = getAmbito(title);
-            const id = 'cabreira-' + title.replace(/\s+/g, '-').toLowerCase() + '-' + eventYear;
+        for (const element of items) {
+            const aTag = $(element).find('.evento-item-image-container a');
+            let href = aTag.attr('href') || '';
             
-            // Deep Scrape
-            const deepData = await deepScrapeCabreira(href);
-            
-            let links = href ? [{ label: 'Ver na Cabreira Solutions', link: href }] : [];
-            if (deepData.additionalLinks && Array.isArray(deepData.additionalLinks)) {
-                for (const addLink of deepData.additionalLinks) {
-                    if (!links.some(l => l.link === addLink.link)) {
-                        links.push(addLink);
-                    }
+            let title = 'Evento Cabreira';
+            if (href) {
+                const parts = href.split('/').filter(Boolean);
+                const slug = parts[parts.length - 1];
+                if (slug) {
+                    title = slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
                 }
             }
+            
+            let logoUrl = $(element).find('.evento-item-image-container .evento-item-logo').attr('src') || null;
+            let imageUrl = null;
+            const styleAttr = $(element).find('.evento-item-image-container .evento-item-image').attr('style');
+            if (styleAttr) {
+                const match = styleAttr.match(/url\(['"]?(.*?)['"]?\)/);
+                if (match) imageUrl = match[1];
+            }
+            
+            // Fetch and convert to base64
+            const logo = await fetchImageAsBase64(logoUrl);
+            const image = await fetchImageAsBase64(imageUrl);
 
-            const eventData = {
-                title: title,
-                date: dateText,
-                sortDate: new Date(parseSortDate(rawDateForSort, eventYear)),
-                details: locText,
-                tag: getTag(title),
-                ambito: ambitoVal,
-                escaloes: JSON.stringify(['Todos (Aberto)']),
-                licenca: 'CPT / Lazer',
-                regiao: getRegiao(title, locText),
-                distrito: getDistrito(title, locText),
-                source: 'Cabreira',
-                link: href || 'https://cabreirasolutions.com/eventos/',
-                extraLinks: JSON.stringify(links),
-                registrationOpensAt: deepData.opensAt,
-                registrationClosesAt: deepData.closesAt,
-                description: deepData.description,
-                prices: deepData.prices,
-                insurance: deepData.insurance,
-                prizes: deepData.prizes,
-                programa: deepData.programa,
-                logo: logo,
-                image: image,
-            };
+            let dateText = $(element).find('.evento-item-data').text().trim().toUpperCase() || 'DATA A DEFINIR';
+            const rawDateForSort = dateText;
+            dateText = formatDateStr(dateText, year);
+            
+            let locText = $(element).find('.evento-item-local').text().trim() || 'A DEFINIR';
+            if (locText !== 'A DEFINIR') locText = toTitleCase(locText);
+            
+            const yearInDateMatch = dateText.match(/202\d/);
+            const eventYear = yearInDateMatch ? yearInDateMatch[0] : (year || new Date().getFullYear().toString());
 
-            await prisma.event.upsert({
-                where: { id: id },
-                update: eventData,
-                create: { id: id, ...eventData }
-            });
+            if (!year || dateText.includes(year)) {
+                const ambitoVal = getAmbito(title);
+                const id = 'cabreira-' + title.replace(/\s+/g, '-').toLowerCase() + '-' + eventYear;
+                
+                // Deep Scrape
+                const deepData = await deepScrapeCabreira(href);
+                
+                let links = href ? [{ label: 'Ver na Cabreira Solutions', link: href }] : [];
+                if (deepData.additionalLinks && Array.isArray(deepData.additionalLinks)) {
+                    for (const addLink of deepData.additionalLinks) {
+                        if (!links.some(l => l.link === addLink.link)) {
+                            links.push(addLink);
+                        }
+                    }
+                }
+
+                const eventData = {
+                    title: title,
+                    date: dateText,
+                    sortDate: new Date(parseSortDate(rawDateForSort, eventYear)),
+                    details: locText,
+                    tag: getTag(title),
+                    ambito: ambitoVal,
+                    escaloes: JSON.stringify(['Todos (Aberto)']),
+                    licenca: 'CPT / Lazer',
+                    regiao: getRegiao(title, locText),
+                    distrito: getDistrito(title, locText),
+                    source: 'Cabreira',
+                    link: href || 'https://cabreirasolutions.com/eventos/',
+                    extraLinks: JSON.stringify(links),
+                    registrationOpensAt: deepData.opensAt,
+                    registrationClosesAt: deepData.closesAt,
+                    description: deepData.description,
+                    prices: deepData.prices,
+                    insurance: deepData.insurance,
+                    prizes: deepData.prizes,
+                    programa: deepData.programa,
+                    logo: logo,
+                    image: image,
+                };
+
+                await prisma.event.upsert({
+                    where: { id: id },
+                    update: eventData,
+                    create: { id: id, ...eventData }
+                });
+                processedCount++;
+            }
         }
+
+        logInfo('SCRAPER', `Sincronização Cabreira concluída com sucesso (${processedCount} provas atualizadas na BD)`);
+    } catch (e) {
+        logError('SCRAPER', `Erro durante o scraping da Cabreira Solutions: ${e.message}`, e);
     }
 };

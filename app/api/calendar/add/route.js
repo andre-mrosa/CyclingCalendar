@@ -1,6 +1,7 @@
 import { auth, getAuth, verifyToken, clerkClient } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/db';
+import { logInfo, logError } from '@/app/lib/logger';
 
 function parsePtDate(dateStr) {
     if (!dateStr || typeof dateStr !== 'string') return null;

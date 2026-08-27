@@ -3,8 +3,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
-import { SignInButton, Show, UserButton } from '@clerk/nextjs';
-import { Home, Trophy, MapPin, Bike, HelpCircle, Settings, Menu, X, Moon, Sun, Flag, Star, Globe, LogIn, CalendarCheck } from 'lucide-react';
+import { SignInButton, Show, UserButton, useUser } from '@clerk/nextjs';
+import { Home, Trophy, MapPin, Bike, HelpCircle, Settings, Menu, X, Moon, Sun, Flag, Star, Globe, LogIn, CalendarCheck, Shield } from 'lucide-react';
 import SettingsPage from '../definicoes/page';
 import HelpPage from '../ajuda/page';
 import { useSettingsStore } from '../store/useSettingsStore';
@@ -13,14 +13,45 @@ import DynamicLogo from './DynamicLogo';
 export default function Navigation() {
     const pathname = usePathname();
     const { theme, setTheme } = useTheme();
+    const { isLoaded, isSignedIn, user } = useUser();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
     const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    useEffect(() => {
+        if (!isLoaded || !isSignedIn) {
+            setIsAdmin(false);
+            return;
+        }
+
+        // 1. Verificação instantânea no lado do cliente
+        const primaryEmail = (user?.primaryEmailAddress?.emailAddress || user?.emailAddresses?.[0]?.emailAddress || '').toLowerCase();
+        const masterDefaults = ['andre.rosa1603@gmail.com', 'andremrosa@gmail.com', 'andre_rosa', 'andrerosa'];
+        const isMaster = masterDefaults.some(m => primaryEmail.includes(m));
+        const hasAdminRole = user?.publicMetadata?.role === 'admin';
+
+        if (isMaster || hasAdminRole) {
+            setIsAdmin(true);
+        }
+
+        // 2. Confirmação com o backend
+        fetch('/api/admin/me')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.isAdmin) {
+                    setIsAdmin(true);
+                } else if (!isMaster && !hasAdminRole) {
+                    setIsAdmin(false);
+                }
+            })
+            .catch(() => {});
+    }, [isLoaded, isSignedIn, user]);
 
     const isDarkMode = mounted ? theme === 'dark' : true; // Default to dark for SSR to match defaultTheme
 
@@ -142,7 +173,7 @@ export default function Navigation() {
                         {links.map(renderLink)}
                     </div>
                     
-                    <div className="ml-auto flex gap-6 items-center">
+                    <div className="ml-auto flex gap-4 items-center">
                         <ThemeToggle />
                         
                         <Show when="signed-out">
@@ -155,6 +186,16 @@ export default function Navigation() {
                             </SignInButton>
                         </Show>
                         <Show when="signed-in">
+                            {isAdmin && (
+                                <Link 
+                                    href="/admin"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30 text-xs font-bold transition-all shadow-sm !no-underline"
+                                    title="Painel de Gestão e Logs"
+                                >
+                                    <Shield size={14} />
+                                    <span>Gestão</span>
+                                </Link>
+                            )}
                             <UserButton 
                                 appearance={{
                                     elements: {
@@ -169,6 +210,13 @@ export default function Navigation() {
                                 }}
                             >
                                 <UserButton.MenuItems>
+                                    {isAdmin && (
+                                        <UserButton.Link 
+                                            label="Painel de Gestão"
+                                            labelIcon={<Shield size={16} className="mr-2 text-blue-500" />}
+                                            href="/admin"
+                                        />
+                                    )}
                                     <UserButton.Action 
                                         label="Definições"
                                         labelIcon={<Settings size={16} className="mr-2" />}
@@ -185,8 +233,17 @@ export default function Navigation() {
                     </div>
                 </div>
                 
-                {/* Mobile specific toggle that shows only when menu is closed */}
-                <div className="ml-auto md:hidden flex items-center">
+                {/* Mobile specific actions that show only when menu is closed */}
+                <div className="ml-auto md:hidden flex items-center gap-2">
+                    {isAdmin && (
+                        <Link 
+                            href="/admin" 
+                            className="p-1.5 rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30 flex items-center justify-center transition-colors !no-underline"
+                            title="Painel de Gestão"
+                        >
+                            <Shield size={16} />
+                        </Link>
+                    )}
                     <ThemeToggle />
                 </div>
             </nav>
@@ -249,6 +306,13 @@ export default function Navigation() {
                                     }}
                                 >
                                     <UserButton.MenuItems>
+                                        {isAdmin && (
+                                            <UserButton.Link 
+                                                label="Painel de Gestão"
+                                                labelIcon={<Shield size={16} className="mr-2 text-blue-500" />}
+                                                href="/admin"
+                                            />
+                                        )}
                                         <UserButton.Action 
                                             label="Definições"
                                             labelIcon={<Settings size={16} className="mr-2" />}
@@ -269,6 +333,17 @@ export default function Navigation() {
                                 </UserButton>
                                 <span className="text-sm font-semibold select-none flex-1">A minha conta</span>
                             </div>
+
+                            {isAdmin && (
+                                <Link 
+                                    href="/admin"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className="flex items-center gap-2.5 py-2.5 px-3 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/25 text-sm font-bold transition-colors !no-underline"
+                                >
+                                    <Shield size={16} />
+                                    <span>Painel de Gestão</span>
+                                </Link>
+                            )}
                         </Show>
                     </div>
                 </div>

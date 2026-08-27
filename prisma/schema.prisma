@@ -41,3 +41,18 @@ model Event {
   updatedAt            DateTime  @updatedAt
 }
 
+model SystemLog {
+  id        String   @id @default(cuid())
+  level     String   // "INFO" | "WARN" | "ERROR"
+  source    String   // "SCRAPER" | "CALENDAR" | "API" | "AUTH" | "CRON" | "SYSTEM"
+  message   String
+  details   String?  // JSON string or error stack trace
+  userId    String?  // Optional Clerk userId if action performed by user
+  userEmail String?  // Optional user email
+  createdAt DateTime @default(now())
+
+  @@index([level])
+  @@index([source])
+  @@index([createdAt])
+}
+
