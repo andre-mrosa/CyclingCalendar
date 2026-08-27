@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Calendar, Star, X, CalendarPlus, Check, Bike, FileText, CreditCard, Trophy, Shield, Users, Globe, Clock, MapPin, ExternalLink, ChevronDown, Bell, Sparkles, Trash2, Info, Tag } from 'lucide-react';
+import { Calendar, Star, X, CalendarPlus, Check, Bike, FileText, CreditCard, Trophy, Shield, Users, Globe, Clock, MapPin, ExternalLink, ChevronDown, Bell, Sparkles, Trash2, Info, Tag, Share2 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import SmartLogo from './SmartLogo';
 import { parsePrograma } from '../utils/parsePrograma';
@@ -23,6 +23,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
     const [regCloseCalStatus, setRegCloseCalStatus] = useState(null);
     const [regCloseCalMsg, setRegCloseCalMsg] = useState('');
     const [showCalMenu, setShowCalMenu] = useState(false);
+    const [shareCopied, setShareCopied] = useState(false);
     const calMenuRef = useRef(null);
     const [activeTab, setActiveTab] = useState('info');
     const [isClosing, setIsClosing] = useState(false);
@@ -32,6 +33,37 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
     const [isExpanded, setIsExpanded] = useState(false);
     const touchStartY = useRef(0);
     const currentDragY = useRef(0);
+
+    const handleShare = async () => {
+        if (!selectedEvent) return;
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+            navigator.vibrate(10);
+        }
+        const shareUrl = typeof window !== 'undefined' 
+            ? `${window.location.origin}/?event=${selectedEvent.id}` 
+            : `https://cyclingcalendar.pt/?event=${selectedEvent.id}`;
+
+        const shareData = {
+            title: `${selectedEvent.title} | Cycling Calendar Portugal`,
+            text: `Vê todos os detalhes de "${selectedEvent.title}" (${selectedEvent.date}) no Cycling Calendar:`,
+            url: shareUrl
+        };
+
+        if (typeof navigator !== 'undefined' && navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+            try {
+                await navigator.share(shareData);
+                return;
+            } catch (e) {}
+        }
+
+        if (typeof navigator !== 'undefined' && navigator.clipboard) {
+            try {
+                await navigator.clipboard.writeText(shareUrl);
+                setShareCopied(true);
+                setTimeout(() => setShareCopied(false), 2200);
+            } catch (e) {}
+        }
+    };
 
     useEffect(() => {
         const raf = requestAnimationFrame(() => {
@@ -104,16 +136,16 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
             return;
         }
 
-        // Instant load if selectedEvent already has full details from API
-        if (selectedEvent.description || selectedEvent.programa || selectedEvent.prices || selectedEvent.logo || selectedEvent.image) {
-            setFullEvent(selectedEvent);
+        // Instant load from cache if available
+        if (eventDetailsCache.has(selectedEvent.id)) {
+            setFullEvent(eventDetailsCache.get(selectedEvent.id));
             setIsLoadingFullEvent(false);
             return;
         }
 
-        // Instant load from cache if available
-        if (eventDetailsCache.has(selectedEvent.id)) {
-            setFullEvent(eventDetailsCache.get(selectedEvent.id));
+        // If selectedEvent already has full deep details explicitly
+        if (selectedEvent._hasFullDetails) {
+            setFullEvent(selectedEvent);
             setIsLoadingFullEvent(false);
             return;
         }
@@ -126,7 +158,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 const res = await fetch(`/api/events/${selectedEvent.id}`);
                 const data = await res.json();
                 if (data.success && data.event) {
-                    const merged = { ...selectedEvent, ...data.event };
+                    const merged = { ...selectedEvent, ...data.event, _hasFullDetails: true };
                     eventDetailsCache.set(selectedEvent.id, merged);
                     setFullEvent(merged);
                 }
@@ -218,6 +250,68 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
     const parsedSchedule = useMemo(() => {
         return parsePrograma(programaCleanHtml);
     }, [programaCleanHtml]);
+
+    // Extrai os percursos e distâncias para o cartão de resumo nativo
+    const percursosSummary = useMemo(() => {
+        if (!activeEvent) return [];
+        const items = [];
+        
+        // 1. Procura se a descrição tem itens de percurso formatados
+        if (activeEvent.description) {
+            const desc = activeEvent.description;
+            // Padrão: <strong>PERCURSOS:</strong> ...
+            const percBlockMatch = desc.match(/<strong>PERCURSOS:<\/strong>\s*(?:<span>)?([\s\S]*?)(?:<\/span>|<\/li>|<\/div>|<h[1-6]>)/i);
+            let targetText = percBlockMatch ? percBlockMatch[1] : desc;
+            
+            targetText = targetText.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ');
+
+            // Divide por marcadores de percurso individuais
+            const splitRegex = /(?:^|\s*[-•*]\s*|\s+(?=(?:Percurso\s+(?:Longo|Curto|Médio|Medio|Gravel|BTT|Mini|Promoção|Promocao|Principal|Alternativo|1|2|3)|Granfondo|Mediofondo|Minifondo|Meia\s+Maratona|Maratona|Mini\s+Maratona|Passeio\s+Guiado|Passeio)\b))/i;
+            
+            const rawSegments = targetText.split(splitRegex);
+            for (let seg of rawSegments) {
+                let clean = seg.replace(/^[-•*:\s]+/, '').replace(/[-•*:\s]+$/, '').trim();
+                if (clean.length < 4) continue;
+                
+                if (/\b\d+(?:[.,]\d+)?\s*km\b/i.test(clean) || /\b\d+\s*(?:m|mt)?\s*D\+/i.test(clean) || /percurso/i.test(clean)) {
+                    // Formata espaçamentos e acumulado
+                    clean = clean
+                        .replace(/(\d+(?:[.,]\d+)?)\s*km\b/gi, '$1 km')
+                        .replace(/(\d+)\s*(?:mt|m)\s*D\+/gi, '• $1 m D+')
+                        .replace(/(\d+)\s*D\+/gi, '• $1 m D+')
+                        .replace(/(\d+(?:[.,]\d+)?\s*km)\s+(\d{3,4})\b/i, '$1 • $2 m D+');
+                    
+                    clean = clean.replace(/:\s*/, ': ');
+                    clean = clean.replace(/•\s*•/g, '•').replace(/\s+/g, ' ').trim();
+                    
+                    if (!items.includes(clean)) {
+                        items.push(clean);
+                    }
+                }
+            }
+        }
+
+        // 2. Procura nas details da prova (comum na FPC ex: "80 Km | XCM")
+        if (items.length === 0 && activeEvent.details) {
+            const kmMatch = activeEvent.details.match(/\b(\d{1,3}(?:[.,]\d+)?\s*km)\b/gi);
+            if (kmMatch) {
+                kmMatch.forEach(k => {
+                    const clean = `Percurso: ${k.trim()}`;
+                    if (!items.includes(clean)) items.push(clean);
+                });
+            }
+        }
+
+        return items;
+    }, [activeEvent]);
+
+    // Limpeza da descrição removendo o bloco raw HTML de resumo para usar o componente nativo React
+    const cleanDescriptionHtml = useMemo(() => {
+        if (!activeEvent?.description) return '';
+        return activeEvent.description
+            .replace(/<div class="event-summary-card"[\s\S]*?<\/div>(?:<br\s*\/?>)*/gi, '')
+            .trim();
+    }, [activeEvent?.description]);
 
     // Calcula as tabs ativas baseadas nos dados reais do evento
     const availableTabs = useMemo(() => {
@@ -480,7 +574,15 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             </a>
                         )}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
+                        <button 
+                            onClick={handleShare}
+                            className={`flex items-center justify-center gap-1 h-8 px-2 rounded-full transition-all cursor-pointer text-xs font-semibold ${shareCopied ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40' : 'bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
+                            title="Partilhar prova ou copiar link direto"
+                        >
+                            <Share2 size={13} />
+                            {shareCopied && <span className="text-[10px]">Copiado!</span>}
+                        </button>
                         {(() => {
                             const isEventFavorited = favorites.includes(activeEvent.id) || (activeEvent._allIds && activeEvent._allIds.some(id => favorites.includes(id)));
                             return (
@@ -560,6 +662,14 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 <span className="text-slate-900 dark:text-white truncate">{activeEvent.title}</span>
                             )}
                         </h2>
+                        <button 
+                            onClick={handleShare}
+                            className={`flex shrink-0 items-center justify-center gap-1.5 h-7 px-2.5 rounded-full transition-all cursor-pointer text-xs font-semibold ${shareCopied ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40' : 'bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
+                            title="Partilhar prova ou copiar link direto"
+                        >
+                            <Share2 size={13} />
+                            <span className="text-[11px]">{shareCopied ? 'Copiado!' : 'Partilhar'}</span>
+                        </button>
                         {(() => {
                             const isEventFavorited = favorites.includes(activeEvent.id) || (activeEvent._allIds && activeEvent._allIds.some(id => favorites.includes(id)));
                             return (
@@ -663,9 +773,138 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 {/* Tab: INFO */}
                 {activeTab === 'info' && (
                     <div className="flex flex-col h-full animate-fade-in min-h-0">
+                        {/* Registration Alert Banner */}
+                        {(() => {
+                            if (!activeEvent.registrationClosesAt && !activeEvent.registrationOpensAt) return null;
+                            const now = new Date();
+                            if (activeEvent.registrationClosesAt) {
+                                const closes = new Date(activeEvent.registrationClosesAt);
+                                const diffDays = Math.ceil((closes - now) / (1000 * 60 * 60 * 24));
+                                if (diffDays >= 0 && diffDays <= 7) {
+                                    return (
+                                        <div className="mb-2.5 px-3.5 py-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-between gap-2 text-rose-600 dark:text-rose-400 text-xs font-semibold shrink-0">
+                                            <div className="flex items-center gap-2">
+                                                <Clock size={15} className="shrink-0 animate-pulse text-rose-500" />
+                                                <span>Inscrições fecham {diffDays === 0 ? 'HOJE!' : `em ${diffDays} dias (${closes.toLocaleDateString('pt-PT')})`}</span>
+                                            </div>
+                                            {activeEvent.link && (
+                                                <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-bold no-underline transition-colors shrink-0">
+                                                    Inscrever
+                                                </a>
+                                            )}
+                                        </div>
+                                    );
+                                }
+                            }
+                            if (activeEvent.registrationOpensAt) {
+                                const opens = new Date(activeEvent.registrationOpensAt);
+                                const diffDays = Math.ceil((opens - now) / (1000 * 60 * 60 * 24));
+                                if (diffDays > 0 && diffDays <= 14) {
+                                    return (
+                                        <div className="mb-2.5 px-3.5 py-2.5 rounded-xl bg-lime-500/10 border border-lime-500/30 flex items-center gap-2 text-lime-700 dark:text-lime-400 text-xs font-semibold shrink-0">
+                                            <Clock size={15} className="shrink-0 text-lime-500" />
+                                            <span>Inscrições abrem em {diffDays} dias ({opens.toLocaleDateString('pt-PT')})</span>
+                                        </div>
+                                    );
+                                }
+                            }
+                            return null;
+                        })()}
+
                         <div className="flex-1 overflow-y-auto min-h-0 pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent overscroll-contain touch-pan-y">
+                            {/* Native Universal Resumo da Prova Card */}
+                            <div className="mb-3 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-br from-blue-500/[0.06] via-slate-50 to-slate-100/80 dark:from-blue-500/10 dark:via-slate-900/90 dark:to-slate-950/80 border border-blue-500/20 dark:border-blue-500/25 shadow-sm">
+                                <div className="flex items-center justify-between gap-2 mb-2.5 pb-2 border-b border-slate-200/80 dark:border-slate-800/80">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-6 h-6 rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                                            <Sparkles size={13} />
+                                        </div>
+                                        <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white m-0 tracking-tight">
+                                            Resumo da Prova
+                                        </h4>
+                                    </div>
+                                    {activeEvent.source && (
+                                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-200/80 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-300/60 dark:border-slate-700">
+                                            {activeEvent.source}
+                                        </span>
+                                    )}
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                                    {/* Data */}
+                                    <div className="flex items-start gap-2 text-slate-700 dark:text-slate-300">
+                                        <Calendar size={14} className="text-blue-500 shrink-0 mt-0.5" />
+                                        <div className="min-w-0">
+                                            <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-semibold uppercase leading-tight">Data</span>
+                                            <span className="font-semibold text-slate-900 dark:text-slate-100 truncate block">{activeEvent.date}</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Localização */}
+                                    <div className="flex items-start gap-2 text-slate-700 dark:text-slate-300">
+                                        <MapPin size={14} className="text-rose-500 shrink-0 mt-0.5" />
+                                        <div className="min-w-0">
+                                            <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-semibold uppercase leading-tight">Localização</span>
+                                            <span className="font-semibold text-slate-900 dark:text-slate-100 truncate block">
+                                                {activeEvent.details?.split('|')[0]?.trim() || 'A definir'}
+                                                {activeEvent.distrito && !activeEvent.details?.includes(activeEvent.distrito) ? ` (${activeEvent.distrito})` : ''}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Modalidade */}
+                                    <div className="flex items-start gap-2 text-slate-700 dark:text-slate-300">
+                                        <Bike size={14} className="text-amber-500 shrink-0 mt-0.5" />
+                                        <div className="min-w-0">
+                                            <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-semibold uppercase leading-tight">Modalidade</span>
+                                            <span className="font-semibold text-slate-900 dark:text-slate-100 truncate block">{activeEvent.tag || 'Ciclismo'}</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Âmbito & Licença */}
+                                    <div className="flex items-start gap-2 text-slate-700 dark:text-slate-300">
+                                        <Shield size={14} className="text-emerald-500 shrink-0 mt-0.5" />
+                                        <div className="min-w-0">
+                                            <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-semibold uppercase leading-tight">Âmbito & Licença</span>
+                                            <span className="font-semibold text-slate-900 dark:text-slate-100 truncate block">
+                                                {activeEvent.ambito} {activeEvent.licenca ? `• ${activeEvent.licenca}` : ''}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Percursos & Distâncias */}
+                                {percursosSummary && percursosSummary.length > 0 && (
+                                    <div className="mt-2.5 pt-2 border-t border-slate-200/80 dark:border-slate-800/80">
+                                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase block mb-1.5">
+                                            🚴 Percursos & Distâncias
+                                        </span>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                            {percursosSummary.map((p, idx) => {
+                                                const parts = p.split(/:\s*/);
+                                                const title = parts.length > 1 ? parts[0] : null;
+                                                const metrics = parts.length > 1 ? parts.slice(1).join(': ') : p;
+                                                return (
+                                                    <div key={idx} className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-blue-500/10 dark:bg-blue-500/15 border border-blue-500/20 text-xs shadow-sm">
+                                                        <div className="w-5 h-5 rounded-lg bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                                                            <Bike size={12} />
+                                                        </div>
+                                                        <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                                                            {title && (
+                                                                <span className="font-bold text-slate-900 dark:text-slate-100">{title}:</span>
+                                                            )}
+                                                            <span className="font-semibold text-blue-700 dark:text-blue-300">{metrics}</span>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
                             {isLoadingFullEvent && (
-                                <div className="w-full h-48 sm:h-60 rounded-xl bg-slate-800/30 border border-slate-800/80 animate-pulse flex flex-col items-center justify-center gap-2 mb-2 text-slate-500">
+                                <div className="w-full h-32 rounded-xl bg-slate-800/30 border border-slate-800/80 animate-pulse flex flex-col items-center justify-center gap-2 mb-2 text-slate-500">
                                     <div className="w-5 h-5 border-2 border-slate-600 border-t-blue-400 rounded-full animate-spin"></div>
                                     <span className="text-xs font-medium">A carregar detalhes do evento...</span>
                                 </div>
@@ -674,10 +913,10 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             {fpcBannerHtml && !isLoadingFullEvent && (
                                 <div className="mb-2 text-center" dangerouslySetInnerHTML={{ __html: fpcBannerHtml }} onClick={handleHtmlClick} />
                             )}
-                            {activeEvent.description ? (
-                                <div className="text-slate-700 dark:text-slate-300 text-xs sm:text-sm leading-relaxed prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: activeEvent.description }} />
+                            {cleanDescriptionHtml ? (
+                                <div className="text-slate-700 dark:text-slate-300 text-xs sm:text-sm leading-relaxed prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: cleanDescriptionHtml }} />
                             ) : !isLoadingFullEvent ? (
-                                <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">Descrição não disponível.</p>
+                                <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">Descrição adicional não disponível.</p>
                             ) : null}
                         </div>
                         

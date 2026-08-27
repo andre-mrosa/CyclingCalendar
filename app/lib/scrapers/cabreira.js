@@ -6,10 +6,10 @@ import {
 } from './utils';
 
 export const deepScrapeCabreira = async (link) => {
-    if (!link) return { opensAt: null, closesAt: null, description: null, prices: null, insurance: null, prizes: null, programa: null };
+    if (!link) return { opensAt: null, closesAt: null, description: null, prices: null, insurance: null, prizes: null, programa: null, additionalLinks: [] };
     try {
         const response = await fetch(link, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-        if (!response.ok) return { opensAt: null, closesAt: null, description: null, prices: null, insurance: null, prizes: null, programa: null };
+        if (!response.ok) return { opensAt: null, closesAt: null, description: null, prices: null, insurance: null, prizes: null, programa: null, additionalLinks: [] };
         const html = await response.text();
         const $ = cheerio.load(html);
         
@@ -20,66 +20,80 @@ export const deepScrapeCabreira = async (link) => {
         let insurance = '';
         let prizes = '';
         let programa = null;
+        const additionalLinks = [];
         
-        let descriptionHtml = '';
-        
-        // 1. Extrair Apresentação (Description) da aba atual (default)
-        let currentSection = 'description';
-        $('.event-desc').children().each((i, el) => {
-            if (el.type !== 'tag') return;
-            const $el = $(el);
-            const tagName = (el.tagName || el.name || '').toLowerCase();
-            if (!tagName) return;
+        // Extrair links úteis da navegação (StopAndGo, Inscrições, Lista de Inscritos, Percursos)
+        $('a').each((_, el) => {
+            const href = $(el).attr('href');
+            const text = $(el).text().trim();
+            if (!href || href === '#' || href.startsWith('javascript:')) return;
             
-            let isHeader = false;
-            let headerText = '';
-            
-            if (tagName.match(/^h[1-6]$/)) {
-                isHeader = true;
-                headerText = $el.text().toUpperCase();
-            } else if (tagName === 'ol' || tagName === 'ul') {
-                const lis = $el.find('> li');
-                if (lis.length === 1 && lis.find('strong').length > 0) {
-                    isHeader = true;
-                    headerText = lis.text().toUpperCase();
+            if (href.includes('stopandgo.net') && href.includes('register')) {
+                if (!additionalLinks.some(l => l.link === href)) {
+                    additionalLinks.push({ label: 'Inscrever no StopAndGo', link: href });
+                }
+            } else if (href.includes('stopandgo.net') && href.includes('list')) {
+                if (!additionalLinks.some(l => l.link === href)) {
+                    additionalLinks.push({ label: 'Lista de Inscritos', link: href });
+                }
+            } else if (text.toUpperCase().includes('PERCURSO') || href.includes('tab=percursos')) {
+                const fullPercursoUrl = href.startsWith('http') ? href : link + (link.includes('?') ? '&' : '?') + 'tab=percursos';
+                if (!additionalLinks.some(l => l.link === fullPercursoUrl)) {
+                    additionalLinks.push({ label: 'Percursos & Tracks', link: fullPercursoUrl });
+                }
+            } else if (text.toUpperCase().includes('REGULAMENTO') || href.includes('tab=regulamento')) {
+                const fullRegUrl = href.startsWith('http') ? href : link + (link.includes('?') ? '&' : '?') + 'tab=regulamento';
+                if (!additionalLinks.some(l => l.link === fullRegUrl)) {
+                    additionalLinks.push({ label: 'Regulamento Oficial', link: fullRegUrl });
                 }
             }
-            
-            if (isHeader) {
-                if (headerText.includes('APRESENTA')) {
-                    currentSection = 'description';
-                } else {
-                    // Outras secções na aba Apresentação ignoramos (ou não existem no novo layout)
-                    currentSection = null;
-                }
-                return; // Ignorar o cabeçalho
-            }
-            
-            const htmlBlock = sanitizeHtml($.html($el));
-            if (!htmlBlock) return;
-            
-            if (currentSection === 'description') descriptionHtml += htmlBlock + '<br/><br/>';
         });
 
-        if (descriptionHtml.length > 20) description = descriptionHtml;
-        if (!description) {
-            $('p').each((i, el) => {
+        // 1. Extrair Resumo / Tabela da Barra Lateral
+        let summaryHtml = '';
+        const sidebar = $('.single-evento-info-sidebar');
+        if (sidebar.length > 0) {
+            const items = [];
+            sidebar.find('.single-evento-info-sidebar-item').each((_, itemEl) => {
+                const label = $(itemEl).find('.label').text().trim();
+                const value = $(itemEl).find('.value').text().replace(/\s+/g, ' ').trim();
+                if (label && value) {
+                    items.push(`<li><strong>${label}</strong> ${value}</li>`);
+                }
+            });
+            if (items.length > 0) {
+                summaryHtml = `<div class="event-summary-card" style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(59,130,246,0.06); border: 1px solid rgba(59,130,246,0.2); border-radius: 0.75rem;"><h4 style="margin: 0 0 0.5rem 0; font-weight: bold; color: #3b82f6; font-size: 0.95rem;">📋 Resumo da Prova</h4><ul style="margin: 0; padding-left: 1.25rem; line-height: 1.6; font-size: 0.875rem;">${items.join('')}</ul></div>`;
+            }
+        }
+
+        // 2. Extrair Apresentação (Description)
+        let descParts = [];
+        $('.event-desc p, #page-content .event-desc, .wpb_text_column .wpb_wrapper p').each((_, el) => {
+            const pText = $(el).text().trim();
+            if (pText.length > 20 && !pText.toUpperCase().includes('COOKIES') && !pText.toUpperCase().includes('PRIVACIDADE')) {
+                const cleanP = sanitizeHtml($.html(el));
+                if (cleanP) descParts.push(cleanP);
+            }
+        });
+
+        if (descParts.length > 0) {
+            description = (summaryHtml ? summaryHtml + '<br/>' : '') + descParts.join('<br/><br/>');
+        } else if (summaryHtml) {
+            description = summaryHtml;
+        } else {
+            $('p').each((_, el) => {
                 const txt = $(el).text().trim();
-                if (txt.length > 50 && !description && !txt.toUpperCase().includes('INSCRIÇÃO') && !txt.toUpperCase().includes('REGULAMENTO')) {
-                    description = txt;
+                if (txt.length > 50 && !description && !txt.toUpperCase().includes('INSCRIÇÃO') && !txt.toUpperCase().includes('REGULAMENTO') && !txt.toUpperCase().includes('COOKIE')) {
+                    description = sanitizeHtml($.html(el));
                 }
             });
         }
 
-        // 2. Extrair Programa — navegar estrutura: .single-evento-programa > h2 + div(dias) > div(dia) > div(header) + div(actividades) > div(actividade)
-        // Filtrar divs de actividade anormalmente grandes (> 5000 chars) que esconde regulamento
+        // 3. Extrair Programa da Página Principal
         const MAX_ACTIVITY_SIZE = 5000;
         const progContainer = $('.single-evento-programa').first();
         if (progContainer.length > 0) {
-            // Reconstruir a estrutura limpando actividades com regulamento embutido
             let programaHtml = '';
-            
-            // Iterar filhos directos do container: <h2> e <div> wrapper de dias
             progContainer.children().each((i, topEl) => {
                 const topTag = (topEl.tagName || topEl.name || '').toLowerCase();
                 if (topTag === 'h2') {
@@ -88,13 +102,11 @@ export const deepScrapeCabreira = async (link) => {
                 }
                 if (topTag !== 'div') return;
                 
-                // Este é o wrapper com os dias
                 let daysHtml = '';
                 $(topEl).children().each((j, dayEl) => {
                     const dayTag = (dayEl.tagName || dayEl.name || '').toLowerCase();
                     if (dayTag !== 'div') return;
                     
-                    // Cada dia tem: div(header com data) + div(lista de actividades)
                     let dayHtml = '';
                     $(dayEl).children().each((k, dayChild) => {
                         const childTag = (dayChild.tagName || dayChild.name || '').toLowerCase();
@@ -103,13 +115,10 @@ export const deepScrapeCabreira = async (link) => {
                             return;
                         }
                         const childHtmlSize = $(dayChild).html()?.length || 0;
-                        
-                        // Se for a lista de actividades (grande), filtrar actividade a actividade
                         if (childHtmlSize > MAX_ACTIVITY_SIZE) {
                             let activitiesHtml = '';
                             $(dayChild).children().each((l, actEl) => {
                                 const actHtmlSize = $(actEl).html()?.length || 0;
-                                // Ignorar actividades com conteúdo anormalmente grande (têm regulamento dentro)
                                 if (actHtmlSize > MAX_ACTIVITY_SIZE) return;
                                 activitiesHtml += $.html(actEl);
                             });
@@ -128,24 +137,36 @@ export const deepScrapeCabreira = async (link) => {
             }
         }
 
-        // Parse phase dates da página principal (fallback)
-        $('li, p').each((_, el) => {
-            const text = $(el).text();
-            if (text.match(/abertura/i)) {
-                const abertMatch = text.match(/abertura dia (\d{2}-\d{2}-\d{4}(?:\s+pelas\s+\d{2}h\d{2})?)/);
-                if (abertMatch && !opensAt) opensAt = parsePTDateToISO(abertMatch[1]);
+        // 4. Fazer fetch da aba Percursos para detalhes dos trajectos
+        try {
+            const percUrl = link + (link.includes('?') ? '&' : '?') + 'tab=percursos';
+            const percResponse = await fetch(percUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+            if (percResponse.ok) {
+                const percHtml = await percResponse.text();
+                const $perc = cheerio.load(percHtml);
+                const percItems = [];
+                $perc('.single-evento-percurso-item').each((_, pEl) => {
+                    const pTitle = $perc(pEl).find('.evento-percurso-item-title').text().trim();
+                    const pInfo = $perc(pEl).find('.evento-percurso-item-info p').map((_, p) => $perc(p).text().trim()).get().filter(Boolean).join(' • ');
+                    if (pTitle) {
+                        percItems.push(`<li><strong>${pTitle}:</strong> ${pInfo}</li>`);
+                    }
+                });
+                if (percItems.length > 0 && !summaryHtml) {
+                    const percBox = `<div class="event-summary-card" style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(59,130,246,0.06); border: 1px solid rgba(59,130,246,0.2); border-radius: 0.75rem;"><h4 style="margin: 0 0 0.5rem 0; font-weight: bold; color: #3b82f6; font-size: 0.95rem;">🚴 Percursos da Prova</h4><ul style="margin: 0; padding-left: 1.25rem; line-height: 1.6; font-size: 0.875rem;">${percItems.join('')}</ul></div>`;
+                    description = percBox + '<br/>' + description;
+                }
             }
-            const encerFinalMain = text.match(/encerram\s+(?:o\s+)?dia\s+(\d{2}-\d{2}-\d{4}(?:\s+pelas\s+\d{2}h\d{2})?)/);
-            if (encerFinalMain) {
-                const ds = encerFinalMain[1].includes('pelas') ? encerFinalMain[1] : encerFinalMain[1] + ' pelas 23h59';
-                closesAt = parsePTDateToISO(ds);
-            }
-        });
+        } catch (err) {
+            console.error('Error fetching Cabreira percursos', err);
+        }
 
-        // 3. Fazer fetch da aba Regulamento para preços, prêmios e seguros
-        let pricesHtml = '';
-        let insuranceHtml = '';
-        let prizesHtml = '';
+        // 5. Fazer fetch da aba Regulamento para preços, prémios, seguros e datas
+        let pricesParts = [];
+        let insuranceParts = [];
+        let prizesParts = [];
+        let scheduleParts = [];
+
         try {
             const regUrl = link + (link.includes('?') ? '&' : '?') + 'tab=regulamento';
             const regResponse = await fetch(regUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
@@ -153,110 +174,68 @@ export const deepScrapeCabreira = async (link) => {
                 const regHtml = await regResponse.text();
                 const $reg = cheerio.load(regHtml);
                 
-                let regSection = null;
-                let wrapper = $reg('.wpb_text_column .wpb_wrapper').first();
-                if (wrapper.length === 0) {
-                    wrapper = $reg('#page-content .col-12').first();
-                }
-                if (wrapper.length === 0) {
-                    wrapper = $reg('.event-desc').first();
-                }
-                
-                if (wrapper.length) {
-                    wrapper.children().each((i, el) => {
-                        if (el.type !== 'tag') return;
-                        const $el = $reg(el);
-                        const text = $el.text().toUpperCase();
-                        const tagName = (el.tagName || el.name || '').toLowerCase();
-                        
-                        let isHeader = false;
-                        
-                        if (tagName.match(/^h[1-6]$/)) {
-                            isHeader = true;
-                        } else if (tagName === 'p' && $el.find('strong').length > 0) {
-                            const strongText = $el.find('strong').text().trim();
-                            const fullText = $el.text().trim();
-                            // Só é cabeçalho se o <p> contiver APENAS o texto bold (±3 chars extra)
-                            // Evitar falsos positivos em parágrafos de conteúdo com palavras a negrito
-                            if (strongText.length > 3 && fullText.length <= strongText.length + 3) {
-                                isHeader = true;
-                            }
-                        } else if (tagName === 'ul' || tagName === 'ol') {
-                            const lis = $el.find('> li');
-                            const strongText = lis.find('strong').text().trim();
-                            const fullText = $el.text().trim();
-                            // A price phase is often a one-item list with a bold label.
-                            // It is only a section header when the bold text is the whole item.
-                            if (lis.length === 1 && strongText.length > 3 && fullText.length <= strongText.length + 3) {
-                                isHeader = true;
-                            }
-                        }
-                        
-                        if (isHeader) {
-                            if (text.match(/PRÉMIO|PREMIO|CLASSIFICA/)) {
-                                regSection = 'prizes';
-                            } else if (text.match(/INSCRI|PREÇO|PRECO|VALORES/)) {
-                                regSection = 'prices';
-                            } else if (text.match(/SEGURO/)) {
-                                regSection = 'insurance';
-                            } else if (text.match(/CONDI|PARTICIPA|KITS|CANCEL|ESPECIFICA|OBRIGA|PENALIZA|RECLAMA|SEGURAN|TERMO|MECAN|SAN|SECRETARIADO|FRONTAIS|ABASTECIMENTO|DOPING|CIVISMO|RESPEITO|IMAGEM|RGPD|OUTROS|CATEGORIA|CONTROLO/)) {
-                                regSection = null;
-                            } else if (text.match(/^[0-9]+\.\s/)) {
-                                regSection = null;
-                            }
-                            return; 
-                        }
-                        
-                        // Empty paragraphs are visual spacers in the source site and should not
-                        // create empty areas in the event modal.
-                        if (!$el.text().replace(/\u00a0/g, ' ').trim()) return;
-
-                        const htmlBlock = sanitizeHtml($reg.html($el));
-                        if (!htmlBlock) return;
-                        
-                        if (regSection === 'prizes') prizesHtml += htmlBlock + '<br/>';
-                        else if (regSection === 'prices') pricesHtml += htmlBlock + '<br/>';
-                        else if (regSection === 'insurance') insuranceHtml += htmlBlock + '<br/>';
-                    });
-                }
-                
-                // Extrair datas de inscrição do regulamento (onde normalmente vivem)
-                let finalCloseDate = null;
-                $reg('li, p, ul, ol').each((_, el) => {
+                // Parse phase dates do regulamento
+                $reg('li, p, ul, ol, td, div').each((_, el) => {
                     const text = $reg(el).text();
-                    // Data de abertura (1ª fase)
-                    if (!opensAt) {
-                        const abertMatch = text.match(/abertura dia (\d{2}-\d{2}-\d{4}(?:\s+pelas\s+\d{2}h\d{2})?)/);
-                        if (abertMatch) opensAt = parsePTDateToISO(abertMatch[1]);
+                    
+                    // Match abertura
+                    if (!opensAt && text.match(/abertura\s+(?:dia|a)?\s*(\d{2}[-/.]\d{2}[-/.]\d{4})/i)) {
+                        const m = text.match(/abertura\s+(?:dia|a)?\s*(\d{2}[-/.]\d{2}[-/.]\d{4})/i);
+                        if (m) opensAt = parsePTDateToISO(m[1].replace(/\./g, '-').replace(/\//g, '-'));
                     }
-                    // Data final de fecho explícita ("inscrições encerram dia")
-                    const encerFinal = text.match(/encerram\s+(?:o\s+)?dia\s+(\d{2}-\d{2}-\d{4}(?:\s+pelas\s+\d{2}h\d{2})?)/);
-                    if (encerFinal) {
-                        const ds = encerFinal[1].includes('pelas') ? encerFinal[1] : encerFinal[1] + ' pelas 23h59';
-                        finalCloseDate = parsePTDateToISO(ds);
-                    }
-                    // Fallback: fecho de fase ("encerramento do dia")
+                    
+                    // Match fecho ("inscrições serão efetuadas até ao dia 08-09-2026" ou "encerram dia 08-09-2026")
                     if (!closesAt) {
-                        const encerPhase = text.match(/encerramento\s+(?:às\s+\d{2}h\d{2}\s+)?do\s+dia\s+(\d{2}-\d{2}-\d{4})/);
-                        if (encerPhase) closesAt = parsePTDateToISO(encerPhase[1] + ' pelas 23h59');
+                        const mClose = text.match(/(?:encerram|efetuadas até ao dia|até ao dia)\s+(\d{2}[-/.]\d{2}[-/.]\d{4})/i);
+                        if (mClose) {
+                            const cleanD = mClose[1].replace(/\./g, '-').replace(/\//g, '-');
+                            closesAt = parsePTDateToISO(cleanD + ' pelas 23h59');
+                        }
                     }
                 });
-                // Preferir a data final explícita sobre a data de fase
-                if (finalCloseDate) closesAt = finalCloseDate;
+
+                // Parse blocos de conteúdo do regulamento
+                $reg('p, table, ul, ol').each((_, el) => {
+                    const text = $reg(el).text().trim();
+                    const upper = text.toUpperCase();
+                    const cleanHtml = sanitizeHtml($reg.html(el));
+                    if (!cleanHtml || text.length < 15) return;
+
+                    // Inscrições / Preços
+                    if (upper.includes('INSCRIÇ') || upper.includes('VALOR DE INSCRIÇÃO') || upper.includes('PREÇO') || upper.includes('TAXA') || upper.includes('€') || upper.includes('EUROS') || upper.includes('INCLUSÕES')) {
+                        if (!pricesParts.includes(cleanHtml)) pricesParts.push(cleanHtml);
+                    }
+
+                    // Seguros
+                    if (upper.includes('SEGURO') || upper.includes('COBERTURAS DO SEGURO') || upper.includes('MORTE POR ACIDENTE') || upper.includes('DESPESAS DE TRATAMENTO')) {
+                        if (!insuranceParts.includes(cleanHtml)) insuranceParts.push(cleanHtml);
+                    }
+
+                    // Prémios
+                    if (upper.includes('PRÉMIO') || upper.includes('PREMIO') || upper.includes('TROFÉU') || upper.includes('PÓDIO') || upper.includes('CLASSIFICAÇÃO')) {
+                        if (!prizesParts.includes(cleanHtml)) prizesParts.push(cleanHtml);
+                    }
+
+                    // Horários / Secretariado se não tiver programa
+                    if (!programa && (upper.includes('SECRETARIADO') || upper.includes('HORÁRIO PARTIDA') || upper.includes('HORÁRIOS') || upper.includes('PARTIDA/CHEGADA'))) {
+                        if (!scheduleParts.includes(cleanHtml)) scheduleParts.push(cleanHtml);
+                    }
+                });
             }
         } catch (err) {
-            console.error('Error fetching regulamento', err);
+            console.error('Error fetching Cabreira regulamento', err);
         }
 
-        if (prizesHtml.length > 20) prizes = prizesHtml;
-        if (pricesHtml.length > 20) prices = pricesHtml;
-        if (insuranceHtml.length > 20) insurance = insuranceHtml;
+        if (pricesParts.length > 0) prices = pricesParts.join('<br/><br/>');
+        if (insuranceParts.length > 0) insurance = insuranceParts.join('<br/><br/>');
+        if (prizesParts.length > 0) prizes = prizesParts.join('<br/><br/>');
+        if (!programa && scheduleParts.length > 0) programa = scheduleParts.join('<br/><br/>');
 
-        return { opensAt, closesAt, description, prices, insurance, prizes, programa };
+        return { opensAt, closesAt, description, prices, insurance, prizes, programa, additionalLinks };
     } catch(e) {
-        return { opensAt: null, closesAt: null, description: null, prices: null, insurance: null, prizes: null, programa: null };
+        return { opensAt: null, closesAt: null, description: null, prices: null, insurance: null, prizes: null, programa: null, additionalLinks: [] };
     }
-}
+};
 
 export const scrapeCabreira = async (year) => {
     const response = await fetch(`https://cabreirasolutions.com/eventos/`, {
@@ -301,17 +280,29 @@ export const scrapeCabreira = async (year) => {
         let locText = $(element).find('.evento-item-local').text().trim() || 'A DEFINIR';
         if (locText !== 'A DEFINIR') locText = toTitleCase(locText);
         
-        if (year && dateText.includes(year)) {
+        const yearInDateMatch = dateText.match(/202\d/);
+        const eventYear = yearInDateMatch ? yearInDateMatch[0] : (year || new Date().getFullYear().toString());
+
+        if (!year || dateText.includes(year)) {
             const ambitoVal = getAmbito(title);
-            const id = 'cabreira-' + title.replace(/\s+/g, '-').toLowerCase() + '-' + year;
+            const id = 'cabreira-' + title.replace(/\s+/g, '-').toLowerCase() + '-' + eventYear;
             
             // Deep Scrape
             const deepData = await deepScrapeCabreira(href);
             
+            let links = href ? [{ label: 'Ver na Cabreira Solutions', link: href }] : [];
+            if (deepData.additionalLinks && Array.isArray(deepData.additionalLinks)) {
+                for (const addLink of deepData.additionalLinks) {
+                    if (!links.some(l => l.link === addLink.link)) {
+                        links.push(addLink);
+                    }
+                }
+            }
+
             const eventData = {
                 title: title,
                 date: dateText,
-                sortDate: new Date(parseSortDate(rawDateForSort, year)),
+                sortDate: new Date(parseSortDate(rawDateForSort, eventYear)),
                 details: locText,
                 tag: getTag(title),
                 ambito: ambitoVal,
@@ -321,7 +312,7 @@ export const scrapeCabreira = async (year) => {
                 distrito: getDistrito(title, locText),
                 source: 'Cabreira',
                 link: href || 'https://cabreirasolutions.com/eventos/',
-                extraLinks: JSON.stringify(href ? [{ label: 'Ver na Cabreira Solutions', link: href }] : []),
+                extraLinks: JSON.stringify(links),
                 registrationOpensAt: deepData.opensAt,
                 registrationClosesAt: deepData.closesAt,
                 description: deepData.description,
@@ -340,4 +331,4 @@ export const scrapeCabreira = async (year) => {
             });
         }
     }
-}
+};

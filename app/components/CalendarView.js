@@ -3,11 +3,12 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { useSettingsStore } from '../store/useSettingsStore';
 import useSWR from 'swr';
 
-import { Calendar, MapPin, Search, X, ChevronLeft, ChevronRight, Users, Heart, Star, LayoutGrid, List, HelpCircle, Filter, Bike, AlertTriangle, Check, CalendarCheck, History, WifiOff } from 'lucide-react';
+import { Calendar, MapPin, Search, X, ChevronLeft, ChevronRight, Users, Heart, Star, LayoutGrid, List, HelpCircle, Filter, Bike, AlertTriangle, Check, CalendarCheck, History, WifiOff, Download, Clock } from 'lucide-react';
 import { useFavorites } from '../hooks/useFavorites';
 import { useCalendarEvents } from '../hooks/useCalendarEvents';
 import { filterEvents } from '../utils/filterEvents';
 import { mergeEvents } from '../utils/mergeEvents';
+import { exportEventsToICS } from '../utils/exportCalendar';
 import EventModal from './EventModal';
 import EscalaoAssistant from './EscalaoAssistant';
 import OrganizationLogo from './OrganizationLogo';
@@ -138,6 +139,22 @@ export default function CalendarView({
         }
         return EMPTY_EVENTS;
     }, [fetchedEvents, localCachedEvents]);
+
+    // Deep linking: Auto-open modal if ?event=ID is present in URL
+    useEffect(() => {
+        if (typeof window !== 'undefined' && events && events.length > 0) {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const eventId = urlParams.get('event');
+                if (eventId && !selectedEvent) {
+                    const target = events.find(e => String(e.id) === String(eventId) || (e._allIds && e._allIds.map(String).includes(String(eventId))));
+                    if (target) {
+                        setSelectedEvent(target);
+                    }
+                }
+            } catch (e) {}
+        }
+    }, [events, selectedEvent]);
 
     const isInitialLoading = !mounted || (loading && events.length === 0);
 
@@ -336,6 +353,30 @@ export default function CalendarView({
                             </button>
                         )}
                     </div>
+                </div>
+
+                {/* Sub-header info: Counter & Bulk Export */}
+                <div className="flex flex-wrap items-center justify-between gap-3 mt-3 px-1">
+                    <div className="text-xs text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1.5">
+                        <span>A mostrar <strong className="text-slate-800 dark:text-slate-200 font-semibold">{Math.min(visibleCount, filteredEvents.length)}</strong> de <strong className="text-slate-800 dark:text-slate-200 font-semibold">{filteredEvents.length}</strong> {filteredEvents.length === 1 ? 'prova' : 'provas'}</span>
+                        {events.length > 0 && filteredEvents.length !== events.length && (
+                            <span className="text-slate-400 dark:text-slate-500 font-normal">({events.length} no total)</span>
+                        )}
+                    </div>
+
+                    {(filterByAgenda || filterByFavorites) && filteredEvents.length > 0 && (
+                        <button
+                            onClick={() => {
+                                if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(10);
+                                exportEventsToICS(filteredEvents, filterByAgenda ? 'minha_agenda.ics' : 'favoritos.ics');
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 text-xs font-semibold transition-all cursor-pointer shadow-xs ml-auto"
+                            title="Exportar todas as provas desta lista para o teu calendário (.ics)"
+                        >
+                            <Download size={13} />
+                            <span>Exportar Calendário (.ics)</span>
+                        </button>
+                    )}
                 </div>
                 
                 {showFilters && (
@@ -691,18 +732,62 @@ export default function CalendarView({
                                                     <AlertTriangle size={11} className="stroke-[2.5] text-orange-500" /> Prova no mesmo dia
                                                 </span>
                                             )}
+
+                                            {/* Registration Countdown Alert */}
+                                            {(() => {
+                                                if (!event.registrationClosesAt && !event.registrationOpensAt) return null;
+                                                const now = new Date();
+                                                if (event.registrationClosesAt) {
+                                                    const closes = new Date(event.registrationClosesAt);
+                                                    const diffDays = Math.ceil((closes - now) / (1000 * 60 * 60 * 24));
+                                                    if (diffDays >= 0 && diffDays <= 4) {
+                                                        return (
+                                                            <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 flex items-center gap-1 shrink-0 animate-pulse">
+                                                                <Clock size={10} className="shrink-0" /> {diffDays === 0 ? 'Último dia!' : `${diffDays}d p/ fechar`}
+                                                            </span>
+                                                        );
+                                                    }
+                                                }
+                                                return null;
+                                            })()}
+
+                                            {/* Main Scope / Âmbito */}
                                             {event.ambito && (
-                                                <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider shrink-0 ${event.ambito === 'Nacional' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : event.ambito === 'Prova Aberta' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : event.ambito === 'Taça de Portugal' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' : 'bg-slate-500/10 text-slate-400 border border-slate-500/20'}`}>
+                                                <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider shrink-0 ${
+                                                    event.ambito === 'Taça de Portugal'
+                                                        ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30'
+                                                        : event.ambito === 'Nacional' || event.ambito.includes('Nacional')
+                                                        ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30'
+                                                        : event.ambito === 'Prova Aberta'
+                                                        ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
+                                                        : event.ambito === 'Internacional' || event.ambito.includes('UCI')
+                                                        ? 'bg-sky-500/15 text-sky-600 dark:text-sky-400 border border-sky-500/30'
+                                                        : 'bg-slate-500/15 text-slate-700 dark:text-slate-300 border border-slate-500/30'
+                                                }`}>
                                                     {event.ambito}
                                                 </span>
                                             )}
+
+                                            {/* Licença / Caráter (Evita duplicar Prova Aberta + CPT/Lazer) */}
                                             {event.licenca && (
-                                                <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider shrink-0 ${event.licenca === 'Competição' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' : event.licenca === 'CPT / Lazer' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'}`}>
-                                                    {event.licenca}
-                                                </span>
+                                                event.licenca === 'Competição' ? (
+                                                    <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30 shrink-0">
+                                                        Competição
+                                                    </span>
+                                                ) : event.licenca === 'CPT / Lazer' && event.ambito !== 'Prova Aberta' ? (
+                                                    <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0">
+                                                        Lazer
+                                                    </span>
+                                                ) : event.licenca !== 'CPT / Lazer' && event.licenca !== 'Competição' ? (
+                                                    <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 shrink-0">
+                                                        {event.licenca}
+                                                    </span>
+                                                ) : null
                                             )}
+
+                                            {/* Prova por Etapas */}
                                             {isMultiDay && (
-                                                <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shrink-0">
+                                                <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/30 shrink-0">
                                                     Etapas
                                                 </span>
                                             )}

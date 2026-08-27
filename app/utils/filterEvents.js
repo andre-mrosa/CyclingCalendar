@@ -36,10 +36,17 @@ export function filterEvents(events, filters) {
     }
     
     if (searchTerm) {
-        filtered = filtered.filter(event => 
-            event.title.toLowerCase().includes(searchTerm) ||
-            event.details.toLowerCase().includes(searchTerm)
-        );
+        const term = searchTerm.toLowerCase().trim();
+        filtered = filtered.filter(event => {
+            const titleMatch = event.title?.toLowerCase().includes(term);
+            const detailsMatch = event.details?.toLowerCase().includes(term);
+            const distritoMatch = event.distrito?.toLowerCase().includes(term);
+            const regiaoMatch = event.regiao?.toLowerCase().includes(term);
+            const organizadorMatch = event.organizador?.toLowerCase().includes(term);
+            const tagMatch = event.tag?.toLowerCase().includes(term);
+            const sourceMatch = event.source?.toLowerCase().includes(term);
+            return titleMatch || detailsMatch || distritoMatch || regiaoMatch || organizadorMatch || tagMatch || sourceMatch;
+        });
     }
 
     if (selectedEscaloes && selectedEscaloes.length > 0) {
