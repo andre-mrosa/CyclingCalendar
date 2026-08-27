@@ -200,6 +200,7 @@ export default function Navigation() {
         if (path.startsWith('/favoritos')) return { label: 'Favoritos', icon: <Star size={17} className="text-blue-500 dark:text-blue-400" /> };
         if (path.startsWith('/definicoes')) return { label: 'Definições', icon: <Settings size={17} className="text-blue-500 dark:text-blue-400" /> };
         if (path.startsWith('/ajuda')) return { label: 'Ajuda', icon: <HelpCircle size={17} className="text-blue-500 dark:text-blue-400" /> };
+        if (path.startsWith('/admin')) return { label: 'Painel de Gestão', icon: <Shield size={17} className="text-blue-500 dark:text-blue-400" /> };
         return { label: 'Calendário', icon: <DynamicLogo className="w-5 h-5 rounded" /> };
     };
 

@@ -307,25 +307,7 @@ export default function AdminDashboardPage() {
     }, [users, userRoleFilter, userSearch]);
 
     return (
-        <div className="space-y-5 animate-fade-in">
-            {/* Page Header (Consistent with the rest of the application) */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 border-b border-slate-200/80 dark:border-slate-800/80">
-                <div>
-                    <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <Shield className="text-blue-500 shrink-0" size={22} />
-                        <span>Painel de Gestão</span>
-                    </h1>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        Administração geral, utilizadores, logs e scrapers
-                    </p>
-                </div>
-                <div className="flex items-center gap-2 self-start sm:self-auto">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 shadow-sm">
-                        <span>👑 Master Admin</span>
-                    </span>
-                </div>
-            </div>
-
+        <div className="space-y-4 animate-fade-in">
             {/* Server Communication Error Banner */}
             {apiError && (
                 <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-rose-600 dark:text-rose-400 font-semibold animate-fade-in">
@@ -348,17 +330,17 @@ export default function AdminDashboardPage() {
                 </div>
             )}
 
-            {/* Tabs Navigation */}
-            <div className="flex items-center gap-1.5 sm:gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto no-scrollbar flex-nowrap">
+            {/* Tabs Navigation (2x2 Grid on Mobile, 4x1 on Desktop - 0 scroll, 100% visible) */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5 sm:gap-2 p-1 rounded-2xl bg-slate-200/60 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
                 <button
                     onClick={() => {
                         setActiveTab('stats');
                         loadStats();
                     }}
-                    className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                    className={`flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                         activeTab === 'stats'
                             ? 'bg-blue-600 text-white shadow-md'
-                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-800'
                     }`}
                 >
                     <Activity size={15} />
@@ -370,10 +352,10 @@ export default function AdminDashboardPage() {
                         setActiveTab('users');
                         loadUsers();
                     }}
-                    className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                    className={`flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                         activeTab === 'users'
                             ? 'bg-blue-600 text-white shadow-md'
-                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-800'
                     }`}
                 >
                     <Users size={15} />
@@ -390,14 +372,14 @@ export default function AdminDashboardPage() {
                         setActiveTab('logs');
                         loadLogs();
                     }}
-                    className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                    className={`flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                         activeTab === 'logs'
                             ? 'bg-blue-600 text-white shadow-md'
-                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-800'
                     }`}
                 >
                     <FileText size={15} />
-                    <span>Logs do Sistema</span>
+                    <span>Logs</span>
                     {stats?.logs?.errors > 0 && (
                         <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white">
                             {stats.logs.errors}
@@ -407,14 +389,14 @@ export default function AdminDashboardPage() {
 
                 <button
                     onClick={() => setActiveTab('operations')}
-                    className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                    className={`flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                         activeTab === 'operations'
                             ? 'bg-blue-600 text-white shadow-md'
-                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-800'
                     }`}
                 >
                     <Database size={15} />
-                    <span>Operações & Scrapers</span>
+                    <span>Operações</span>
                 </button>
             </div>
 
@@ -1200,47 +1182,52 @@ export default function AdminDashboardPage() {
                                         <div 
                                             key={log.id} 
                                             className={`p-3 transition-colors ${
-                                                isError ? 'bg-rose-500/[0.03] hover:bg-rose-500/[0.07]' : isWarn ? 'bg-amber-500/[0.03] hover:bg-amber-500/[0.07]' : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'
+                                                isError ? 'bg-rose-500/[0.04] hover:bg-rose-500/[0.08]' : isWarn ? 'bg-amber-500/[0.04] hover:bg-amber-500/[0.08]' : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'
                                             }`}
                                         >
                                             <div 
                                                 onClick={() => setExpandedLogId(isExpanded ? null : log.id)}
-                                                className="flex items-start justify-between gap-3 cursor-pointer select-none"
+                                                className="cursor-pointer select-none space-y-1.5"
                                             >
-                                                <div className="flex items-start gap-2 min-w-0">
-                                                    <span className="text-slate-400 shrink-0 mt-0.5">
-                                                        {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                                                    </span>
+                                                {/* Top Row: Badges, User info, and Timestamp */}
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
+                                                        <span className="text-slate-400 shrink-0">
+                                                            {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                                                        </span>
 
-                                                    {/* Level Badge */}
-                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${
-                                                        isError 
-                                                            ? 'bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30' 
-                                                            : isWarn 
-                                                            ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30' 
-                                                            : 'bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30'
-                                                    }`}>
-                                                        {log.level}
-                                                    </span>
+                                                        {/* Level Badge */}
+                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-black shrink-0 ${
+                                                            isError 
+                                                                ? 'bg-rose-500 text-white shadow-sm' 
+                                                                : isWarn 
+                                                                ? 'bg-amber-500 text-slate-950 font-black shadow-sm' 
+                                                                : 'bg-blue-600 text-white shadow-sm'
+                                                        }`}>
+                                                            {log.level}
+                                                        </span>
 
-                                                    {/* Source Badge */}
-                                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 shrink-0">
-                                                        {log.source}
-                                                    </span>
+                                                        {/* Source Badge */}
+                                                        <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 shrink-0 border border-slate-200/50 dark:border-slate-700/50">
+                                                            {log.source}
+                                                        </span>
 
-                                                    {/* Message */}
-                                                    <span className="text-slate-800 dark:text-slate-200 font-sans font-medium break-words leading-relaxed">
-                                                        {log.message}
+                                                        {log.userEmail && (
+                                                            <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[150px] sm:max-w-[220px]" title={log.userEmail}>
+                                                                👤 {log.userEmail}
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Timestamp on right */}
+                                                    <span className="text-[11px] text-slate-400 shrink-0 font-mono font-medium whitespace-nowrap">
+                                                        {timeStr}
                                                     </span>
                                                 </div>
 
-                                                <div className="flex items-center gap-2 shrink-0 text-slate-400 text-[11px]">
-                                                    {log.userEmail && (
-                                                        <span className="hidden sm:inline text-slate-500 truncate max-w-[140px]" title={log.userEmail}>
-                                                            👤 {log.userEmail}
-                                                        </span>
-                                                    )}
-                                                    <span className="shrink-0">{timeStr}</span>
+                                                {/* Bottom Row: Full Width Message (Never overlaps!) */}
+                                                <div className="pl-5 text-slate-800 dark:text-slate-200 text-xs font-sans font-medium break-words leading-relaxed">
+                                                    {log.message}
                                                 </div>
                                             </div>
 
