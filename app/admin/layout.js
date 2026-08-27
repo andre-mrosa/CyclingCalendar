@@ -84,10 +84,19 @@ export default function AdminLayout({ children }) {
                 </p>
 
                 {isSignedIn ? (
-                    <div className="mb-6 p-3.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-400 font-mono text-left w-full space-y-1">
-                        <div>Email: <strong className="text-slate-900 dark:text-slate-200">{primaryEmail || 'Sem email detetado'}</strong></div>
-                        <div className="text-[11px] truncate">ID: {user?.id}</div>
-                        <div className="mt-2 text-amber-600 dark:text-amber-400 font-bold text-xs">⚠️ Esta conta não possui privilégios de administrador. Inicia sessão com a tua conta principal.</div>
+                    <div className="mb-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300 font-mono text-left w-full space-y-1.5 shadow-sm">
+                        <div className="font-bold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-1 mb-2">
+                            🔍 Diagnóstico de Conta (Dispositivo Atual):
+                        </div>
+                        <div>Email: <strong className="text-blue-600 dark:text-blue-400">{primaryEmail || user?.primaryEmailAddress?.emailAddress || 'Sem email'}</strong></div>
+                        <div className="text-[11px] truncate">ID: {user?.id || 'Sem ID'}</div>
+                        <div className="text-[11px]">Username: {user?.username || 'Sem username'}</div>
+                        <div className="text-[11px]">Nome: {user?.fullName || 'Sem nome'}</div>
+                        <div className="text-[11px] break-all text-slate-500">Emails detetados: {JSON.stringify(userEmails)}</div>
+                        
+                        <div className="mt-3 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300 font-sans font-semibold text-xs">
+                            ⚠️ Se esta é a tua conta Master Admin, confirma se o email acima corresponde exatamente a <code>andre.rosa1603@gmail.com</code> ou <code>andremrosa@gmail.com</code>.
+                        </div>
                     </div>
                 ) : (
                     <div className="mb-6 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-400 font-bold">
@@ -118,38 +127,38 @@ export default function AdminLayout({ children }) {
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
             {/* Top Admin Header Bar */}
-            <header className="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 sm:px-8 py-3">
-                <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
+            <header className="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-3 sm:px-8 py-2.5 sm:py-3">
+                <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                         <Link 
                             href="/" 
-                            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
                             title="Voltar ao site público"
                         >
-                            <ArrowLeft size={18} />
+                            <ArrowLeft size={16} />
                         </Link>
-                        <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm">
-                                <Shield size={16} />
+                        <div className="flex items-center gap-2 min-w-0">
+                            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm shrink-0">
+                                <Shield size={14} className="sm:w-4 sm:h-4" />
                             </div>
-                            <div>
-                                <h1 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-none">
+                            <div className="min-w-0">
+                                <h1 className="text-xs sm:text-base font-bold text-slate-900 dark:text-white leading-tight truncate">
                                     Painel de Gestão
                                 </h1>
-                                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                                <span className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium hidden xs:block truncate">
                                     Cycling Calendar Backoffice
                                 </span>
                             </div>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2.5">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
+                    <div className="flex items-center gap-2 shrink-0">
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-bold shrink-0 ${
                             displayIsMaster 
                                 ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30' 
                                 : 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30'
                         }`}>
-                            <span>{displayIsMaster ? '👑 Master Admin' : '🛡️ Administrador'}</span>
+                            <span>{displayIsMaster ? '👑 Master Admin' : '🛡️ Admin'}</span>
                         </span>
                         
                         <div className="hidden sm:block text-right">

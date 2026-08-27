@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useUser } from '@clerk/nextjs';
 import { 
     Users, FileText, Activity, Shield, AlertTriangle, CheckCircle2, 
     XCircle, Info, RefreshCw, Search, Trash2, Download, ExternalLink, 
@@ -8,7 +9,9 @@ import {
 } from 'lucide-react';
 
 export default function AdminDashboardPage() {
+    const { isLoaded, isSignedIn, user } = useUser();
     const [activeTab, setActiveTab] = useState('users'); // 'users' | 'logs' | 'operations'
+    const [apiError, setApiError] = useState(null);
     
     // Stats State
     const [stats, setStats] = useState(null);
@@ -50,9 +53,14 @@ export default function AdminDashboardPage() {
             const data = await res.json();
             if (data.success) {
                 setStats(data.stats);
+                setApiError(null);
+            } else {
+                console.error('Stats error:', data.error);
+                setApiError(`Estatísticas: ${data.error || 'Erro no servidor'}`);
             }
         } catch (e) {
             console.error('Error loading stats:', e);
+            setApiError(`Estatísticas: ${e.message}`);
         } finally {
             setIsLoadingStats(false);
         }
@@ -67,9 +75,14 @@ export default function AdminDashboardPage() {
             if (data.success) {
                 setUsers(data.users || []);
                 setPendingDeletionsCount(data.pendingDeletionsCount || 0);
+                setApiError(null);
+            } else {
+                console.error('Users error:', data.error);
+                setApiError(`Utilizadores: ${data.error || 'Erro no servidor'}`);
             }
         } catch (e) {
             console.error('Error loading users:', e);
+            setApiError(`Utilizadores: ${e.message}`);
         } finally {
             setIsLoadingUsers(false);
         }
@@ -89,20 +102,26 @@ export default function AdminDashboardPage() {
             const data = await res.json();
             if (data.success) {
                 setLogs(data.logs || []);
+                setApiError(null);
+            } else {
+                console.error('Logs error:', data.error);
+                setApiError(`Logs: ${data.error || 'Erro no servidor'}`);
             }
         } catch (e) {
             console.error('Error loading logs:', e);
+            setApiError(`Logs: ${e.message}`);
         } finally {
             setIsLoadingLogs(false);
         }
     }, [logLevelFilter, logSourceFilter, logSearch]);
 
-    // Initial load
+    // Initial load once user session is loaded
     useEffect(() => {
+        if (!isLoaded || !isSignedIn) return;
         loadStats();
         if (activeTab === 'users') loadUsers();
         if (activeTab === 'logs') loadLogs();
-    }, [activeTab, loadStats, loadUsers, loadLogs]);
+    }, [isLoaded, isSignedIn, activeTab, loadStats, loadUsers, loadLogs]);
 
     // Auto-refresh logs timer
     useEffect(() => {
@@ -236,86 +255,108 @@ export default function AdminDashboardPage() {
 
     return (
         <div className="space-y-6 animate-fade-in">
+            {/* Server Communication Error Banner */}
+            {apiError && (
+                <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-rose-600 dark:text-rose-400 font-semibold animate-fade-in">
+                    <div className="flex items-center gap-2.5">
+                        <AlertTriangle size={18} className="shrink-0 text-rose-500" />
+                        <span>Erro ao carregar dados do servidor: <strong>{apiError}</strong></span>
+                    </div>
+                    <button
+                        onClick={() => {
+                            setApiError(null);
+                            loadStats();
+                            if (activeTab === 'users') loadUsers();
+                            if (activeTab === 'logs') loadLogs();
+                        }}
+                        className="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold cursor-pointer shrink-0 transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+                    >
+                        <RefreshCw size={13} />
+                        <span>Tentar Novamente</span>
+                    </button>
+                </div>
+            )}
+
             {/* Top Metric Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Utilizadores</span>
-                        <div className="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-                            <Users size={14} />
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 sm:p-4 shadow-sm flex flex-col justify-between">
+                    <div className="flex items-center justify-between gap-1.5 mb-1">
+                        <span className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider truncate">Utilizadores</span>
+                        <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                            <Users size={13} />
                         </div>
                     </div>
-                    <div className="text-2xl font-black text-slate-900 dark:text-white">
+                    <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white leading-tight">
                         {isLoadingStats ? '...' : (stats?.users?.total ?? users.length)}
                     </div>
-                    <span className="text-[11px] text-slate-500">Contas registadas</span>
+                    <span className="text-[10px] sm:text-[11px] text-slate-500 truncate mt-0.5">Contas registadas</span>
                 </div>
 
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Eventos no BD</span>
-                        <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                            <Database size={14} />
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 sm:p-4 shadow-sm flex flex-col justify-between">
+                    <div className="flex items-center justify-between gap-1.5 mb-1">
+                        <span className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider truncate">Eventos no BD</span>
+                        <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                            <Database size={13} />
                         </div>
                     </div>
-                    <div className="text-2xl font-black text-slate-900 dark:text-white">
+                    <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white leading-tight">
                         {isLoadingStats ? '...' : (stats?.events?.total ?? 0)}
                     </div>
-                    <span className="text-[11px] text-slate-500">
-                        {stats?.events ? `${stats.events.fpc} FPC • ${stats.events.cabreira} Cabreira` : 'A carregar...'}
+                    <span className="text-[10px] sm:text-[11px] text-slate-500 truncate mt-0.5">
+                        {stats?.events ? `${stats.events.fpc} FPC • ${stats.events.cabreira} Cabr.` : 'A carregar...'}
                     </span>
                 </div>
 
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Erros Registados</span>
-                        <div className="w-7 h-7 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center">
-                            <AlertTriangle size={14} />
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 sm:p-4 shadow-sm flex flex-col justify-between">
+                    <div className="flex items-center justify-between gap-1.5 mb-1">
+                        <span className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider truncate">Erros</span>
+                        <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+                            <AlertTriangle size={13} />
                         </div>
                     </div>
-                    <div className="text-2xl font-black text-rose-600 dark:text-rose-400">
+                    <div className="text-xl sm:text-2xl font-black text-rose-600 dark:text-rose-400 leading-tight">
                         {isLoadingStats ? '...' : (stats?.logs?.errors ?? 0)}
                     </div>
-                    <span className="text-[11px] text-slate-500">Logs de nível ERROR</span>
+                    <span className="text-[10px] sm:text-[11px] text-slate-500 truncate mt-0.5">Nível ERROR</span>
                 </div>
 
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total de Logs</span>
-                        <div className="w-7 h-7 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
-                            <Activity size={14} />
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 sm:p-4 shadow-sm flex flex-col justify-between">
+                    <div className="flex items-center justify-between gap-1.5 mb-1">
+                        <span className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider truncate">Total de Logs</span>
+                        <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+                            <Activity size={13} />
                         </div>
                     </div>
-                    <div className="text-2xl font-black text-slate-900 dark:text-white">
+                    <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white leading-tight">
                         {isLoadingStats ? '...' : (stats?.logs?.total ?? 0)}
                     </div>
-                    <span className="text-[11px] text-slate-500">Histórico de eventos</span>
+                    <span className="text-[10px] sm:text-[11px] text-slate-500 truncate mt-0.5">Histórico de eventos</span>
                 </div>
             </div>
 
             {/* Tabs Navigation */}
-            <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto no-scrollbar flex-nowrap">
                 <button
                     onClick={() => setActiveTab('users')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                    className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                         activeTab === 'users'
                             ? 'bg-blue-600 text-white shadow-md'
                             : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800'
                     }`}
                 >
-                    <Users size={16} />
+                    <Users size={15} />
                     <span>Utilizadores ({users.length})</span>
                 </button>
 
                 <button
                     onClick={() => setActiveTab('logs')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                    className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                         activeTab === 'logs'
                             ? 'bg-blue-600 text-white shadow-md'
                             : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800'
                     }`}
                 >
-                    <Activity size={16} />
+                    <Activity size={15} />
                     <span>Logs do Sistema</span>
                     {stats?.logs?.errors > 0 && (
                         <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white">
@@ -326,13 +367,13 @@ export default function AdminDashboardPage() {
 
                 <button
                     onClick={() => setActiveTab('operations')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                    className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                         activeTab === 'operations'
                             ? 'bg-blue-600 text-white shadow-md'
                             : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800'
                     }`}
                 >
-                    <Database size={16} />
+                    <Database size={15} />
                     <span>Operações & Scrapers</span>
                 </button>
             </div>
@@ -342,36 +383,36 @@ export default function AdminDashboardPage() {
                 <div className="space-y-4">
                     {/* Deletion Requests Alert Banner */}
                     {pendingDeletionsCount > 0 && (
-                        <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-rose-700 dark:text-rose-300 animate-fade-in shadow-sm">
-                            <div className="flex items-center gap-2.5">
-                                <AlertTriangle size={18} className="shrink-0 text-rose-600 dark:text-rose-400" />
+                        <div className="p-3.5 sm:p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs text-rose-700 dark:text-rose-300 animate-fade-in shadow-sm">
+                            <div className="flex items-center gap-2">
+                                <AlertTriangle size={16} className="shrink-0 text-rose-600 dark:text-rose-400" />
                                 <span>
-                                    <strong>Atenção:</strong> Existem <strong>{pendingDeletionsCount}</strong> utilizador(es) com pedido de eliminação de conta pendente de processamento.
+                                    <strong>Atenção:</strong> <strong>{pendingDeletionsCount}</strong> pedido(s) pendente(s).
                                 </span>
                             </div>
                             <button 
                                 onClick={() => setUserRoleFilter(userRoleFilter === 'deletions' ? 'ALL' : 'deletions')}
-                                className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow transition-colors cursor-pointer shrink-0"
+                                className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow transition-colors cursor-pointer shrink-0 self-start sm:self-auto"
                             >
-                                {userRoleFilter === 'deletions' ? 'Mostrar Todos' : 'Filtrar Pedidos Pendentes'}
+                                {userRoleFilter === 'deletions' ? 'Mostrar Todos' : 'Ver Pedidos Pendentes'}
                             </button>
                         </div>
                     )}
 
                     {/* Filter Bar */}
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 bg-white dark:bg-slate-900 p-2.5 sm:p-3 rounded-2xl border border-slate-200 dark:border-slate-800">
                         <div className="relative flex-1">
-                            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                             <input 
                                 type="text"
-                                placeholder="Pesquisar utilizador por nome ou email..."
+                                placeholder="Pesquisar por nome ou email..."
                                 value={userSearch}
                                 onChange={(e) => setUserSearch(e.target.value)}
-                                className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 transition-colors"
+                                className="w-full pl-8 sm:pl-9 pr-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 transition-colors"
                             />
                         </div>
 
-                        <div className="flex items-center gap-1.5 shrink-0 overflow-x-auto pb-1 sm:pb-0">
+                        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 overflow-x-auto no-scrollbar flex-nowrap py-0.5">
                             {[
                                 { key: 'ALL', label: 'Todos' },
                                 { key: 'admin', label: '🛡️ Admins' },
@@ -381,11 +422,11 @@ export default function AdminDashboardPage() {
                                 <button
                                     key={filter.key}
                                     onClick={() => setUserRoleFilter(filter.key)}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                                    className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-semibold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                                         userRoleFilter === filter.key
                                             ? filter.key === 'deletions'
-                                                ? 'bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30'
-                                                : 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30'
+                                                ? 'bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 font-bold'
+                                                : 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30 font-bold'
                                             : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
                                     }`}
                                 >
@@ -395,10 +436,10 @@ export default function AdminDashboardPage() {
                             <button
                                 onClick={loadUsers}
                                 disabled={isLoadingUsers}
-                                className="p-2 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer ml-1"
+                                className="p-1.5 sm:p-2 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
                                 title="Atualizar lista de utilizadores"
                             >
-                                <RefreshCw size={15} className={isLoadingUsers ? 'animate-spin' : ''} />
+                                <RefreshCw size={14} className={isLoadingUsers ? 'animate-spin' : ''} />
                             </button>
                         </div>
                     </div>
