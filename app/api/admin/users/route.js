@@ -13,20 +13,33 @@ export async function GET(request) {
 
     try {
         const client = await clerkClient();
-        const [response, pendingRequests] = await Promise.all([
-            client.users.getUserList({
-                limit: 100,
-                orderBy: '-created_at'
-            }),
-            prisma.accountDeletionRequest.findMany({
+        
+        let response;
+        try {
+            response = await client.users.getUserList({ limit: 100 });
+        } catch (e) {
+            console.error('Error in client.users.getUserList:', e);
+            response = [];
+        }
+
+        let pendingRequests = [];
+        try {
+            pendingRequests = await prisma.accountDeletionRequest.findMany({
                 where: { status: 'PENDING' }
-            })
-        ]);
+            });
+        } catch (e) {
+            console.error('Error fetching deletion requests:', e);
+        }
 
         const pendingMap = new Map(pendingRequests.map(r => [r.userId, r]));
 
-        // Obter lista de utilizadores da resposta (compatível com Clerk paginated result ou array)
-        const userList = Array.isArray(response) ? response : (response?.data || []);
+        // Obter lista de utilizadores da resposta e ordenar do mais recente para o mais antigo
+        const rawList = Array.isArray(response) ? response : (response?.data || []);
+        const userList = [...rawList].sort((a, b) => {
+            const timeA = new Date(a.createdAt || 0).getTime();
+            const timeB = new Date(b.createdAt || 0).getTime();
+            return timeB - timeA;
+        });
 
         const formattedUsers = userList.map(u => {
             const primaryEmail = u.emailAddresses?.find(e => e.id === u.primaryEmailAddressId)?.emailAddress || u.emailAddresses?.[0]?.emailAddress || 'Sem email';
