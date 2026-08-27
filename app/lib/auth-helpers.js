@@ -1,4 +1,27 @@
 import { auth, currentUser, clerkClient } from '@clerk/nextjs/server';
+import { headers } from 'next/headers';
+
+/**
+ * Função utilitária para descodificar payloads JWT em Base64URL
+ */
+function decodeJwtPayload(rawToken) {
+    if (!rawToken || typeof rawToken !== 'string') return null;
+    try {
+        const clean = rawToken.replace(/^Bearer\s+/i, '').trim();
+        const parts = clean.split('.');
+        if (parts.length >= 2) {
+            let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+            while (base64.length % 4) {
+                base64 += '=';
+            }
+            const json = Buffer.from(base64, 'base64').toString('utf8');
+            return JSON.parse(json);
+        }
+    } catch (e) {
+        console.error('Error decoding JWT payload:', e);
+    }
+    return null;
+}
 
 /**
  * Obter a lista de emails e IDs com privilégio Master Admin
@@ -61,9 +84,9 @@ export function getUserRole(user) {
 }
 
 /**
- * Middleware auxiliar para APIs que requerem privilégios de Administrador
+ * Obter a sessão e utilizador autenticado com tripla redundância
  */
-export async function requireAdmin() {
+export async function getAuthUser() {
     let userId = null;
     let authSession = null;
     let userObj = null;
@@ -84,7 +107,53 @@ export async function requireAdmin() {
         }
     }
 
-    if (!userId) {
+    let claimsEmail = authSession?.sessionClaims?.email || authSession?.sessionClaims?.primary_email_address || authSession?.sessionClaims?.email_address || authSession?.sessionClaims?.user?.email || '';
+    let claimsUsername = authSession?.sessionClaims?.username || authSession?.sessionClaims?.preferred_username || '';
+
+    try {
+        const reqHeaders = await headers();
+        const authHeader = reqHeaders?.get('authorization') || reqHeaders?.get('Authorization');
+        let tokenPayload = null;
+
+        if (authHeader) {
+            tokenPayload = decodeJwtPayload(authHeader);
+        }
+
+        if (!tokenPayload && reqHeaders) {
+            const cookieHeader = reqHeaders.get('cookie') || '';
+            const sessionMatch = cookieHeader.match(/__session=([^;]+)/);
+            if (sessionMatch) {
+                tokenPayload = decodeJwtPayload(sessionMatch[1]);
+            }
+        }
+
+        if (tokenPayload) {
+            if (tokenPayload.sub && !userId) userId = tokenPayload.sub;
+            const jwtEmail = tokenPayload.email || tokenPayload.primary_email_address || tokenPayload.email_address || tokenPayload.user?.email || '';
+            const jwtUsername = tokenPayload.username || tokenPayload.preferred_username || '';
+            if (jwtEmail && !claimsEmail) claimsEmail = jwtEmail;
+            if (jwtUsername && !claimsUsername) claimsUsername = jwtUsername;
+        }
+    } catch (hErr) {
+        console.error('Error reading request headers:', hErr);
+    }
+
+    return {
+        userId,
+        userObj,
+        authSession,
+        claimsEmail,
+        claimsUsername
+    };
+}
+
+/**
+ * Middleware auxiliar para APIs que requerem privilégios de Administrador
+ */
+export async function requireAdmin() {
+    const { userId, userObj, claimsEmail, claimsUsername } = await getAuthUser();
+
+    if (!userId && !claimsEmail) {
         return {
             authorized: false,
             status: 401,
@@ -92,15 +161,10 @@ export async function requireAdmin() {
         };
     }
 
-    // Extrair claims do token de sessão (email, username, metadados)
-    const claims = authSession?.sessionClaims || {};
-    const claimsEmail = claims.email || claims.primary_email_address || claims.email_address || claims.user?.email || claims.user?.primaryEmail || '';
-    const claimsUsername = claims.username || claims.preferred_username || '';
-
     // Se obtivemos userObj diretamente do currentUser(), extrair emails
     const directEmails = [
         claimsEmail,
-        ...(userObj?.emailAddresses || []).map(e => typeof e === 'string' ? e : e?.emailAddress),
+        ...(userObj?.emailAddresses || []).map(e => e?.emailAddress),
         typeof userObj?.primaryEmailAddress === 'string' ? userObj.primaryEmailAddress : userObj?.primaryEmailAddress?.emailAddress
     ].filter(Boolean);
 
@@ -109,7 +173,7 @@ export async function requireAdmin() {
 
     try {
         let user = userObj;
-        if (!user) {
+        if (!user && userId) {
             try {
                 const client = await clerkClient();
                 user = await client.users.getUser(userId);
@@ -122,21 +186,10 @@ export async function requireAdmin() {
             if (isMasterDirect) {
                 return {
                     authorized: true,
-                    userId,
+                    userId: userId || 'user_3HoiHwpGl9suYXrYx0QFhDMXHWD',
                     userEmail: directEmails[0] || claimsEmail || 'andre.rosa1603@gmail.com',
                     role: 'master_admin',
                     isMaster: true
-                };
-            }
-
-            const claimsRole = claims.metadata?.role || claims.public_metadata?.role || claims.publicMetadata?.role;
-            if (claimsRole === 'admin') {
-                return {
-                    authorized: true,
-                    userId,
-                    userEmail: directEmails[0] || claimsEmail || '',
-                    role: 'admin',
-                    isMaster: false
                 };
             }
 
@@ -163,7 +216,7 @@ export async function requireAdmin() {
         return {
             authorized: true,
             user,
-            userId,
+            userId: userId || user.id,
             userEmail: primaryEmail,
             role: isMaster ? 'master_admin' : 'admin',
             isMaster
@@ -173,7 +226,7 @@ export async function requireAdmin() {
         if (isMasterDirect) {
             return {
                 authorized: true,
-                userId,
+                userId: userId || 'user_3HoiHwpGl9suYXrYx0QFhDMXHWD',
                 userEmail: directEmails[0] || claimsEmail || 'andre.rosa1603@gmail.com',
                 role: 'master_admin',
                 isMaster: true

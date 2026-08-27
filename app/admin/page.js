@@ -14,11 +14,11 @@ export default function AdminDashboardPage() {
     const [activeTab, setActiveTab] = useState('users'); // 'users' | 'logs' | 'operations'
     const [apiError, setApiError] = useState(null);
     
-    // Authenticated fetch wrapper with Bearer token
-    const authFetch = useCallback(async (url, options = {}) => {
+    // Authenticated fetch wrapper with Bearer token and automatic 401 retry
+    const authFetch = useCallback(async (url, options = {}, retries = 2) => {
         let token = null;
         try {
-            token = await getToken();
+            token = await getToken({ skipCache: retries < 2 });
         } catch (e) {
             console.error('Error obtaining Clerk token:', e);
         }
@@ -29,10 +29,17 @@ export default function AdminDashboardPage() {
             ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         };
 
-        return fetch(url, {
+        const res = await fetch(url, {
             ...options,
             headers
         });
+
+        if (res.status === 401 && retries > 0) {
+            await new Promise(resolve => setTimeout(resolve, 600));
+            return authFetch(url, options, retries - 1);
+        }
+
+        return res;
     }, [getToken]);
 
     // Stats State
