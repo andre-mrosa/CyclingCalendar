@@ -168,8 +168,11 @@ export default function AdminDashboardPage() {
     // Initial load once user session is loaded
     useEffect(() => {
         if (!isLoaded || !isSignedIn) return;
-        loadStats();
-        if (activeTab === 'users') loadUsers();
+        if (activeTab === 'stats') loadStats();
+        if (activeTab === 'users') {
+            loadUsers();
+            loadStats();
+        }
         if (activeTab === 'logs') loadLogs();
     }, [isLoaded, isSignedIn, activeTab, loadStats, loadUsers, loadLogs]);
 
@@ -304,7 +307,25 @@ export default function AdminDashboardPage() {
     }, [users, userRoleFilter, userSearch]);
 
     return (
-        <div className="space-y-6 animate-fade-in">
+        <div className="space-y-5 animate-fade-in">
+            {/* Page Header (Consistent with the rest of the application) */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 border-b border-slate-200/80 dark:border-slate-800/80">
+                <div>
+                    <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <Shield className="text-blue-500 shrink-0" size={22} />
+                        <span>Painel de Gestão</span>
+                    </h1>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        Administração geral, utilizadores, logs e scrapers
+                    </p>
+                </div>
+                <div className="flex items-center gap-2 self-start sm:self-auto">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 shadow-sm">
+                        <span>👑 Master Admin</span>
+                    </span>
+                </div>
+            </div>
+
             {/* Server Communication Error Banner */}
             {apiError && (
                 <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-rose-600 dark:text-rose-400 font-semibold animate-fade-in">
@@ -327,67 +348,28 @@ export default function AdminDashboardPage() {
                 </div>
             )}
 
-            {/* Top Metric Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 sm:p-4 shadow-sm flex flex-col justify-between">
-                    <div className="flex items-center justify-between gap-1.5 mb-1">
-                        <span className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider truncate">Utilizadores</span>
-                        <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-                            <Users size={13} />
-                        </div>
-                    </div>
-                    <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white leading-tight">
-                        {isLoadingStats ? '...' : (stats?.users?.total ?? users.length)}
-                    </div>
-                    <span className="text-[10px] sm:text-[11px] text-slate-500 truncate mt-0.5">Contas registadas</span>
-                </div>
-
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 sm:p-4 shadow-sm flex flex-col justify-between">
-                    <div className="flex items-center justify-between gap-1.5 mb-1">
-                        <span className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider truncate">Eventos no BD</span>
-                        <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                            <Database size={13} />
-                        </div>
-                    </div>
-                    <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white leading-tight">
-                        {isLoadingStats ? '...' : (stats?.events?.total ?? 0)}
-                    </div>
-                    <span className="text-[10px] sm:text-[11px] text-slate-500 truncate mt-0.5">
-                        {stats?.events ? `${stats.events.fpc} FPC • ${stats.events.cabreira} Cabr.` : 'A carregar...'}
-                    </span>
-                </div>
-
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 sm:p-4 shadow-sm flex flex-col justify-between">
-                    <div className="flex items-center justify-between gap-1.5 mb-1">
-                        <span className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider truncate">Erros</span>
-                        <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
-                            <AlertTriangle size={13} />
-                        </div>
-                    </div>
-                    <div className="text-xl sm:text-2xl font-black text-rose-600 dark:text-rose-400 leading-tight">
-                        {isLoadingStats ? '...' : (stats?.logs?.errors ?? 0)}
-                    </div>
-                    <span className="text-[10px] sm:text-[11px] text-slate-500 truncate mt-0.5">Nível ERROR</span>
-                </div>
-
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 sm:p-4 shadow-sm flex flex-col justify-between">
-                    <div className="flex items-center justify-between gap-1.5 mb-1">
-                        <span className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider truncate">Total de Logs</span>
-                        <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
-                            <Activity size={13} />
-                        </div>
-                    </div>
-                    <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white leading-tight">
-                        {isLoadingStats ? '...' : (stats?.logs?.total ?? 0)}
-                    </div>
-                    <span className="text-[10px] sm:text-[11px] text-slate-500 truncate mt-0.5">Histórico de eventos</span>
-                </div>
-            </div>
-
             {/* Tabs Navigation */}
             <div className="flex items-center gap-1.5 sm:gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto no-scrollbar flex-nowrap">
                 <button
-                    onClick={() => setActiveTab('users')}
+                    onClick={() => {
+                        setActiveTab('stats');
+                        loadStats();
+                    }}
+                    className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                        activeTab === 'stats'
+                            ? 'bg-blue-600 text-white shadow-md'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800'
+                    }`}
+                >
+                    <Activity size={15} />
+                    <span>Estatísticas</span>
+                </button>
+
+                <button
+                    onClick={() => {
+                        setActiveTab('users');
+                        loadUsers();
+                    }}
                     className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                         activeTab === 'users'
                             ? 'bg-blue-600 text-white shadow-md'
@@ -396,17 +378,25 @@ export default function AdminDashboardPage() {
                 >
                     <Users size={15} />
                     <span>Utilizadores ({users.length})</span>
+                    {pendingDeletionsCount > 0 && (
+                        <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white animate-pulse">
+                            {pendingDeletionsCount}
+                        </span>
+                    )}
                 </button>
 
                 <button
-                    onClick={() => setActiveTab('logs')}
+                    onClick={() => {
+                        setActiveTab('logs');
+                        loadLogs();
+                    }}
                     className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                         activeTab === 'logs'
                             ? 'bg-blue-600 text-white shadow-md'
                             : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800'
                     }`}
                 >
-                    <Activity size={15} />
+                    <FileText size={15} />
                     <span>Logs do Sistema</span>
                     {stats?.logs?.errors > 0 && (
                         <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white">
@@ -427,6 +417,174 @@ export default function AdminDashboardPage() {
                     <span>Operações & Scrapers</span>
                 </button>
             </div>
+
+            {/* TAB 0: ESTATÍSTICAS / VISÃO GERAL */}
+            {activeTab === 'stats' && (
+                <div className="space-y-6 animate-fade-in">
+                    {/* Key Metric Cards */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                        <div 
+                            onClick={() => {
+                                setActiveTab('users');
+                                loadUsers();
+                            }}
+                            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex flex-col justify-between cursor-pointer hover:border-blue-500/50 transition-all group"
+                        >
+                            <div className="flex items-center justify-between gap-1.5 mb-2">
+                                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Utilizadores</span>
+                                <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <Users size={16} />
+                                </div>
+                            </div>
+                            <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+                                {isLoadingStats ? '...' : (stats?.users?.total ?? users.length)}
+                            </div>
+                            <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500">
+                                <span>Contas registadas</span>
+                                <span className="text-blue-500 font-bold group-hover:translate-x-0.5 transition-transform">Gerir →</span>
+                            </div>
+                        </div>
+
+                        <div 
+                            onClick={() => setActiveTab('operations')}
+                            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex flex-col justify-between cursor-pointer hover:border-emerald-500/50 transition-all group"
+                        >
+                            <div className="flex items-center justify-between gap-1.5 mb-2">
+                                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Eventos no BD</span>
+                                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <Database size={16} />
+                                </div>
+                            </div>
+                            <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+                                {isLoadingStats ? '...' : (stats?.events?.total ?? 0)}
+                            </div>
+                            <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500">
+                                <span>{stats?.events ? `${stats.events.fpc} FPC • ${stats.events.cabreira} Cabr.` : 'A carregar...'}</span>
+                                <span className="text-emerald-500 font-bold group-hover:translate-x-0.5 transition-transform">Scrapers →</span>
+                            </div>
+                        </div>
+
+                        <div 
+                            onClick={() => {
+                                setLogLevelFilter('ERROR');
+                                setActiveTab('logs');
+                                loadLogs();
+                            }}
+                            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex flex-col justify-between cursor-pointer hover:border-rose-500/50 transition-all group"
+                        >
+                            <div className="flex items-center justify-between gap-1.5 mb-2">
+                                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Erros</span>
+                                <div className="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <AlertTriangle size={16} />
+                                </div>
+                            </div>
+                            <div className="text-2xl sm:text-3xl font-black text-rose-600 dark:text-rose-400">
+                                {isLoadingStats ? '...' : (stats?.logs?.errors ?? 0)}
+                            </div>
+                            <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500">
+                                <span>Nível ERROR</span>
+                                <span className="text-rose-500 font-bold group-hover:translate-x-0.5 transition-transform">Ver Logs →</span>
+                            </div>
+                        </div>
+
+                        <div 
+                            onClick={() => {
+                                setActiveTab('logs');
+                                loadLogs();
+                            }}
+                            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex flex-col justify-between cursor-pointer hover:border-purple-500/50 transition-all group"
+                        >
+                            <div className="flex items-center justify-between gap-1.5 mb-2">
+                                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total de Logs</span>
+                                <div className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <Activity size={16} />
+                                </div>
+                            </div>
+                            <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+                                {isLoadingStats ? '...' : (stats?.logs?.total ?? 0)}
+                            </div>
+                            <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500">
+                                <span>Histórico auditado</span>
+                                <span className="text-purple-500 font-bold group-hover:translate-x-0.5 transition-transform">Abrir →</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Detailed Insights & Breakdown */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Event Distribution */}
+                        <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                    <Calendar size={16} className="text-blue-500" />
+                                    <span>Distribuição de Eventos</span>
+                                </h3>
+                                <span className="text-xs font-semibold text-slate-500">{stats?.events?.total || 0} no total</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60">
+                                    <div className="text-slate-500 text-[11px]">Federação (FPC)</div>
+                                    <div className="text-lg font-bold text-slate-900 dark:text-white">{stats?.events?.fpc || 0}</div>
+                                </div>
+                                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60">
+                                    <div className="text-slate-500 text-[11px]">Cabreira Solutions</div>
+                                    <div className="text-lg font-bold text-slate-900 dark:text-white">{stats?.events?.cabreira || 0}</div>
+                                </div>
+                                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60">
+                                    <div className="text-slate-500 text-[11px]">Com Prazo Inscrição</div>
+                                    <div className="text-lg font-bold text-slate-900 dark:text-white">{stats?.events?.withRegistration || 0}</div>
+                                </div>
+                                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60">
+                                    <div className="text-slate-500 text-[11px]">Com Preços / Info</div>
+                                    <div className="text-lg font-bold text-slate-900 dark:text-white">{stats?.events?.withPrices || 0}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Recent Logs & Quick Health */}
+                        <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                    <Activity size={16} className="text-purple-500" />
+                                    <span>Última Atividade do Sistema</span>
+                                </h3>
+                                <button
+                                    onClick={() => {
+                                        setActiveTab('logs');
+                                        loadLogs();
+                                    }}
+                                    className="text-xs font-bold text-purple-500 hover:underline cursor-pointer"
+                                >
+                                    Ver todos
+                                </button>
+                            </div>
+                            {stats?.logs?.recent?.length > 0 ? (
+                                <div className="space-y-2">
+                                    {stats.logs.recent.slice(0, 4).map(l => (
+                                        <div key={l.id} className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between gap-2 text-xs">
+                                            <div className="min-w-0 flex items-center gap-2">
+                                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-black shrink-0 ${
+                                                    l.level === 'ERROR' ? 'bg-rose-500 text-white' :
+                                                    l.level === 'WARN' ? 'bg-amber-500 text-white' :
+                                                    'bg-blue-500 text-white'
+                                                }`}>
+                                                    {l.level}
+                                                </span>
+                                                <span className="truncate font-medium text-slate-700 dark:text-slate-300">{l.message}</span>
+                                            </div>
+                                            <span className="text-[10px] text-slate-400 shrink-0 font-mono">
+                                                {new Date(l.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-xs text-slate-500 py-4 text-center">Nenhum registo recente.</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* TAB 1: UTILIZADORES */}
             {activeTab === 'users' && (

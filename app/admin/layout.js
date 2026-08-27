@@ -133,55 +133,7 @@ export default function AdminLayout({ children }) {
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
-            {/* Top Admin Header Bar */}
-            <header className="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-3 sm:px-8 py-2.5 sm:py-3">
-                <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
-                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                        <Link 
-                            href="/" 
-                            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
-                            title="Voltar ao site público"
-                        >
-                            <ArrowLeft size={16} />
-                        </Link>
-                        <div className="flex items-center gap-2 min-w-0">
-                            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm shrink-0">
-                                <Shield size={14} className="sm:w-4 sm:h-4" />
-                            </div>
-                            <div className="min-w-0">
-                                <h1 className="text-xs sm:text-base font-bold text-slate-900 dark:text-white leading-tight truncate">
-                                    Painel de Gestão
-                                </h1>
-                                <span className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium hidden xs:block truncate">
-                                    Cycling Calendar Backoffice
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-bold shrink-0 ${
-                            displayIsMaster 
-                                ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30' 
-                                : 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30'
-                        }`}>
-                            <span>{displayIsMaster ? '👑 Master Admin' : '🛡️ Admin'}</span>
-                        </span>
-                        
-                        <div className="hidden sm:block text-right">
-                            <span className="text-xs font-semibold block text-slate-800 dark:text-slate-200 leading-tight">
-                                {displayName}
-                            </span>
-                            <span className="text-[10px] text-slate-500 dark:text-slate-400 block leading-tight">
-                                {displayEmail}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
-            {/* Main Content */}
-            <main className="max-w-7xl mx-auto px-4 sm:px-8 py-6">
+            <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
                 {children}
             </main>
         </div>
