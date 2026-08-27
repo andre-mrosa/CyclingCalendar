@@ -12,24 +12,20 @@ export async function GET(request) {
     }
 
     try {
-        const client = await clerkClient();
-        
-        let response;
-        try {
-            response = await client.users.getUserList({ limit: 100 });
-        } catch (e) {
-            console.error('Error in client.users.getUserList:', e);
-            response = [];
-        }
-
-        let pendingRequests = [];
-        try {
-            pendingRequests = await prisma.accountDeletionRequest.findMany({
+        const [response, pendingRequests] = await Promise.all([
+            (async () => {
+                try {
+                    const client = await clerkClient();
+                    return await client.users.getUserList({ limit: 100 });
+                } catch (e) {
+                    console.error('Error in client.users.getUserList:', e);
+                    return [];
+                }
+            })(),
+            prisma.accountDeletionRequest.findMany({
                 where: { status: 'PENDING' }
-            });
-        } catch (e) {
-            console.error('Error fetching deletion requests:', e);
-        }
+            }).catch(() => [])
+        ]);
 
         const pendingMap = new Map(pendingRequests.map(r => [r.userId, r]));
 
@@ -66,7 +62,8 @@ export async function GET(request) {
             };
         });
 
-        logInfo('AUTH', `Admin ${adminCheck.userEmail} consultou a lista de ${formattedUsers.length} utilizadores`, null, { id: adminCheck.userId, email: adminCheck.userEmail });
+        // Gravação assíncrona não-bloqueante
+        logInfo('AUTH', `Admin ${adminCheck.userEmail} consultou a lista de ${formattedUsers.length} utilizadores`, null, { id: adminCheck.userId, email: adminCheck.userEmail }).catch?.(() => {});
 
         return Response.json({
             success: true,
