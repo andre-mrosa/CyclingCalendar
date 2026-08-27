@@ -1,4 +1,4 @@
-import { auth, clerkClient } from '@clerk/nextjs/server';
+import { auth, currentUser, clerkClient } from '@clerk/nextjs/server';
 
 /**
  * Obter a lista de emails e IDs com privilégio Master Admin
@@ -64,19 +64,26 @@ export function getUserRole(user) {
  * Middleware auxiliar para APIs que requerem privilégios de Administrador
  */
 export async function requireAdmin() {
-    let authSession;
+    let userId = null;
+    let authSession = null;
+    let userObj = null;
+
     try {
         authSession = await auth();
-    } catch (err) {
-        console.error('Error getting auth session:', err);
-        return {
-            authorized: false,
-            status: 401,
-            error: 'Sessão não iniciada ou expirada.'
-        };
+        userId = authSession?.userId;
+    } catch (authErr) {
+        console.error('Error in auth():', authErr?.message);
     }
 
-    const userId = authSession?.userId;
+    if (!userId) {
+        try {
+            userObj = await currentUser();
+            userId = userObj?.id;
+        } catch (currErr) {
+            console.error('Error in currentUser():', currErr?.message);
+        }
+    }
+
     if (!userId) {
         return {
             authorized: false,
@@ -90,16 +97,25 @@ export async function requireAdmin() {
     const claimsEmail = claims.email || claims.primary_email_address || claims.email_address || claims.user?.email || claims.user?.primaryEmail || '';
     const claimsUsername = claims.username || claims.preferred_username || '';
 
+    // Se obtivemos userObj diretamente do currentUser(), extrair emails
+    const directEmails = [
+        claimsEmail,
+        ...(userObj?.emailAddresses || []).map(e => typeof e === 'string' ? e : e?.emailAddress),
+        typeof userObj?.primaryEmailAddress === 'string' ? userObj.primaryEmailAddress : userObj?.primaryEmailAddress?.emailAddress
+    ].filter(Boolean);
+
     // Verifica se já é Master Admin por ID, email nas claims ou username
-    const isMasterDirect = isMasterAdmin(userId) || isMasterAdmin(claimsEmail) || isMasterAdmin(claimsUsername);
+    const isMasterDirect = isMasterAdmin(userId) || isMasterAdmin(claimsEmail) || isMasterAdmin(claimsUsername) || directEmails.some(e => isMasterAdmin(e));
 
     try {
-        let user = null;
-        try {
-            const client = await clerkClient();
-            user = await client.users.getUser(userId);
-        } catch (clerkErr) {
-            console.error('Aviso: Não foi possível obter detalhes do Clerk via REST API:', clerkErr?.message);
+        let user = userObj;
+        if (!user) {
+            try {
+                const client = await clerkClient();
+                user = await client.users.getUser(userId);
+            } catch (clerkErr) {
+                console.error('Aviso: Não foi possível obter detalhes do Clerk via REST API:', clerkErr?.message);
+            }
         }
         
         if (!user) {
@@ -107,7 +123,7 @@ export async function requireAdmin() {
                 return {
                     authorized: true,
                     userId,
-                    userEmail: claimsEmail || 'andre.rosa1603@gmail.com',
+                    userEmail: directEmails[0] || claimsEmail || 'andre.rosa1603@gmail.com',
                     role: 'master_admin',
                     isMaster: true
                 };
@@ -118,7 +134,7 @@ export async function requireAdmin() {
                 return {
                     authorized: true,
                     userId,
-                    userEmail: claimsEmail || '',
+                    userEmail: directEmails[0] || claimsEmail || '',
                     role: 'admin',
                     isMaster: false
                 };
@@ -142,7 +158,7 @@ export async function requireAdmin() {
             };
         }
 
-        const primaryEmail = user.emailAddresses?.find(e => e.id === user.primaryEmailAddressId)?.emailAddress || user.emailAddresses?.[0]?.emailAddress || claimsEmail || '';
+        const primaryEmail = user.emailAddresses?.find(e => e.id === user.primaryEmailAddressId)?.emailAddress || user.emailAddresses?.[0]?.emailAddress || directEmails[0] || claimsEmail || '';
 
         return {
             authorized: true,
@@ -158,7 +174,7 @@ export async function requireAdmin() {
             return {
                 authorized: true,
                 userId,
-                userEmail: claimsEmail || 'andre.rosa1603@gmail.com',
+                userEmail: directEmails[0] || claimsEmail || 'andre.rosa1603@gmail.com',
                 role: 'master_admin',
                 isMaster: true
             };
