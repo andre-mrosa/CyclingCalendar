@@ -1,14 +1,14 @@
-import { auth, clerkClient } from '@clerk/nextjs/server';
+import { clerkClient } from '@clerk/nextjs/server';
 import { prisma } from '@/app/lib/db';
 import { logSystem, logWarn, logInfo, logError } from '@/app/lib/logger';
-import { isMasterAdmin } from '@/app/lib/auth-helpers';
+import { getAuthUser, isMasterAdmin } from '@/app/lib/auth-helpers';
 
 export const dynamic = 'force-dynamic';
 
 // 1. Obter estado do pedido de eliminação do utilizador atual
 export async function GET() {
     try {
-        const { userId } = await auth();
+        const { userId } = await getAuthUser();
         if (!userId) {
             return Response.json({ success: false, error: 'Não autenticado' }, { status: 401 });
         }
@@ -31,15 +31,20 @@ export async function GET() {
 // 2. Submeter pedido de eliminação de conta
 export async function POST(request) {
     try {
-        const { userId } = await auth();
+        const { userId, userObj, claimsEmail } = await getAuthUser();
         if (!userId) {
             return Response.json({ success: false, error: 'Tens de iniciar sessão para efetuar este pedido.' }, { status: 401 });
         }
 
-        const client = await clerkClient();
-        const user = await client.users.getUser(userId);
-        if (!user) {
-            return Response.json({ success: false, error: 'Utilizador não encontrado no sistema.' }, { status: 404 });
+        let user = userObj;
+        let client = null;
+        try {
+            client = await clerkClient();
+            if (!user) {
+                user = await client.users.getUser(userId);
+            }
+        } catch (uErr) {
+            console.error('Error getting clerk client user:', uErr);
         }
 
         const primaryEmail = user.emailAddresses?.find(e => e.id === user.primaryEmailAddressId)?.emailAddress || user.emailAddresses?.[0]?.emailAddress || 'Sem email';
@@ -118,13 +123,22 @@ export async function POST(request) {
 // 3. Cancelar pedido de eliminação pendente
 export async function DELETE() {
     try {
-        const { userId } = await auth();
+        const { userId, userObj } = await getAuthUser();
         if (!userId) {
             return Response.json({ success: false, error: 'Não autenticado' }, { status: 401 });
         }
 
-        const client = await clerkClient();
-        const user = await client.users.getUser(userId);
+        let user = userObj;
+        let client = null;
+        try {
+            client = await clerkClient();
+            if (!user) {
+                user = await client.users.getUser(userId);
+            }
+        } catch (uErr) {
+            console.error('Error getting clerk client user in DELETE:', uErr);
+        }
+
         const primaryEmail = user?.emailAddresses?.find(e => e.id === user.primaryEmailAddressId)?.emailAddress || user?.emailAddresses?.[0]?.emailAddress || 'Sem email';
 
         await prisma.accountDeletionRequest.updateMany({

@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useUser } from '@clerk/nextjs';
+import { useUser, useAuth } from '@clerk/nextjs';
 import { Trash2, RotateCcw, AlertTriangle, Clock, CheckCircle2 } from 'lucide-react';
 
 export default function ClerkPrivacyProfilePage() {
     const { isLoaded, isSignedIn, user } = useUser();
+    const { getToken } = useAuth();
     const [deletionRequest, setDeletionRequest] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [activeAction, setActiveAction] = useState(null); // 'DELETE_DATA' | 'DELETE_ACCOUNT' | null
@@ -22,7 +23,13 @@ export default function ClerkPrivacyProfilePage() {
         const checkStatus = async () => {
             setIsLoading(true);
             try {
-                const res = await fetch('/api/user/delete-request');
+                const token = await getToken().catch(() => null);
+                const res = await fetch('/api/user/delete-request', {
+                    headers: {
+                        'Accept': 'application/json',
+                        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                    }
+                });
                 const text = await res.text();
                 if (text) {
                     const data = JSON.parse(text);
@@ -38,18 +45,20 @@ export default function ClerkPrivacyProfilePage() {
         };
 
         checkStatus();
-    }, [isLoaded, isSignedIn]);
+    }, [isLoaded, isSignedIn, getToken]);
 
     const handleSubmitRequest = async () => {
         if (!activeAction) return;
         setIsSubmitting(true);
         setFeedback(null);
         try {
+            const token = await getToken().catch(() => null);
             const res = await fetch('/api/user/delete-request', {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json'
+                    'Accept': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                 },
                 body: JSON.stringify({
                     type: activeAction,
@@ -88,7 +97,14 @@ export default function ClerkPrivacyProfilePage() {
         if (!window.confirm('Deseja cancelar o pedido pendente?')) return;
         setIsSubmitting(true);
         try {
-            const res = await fetch('/api/user/delete-request', { method: 'DELETE' });
+            const token = await getToken().catch(() => null);
+            const res = await fetch('/api/user/delete-request', { 
+                method: 'DELETE',
+                headers: {
+                    'Accept': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                }
+            });
             const text = await res.text();
             let data;
             try {
