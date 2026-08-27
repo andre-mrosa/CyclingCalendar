@@ -21,11 +21,20 @@ export async function GET(request) {
 
         if (!isAllYears && years.length > 0) {
             andConditions.push({
-                OR: years.map(year => ({
-                    date: {
-                        contains: year
+                OR: years.map(year => {
+                    const y = parseInt(year, 10);
+                    if (isNaN(y)) {
+                        return { date: { contains: year } };
                     }
-                }))
+                    const startOfYear = new Date(`${y}-01-01T00:00:00.000Z`);
+                    const endOfYear = new Date(`${y}-12-31T23:59:59.999Z`);
+                    return {
+                        OR: [
+                            { date: { contains: year } },
+                            { sortDate: { gte: startOfYear, lte: endOfYear } }
+                        ]
+                    };
+                })
             });
         }
 

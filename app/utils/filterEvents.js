@@ -4,6 +4,7 @@ export function filterEvents(events, filters) {
         filterByFavorites, favorites,
         filterByAgenda, markedSet,
         searchTerm,
+        selectedYears,
         selectedEscaloes,
         selectedAmbito,
         selectedLicenca,
@@ -14,6 +15,13 @@ export function filterEvents(events, filters) {
         selectedTags,
         selectedType
     } = filters;
+
+    if (selectedYears && selectedYears.length > 0 && !filterByFavorites && !filterByAgenda) {
+        filtered = filtered.filter(event => {
+            const y = event.sortDate ? new Date(event.sortDate).getFullYear().toString() : null;
+            return selectedYears.some(selYear => (y && y === selYear) || (event.date && event.date.includes(selYear)));
+        });
+    }
 
     if (filterByFavorites && favorites) {
         filtered = filtered.filter(event => 
