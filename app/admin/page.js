@@ -5,13 +5,14 @@ import { useUser, useAuth } from '@clerk/nextjs';
 import { 
     Users, FileText, Activity, Shield, AlertTriangle, CheckCircle2, 
     XCircle, Info, RefreshCw, Search, Trash2, Download, ExternalLink, 
-    Clock, Calendar, UserCheck, UserX, Database, Play, Check, ChevronDown, ChevronRight, Copy, RotateCcw
+    Clock, Calendar, UserCheck, UserX, Database, Play, Check, ChevronDown, ChevronRight, Copy, RotateCcw,
+    LayoutDashboard
 } from 'lucide-react';
 
 export default function AdminDashboardPage() {
     const { isLoaded, isSignedIn, user } = useUser();
     const { getToken } = useAuth();
-    const [activeTab, setActiveTab] = useState('users'); // 'users' | 'logs' | 'operations'
+    const [activeTab, setActiveTab] = useState('stats'); // 'stats' | 'users' | 'logs' | 'operations'
     const [apiError, setApiError] = useState(null);
     
     // Authenticated fetch wrapper with Bearer token and automatic 401 retry
@@ -168,7 +169,10 @@ export default function AdminDashboardPage() {
     // Initial load once user session is loaded
     useEffect(() => {
         if (!isLoaded || !isSignedIn) return;
-        if (activeTab === 'stats') loadStats();
+        if (activeTab === 'stats') {
+            loadStats();
+            loadUsers();
+        }
         if (activeTab === 'users') {
             loadUsers();
             loadStats();
@@ -343,8 +347,8 @@ export default function AdminDashboardPage() {
                             : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-800'
                     }`}
                 >
-                    <Activity size={15} />
-                    <span>Estatísticas</span>
+                    <LayoutDashboard size={15} />
+                    <span>Painel</span>
                 </button>
 
                 <button
