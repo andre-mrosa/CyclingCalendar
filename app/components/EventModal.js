@@ -6,6 +6,7 @@ import { parsePrograma } from '../utils/parsePrograma';
 import { useCalendarEvents } from '../hooks/useCalendarEvents';
 import WeatherWidget from './WeatherWidget';
 import { useTranslation } from '../i18n/useTranslation';
+import { detectRaceDate } from '../utils/detectRaceDate';
 
 const eventDetailsCache = new Map();
 
@@ -988,99 +989,107 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                         <div className="flex-1 overflow-y-auto min-h-0 pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent overscroll-contain touch-pan-y">
                             {/* Native Universal Resumo da Prova Card */}
-                            <div className="mb-3 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-br from-blue-500/[0.06] via-slate-50 to-slate-100/80 dark:from-blue-500/10 dark:via-slate-900/90 dark:to-slate-950/80 border border-blue-500/20 dark:border-blue-500/25 shadow-sm">
-                                <div className="flex items-center justify-between gap-2 mb-2.5 pb-2 border-b border-slate-200/80 dark:border-slate-800/80">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-6 h-6 rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-                                            <Sparkles size={13} />
+                            {(() => {
+                                const raceInfo = detectRaceDate(activeEvent);
+                                return (
+                                <div className="mb-3 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-br from-blue-500/[0.06] via-slate-50 to-slate-100/80 dark:from-blue-500/10 dark:via-slate-900/90 dark:to-slate-950/80 border border-blue-500/20 dark:border-blue-500/25 shadow-sm">
+                                    <div className="flex items-center justify-between gap-2 mb-2.5 pb-2 border-b border-slate-200/80 dark:border-slate-800/80">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-6 h-6 rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                                                <Sparkles size={13} />
+                                            </div>
+                                            <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white m-0 tracking-tight">
+                                                {t('summary_title')}
+                                            </h4>
                                         </div>
-                                        <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white m-0 tracking-tight">
-                                            Resumo da Prova
-                                        </h4>
+                                        {activeEvent.source && (
+                                            <div className="flex items-center gap-1 flex-wrap">
+                                                {activeEvent.source.split(',').map(s => s.trim()).filter(Boolean).map(src => (
+                                                    <span key={src} className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-200/80 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-300/60 dark:border-slate-700">
+                                                        {src}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
-                                    {activeEvent.source && (
-                                        <div className="flex items-center gap-1 flex-wrap">
-                                            {activeEvent.source.split(',').map(s => s.trim()).filter(Boolean).map(src => (
-                                                <span key={src} className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-200/80 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-300/60 dark:border-slate-700">
-                                                    {src}
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                                        {/* Data */}
+                                        <div className="flex items-start gap-2 text-slate-700 dark:text-slate-300">
+                                            <Calendar size={14} className="text-blue-500 shrink-0 mt-0.5" />
+                                            <div className="min-w-0">
+                                                <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-semibold uppercase leading-tight">{t('summary_date')}</span>
+                                                <span className="font-semibold text-slate-900 dark:text-slate-100 truncate block">{activeEvent.date}</span>
+                                                {raceInfo && raceInfo.raceDayOnly && raceInfo.label !== activeEvent.date && (
+                                                    <span className="text-[11px] text-blue-600 dark:text-blue-400 font-bold block mt-0.5">🏁 {raceInfo.label}</span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Localização */}
+                                        <div className="flex items-start gap-2 text-slate-700 dark:text-slate-300">
+                                            <MapPin size={14} className="text-rose-500 shrink-0 mt-0.5" />
+                                            <div className="min-w-0">
+                                                <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-semibold uppercase leading-tight">{t('summary_location')}</span>
+                                                <span className="font-semibold text-slate-900 dark:text-slate-100 truncate block">
+                                                    {activeEvent.details?.split('|')[0]?.trim() || 'A definir'}
+                                                    {activeEvent.distrito && !activeEvent.details?.includes(activeEvent.distrito) ? ` (${activeEvent.distrito})` : ''}
                                                 </span>
-                                            ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Modalidade */}
+                                        <div className="flex items-start gap-2 text-slate-700 dark:text-slate-300">
+                                            <Bike size={14} className="text-amber-500 shrink-0 mt-0.5" />
+                                            <div className="min-w-0">
+                                                <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-semibold uppercase leading-tight">{t('summary_discipline')}</span>
+                                                <span className="font-semibold text-slate-900 dark:text-slate-100 truncate block">{activeEvent.tag || 'Ciclismo'}</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Âmbito & Licença */}
+                                        <div className="flex items-start gap-2 text-slate-700 dark:text-slate-300">
+                                            <Shield size={14} className="text-emerald-500 shrink-0 mt-0.5" />
+                                            <div className="min-w-0">
+                                                <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-semibold uppercase leading-tight">{t('summary_scope_license')}</span>
+                                                <span className="font-semibold text-slate-900 dark:text-slate-100 truncate block">
+                                                    {activeEvent.ambito} {activeEvent.licenca ? `• ${activeEvent.licenca}` : ''}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Percursos & Distâncias */}
+                                    {percursosSummary && percursosSummary.length > 0 && (
+                                        <div className="mt-2.5 pt-2 border-t border-slate-200/80 dark:border-slate-800/80">
+                                            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase block mb-1.5">
+                                                🚴 Percursos & Distâncias
+                                            </span>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                                {percursosSummary.map((p, idx) => {
+                                                    const parts = p.split(/:\s*/);
+                                                    const title = parts.length > 1 ? parts[0] : null;
+                                                    const metrics = parts.length > 1 ? parts.slice(1).join(': ') : p;
+                                                    return (
+                                                        <div key={idx} className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-blue-500/10 dark:bg-blue-500/15 border border-blue-500/20 text-xs shadow-sm">
+                                                            <div className="w-5 h-5 rounded-lg bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                                                                <Bike size={12} />
+                                                            </div>
+                                                            <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                                                                {title && (
+                                                                    <span className="font-bold text-slate-900 dark:text-slate-100">{title}:</span>
+                                                                )}
+                                                                <span className="font-semibold text-blue-700 dark:text-blue-300">{metrics}</span>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
                                     )}
                                 </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                                    {/* Data */}
-                                    <div className="flex items-start gap-2 text-slate-700 dark:text-slate-300">
-                                        <Calendar size={14} className="text-blue-500 shrink-0 mt-0.5" />
-                                        <div className="min-w-0">
-                                            <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-semibold uppercase leading-tight">Data</span>
-                                            <span className="font-semibold text-slate-900 dark:text-slate-100 truncate block">{activeEvent.date}</span>
-                                        </div>
-                                    </div>
-
-                                    {/* Localização */}
-                                    <div className="flex items-start gap-2 text-slate-700 dark:text-slate-300">
-                                        <MapPin size={14} className="text-rose-500 shrink-0 mt-0.5" />
-                                        <div className="min-w-0">
-                                            <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-semibold uppercase leading-tight">Localização</span>
-                                            <span className="font-semibold text-slate-900 dark:text-slate-100 truncate block">
-                                                {activeEvent.details?.split('|')[0]?.trim() || 'A definir'}
-                                                {activeEvent.distrito && !activeEvent.details?.includes(activeEvent.distrito) ? ` (${activeEvent.distrito})` : ''}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    {/* Modalidade */}
-                                    <div className="flex items-start gap-2 text-slate-700 dark:text-slate-300">
-                                        <Bike size={14} className="text-amber-500 shrink-0 mt-0.5" />
-                                        <div className="min-w-0">
-                                            <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-semibold uppercase leading-tight">Modalidade</span>
-                                            <span className="font-semibold text-slate-900 dark:text-slate-100 truncate block">{activeEvent.tag || 'Ciclismo'}</span>
-                                        </div>
-                                    </div>
-
-                                    {/* Âmbito & Licença */}
-                                    <div className="flex items-start gap-2 text-slate-700 dark:text-slate-300">
-                                        <Shield size={14} className="text-emerald-500 shrink-0 mt-0.5" />
-                                        <div className="min-w-0">
-                                            <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-semibold uppercase leading-tight">Âmbito & Licença</span>
-                                            <span className="font-semibold text-slate-900 dark:text-slate-100 truncate block">
-                                                {activeEvent.ambito} {activeEvent.licenca ? `• ${activeEvent.licenca}` : ''}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Percursos & Distâncias */}
-                                {percursosSummary && percursosSummary.length > 0 && (
-                                    <div className="mt-2.5 pt-2 border-t border-slate-200/80 dark:border-slate-800/80">
-                                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase block mb-1.5">
-                                            🚴 Percursos & Distâncias
-                                        </span>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                                            {percursosSummary.map((p, idx) => {
-                                                const parts = p.split(/:\s*/);
-                                                const title = parts.length > 1 ? parts[0] : null;
-                                                const metrics = parts.length > 1 ? parts.slice(1).join(': ') : p;
-                                                return (
-                                                    <div key={idx} className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-blue-500/10 dark:bg-blue-500/15 border border-blue-500/20 text-xs shadow-sm">
-                                                        <div className="w-5 h-5 rounded-lg bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-                                                            <Bike size={12} />
-                                                        </div>
-                                                        <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                                                            {title && (
-                                                                <span className="font-bold text-slate-900 dark:text-slate-100">{title}:</span>
-                                                            )}
-                                                            <span className="font-semibold text-blue-700 dark:text-blue-300">{metrics}</span>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
+                                );
+                            })()}
 
                             {isLoadingFullEvent && (
                                 <div className="w-full h-32 rounded-xl bg-slate-800/30 border border-slate-800/80 animate-pulse flex flex-col items-center justify-center gap-2 mb-2 text-slate-500">

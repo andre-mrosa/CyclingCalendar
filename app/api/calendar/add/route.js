@@ -2,6 +2,7 @@ import { auth, getAuth, verifyToken, clerkClient } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/db';
 import { logInfo, logError } from '@/app/lib/logger';
+import { detectRaceDate } from '@/app/utils/detectRaceDate';
 
 function parsePtDate(dateStr) {
     if (!dateStr || typeof dateStr !== 'string') return null;
@@ -360,9 +361,10 @@ export async function POST(req) {
             return NextResponse.json({ ...result, calendar: targetCalendarId, target: 'registration_close' });
         }
 
-        // CASO 3: Prova (Dia do Evento - default)
-        const startDateStr = parsePtDate(fullEvent.date);
-        let endDateStr = parsePtDate(fullEvent.endDate) || startDateStr;
+        // CASO 3: Prova (Dia da Competição / Corrida estrita)
+        const raceInfo = detectRaceDate(fullEvent);
+        const startDateStr = raceInfo?.raceDateISO || parsePtDate(fullEvent.date);
+        let endDateStr = raceInfo?.raceEndDateISO || parsePtDate(fullEvent.endDate) || startDateStr;
 
         if (!startDateStr) {
             return NextResponse.json({ error: 'Não é possível marcar este evento porque a data ainda não está definida ou foi adiada.' }, { status: 400 });
@@ -374,7 +376,7 @@ export async function POST(req) {
 
         const gEvent = {
             summary: `🚴 ${fullEvent.title}`,
-            description: `Mais informações: ${fullEvent.link || 'App Cycling Calendar'}\n\nEscalão: ${fullEvent.escalao || '-'}\nÂmbito: ${fullEvent.ambito || '-'}`,
+            description: `🏁 Data da Prova: ${raceInfo?.label || fullEvent.date || startDateStr}\nMais informações: ${fullEvent.link || 'App Cycling Calendar'}\n\nEscalão: ${fullEvent.escalao || '-'}\nÂmbito: ${fullEvent.ambito || '-'}\nOrganização: ${fullEvent.organizador || fullEvent.source || '-'}`,
             location: location,
             start: { date: startDateStr },
             end: { date: endDateStr },

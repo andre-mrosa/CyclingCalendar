@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from 'react';
+import { useTranslation } from '../i18n/useTranslation';
 
 export default function EscalaoAssistant({ onApply }) {
+    const { t } = useTranslation();
     const [birthYear, setBirthYear] = useState('');
     const [gender, setGender] = useState('M');
     const [licenseType, setLicenseType] = useState('Competição');
@@ -50,7 +52,7 @@ export default function EscalaoAssistant({ onApply }) {
         }
         
         setSuggestedEscalao(result);
-        setEscalaoMessage(`Resultado: ${result}`);
+        setEscalaoMessage(`${t('escalao_detected_title')} ${result}`);
     };
 
     const applyEscalao = () => {
@@ -72,14 +74,14 @@ export default function EscalaoAssistant({ onApply }) {
                     <span className="text-xl">🧮</span>
                 </div>
                 <div>
-                    <h2 className="m-0 text-slate-900 dark:text-white text-xl font-bold tracking-tight">Assistente de Escalões</h2>
-                    <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">Calcula o teu escalão oficial da FPC</p>
+                    <h2 className="m-0 text-slate-900 dark:text-white text-xl font-bold tracking-tight">{t('escalao_modal_title')}</h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">{t('escalao_modal_desc')}</p>
                 </div>
             </div>
             
             <div className="flex flex-col gap-5">
                 <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Ano de Nascimento</label>
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t('escalao_year_label')}</label>
                     <input 
                         type="number" 
                         placeholder="Ex: 1990"
@@ -91,25 +93,25 @@ export default function EscalaoAssistant({ onApply }) {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-2">
-                        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Género</label>
+                        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t('escalao_gender_label')}</label>
                         <select 
                             value={gender} 
                             onChange={e => setGender(e.target.value)}
                             className="w-full py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 text-sm outline-none focus:border-blue-500 transition-colors shadow-inner"
                         >
-                            <option value="M">Masculino</option>
-                            <option value="F">Feminino</option>
+                            <option value="M">{t('escalao_gender_male')}</option>
+                            <option value="F">{t('escalao_gender_female')}</option>
                         </select>
                     </div>
                     <div className="flex flex-col gap-2">
-                        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Licença</label>
+                        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t('escalao_license_type')}</label>
                         <select 
                             value={licenseType} 
                             onChange={e => setLicenseType(e.target.value)}
                             className="w-full py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 text-sm outline-none focus:border-blue-500 transition-colors shadow-inner"
                         >
-                            <option value="Competição">Competição</option>
-                            <option value="CPT">CPT / Lazer</option>
+                            <option value="Competição">{t('escalao_license_competition')}</option>
+                            <option value="CPT">{t('escalao_license_cpt')}</option>
                         </select>
                     </div>
                 </div>
@@ -131,7 +133,7 @@ export default function EscalaoAssistant({ onApply }) {
                     onClick={calculateEscalao}
                     className="w-full py-3.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold shadow-lg shadow-blue-500/20 transition-colors text-sm mt-1 cursor-pointer"
                 >
-                    Calcular Escalão
+                    {t('escalao_modal_title')}
                 </button>
 
                 {escalaoMessage && (
@@ -142,7 +144,7 @@ export default function EscalaoAssistant({ onApply }) {
                                 onClick={applyEscalao}
                                 className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold text-sm transition-colors shadow-md cursor-pointer"
                             >
-                                Aplicar {suggestedEscalao}
+                                {t('escalao_btn_apply')} ({suggestedEscalao})
                             </button>
                         )}
                     </div>

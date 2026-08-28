@@ -1,7 +1,6 @@
-'use client';
-
 import { useState, useEffect } from 'react';
 import { Cloud, Sun, CloudRain, CloudSun, CloudLightning, CloudDrizzle, CloudFog, Wind, Droplets, Thermometer, Sparkles, Calendar, Info, RefreshCw } from 'lucide-react';
+import { useTranslation } from '../i18n/useTranslation';
 
 function getWeatherIcon(iconType, className = "w-6 h-6") {
     switch (iconType) {
@@ -31,6 +30,7 @@ function getWeatherIcon(iconType, className = "w-6 h-6") {
 }
 
 export default function WeatherWidget({ location, distrito, date, variant = 'default' }) {
+    const { t, language } = useTranslation();
     const [weatherData, setWeatherData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);

@@ -1,7 +1,4 @@
-/**
- * Utility to generate and download an RFC 5545 .ics calendar file
- * for single or bulk cycling events.
- */
+import { detectRaceDate } from './detectRaceDate';
 
 function formatICSDate(date) {
     if (!date) return '';
@@ -35,7 +32,8 @@ export function exportEventsToICS(events, filename = 'cycling_calendar.ics') {
     events.forEach((event) => {
         if (!event.sortDate && !event.date) return;
 
-        const eventDate = event.sortDate ? new Date(event.sortDate) : new Date();
+        const raceInfo = detectRaceDate(event);
+        const eventDate = raceInfo?.raceDateISO ? new Date(`${raceInfo.raceDateISO}T09:00:00Z`) : (event.sortDate ? new Date(event.sortDate) : new Date());
         const startStr = formatICSDate(eventDate);
         
         // Default duration: 4 hours

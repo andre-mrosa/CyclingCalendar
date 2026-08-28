@@ -1,8 +1,10 @@
 "use client";
 import { useState } from 'react';
 import { Mail } from 'lucide-react';
+import { useTranslation } from '../i18n/useTranslation';
 
 export default function ContactoPage() {
+    const { t } = useTranslation();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitStatus, setSubmitStatus] = useState(null);
     const [formData, setFormData] = useState({ name: '', email: '', message: '' });
@@ -38,9 +40,9 @@ export default function ContactoPage() {
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-500/10 border border-blue-500/20 mb-4">
                     <Mail size={28} className="text-blue-500 dark:text-blue-400" />
                 </div>
-                <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-2">Contactos</h1>
+                <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-2">{t('contact_title')}</h1>
                 <p className="text-slate-600 dark:text-slate-400 text-base sm:text-lg">
-                    Tens sugestões de melhoria ou queres reportar um erro? Fala connosco.
+                    {t('contact_subtitle')}
                 </p>
             </div>
 
@@ -48,13 +50,13 @@ export default function ContactoPage() {
                 <form onSubmit={handleContactSubmit} className="flex flex-col gap-5">
                     {submitStatus === 'success' ? (
                         <div className="p-6 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl text-center border border-emerald-500/20 text-base font-medium">
-                            <strong className="font-semibold block mb-1">Obrigado!</strong> A tua mensagem foi enviada com sucesso.
+                            <strong className="font-semibold block mb-1">Obrigado!</strong> {t('contact_form_success')}
                         </div>
                     ) : (
                         <>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-xs uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">Nome (Opcional)</label>
+                                    <label className="text-xs uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">{t('contact_form_name')}</label>
                                     <input 
                                         type="text" 
                                         placeholder="O teu nome..." 
@@ -65,7 +67,7 @@ export default function ContactoPage() {
                                     />
                                 </div>
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-xs uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">E-mail (Opcional)</label>
+                                    <label className="text-xs uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">{t('contact_form_email')}</label>
                                     <input 
                                         type="email" 
                                         placeholder="O teu e-mail..." 
@@ -77,7 +79,7 @@ export default function ContactoPage() {
                                 </div>
                             </div>
                             <div className="flex flex-col gap-2">
-                                <label className="text-xs uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">Mensagem</label>
+                                <label className="text-xs uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">{t('contact_form_msg')}</label>
                                 <textarea 
                                     placeholder="Escreve aqui a tua mensagem ou sugestão..." 
                                     required
@@ -103,10 +105,10 @@ export default function ContactoPage() {
                                 {isSubmitting ? (
                                     <>
                                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                        <span>A enviar...</span>
+                                        <span>{t('action_loading')}</span>
                                     </>
                                 ) : (
-                                    'Enviar Mensagem'
+                                    t('contact_form_submit')
                                 )}
                             </button>
                         </>

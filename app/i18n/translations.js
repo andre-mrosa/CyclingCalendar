@@ -152,7 +152,50 @@ export const translations = {
         // Cookie Banner
         cookie_text: "Utilizamos cookies e tecnologias similares para melhorar a tua experiência de navegação e guardar as tuas preferências.",
         cookie_accept: "Aceitar",
-        cookie_decline: "Recusar"
+        cookie_decline: "Recusar",
+
+        // Escalao Assistant
+        escalao_modal_title: "Assistente de Escalão",
+        escalao_modal_desc: "Descobre exatamente qual é a tua categoria oficial na FPC / provas abertas.",
+        escalao_year_label: "Ano de Nascimento",
+        escalao_gender_label: "Género",
+        escalao_gender_male: "Masculino",
+        escalao_gender_female: "Feminino",
+        escalao_license_type: "Tipo de Licença / Participação",
+        escalao_license_competition: "Competição (Federado)",
+        escalao_license_cpt: "CPT / Lazer / Não Federado",
+        escalao_detected_title: "O teu escalão oficial:",
+        escalao_btn_apply: "Filtrar por este escalão",
+        escalao_btn_close: "Fechar",
+
+        // Region Assistant
+        region_modal_title: "Assistente de Região",
+        region_modal_desc: "Escolhe o teu distrito ou associação regional de ciclismo para filtrar as provas locais.",
+        region_btn_apply: "Aplicar Região",
+        region_btn_close: "Fechar",
+
+        // Help Page
+        help_title: "Centro de Ajuda & Perguntas Frequentes",
+        help_subtitle: "Tudo o que precisas de saber sobre o CyclingCalendar.",
+        help_faq_1_q: "Como são agregadas as provas no calendário?",
+        help_faq_1_a: "A nossa plataforma monitoriza continuamente os calendários oficiais da Federação Portuguesa de Ciclismo (FPC), Cabreira Solutions, Stop&Go e outras plataformas de inscrições, unificando duplicados e atualizando horários.",
+        help_faq_2_q: "Como funciona a sincronização com o Google Calendar?",
+        help_faq_2_a: "Ao clicares em 'Marcar prova', criamos automaticamente o evento na data exata da corrida na tua conta do Google Calendar.",
+        help_faq_3_q: "Como recebo alertas de abertura de inscrições?",
+        help_faq_3_a: "Podes ativar lembretes de abertura ou fecho de inscrições no modal de cada prova. O sistema agenda notificações prévias.",
+
+        // Contact Page
+        contact_title: "Contacto & Sugestões",
+        contact_subtitle: "Tens alguma dúvida, sugestão ou queres adicionar uma prova não listada?",
+        contact_form_name: "O teu Nome",
+        contact_form_email: "O teu Email",
+        contact_form_msg: "Mensagem ou link da prova",
+        contact_form_submit: "Enviar Mensagem",
+        contact_form_success: "Mensagem enviada com sucesso! Responderemos o mais breve possível.",
+
+        // Privacy & Terms
+        privacy_title: "Política de Privacidade",
+        terms_title: "Termos de Utilização"
     },
     en: {
         // Navigation & Tabs
@@ -176,7 +219,7 @@ export const translations = {
         admin_alert_link: "View in Dashboard →",
 
         // Filters & Search
-        search_placeholder: "Search by race title, location, club...",
+        search_placeholder: "Search by race name, location, club...",
         filter_discipline: "Discipline",
         filter_all_disciplines: "All Disciplines",
         filter_category: "Category",
@@ -189,8 +232,8 @@ export const translations = {
         filter_events_found: "events found",
         filter_event_found: "event found",
         filter_month_all: "All Months",
-        filter_no_events: "No events found matching the selected filters.",
-        filter_no_events_sub: "Try adjusting your search terms or clearing the applied filters.",
+        filter_no_events: "No events found with the selected filters.",
+        filter_no_events_sub: "Try adjusting your search terms or clearing applied filters.",
 
         // Quick Date Shortcuts
         quick_this_weekend: "This Weekend",
@@ -233,11 +276,11 @@ export const translations = {
         action_register: "Register",
         action_rules: "Regulations",
         action_results: "Results",
-        action_official_site: "Official Site",
-        action_org_site: "Organizer Site",
+        action_official_site: "Official Website",
+        action_org_site: "Organizer Website",
         action_fpc_page: "FPC Page",
         action_stopandgo_page: "Stop & Go Page",
-        action_cabreira_site: "Cabreira Site",
+        action_cabreira_site: "Cabreira Website",
         action_mark_event: "Add to Calendar",
         action_marked_event: "Event Added",
         action_share: "Share",
@@ -307,6 +350,49 @@ export const translations = {
         // Cookie Banner
         cookie_text: "We use cookies and similar technologies to improve your browsing experience and save your preferences.",
         cookie_accept: "Accept",
-        cookie_decline: "Decline"
+        cookie_decline: "Decline",
+
+        // Escalao Assistant
+        escalao_modal_title: "Category Assistant",
+        escalao_modal_desc: "Find your official category for FPC or open cycling events.",
+        escalao_year_label: "Birth Year",
+        escalao_gender_label: "Gender",
+        escalao_gender_male: "Male",
+        escalao_gender_female: "Female",
+        escalao_license_type: "License / Participation Type",
+        escalao_license_competition: "Competition (Federated)",
+        escalao_license_cpt: "Leisure / Open / Non-Federated",
+        escalao_detected_title: "Your official category:",
+        escalao_btn_apply: "Filter by this category",
+        escalao_btn_close: "Close",
+
+        // Region Assistant
+        region_modal_title: "Region Assistant",
+        region_modal_desc: "Choose your district or regional cycling association to filter local races.",
+        region_btn_apply: "Apply Region",
+        region_btn_close: "Close",
+
+        // Help Page
+        help_title: "Help Center & FAQ",
+        help_subtitle: "Everything you need to know about CyclingCalendar.",
+        help_faq_1_q: "How are cycling races aggregated?",
+        help_faq_1_a: "Our platform continuously monitors official calendars from the Portuguese Cycling Federation (FPC), Cabreira Solutions, Stop&Go, and other registration platforms, merging duplicates and keeping schedules up to date.",
+        help_faq_2_q: "How does Google Calendar sync work?",
+        help_faq_2_a: "When you click 'Add to Calendar', we automatically schedule the event on the exact race date in your Google Calendar account.",
+        help_faq_3_q: "How do I get registration opening alerts?",
+        help_faq_3_a: "You can enable opening or closing reminders in each event modal. The system schedules timely reminders.",
+
+        // Contact Page
+        contact_title: "Contact & Feedback",
+        contact_subtitle: "Have a question, feedback, or want to suggest an unlisted race?",
+        contact_form_name: "Your Name",
+        contact_form_email: "Your Email",
+        contact_form_msg: "Message or Race Link",
+        contact_form_submit: "Send Message",
+        contact_form_success: "Message sent successfully! We will get back to you soon.",
+
+        // Privacy & Terms
+        privacy_title: "Privacy Policy",
+        terms_title: "Terms of Service"
     }
 };

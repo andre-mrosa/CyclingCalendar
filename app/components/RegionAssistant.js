@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from 'react';
+import { useTranslation } from '../i18n/useTranslation';
 
 export default function RegionAssistant({ onApply }) {
+    const { t } = useTranslation();
     const [isLocating, setIsLocating] = useState(false);
     const [addressInput, setAddressInput] = useState('');
     const [locationMessage, setLocationMessage] = useState('');
@@ -60,7 +62,7 @@ export default function RegionAssistant({ onApply }) {
         setLocationMessage("A procurar região...");
         
         try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressInput + ', Portugal')}`);
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&countrycodes=pt&q=${encodeURIComponent(addressInput)}`);
             const data = await res.json();
             
             if (data && data.length > 0) {
@@ -98,8 +100,8 @@ export default function RegionAssistant({ onApply }) {
                     <span className="text-xl">📍</span>
                 </div>
                 <div>
-                    <h2 className="m-0 text-slate-900 dark:text-white text-xl font-bold tracking-tight">Assistente de Região</h2>
-                    <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">Descobre a tua Associação Regional</p>
+                    <h2 className="m-0 text-slate-900 dark:text-white text-xl font-bold tracking-tight">{t('region_modal_title')}</h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">{t('region_modal_desc')}</p>
                 </div>
             </div>
             
@@ -109,7 +111,7 @@ export default function RegionAssistant({ onApply }) {
                     disabled={isLocating} 
                     className="w-full py-3.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold shadow-lg shadow-blue-500/20 transition-colors text-sm disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                 >
-                    {isLocating ? 'A localizar...' : 'Usar Localização GPS'}
+                    {isLocating ? 'A localizar...' : 'GPS / Localização'}
                 </button>
                 
                 <div className="flex items-center gap-3">
@@ -144,7 +146,7 @@ export default function RegionAssistant({ onApply }) {
                                 onClick={applyRegiao}
                                 className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold text-sm transition-colors shadow-md cursor-pointer"
                             >
-                                Aplicar {suggestedRegiao}
+                                {t('region_btn_apply')} ({suggestedRegiao})
                             </button>
                         )}
                     </div>

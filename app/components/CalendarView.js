@@ -346,11 +346,11 @@ export default function CalendarView({
                                 ? 'bg-blue-600/10 text-blue-600 dark:text-blue-400 border-blue-500/30 shadow-sm' 
                                 : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 shadow-sm hover:border-slate-300 dark:hover:border-slate-700'
                             }`}
-                            title={pastEventsFilter === 'passados' ? "A mostrar apenas eventos passados. Clica para voltar aos futuros." : "Clica para ver o histórico de provas que já passaram."}
+                            title={pastEventsFilter === 'passados' ? "A mostrar apenas eventos passados." : "Ver provas anteriores."}
                         >
                             <div className="flex items-center gap-1.5 sm:gap-2 truncate">
                                 <History size={14} className={`shrink-0 ${pastEventsFilter === 'passados' ? 'text-blue-500 dark:text-blue-400' : 'text-slate-400'}`} />
-                                <span className="truncate">{pastEventsFilter === 'passados' ? 'A ver passados' : 'Ver passados'}</span>
+                                <span className="truncate">{pastEventsFilter === 'passados' ? 'Histórico' : 'Passados'}</span>
                             </div>
                             
                             {/* Smooth Pill Switch */}
@@ -364,10 +364,10 @@ export default function CalendarView({
                         {(selectedEscaloes.length > 0 || selectedDistrito !== 'Todos' || selectedRegiao !== 'Todas' || selectedTags.length > 0 || selectedType !== 'Todos' || monthFrom !== 1 || monthTo !== 12 || searchTerm !== '' || pastEventsFilter !== 'futuros') && (
                             <button 
                                 onClick={clearAllFilters}
-                                title="Repor todos os filtros"
+                                title={t('filter_clear_all')}
                                 className="col-span-2 sm:col-auto inline-flex items-center justify-center gap-1 font-medium text-xs sm:text-sm text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-300 transition-colors h-8 sm:h-10 px-2 cursor-pointer"
                             >
-                                <X size={14} /> Limpar filtros
+                                <X size={14} /> {t('filter_clear_all')}
                             </button>
                         )}
                     </div>
@@ -375,7 +375,7 @@ export default function CalendarView({
                     <div className="relative w-full sm:w-auto sm:flex-[0_1_320px]">
                         <input 
                             type="text" 
-                            placeholder="Pesquisar por nome ou localidade..." 
+                            placeholder={t('search_placeholder')} 
                             value={searchTerm} 
                             onChange={onSearchChange} 
                             className="w-full py-2 sm:py-2.5 pl-4 sm:pl-5 pr-10 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs sm:text-sm outline-none transition-colors focus:border-blue-500 text-slate-900 dark:text-slate-50 placeholder-slate-400 dark:placeholder-slate-500 shadow-sm"
