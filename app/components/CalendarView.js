@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, Fragment } from 'react';
 import { useSettingsStore } from '../store/useSettingsStore';
 import useSWR from 'swr';
 
@@ -20,6 +20,43 @@ const fetcher = (url) => fetch(url).then((res) => res.json()).then((data) => {
 });
 
 const EMPTY_EVENTS = [];
+
+const getMonthYearInfo = (ev) => {
+    if (ev.sortDate) {
+        const d = new Date(ev.sortDate);
+        if (!isNaN(d.getTime())) {
+            return {
+                year: d.getFullYear(),
+                monthIdx: d.getMonth(),
+                key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+            };
+        }
+    }
+    const rawDate = ev.date || '';
+    const matchYear = rawDate.match(/20\d\d/);
+    const year = matchYear ? parseInt(matchYear[0], 10) : new Date().getFullYear();
+    const monthAbbrsPt = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+    const foundIdx = monthAbbrsPt.findIndex(m => rawDate.toUpperCase().includes(m));
+    const monthIdx = foundIdx !== -1 ? foundIdx : 0;
+    return {
+        year,
+        monthIdx,
+        key: `${year}-${String(monthIdx + 1).padStart(2, '0')}`
+    };
+};
+
+const formatMonthHeading = (year, monthIdx, lang) => {
+    const localeMap = { pt: 'pt-PT', en: 'en-US', es: 'es-ES', fr: 'fr-FR' };
+    const locale = localeMap[lang] || 'pt-PT';
+    try {
+        const d = new Date(year, monthIdx, 1);
+        const name = d.toLocaleDateString(locale, { month: 'long' });
+        return name.charAt(0).toUpperCase() + name.slice(1);
+    } catch {
+        const fallback = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        return fallback[monthIdx] || '';
+    }
+};
 
 export default function CalendarView({ 
     pageTitle = "Calendário FPC & Cabreira", 
@@ -690,7 +727,12 @@ export default function CalendarView({
                 {!isInitialLoading && filteredEvents.length > 0 && (
                     <>
                         <div className="flex flex-col gap-2">
-                            {filteredEvents.slice(0, visibleCount).map(event => {
+                            {filteredEvents.slice(0, visibleCount).map((event, idx, currentArray) => {
+                                const currentMY = getMonthYearInfo(event);
+                                const prevMY = idx > 0 ? getMonthYearInfo(currentArray[idx - 1]) : null;
+                                const isNewMonth = !prevMY || currentMY.key !== prevMY.key;
+                                const monthHeading = isNewMonth ? formatMonthHeading(currentMY.year, currentMY.monthIdx, language) : '';
+
                                 const rawDate = event.date || '';
                                 const isMultiDay = rawDate.includes(',') || rawDate.includes(' e ') || rawDate.includes(' a ');
                                 const monthAbbrs = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
@@ -732,26 +774,39 @@ export default function CalendarView({
                                 const extraDetails = (displayDetails || '').includes('|') ? (displayDetails || '').split('|').slice(1).join('|').trim() : '';
 
                                 return (
-                                <div 
-                                    key={event.id} 
-                                    onClick={() => {
-                                        setSelectedEvent(event);
-                                        trackEvent('EVENT_CLICK', {
-                                            targetId: event.id,
-                                            targetTitle: event.title,
-                                            path: typeof window !== 'undefined' ? window.location.pathname : '/'
-                                        });
-                                    }} 
-                                    className={`group flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-4 bg-white dark:bg-slate-900 border ${cardBorderAndBg} rounded-xl p-3 sm:py-3 sm:px-4 cursor-pointer hover:border-blue-400 dark:hover:border-slate-600 shadow-sm transition-all overflow-hidden`}
-                                >
+                                <Fragment key={event.id}>
+                                    {isNewMonth && (
+                                        <div className={`flex items-center gap-3 ${idx === 0 ? 'pt-1 pb-1.5' : 'pt-5 pb-1.5'} select-none`}>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                                                    {monthHeading}
+                                                </span>
+                                                <span className="text-xs sm:text-sm font-semibold text-slate-400 dark:text-slate-500">
+                                                    {currentMY.year}
+                                                </span>
+                                            </div>
+                                            <div className="h-px flex-1 bg-gradient-to-r from-slate-200 dark:from-slate-800 via-slate-200/50 dark:via-slate-800/50 to-transparent" />
+                                        </div>
+                                    )}
+                                    <div 
+                                        onClick={() => {
+                                            setSelectedEvent(event);
+                                            trackEvent('EVENT_CLICK', {
+                                                targetId: event.id,
+                                                targetTitle: event.title,
+                                                path: typeof window !== 'undefined' ? window.location.pathname : '/'
+                                            });
+                                        }} 
+                                        className={`group flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-4 bg-white dark:bg-slate-900 border ${cardBorderAndBg} rounded-xl p-3 sm:py-3 sm:px-4 cursor-pointer hover:border-blue-400 dark:hover:border-slate-600 shadow-sm transition-all overflow-hidden`}
+                                    >
                                     <div className="flex gap-3 sm:gap-4 flex-1 min-w-0 w-full">
                                         <div className="flex flex-col shrink-0 w-[50px] h-[50px] sm:w-[56px] sm:h-[56px] bg-slate-100 dark:bg-slate-950 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800">
                                             <div className="bg-rose-500 text-white text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-center py-0.5">
                                                 {(() => {
                                                     const monthAbbrsPt = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
                                                     const monthAbbrsEn = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-                                                    const idx = monthAbbrsPt.indexOf(month);
-                                                    return (language === 'en' && idx !== -1) ? monthAbbrsEn[idx] : month;
+                                                    const idxMonth = monthAbbrsPt.indexOf(month);
+                                                    return (language === 'en' && idxMonth !== -1) ? monthAbbrsEn[idxMonth] : month;
                                                 })()}
                                             </div>
                                             <div className={`flex-1 flex items-center justify-center text-slate-900 dark:text-white font-bold ${day.length > 2 ? 'text-xs sm:text-sm tracking-tight' : 'text-base sm:text-lg'}`}>
@@ -882,6 +937,7 @@ export default function CalendarView({
                                         </div>
                                     </div>
                                 </div>
+                                </Fragment>
                                 );
                             })}
                         </div>
