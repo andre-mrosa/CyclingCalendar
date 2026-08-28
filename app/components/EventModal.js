@@ -11,7 +11,7 @@ const eventDetailsCache = new Map();
 
 export default function EventModal({ selectedEvent, setSelectedEvent, favorites, toggleFavorite, isSignedIn }) {
     const { resolvedTheme } = useTheme();
-    const { t } = useTranslation();
+    const { t, language } = useTranslation();
     const { isMarked, refreshCalendar } = useCalendarEvents();
     const [programaData, setProgramaData] = useState({ loading: false, html: null, error: null, additionalLinks: [] });
     const [fullscreenImage, setFullscreenImage] = useState(null);
@@ -897,7 +897,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 const fullLabels = {
                                     info: t('tab_info'),
                                     escaloes: t('tab_categories'),
-                                    programa: activeEvent.source === 'FPC' ? (language === 'en' ? 'Documents & Details' : 'Documentos & Detalhes') : t('tab_schedule'),
+                                    programa: activeEvent.source === 'FPC' ? t('tab_docs') : t('tab_schedule'),
                                     inscricao: t('tab_registration'),
                                     premios: t('tab_prizes'),
                                     localizacao: t('tab_location')
