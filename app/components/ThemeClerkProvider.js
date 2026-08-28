@@ -2,15 +2,26 @@
 
 import { ClerkProvider } from '@clerk/nextjs';
 import { useTheme } from 'next-themes';
-import { ptPT } from "@clerk/localizations";
+import { ptPT, enUS, esES, frFR } from "@clerk/localizations";
 import { dark } from "@clerk/themes";
+import { useTranslation } from '../i18n/useTranslation';
+
+const clerkLocalizations = {
+  pt: ptPT,
+  en: enUS,
+  es: esES,
+  fr: frFR,
+};
 
 export default function ThemeClerkProvider({ children }) {
   const { resolvedTheme } = useTheme();
+  const { language } = useTranslation();
+
+  const currentLocalization = clerkLocalizations[language] || ptPT;
 
   return (
     <ClerkProvider 
-      localization={ptPT}
+      localization={currentLocalization}
       appearance={{
         baseTheme: resolvedTheme === 'dark' ? dark : undefined,
         variables: {
