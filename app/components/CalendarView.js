@@ -350,7 +350,7 @@ export default function CalendarView({
                         >
                             <div className="flex items-center gap-1.5 sm:gap-2 truncate">
                                 <History size={14} className={`shrink-0 ${pastEventsFilter === 'passados' ? 'text-blue-500 dark:text-blue-400' : 'text-slate-400'}`} />
-                                <span className="truncate">{pastEventsFilter === 'passados' ? (language === 'en' ? 'History' : 'Histórico') : (language === 'en' ? 'Past' : 'Passados')}</span>
+                                <span className="truncate">{language === 'en' ? 'Past Events' : 'Passados'}</span>
                             </div>
                             
                             {/* Smooth Pill Switch */}
