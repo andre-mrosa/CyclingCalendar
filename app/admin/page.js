@@ -395,7 +395,7 @@ export default function AdminDashboardPage() {
         // Fire the background execution request (non-blocking safety)
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 90000);
+            const timeoutId = setTimeout(() => controller.abort(), 180000);
 
             const res = await authFetch(endpoint, { signal: controller.signal });
             clearTimeout(timeoutId);
@@ -409,6 +409,8 @@ export default function AdminDashboardPage() {
             }
 
             if (data.success && !isDone) {
+                // Ensure a final poll to pick up all server logs
+                await pollLogs();
                 isDone = true;
                 setScraperActiveStep(6);
                 setOpOutput({
@@ -424,10 +426,10 @@ export default function AdminDashboardPage() {
                 await loadLogs();
             }
         } catch (e) {
-            console.log('Fetch ended (background pipeline continuing):', e.message);
+            console.log('Fetch connection ended (server continues in background):', e.message);
         }
 
-        // Safety fallback timer after 90s if no completion log arrived
+        // Safety fallback timer after 300s (5 minutes) if no completion log arrived
         setTimeout(() => {
             if (!isDone) {
                 clearInterval(logsInterval);
@@ -435,12 +437,12 @@ export default function AdminDashboardPage() {
                 setRunningOp(null);
                 setOpOutput(prev => prev?.status === 'loading' ? {
                     label,
-                    status: 'success',
-                    message: 'O pipeline foi iniciado no servidor. Podes acompanhar os registos em direto nos Logs.',
+                    status: 'error',
+                    message: 'O pipeline excedeu o tempo limite máximo de acompanhamento (5 minutos). Podes consultar o estado nos Logs.',
                     raw: null
                 } : prev);
             }
-        }, 90000);
+        }, 300000);
     };
 
     // Copy log details

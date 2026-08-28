@@ -319,23 +319,26 @@ export const incrementalDeepScrapeFPC = async (limit = 25) => {
         });
         
         let processedCount = 0;
-        for (const ev of fpcEventsToUpdate) {
-            if (ev.link) {
-                try {
-                    const programaHtml = await deepScrapeFPC(ev.link);
-                    await prisma.event.update({ 
-                        where: { id: ev.id }, 
-                        data: { programa: programaHtml || '<p>Detalhes de programa indisponíveis na página da FPC.</p>' } 
-                    });
-                    processedCount++;
-                } catch (err) {
-                    await prisma.event.update({ 
-                        where: { id: ev.id }, 
-                        data: { programa: '<p>Erro ao extrair detalhes na página da FPC.</p>' } 
-                    });
+        const BATCH_SIZE = 5;
+        for (let i = 0; i < fpcEventsToUpdate.length; i += BATCH_SIZE) {
+            const chunk = fpcEventsToUpdate.slice(i, i + BATCH_SIZE);
+            await Promise.all(chunk.map(async (ev) => {
+                if (ev.link) {
+                    try {
+                        const programaHtml = await deepScrapeFPC(ev.link);
+                        await prisma.event.update({ 
+                            where: { id: ev.id }, 
+                            data: { programa: programaHtml || '<p>Detalhes de programa indisponíveis na página da FPC.</p>' } 
+                        });
+                        processedCount++;
+                    } catch (err) {
+                        await prisma.event.update({ 
+                            where: { id: ev.id }, 
+                            data: { programa: '<p>Erro ao extrair detalhes na página da FPC.</p>' } 
+                        });
+                    }
                 }
-                await new Promise(r => setTimeout(r, 500));
-            }
+            }));
         }
         
         if (processedCount > 0) {
