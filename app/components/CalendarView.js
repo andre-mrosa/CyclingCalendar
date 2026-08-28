@@ -87,7 +87,12 @@ export default function CalendarView({
     const [selectedLicenca, setSelectedLicenca] = useState(forceLicenca || 'Todas');
     const [selectedRegiao, setSelectedRegiao] = useState('Todas');
     const [selectedDistrito, setSelectedDistrito] = useState('Todos');
-    const [selectedYears, setSelectedYears] = useState([new Date().getFullYear().toString()]);
+    const currentYear = new Date().getFullYear();
+    const [selectedYears, setSelectedYears] = useState([
+        currentYear.toString(),
+        (currentYear + 1).toString()
+    ]);
+    const hasInitializedYearsRef = useRef(false);
     const [monthFrom, setMonthFrom] = useState(1);
     const [monthTo, setMonthTo] = useState(12);
     const [selectedTags, setSelectedTags] = useState([]);
@@ -265,15 +270,40 @@ export default function CalendarView({
 
     const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
-    const eventYears = [...new Set(events.map(e => e.sortDate ? new Date(e.sortDate).getFullYear().toString() : (e.date ? e.date.match(/20\d\d/)?.[0] : null)).filter(Boolean))];
-    const currentYear = new Date().getFullYear();
-    const defaultYearsList = [
+    const eventYears = useMemo(() => {
+        return [...new Set(events.map(e => e.sortDate ? new Date(e.sortDate).getFullYear().toString() : (e.date ? e.date.match(/20\d\d/)?.[0] : null)).filter(Boolean))].sort();
+    }, [events]);
+
+    const defaultYearsList = useMemo(() => [
         (currentYear - 2).toString(),
         (currentYear - 1).toString(),
         currentYear.toString(),
         (currentYear + 1).toString()
-    ];
-    const availableYears = Array.from(new Set([...defaultYearsList, ...eventYears])).sort();
+    ], [currentYear]);
+
+    const availableYears = useMemo(() => {
+        return Array.from(new Set([...defaultYearsList, ...eventYears])).sort();
+    }, [defaultYearsList, eventYears]);
+
+    const getDefaultSelectedYears = (evYears = eventYears) => {
+        const currYr = new Date().getFullYear();
+        const futureAndCurrentYears = (evYears || [])
+            .filter(y => {
+                const parsed = parseInt(y, 10);
+                return !isNaN(parsed) && parsed >= currYr;
+            });
+        return futureAndCurrentYears.length > 0 
+            ? Array.from(new Set([currYr.toString(), ...futureAndCurrentYears])).sort()
+            : [currYr.toString(), (currYr + 1).toString()];
+    };
+
+    // Auto-select current year and all available upcoming years once events load
+    useEffect(() => {
+        if (!hasInitializedYearsRef.current && events && events.length > 0) {
+            setSelectedYears(getDefaultSelectedYears(eventYears));
+            hasInitializedYearsRef.current = true;
+        }
+    }, [events, eventYears]);
 
     const onSearchChange = (e) => setSearchTerm(e.target.value.toLowerCase());
     const onYearToggle = (y) => {
@@ -320,7 +350,7 @@ export default function CalendarView({
         setSelectedLicenca(forceLicenca || 'Todas');
         setSelectedRegiao((defaultRegiao && applyDefaultRegiao) ? defaultRegiao : 'Todas');
         setSelectedDistrito('Todos');
-        setSelectedYears([new Date().getFullYear().toString()]);
+        setSelectedYears(getDefaultSelectedYears());
         setMonthFrom(1);
         setMonthTo(12);
         setSelectedTags([]);
