@@ -191,7 +191,15 @@ export default function CalendarView({
         if (pastEventsFilter === 'futuros') {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            filtered = filtered.filter(e => !e.sortDate || new Date(e.sortDate) >= today);
+            filtered = filtered.filter(e => {
+                const evYear = e.sortDate ? new Date(e.sortDate).getFullYear().toString() : null;
+                // Se o utilizador selecionou explicitamente um ano anterior ao ano corrente (ex: 2024, 2025),
+                // não devemos apagar os eventos desse ano só porque a data já passou!
+                if (evYear && selectedYears.includes(evYear) && parseInt(evYear) < today.getFullYear()) {
+                    return true;
+                }
+                return !e.sortDate || new Date(e.sortDate) >= today;
+            });
         } else if (pastEventsFilter === 'passados') {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
@@ -200,7 +208,7 @@ export default function CalendarView({
 
         setFilteredEvents(filtered);
         setVisibleCount(15); // Reset visible count on filter change
-    }, [events, searchTerm, selectedEscaloes, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, filterByFavorites, favorites, forceEscalao, forceAmbito, forceLicenca]);
+    }, [events, searchTerm, selectedYears, selectedEscaloes, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, filterByFavorites, favorites, forceEscalao, forceAmbito, forceLicenca]);
 
     const uniqueEscaloes = ['Elite', 'Elite Amador', 'Sub-23', 'Sub-19 (Juniores)', 'Sub-17 (Cadetes)', 'Sub-15 (Juvenis)', 'Masters / Veteranos', 'Femininas', 'Escolas', 'Profissional (UCI)', 'Todos (Aberto)', 'Geral / Vários'];
     const uniqueAmbitos = ['Todos', ...new Set(events.map(e => e.ambito))];
@@ -217,8 +225,23 @@ export default function CalendarView({
 
     const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
+    const eventYears = [...new Set(events.map(e => e.sortDate ? new Date(e.sortDate).getFullYear().toString() : (e.date ? e.date.match(/20\d\d/)?.[0] : null)).filter(Boolean))];
+    const currentYear = new Date().getFullYear();
+    const defaultYearsList = [
+        (currentYear - 2).toString(),
+        (currentYear - 1).toString(),
+        currentYear.toString(),
+        (currentYear + 1).toString()
+    ];
+    const availableYears = Array.from(new Set([...defaultYearsList, ...eventYears])).sort();
+
     const onSearchChange = (e) => setSearchTerm(e.target.value.toLowerCase());
-    const onYearChange = (e) => setSelectedYear(e.target.value);
+    const onYearToggle = (y) => {
+        const newYears = selectedYears.includes(y) 
+            ? selectedYears.filter(yr => yr !== y) 
+            : [...selectedYears, y];
+        if (newYears.length > 0) setSelectedYears(newYears);
+    };
     
     const onMonthFromChange = (e) => {
         const val = parseInt(e.target.value);
@@ -402,21 +425,11 @@ export default function CalendarView({
                                 <div className="flex flex-col gap-2 col-span-full">
                                     <label className="text-xs text-slate-400 uppercase tracking-wider font-bold ml-1">Anos</label>
                                     <div className="flex gap-2 flex-wrap">
-                                        {[
-                                            (new Date().getFullYear() - 2).toString(),
-                                            (new Date().getFullYear() - 1).toString(),
-                                            new Date().getFullYear().toString(),
-                                            (new Date().getFullYear() + 1).toString()
-                                        ].map(y => (
+                                        {availableYears.map(y => (
                                             <button 
                                                 key={y} 
-                                                onClick={() => {
-                                                    const newYears = selectedYears.includes(y) 
-                                                        ? selectedYears.filter(yr => yr !== y) 
-                                                        : [...selectedYears, y];
-                                                    if (newYears.length > 0) setSelectedYears(newYears);
-                                                }} 
-                                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors focus:outline-none ${selectedYears.includes(y) ? 'bg-blue-600/10 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-300'}`}
+                                                onClick={() => onYearToggle(y)} 
+                                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors focus:outline-none cursor-pointer ${selectedYears.includes(y) ? 'bg-blue-600/10 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30 font-bold' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-300'}`}
                                             >
                                                 {y}
                                             </button>
