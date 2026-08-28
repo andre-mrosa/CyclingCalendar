@@ -6,7 +6,7 @@ import {
     Users, FileText, Activity, Shield, AlertTriangle, CheckCircle2, 
     XCircle, Info, RefreshCw, Search, Trash2, Download, ExternalLink, 
     Clock, Calendar, UserCheck, UserX, Database, Play, Check, ChevronDown, ChevronRight, Copy, RotateCcw,
-    LayoutDashboard, Globe, Smartphone, Monitor, Tablet, Eye, TrendingUp, Compass, Flame, MapPin, MousePointerClick, Radio, Sparkles
+    LayoutDashboard, Globe, Smartphone, Monitor, Tablet, Eye, TrendingUp, Compass, Flame, MapPin, MousePointerClick, Radio, Sparkles, Terminal
 } from 'lucide-react';
 
 function getCountryFlag(countryCode) {
@@ -109,9 +109,12 @@ export default function AdminDashboardPage() {
     const [copiedLogId, setCopiedLogId] = useState(null);
     const [isClearingLogs, setIsClearingLogs] = useState(false);
 
-    // Operations State
+    // Operations State & Live Progress
     const [runningOp, setRunningOp] = useState(null);
     const [opOutput, setOpOutput] = useState(null);
+    const [liveScraperLogs, setLiveScraperLogs] = useState([]);
+    const [scraperElapsedSecs, setScraperElapsedSecs] = useState(0);
+    const [scraperActiveStep, setScraperActiveStep] = useState(0); // 0: None, 1: FPC, 2: Cabreira, 3: Stop&Go, 4: DeepScrape, 5: Unificação, 6: Concluído
 
     // 1. Fetch Stats & Analytics (with smart background silent refresh)
     const loadStats = useCallback(async (timeframeParam, silent = false) => {
@@ -299,13 +302,62 @@ export default function AdminDashboardPage() {
         }
     };
 
-    // Run Scraper / Maintenance Operation
+    // Run Scraper / Maintenance Operation with Real-Time Progress, Logs Polling and Step Detection
     const handleRunOperation = async (opKey, endpoint, label) => {
         setRunningOp(opKey);
+        setScraperElapsedSecs(0);
+        setScraperActiveStep(1);
+        setLiveScraperLogs([]);
         setOpOutput({ label, status: 'loading', message: `A executar "${label}"... O pipeline está a consultar os calendários e a fundir as provas.` });
+
+        // Start elapsed timer
+        const timerInterval = setInterval(() => {
+            setScraperElapsedSecs(prev => prev + 1);
+        }, 1000);
+
+        // Real-time logs polling helper
+        const pollLogs = async () => {
+            try {
+                const res = await authFetch('/api/admin/logs?source=SCRAPER&limit=15');
+                const text = await res.text();
+                const data = JSON.parse(text);
+                if (data.success && Array.isArray(data.logs)) {
+                    setLiveScraperLogs(data.logs);
+
+                    // Dynamic step detection based on latest log message
+                    const recentLogs = data.logs.slice(0, 5);
+                    for (const l of recentLogs) {
+                        const msg = (l.message || '').toLowerCase();
+                        if (msg.includes('unificação') || msg.includes('fundidas')) {
+                            setScraperActiveStep(5);
+                            break;
+                        } else if (msg.includes('deep scraping') || msg.includes('programas')) {
+                            setScraperActiveStep(4);
+                            break;
+                        } else if (msg.includes('stop and go')) {
+                            setScraperActiveStep(3);
+                            break;
+                        } else if (msg.includes('cabreira')) {
+                            setScraperActiveStep(2);
+                            break;
+                        } else if (msg.includes('fpc')) {
+                            setScraperActiveStep(1);
+                            break;
+                        }
+                    }
+                }
+            } catch (err) {
+                // Silent poll error
+            }
+        };
+
+        // Poll immediately and start interval
+        await pollLogs();
+        const logsInterval = setInterval(pollLogs, 1500);
+
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 45000);
+            const timeoutId = setTimeout(() => controller.abort(), 60000);
 
             const res = await authFetch(endpoint, { signal: controller.signal });
             clearTimeout(timeoutId);
@@ -321,24 +373,36 @@ export default function AdminDashboardPage() {
                 };
             }
 
+            // Final poll to get complete logs
+            await pollLogs();
+
+            if (data.success) {
+                setScraperActiveStep(6); // 6: Concluído
+            } else {
+                setScraperActiveStep(0);
+            }
+
             setOpOutput({
                 label,
                 status: data.success ? 'success' : 'error',
                 message: data.message || `Operação concluída com sucesso (${data.mergedEvents || data.count || 0} provas processadas).`,
                 raw: data
             });
-            await loadStats();
+            await loadStats(null, true);
             await loadLogs();
         } catch (e) {
+            setScraperActiveStep(0);
             setOpOutput({
                 label,
                 status: 'error',
-                message: e.name === 'AbortError' ? 'A operação demorou mais de 45s. Podes verificar o progresso no separador Logs.' : `Erro na execução: ${e.message}`,
+                message: e.name === 'AbortError' ? 'A operação demorou mais de 60s. O pipeline continua a correr em segundo plano no servidor.' : `Erro na execução: ${e.message}`,
                 raw: { error: e.message }
             });
-            await loadStats();
+            await loadStats(null, true);
             await loadLogs();
         } finally {
+            clearInterval(timerInterval);
+            clearInterval(logsInterval);
             setRunningOp(null);
         }
     };
@@ -1898,27 +1962,145 @@ export default function AdminDashboardPage() {
                         </div>
                     </div>
 
-                    {/* Operation Output Console */}
-                    {opOutput && (
-                        <div className="bg-slate-950 rounded-2xl border border-slate-800 p-4 space-y-2 animate-fade-in">
-                            <div className="flex items-center justify-between gap-2">
-                                <span className="text-xs font-bold text-slate-400 flex items-center gap-2">
-                                    <Activity size={14} className="text-blue-400" />
-                                    <span>Consola de Execução: {opOutput.label}</span>
-                                </span>
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                                    opOutput.status === 'success' ? 'bg-emerald-500/20 text-emerald-400' : opOutput.status === 'loading' ? 'bg-blue-500/20 text-blue-400 animate-pulse' : 'bg-rose-500/20 text-rose-400'
-                                }`}>
-                                    {opOutput.status.toUpperCase()}
-                                </span>
+                    {/* Live Pipeline Execution Dashboard & Stepper */}
+                    {(runningOp || opOutput) && (
+                        <div className="bg-slate-950 rounded-2xl border border-slate-800 p-5 space-y-4 shadow-xl animate-fade-in text-slate-200">
+                            {/* Header: Title, Live Timer, Status Badge */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                                <div className="flex items-center gap-2.5">
+                                    <div className={`p-2 rounded-lg ${runningOp ? 'bg-blue-500/20 text-blue-400' : opOutput?.status === 'success' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                                        <Terminal size={18} />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                                            <span>Consola de Execução em Tempo Real</span>
+                                            {runningOp && (
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-mono animate-pulse">
+                                                    ⏱️ {Math.floor(scraperElapsedSecs / 60).toString().padStart(2, '0')}:{(scraperElapsedSecs % 60).toString().padStart(2, '0')}s
+                                                </span>
+                                            )}
+                                        </h4>
+                                        <p className="text-xs text-slate-400 m-0">
+                                            {runningOp ? 'Pipeline em execução com recolha de dados multi-fonte e fusão automática' : opOutput?.message}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2 self-start sm:self-auto">
+                                    <span className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 ${
+                                        opOutput?.status === 'success'
+                                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                            : opOutput?.status === 'loading' || runningOp
+                                            ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30 animate-pulse'
+                                            : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                                    }`}>
+                                        {runningOp ? (
+                                            <>
+                                                <div className="w-2.5 h-2.5 rounded-full bg-blue-400 animate-ping"></div>
+                                                <span>A EXECUTAR</span>
+                                            </>
+                                        ) : opOutput?.status === 'success' ? (
+                                            <>
+                                                <CheckCircle2 size={13} />
+                                                <span>CONCLUÍDO COM SUCESSO</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <AlertTriangle size={13} />
+                                                <span>ERRO NA EXECUÇÃO</span>
+                                            </>
+                                        )}
+                                    </span>
+                                </div>
                             </div>
-                            <p className="text-xs font-mono text-slate-200 m-0">
-                                {opOutput.message}
-                            </p>
-                            {opOutput.raw && (
-                                <pre className="mt-2 p-2 rounded bg-slate-900 text-[11px] font-mono text-slate-400 max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700">
-                                    {JSON.stringify(opOutput.raw, null, 2)}
-                                </pre>
+
+                            {/* 5-Step Visual Stepper */}
+                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1">
+                                {[
+                                    { step: 1, label: '1. FPCiclismo', desc: 'Calendários 26/27' },
+                                    { step: 2, label: '2. Cabreira', desc: 'Granfondos & Provas' },
+                                    { step: 3, label: '3. Stop & Go', desc: 'Sitemap Ciclismo' },
+                                    { step: 4, label: '4. Deep Scrape', desc: 'Programas & Cartazes' },
+                                    { step: 5, label: '5. Unificação', desc: 'Fusão Multi-Fonte' },
+                                ].map(s => {
+                                    const isDone = scraperActiveStep > s.step || scraperActiveStep === 6;
+                                    const isCurrent = scraperActiveStep === s.step && runningOp;
+                                    return (
+                                        <div 
+                                            key={s.step} 
+                                            className={`p-2.5 rounded-xl border transition-all ${
+                                                isDone 
+                                                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' 
+                                                    : isCurrent 
+                                                    ? 'bg-blue-500/15 border-blue-500/40 text-blue-300 ring-1 ring-blue-500/30 shadow-md shadow-blue-500/10' 
+                                                    : 'bg-slate-900/50 border-slate-800 text-slate-500'
+                                            }`}
+                                        >
+                                            <div className="flex items-center justify-between mb-1">
+                                                <span className="text-xs font-bold">{s.label}</span>
+                                                {isDone ? (
+                                                    <Check size={12} className="text-emerald-400 shrink-0" />
+                                                ) : isCurrent ? (
+                                                    <div className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin shrink-0"></div>
+                                                ) : (
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-slate-700"></span>
+                                                )}
+                                            </div>
+                                            <p className="text-[10px] opacity-80 m-0 truncate">{s.desc}</p>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Live Streaming Logs Terminal Feed */}
+                            <div className="space-y-1.5 pt-1">
+                                <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono">
+                                    <span>Logs em Tempo Real do Servidor:</span>
+                                    <span>{liveScraperLogs.length} registos recentes</span>
+                                </div>
+                                <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 font-mono text-xs max-h-56 overflow-y-auto space-y-1.5 scrollbar-thin scrollbar-thumb-slate-700">
+                                    {liveScraperLogs.length === 0 ? (
+                                        <p className="text-slate-500 text-[11px] italic m-0">A aguardar primeiros registos do pipeline...</p>
+                                    ) : (
+                                        liveScraperLogs.map((l, idx) => {
+                                            const time = new Date(l.createdAt).toLocaleTimeString('pt-PT');
+                                            const isErr = l.level === 'ERROR';
+                                            const isWarn = l.level === 'WARN';
+                                            return (
+                                                <div key={l.id || idx} className="flex items-start gap-2 text-[11px] leading-relaxed">
+                                                    <span className="text-slate-500 shrink-0 select-none">[{time}]</span>
+                                                    <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold shrink-0 ${
+                                                        isErr ? 'bg-rose-500/20 text-rose-400' : isWarn ? 'bg-amber-500/20 text-amber-400' : 'bg-blue-500/20 text-blue-400'
+                                                    }`}>
+                                                        {l.level}
+                                                    </span>
+                                                    <span className={isErr ? 'text-rose-300' : isWarn ? 'text-amber-300' : 'text-slate-300'}>
+                                                        {l.message}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Completion Summary Breakdown (when finished) */}
+                            {!runningOp && opOutput?.raw && opOutput?.status === 'success' && (
+                                <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                                    <div className="flex items-center gap-2.5 text-emerald-400 font-semibold">
+                                        <Sparkles size={16} className="shrink-0" />
+                                        <span>Pipeline universal concluído com sucesso. Base de dados atualizada!</span>
+                                    </div>
+                                    <button 
+                                        onClick={() => {
+                                            setActiveTab('logs');
+                                            loadLogs();
+                                        }}
+                                        className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors shrink-0 flex items-center gap-1.5 cursor-pointer"
+                                    >
+                                        <span>Ver Todos os Logs</span>
+                                        <ChevronRight size={13} />
+                                    </button>
+                                </div>
                             )}
                         </div>
                     )}
