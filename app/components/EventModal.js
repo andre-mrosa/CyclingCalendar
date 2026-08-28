@@ -314,6 +314,158 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
             .trim();
     }, [activeEvent?.description]);
 
+    // Processamento e categorização inteligente de links (evita duplicações e hierarquiza fontes)
+    const parsedLinks = useMemo(() => {
+        const rawList = [];
+        if (programaData.additionalLinks && Array.isArray(programaData.additionalLinks)) {
+            rawList.push(...programaData.additionalLinks);
+        }
+        if (activeEvent?.extraLinks) {
+            const extra = typeof activeEvent.extraLinks === 'string' 
+                ? (() => { try { return JSON.parse(activeEvent.extraLinks); } catch(e) { return []; } })()
+                : activeEvent.extraLinks;
+            if (Array.isArray(extra)) rawList.push(...extra);
+        }
+        if (activeEvent?.link) {
+            rawList.push({ label: 'Site do Evento', link: activeEvent.link });
+        }
+
+        // Deduplica por URL exato
+        const uniqueByUrl = Array.from(new Map(
+            rawList
+                .filter(item => item && item.link && typeof item.link === 'string' && item.link.startsWith('http'))
+                .map(item => [item.link.trim(), item])
+        ).values());
+
+        const isRegistration = (item) => {
+            const l = (item.label || '').toLowerCase();
+            const url = (item.link || '').toLowerCase();
+            return l.includes('inscrev') || l.includes('inscriç') || l.includes('inscric') || url.includes('/registrations/create') || url.includes('prova-inscrever');
+        };
+
+        const isResults = (item) => {
+            const l = (item.label || '').toLowerCase();
+            const url = (item.link || '').toLowerCase();
+            return l.includes('resultado') || l.includes('classifica') || l.includes('ranking') || l.includes('tempos') || l.includes('results') || url.includes('/results') || url.includes('/classificacoes');
+        };
+
+        const isRules = (item) => {
+            const l = (item.label || '').toLowerCase();
+            const url = (item.link || '').toLowerCase();
+            return l.includes('regulamento') || l.includes('rules') || url.includes('/rules') || url.includes('regulamento');
+        };
+
+        const isTracks = (item) => {
+            const l = (item.label || '').toLowerCase();
+            const url = (item.link || '').toLowerCase();
+            return l.includes('track') || l.includes('percurso') || l.includes('gpx') || l.includes('kml') || l.includes('mapa') || url.includes('gpx') || url.includes('strava');
+        };
+
+        const isParticipants = (item) => {
+            const l = (item.label || '').toLowerCase();
+            const url = (item.link || '').toLowerCase();
+            return l.includes('inscritos') || l.includes('participantes') || l.includes('entries') || (url.includes('/registrations') && !url.includes('/create'));
+        };
+
+        const isConditions = (item) => {
+            const l = (item.label || '').toLowerCase();
+            const url = (item.link || '').toLowerCase();
+            return l.includes('condiç') || l.includes('condic') || l.includes('cancelam') || url.includes('/conditions');
+        };
+
+        const isFpcPage = (item) => {
+            const l = (item.label || '').toLowerCase();
+            const url = (item.link || '').toLowerCase();
+            return (l.includes('fpc') || url.includes('fpciclismo.pt')) && !isRegistration(item) && !isRules(item);
+        };
+
+        const isCabreiraPage = (item) => {
+            const l = (item.label || '').toLowerCase();
+            const url = (item.link || '').toLowerCase();
+            return (l.includes('cabreira') || url.includes('cabreirasolutions.com')) && !isRegistration(item) && !isRules(item);
+        };
+
+        const isStopAndGoPage = (item) => {
+            const l = (item.label || '').toLowerCase();
+            const url = (item.link || '').toLowerCase();
+            return (l.includes('stopandgo') || l.includes('stop and go') || url.includes('stopandgo.net')) && !isRegistration(item) && !isRules(item);
+        };
+
+        // Categoriza
+        const registrationList = uniqueByUrl.filter(isRegistration);
+        const resultsList = uniqueByUrl.filter(isResults);
+        const rulesList = uniqueByUrl.filter(isRules);
+        const tracksList = uniqueByUrl.filter(isTracks);
+        const participantsList = uniqueByUrl.filter(isParticipants);
+        const conditionsList = uniqueByUrl.filter(isConditions);
+        const fpcList = uniqueByUrl.filter(isFpcPage);
+
+        // Regulamento principal desduplicado (prioridade: Cabreira/Domínio da prova > StopAndGo > FPC)
+        const primaryRules = rulesList.find(r => r.link.includes('cabreira')) 
+            || rulesList.find(r => !r.link.includes('fpc') && !r.link.includes('stopandgo')) 
+            || rulesList[0] 
+            || null;
+
+        // Resultados principais desduplicados
+        const primaryResults = resultsList[0] || null;
+
+        // Site oficial da organização
+        let officialSite = null;
+        if (activeEvent?.source === 'Cabreira' || (activeEvent?.organizador && activeEvent.organizador.toLowerCase().includes('cabreira'))) {
+            const cabLink = uniqueByUrl.find(isCabreiraPage);
+            officialSite = cabLink ? { label: 'Site da Cabreira', link: cabLink.link } : { label: 'Site da Cabreira', link: 'https://cabreirasolutions.com/eventos/' };
+        } else if (activeEvent?.link && !activeEvent.link.includes('fpciclismo.pt') && !activeEvent.link.includes('stopandgo.net')) {
+            officialSite = { label: 'Site Oficial', link: activeEvent.link };
+        } else if (activeEvent?.source === 'StopAndGo' || (activeEvent?.link && activeEvent.link.includes('stopandgo.net'))) {
+            const sgLink = uniqueByUrl.find(isStopAndGoPage) || { label: 'Página Stop & Go', link: activeEvent.link || 'https://stopandgo.net' };
+            officialSite = sgLink;
+        } else if (activeEvent?.link && activeEvent.link.includes('fpciclismo.pt')) {
+            officialSite = { label: 'Página FPC', link: activeEvent.link };
+        }
+
+        // Recursos secundários organizados para o corpo do modal
+        const resources = [];
+        tracksList.forEach(t => resources.push({ icon: 'track', label: t.label && (t.label.includes('Percurso') || t.label.includes('Track')) ? t.label : 'Percursos & Tracks (GPX)', link: t.link }));
+        participantsList.forEach(p => resources.push({ icon: 'users', label: 'Lista de Inscritos', link: p.link }));
+        resultsList.forEach(r => resources.push({ icon: 'trophy', label: r.label && (r.label.includes('Resultado') || r.label.includes('Classifica')) ? r.label : 'Classificações Oficiais', link: r.link }));
+        if (primaryRules) {
+            resources.push({ icon: 'file', label: 'Regulamento Oficial', link: primaryRules.link });
+        }
+        conditionsList.forEach(c => resources.push({ icon: 'shield', label: 'Condições & Cancelamentos', link: c.link }));
+        if (fpcList.length > 0 && activeEvent?.source !== 'FPC') {
+            fpcList.forEach(f => resources.push({ icon: 'fpc', label: 'Ficha Homologação FPC', link: f.link }));
+        }
+
+        // Inscrições limpas e desduplicadas por plataforma
+        const registrationClean = [];
+        const seenPlats = new Set();
+        for (const src of registrationList) {
+            let plat = "Oficial";
+            const sLink = (src.link || '').toLowerCase();
+            if (sLink.includes('stopandgo')) plat = "Stop & Go";
+            else if (sLink.includes('cabreira')) plat = "Cabreira";
+            else if (sLink.includes('fpc')) plat = "FPC";
+            else plat = (src.label || 'Oficial').replace(/inscrever|inscrição|inscricao|visitar|em|na|no/ig, '').trim() || "Oficial";
+
+            if (!seenPlats.has(plat)) {
+                seenPlats.add(plat);
+                registrationClean.push({ ...src, _plat: plat });
+            }
+        }
+
+        if (registrationClean.length === 0 && activeEvent?.link && (activeEvent.link.includes('prova-inscrever') || activeEvent.link.includes('stopandgo'))) {
+            registrationClean.push({ label: 'Inscrever', link: activeEvent.link, _plat: 'Oficial' });
+        }
+
+        return {
+            registrationList: registrationClean,
+            primaryResults,
+            primaryRules,
+            officialSite,
+            resources: Array.from(new Map(resources.map(r => [r.link, r])).values())
+        };
+    }, [programaData.additionalLinks, activeEvent]);
+
     // Calcula as tabs ativas baseadas nos dados reais do evento
     const availableTabs = useMemo(() => {
         if (!selectedEvent) return [];
@@ -942,6 +1094,37 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             ) : !isLoadingFullEvent ? (
                                 <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">Descrição adicional não disponível.</p>
                             ) : null}
+
+                            {/* Recursos e Documentos Úteis da Prova */}
+                            {parsedLinks.resources.length > 0 && !isLoadingFullEvent && (
+                                <div className="mt-3.5 mb-1 p-3.5 bg-slate-50 dark:bg-slate-950/60 rounded-2xl border border-slate-200 dark:border-slate-800/80">
+                                    <h5 className="text-[11px] uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400 mb-2.5 flex items-center gap-1.5">
+                                        <ExternalLink size={12} className="text-blue-500" /> Recursos e Documentos
+                                    </h5>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        {parsedLinks.resources.map((res, idx) => (
+                                            <a 
+                                                key={`res-${idx}`} 
+                                                href={res.link} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-2.5 p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 hover:border-blue-400 dark:hover:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-white transition-colors text-xs font-semibold shadow-2xs group"
+                                            >
+                                                <span className="p-1 rounded-lg bg-slate-100 dark:bg-slate-800 group-hover:bg-blue-500/10 transition-colors shrink-0">
+                                                    {res.icon === 'track' && <MapPin size={13} className="text-emerald-500" />}
+                                                    {res.icon === 'users' && <Users size={13} className="text-blue-500" />}
+                                                    {res.icon === 'trophy' && <Trophy size={13} className="text-amber-500" />}
+                                                    {res.icon === 'file' && <FileText size={13} className="text-indigo-500" />}
+                                                    {res.icon === 'shield' && <Shield size={13} className="text-purple-500" />}
+                                                    {res.icon === 'fpc' && <Globe size={13} className="text-slate-400" />}
+                                                </span>
+                                                <span className="truncate flex-1">{res.label}</span>
+                                                <ExternalLink size={11} className="text-slate-400 group-hover:text-blue-500 transition-colors shrink-0" />
+                                            </a>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                         
                         <div className="shrink-0 mt-2 grid grid-cols-2 gap-2 pb-1">
@@ -1292,71 +1475,87 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                     {programaData.loading ? (
                         <div className="px-3 py-1.5 flex items-center gap-2 text-slate-400 text-xs">
                             <div className="w-3.5 h-3.5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
-                            <span>A carregar links...</span>
+                            <span>A carregar dados...</span>
                         </div>
-                    ) : (() => {
-                        const allLinks = [];
-                        if (programaData.additionalLinks) allLinks.push(...programaData.additionalLinks);
-                        if (activeEvent.extraLinks && activeEvent.extraLinks.length > 0) allLinks.push(...activeEvent.extraLinks);
-                        if (allLinks.length === 0) {
-                            allLinks.push({ label: `Visitar ${activeEvent.source}`, link: activeEvent.link || (activeEvent.source === 'FPC' ? 'https://www.fpciclismo.pt/' : 'https://cabreirasolutions.com/eventos/') });
-                        }
-                        
-                        const uniqueLinks = Array.from(new Map(allLinks.map(item => [item.link, item])).values());
-                        const isInscrever = l => l.label.toLowerCase().includes('inscrev') || l.label.toLowerCase().includes('inscriç') || l.label.toLowerCase().includes('inscric');
-                        const inscricaoLinksRaw = uniqueLinks.filter(isInscrever);
-                        const outrosLinks = uniqueLinks.filter(l => !isInscrever(l));
-                        
-                        const inscricaoLinks = [];
-                        const seenPlats = new Set();
-                        for (const src of inscricaoLinksRaw) {
-                            let plat = "Plataforma";
-                            const sLabel = src.label.toLowerCase();
-                            const sLink = src.link.toLowerCase();
-                            if (sLink.includes('cabreira') || sLabel.includes('cabreira')) plat = "Cabreira";
-                            else if (sLink.includes('fpc') || sLabel.includes('fpc')) plat = "FPC";
-                            else if (sLink.includes('stopandgo') || sLabel.includes('stop and go') || sLabel.includes('stopandgo')) plat = "Stop and Go";
-                            else plat = src.label.replace(/inscrever|inscrição|inscricao|visitar|em|na|no/ig, '').replace(/\s+/g, ' ').trim() || "Plataforma";
-                            
-                            if (!seenPlats.has(plat)) {
-                                seenPlats.add(plat);
-                                inscricaoLinks.push({ ...src, _plat: plat });
-                            }
-                        }
+                    ) : (
+                        <div className="flex items-center gap-2 flex-wrap">
+                            {/* 1. Classificações / Resultados da Prova (Destaque quando existem) */}
+                            {parsedLinks.primaryResults && (
+                                <a 
+                                    href={parsedLinks.primaryResults.link} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="px-3.5 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30 rounded-xl text-xs sm:text-sm font-semibold transition-colors flex items-center gap-1.5 shadow-sm"
+                                >
+                                    <Trophy size={14} className="text-amber-500 shrink-0" />
+                                    <span>Classificações</span>
+                                </a>
+                            )}
 
-                        return (
-                            <div className="flex items-center gap-2 flex-wrap">
-                                {outrosLinks.map((src, idx) => (
-                                    <a key={`outros-${idx}`} href={src.link} target="_blank" rel="noopener noreferrer" className="px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs sm:text-sm font-semibold transition-colors border border-slate-200 dark:border-slate-700 flex items-center justify-center">
-                                        {src.label}
-                                    </a>
-                                ))}
-                                
-                                {inscricaoLinks.length === 1 && (
-                                    <a href={inscricaoLinks[0].link} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs sm:text-sm font-semibold transition-colors shadow-lg shadow-blue-500/20 flex items-center justify-center">
-                                        Inscrever
-                                    </a>
-                                )}
-                                
-                                {inscricaoLinks.length > 1 && (
-                                    <div className="relative group">
-                                        <button className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs sm:text-sm font-semibold transition-colors shadow-lg shadow-blue-500/20 flex items-center gap-1.5 cursor-pointer">
-                                            Inscrever <span className="text-[0.7em]">▼</span>
-                                        </button>
-                                        <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block w-44 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl overflow-hidden z-50">
-                                            <div className="flex flex-col">
-                                                {inscricaoLinks.map((src, idx) => (
-                                                    <a key={`inscr-${idx}`} href={src.link} target="_blank" rel="noopener noreferrer" className="px-3.5 py-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs transition-colors border-b border-slate-100 dark:border-slate-800 last:border-0 font-medium">
-                                                        Inscrever ({src._plat})
-                                                    </a>
-                                                ))}
-                                            </div>
+                            {/* 2. Regulamento Oficial Único */}
+                            {parsedLinks.primaryRules && (
+                                <a 
+                                    href={parsedLinks.primaryRules.link} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs sm:text-sm font-semibold transition-colors border border-slate-200 dark:border-slate-700 flex items-center gap-1.5"
+                                >
+                                    <FileText size={14} className="text-slate-500 dark:text-slate-400 shrink-0" />
+                                    <span>Regulamento</span>
+                                </a>
+                            )}
+
+                            {/* 3. Site Oficial / Organização */}
+                            {parsedLinks.officialSite && (
+                                <a 
+                                    href={parsedLinks.officialSite.link} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs sm:text-sm font-semibold transition-colors border border-slate-200 dark:border-slate-700 flex items-center gap-1.5"
+                                >
+                                    <Globe size={14} className="text-slate-500 dark:text-slate-400 shrink-0" />
+                                    <span>{parsedLinks.officialSite.label}</span>
+                                </a>
+                            )}
+
+                            {/* 4. Botão Principal de Inscrição */}
+                            {parsedLinks.registrationList.length === 1 && (
+                                <a 
+                                    href={parsedLinks.registrationList[0].link} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs sm:text-sm font-semibold transition-colors shadow-lg shadow-blue-500/20 flex items-center justify-center"
+                                >
+                                    Inscrever
+                                </a>
+                            )}
+                            
+                            {parsedLinks.registrationList.length > 1 && (
+                                <div className="relative group">
+                                    <button className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs sm:text-sm font-semibold transition-colors shadow-lg shadow-blue-500/20 flex items-center gap-1.5 cursor-pointer">
+                                        <span>Inscrever</span>
+                                        <ChevronDown size={13} className="shrink-0" />
+                                    </button>
+                                    <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block w-48 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl overflow-hidden z-50 animate-fade-in">
+                                        <div className="flex flex-col">
+                                            {parsedLinks.registrationList.map((src, idx) => (
+                                                <a 
+                                                    key={`inscr-${idx}`} 
+                                                    href={src.link} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer" 
+                                                    className="px-3.5 py-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs transition-colors border-b border-slate-100 dark:border-slate-800 last:border-0 font-medium flex items-center justify-between"
+                                                >
+                                                    <span>Inscrever</span>
+                                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 font-semibold">{src._plat}</span>
+                                                </a>
+                                            ))}
                                         </div>
                                     </div>
-                                )}
-                            </div>
-                        );
-                    })()}
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {isSignedIn && (() => {
                         const isEventAlreadyMarked = calendarStatus === 'success' || calendarStatus === 'exists';
