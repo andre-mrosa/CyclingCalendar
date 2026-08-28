@@ -29,10 +29,15 @@ export default function OrganizationLogo({ source, className = "h-5 w-auto objec
             return (
                 <div 
                     key={key}
-                    className="flex items-center justify-center shrink-0 px-1.5 py-0.5 rounded-md bg-cyan-500/15 dark:bg-cyan-400/15 border border-cyan-500/30 text-[9px] font-black text-cyan-600 dark:text-cyan-400 uppercase tracking-tighter" 
+                    className="flex items-center justify-center shrink-0 relative px-1 py-0.5 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(15,23,42,0.45)_0%,rgba(15,23,42,0)_75%)] dark:bg-transparent" 
                     title="Stop and Go"
                 >
-                    S&G
+                    <img 
+                        src="/logo-stopandgo.png" 
+                        alt="Stop and Go" 
+                        className={`${className} drop-shadow-[0_0_2px_rgba(0,0,0,0.85)] drop-shadow-[0_0_5px_rgba(0,0,0,0.35)] dark:drop-shadow-none transition-all`} 
+                        loading="lazy"
+                    />
                 </div>
             );
         }

@@ -50,6 +50,38 @@ function parseStopAndGoDate(rawDateStr, fallbackYear = '2026') {
     const yearMatch = clean.match(/202\d/);
     const year = yearMatch ? yearMatch[0] : fallbackYear;
 
+    // Pattern 1: Multi-month range like "27 fev - 1 mar" or "27 fev a 1 mar"
+    const multiMonthMatch = clean.match(/(\d{1,2})\s+([a-zçã]+)\s*(?:-|a)\s*(\d{1,2})\s+([a-zçã]+)/i);
+    if (multiMonthMatch) {
+        const startDay = multiMonthMatch[1].padStart(2, '0');
+        const startMonthName = multiMonthMatch[2];
+        const endDay = multiMonthMatch[3].padStart(2, '0');
+        const endMonthName = multiMonthMatch[4];
+
+        let startMonthNum = '01';
+        for (const [mName, mCode] of Object.entries(MONTH_MAP)) {
+            if (startMonthName.startsWith(mName) || mName.startsWith(startMonthName)) {
+                startMonthNum = mCode;
+                break;
+            }
+        }
+
+        let endMonthNum = '01';
+        for (const [mName, mCode] of Object.entries(MONTH_MAP)) {
+            if (endMonthName.startsWith(mName) || mName.startsWith(endMonthName)) {
+                endMonthNum = mCode;
+                break;
+            }
+        }
+
+        const startAbbr = MONTH_ABBR[startMonthNum] || 'JAN';
+        const endAbbr = MONTH_ABBR[endMonthNum] || 'MAR';
+        const sortDate = new Date(`${year}-${startMonthNum}-${startDay}T08:00:00Z`);
+        const dateText = `${startDay} ${startAbbr} a ${endDay} ${endAbbr} ${year}`;
+        return { dateText, sortDate, year };
+    }
+
+    // Single month for the rest
     let monthNum = '01';
     for (const [mName, mCode] of Object.entries(MONTH_MAP)) {
         if (clean.includes(mName)) {
@@ -59,8 +91,9 @@ function parseStopAndGoDate(rawDateStr, fallbackYear = '2026') {
     }
     const monthAbbr = MONTH_ABBR[monthNum] || 'JAN';
 
-    const rangeMatch = clean.match(/(\d{1,2})\s*-\s*(\d{1,2})/);
-    if (rangeMatch) {
+    // Pattern 2: Same-month range like "18 abr - 19 abr" or "05 - 07 set" or "5 set - 7 set"
+    const rangeMatch = clean.match(/(\d{1,2})\s*(?:[a-zçã]+)?\s*(?:-|a)\s*(\d{1,2})/i);
+    if (rangeMatch && !clean.match(/^\d{1,2}\s+[a-zçã]+\s+202\d$/)) {
         const startDay = rangeMatch[1].padStart(2, '0');
         const endDay = rangeMatch[2].padStart(2, '0');
         const sortDate = new Date(`${year}-${monthNum}-${startDay}T08:00:00Z`);
@@ -68,6 +101,7 @@ function parseStopAndGoDate(rawDateStr, fallbackYear = '2026') {
         return { dateText, sortDate, year };
     }
 
+    // Pattern 3: Single day like "18 out 2026" or "7 jun 2026"
     const singleDayMatch = clean.match(/(\d{1,2})/);
     if (singleDayMatch) {
         const day = singleDayMatch[1].padStart(2, '0');

@@ -71,10 +71,24 @@ export function mergeEventRecords(existing, incoming) {
     const extraLinks = mergeExtraLinks(existing.extraLinks, incoming.extraLinks);
     const escaloes = mergeEscaloes(existing.escaloes, incoming.escaloes);
 
-    // Priorizar data multi-dia se uma delas tiver intervalo " a "
-    let date = existing.date || incoming.date;
-    if (incoming.date && incoming.date.includes(' a ') && !existing.date?.includes(' a ')) {
+    // Priorizar data real caso uma delas seja placeholder ou se incoming tiver intervalo " a "
+    const isExistingPlaceholder = !existing.date || existing.date.includes('DEFINIR') || existing.date.includes('A definir');
+    const isIncomingPlaceholder = !incoming.date || incoming.date.includes('DEFINIR') || incoming.date.includes('A definir');
+
+    let date = existing.date;
+    let sortDate = existing.sortDate;
+
+    if (isExistingPlaceholder && !isIncomingPlaceholder) {
         date = incoming.date;
+        sortDate = incoming.sortDate;
+    } else if (!isExistingPlaceholder && !isIncomingPlaceholder) {
+        if (incoming.date && incoming.date.includes(' a ') && !existing.date?.includes(' a ')) {
+            date = incoming.date;
+            sortDate = incoming.sortDate;
+        }
+    } else if (isExistingPlaceholder && isIncomingPlaceholder) {
+        date = incoming.date || existing.date;
+        sortDate = incoming.sortDate || existing.sortDate;
     }
 
     // Localização mais completa
@@ -95,7 +109,7 @@ export function mergeEventRecords(existing, incoming) {
     return {
         title: existing.title || incoming.title,
         date: date,
-        sortDate: existing.sortDate || incoming.sortDate,
+        sortDate: sortDate,
         details: details,
         tag: existing.tag || incoming.tag,
         ambito: existing.ambito && existing.ambito !== 'Nacional' ? existing.ambito : (incoming.ambito || existing.ambito),
