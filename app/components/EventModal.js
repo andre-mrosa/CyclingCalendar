@@ -927,13 +927,6 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 )}
                             </div>
 
-                            {/* Meteorologia no Dia da Prova */}
-                            <WeatherWidget 
-                                location={activeEvent.details?.split('|')[0]?.trim()} 
-                                distrito={activeEvent.distrito} 
-                                date={activeEvent.sortDate ? new Date(activeEvent.sortDate).toISOString().substring(0, 10) : activeEvent.date} 
-                            />
-
                             {isLoadingFullEvent && (
                                 <div className="w-full h-32 rounded-xl bg-slate-800/30 border border-slate-800/80 animate-pulse flex flex-col items-center justify-center gap-2 mb-2 text-slate-500">
                                     <div className="w-5 h-5 border-2 border-slate-600 border-t-blue-400 rounded-full animate-spin"></div>
