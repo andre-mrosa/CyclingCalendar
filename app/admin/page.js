@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useUser, useAuth } from '@clerk/nextjs';
 import { 
     Users, FileText, Activity, Shield, AlertTriangle, CheckCircle2, 
