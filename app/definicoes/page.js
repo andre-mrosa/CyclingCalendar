@@ -146,7 +146,7 @@ export default function Conta() {
                 )}
                 <section className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/5 rounded-2xl p-6 sm:p-8 shadow-sm dark:shadow-xl">
                     {/* Idioma da Aplicação */}
-                    <div className="flex flex-col md:flex-row md:items-center justify-between pb-6 border-b border-slate-100 dark:border-slate-800/60 gap-4">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between py-6 border-b border-slate-100 dark:border-slate-800/60 gap-4">
                         <div>
                             <h3 className="font-semibold text-slate-900 dark:text-slate-200 flex items-center mb-1 text-base gap-2">
                                 <Globe size={16} className="text-blue-500" />
@@ -155,28 +155,27 @@ export default function Conta() {
                             <p className="text-sm text-slate-500 dark:text-slate-400">{t('settings_lang_desc')}</p>
                         </div>
                         <select 
-                            className="h-10 px-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors w-full md:w-auto font-medium" 
+                            className="h-10 px-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors w-full md:w-auto font-medium cursor-pointer" 
                             value={language || 'pt'} 
                             onChange={(e) => setLanguage(e.target.value)}
                         >
-                            <option value="pt">{t('settings_lang_pt')}</option>
-                            <option value="en">{t('settings_lang_en')}</option>
-                            <option value="es">{t('settings_lang_es')}</option>
-                            <option value="fr">{t('settings_lang_fr')}</option>
+                            <option value="pt">🇵🇹 {t('settings_lang_pt')}</option>
+                            <option value="en">🇬🇧 {t('settings_lang_en')}</option>
+                            <option value="es">🇪🇸 {t('settings_lang_es')}</option>
+                            <option value="fr">🇫🇷 {t('settings_lang_fr')}</option>
                         </select>
                     </div>
 
                     {/* Tema Visual */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between py-6 border-b border-slate-100 dark:border-slate-800/60 gap-4">
                         <div>
-                            <h3 className="font-semibold text-slate-900 dark:text-slate-200 flex items-center mb-1 text-base gap-2">
-                                <Moon size={16} className="text-amber-500" />
+                            <h3 className="font-semibold text-slate-900 dark:text-slate-200 flex items-center mb-1 text-base">
                                 {t('settings_theme_title')}
                             </h3>
                             <p className="text-sm text-slate-500 dark:text-slate-400">{t('settings_theme_desc')}</p>
                         </div>
                         <select 
-                            className="h-10 px-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors w-full md:w-auto font-medium" 
+                            className="h-10 px-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors w-full md:w-auto font-medium cursor-pointer" 
                             value={theme || 'system'} 
                             onChange={(e) => setTheme(e.target.value)}
                         >
@@ -189,36 +188,36 @@ export default function Conta() {
                     <div className="flex flex-col md:flex-row md:items-center justify-between py-6 border-b border-slate-100 dark:border-slate-800/60 gap-4">
                         <div>
                             <h3 className="font-semibold text-slate-900 dark:text-slate-200 flex items-center mb-1 text-base">
-                                Página Principal Predefinida
+                                {t('settings_default_page_title')}
                             </h3>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">Escolhe a página que abre automaticamente ao entrar na aplicação.</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">{t('settings_default_page_desc')}</p>
                         </div>
                         <select 
-                            className="h-10 px-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors w-full md:w-auto" 
+                            className="h-10 px-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors w-full md:w-auto font-medium cursor-pointer" 
                             value={defaultPage || '/'} 
                             onChange={(e) => setDefaultPage(e.target.value)}
                         >
-                            <option value="/">Geral (Todas as Provas)</option>
-                            <option value="/agenda">A Minha Agenda</option>
-                            <option value="/favoritos">Favoritos</option>
-                            <option value="/nacionais">Campeonatos Nacionais</option>
-                            <option value="/tacas">Taças de Portugal</option>
-                            <option value="/regionais">Regionais</option>
-                            <option value="/internacionais">Internacionais</option>
-                            <option value="/lazer">Lazer / CPT</option>
+                            <option value="/">{t('page_home_title')}</option>
+                            <option value="/agenda">{t('page_agenda_title')}</option>
+                            <option value="/favoritos">{t('page_favorites_title')}</option>
+                            <option value="/nacionais">{t('page_nationals_title')}</option>
+                            <option value="/tacas">{t('page_cups_title')}</option>
+                            <option value="/regionais">{t('page_regionals_title')}</option>
+                            <option value="/internacionais">{t('page_internationals_title')}</option>
+                            <option value="/lazer">{t('page_leisure_title')}</option>
                         </select>
                     </div>
 
                     <div className="flex flex-col md:flex-row md:items-center justify-between py-6 border-b border-slate-100 dark:border-slate-800/60 gap-4">
                         <div>
                             <h3 className="font-semibold text-slate-900 dark:text-slate-200 flex items-center mb-1 text-base">
-                                Região Predefinida
-                                <button onClick={() => setActiveModal('regiao')} className="ml-2 text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 transition-colors" title="Assistente de Região"><HelpCircle size={16} /></button>
+                                {t('settings_default_region_title')}
+                                <button onClick={() => setActiveModal('regiao')} className="ml-2 text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 transition-colors" title={t('region_modal_title')}><HelpCircle size={16} /></button>
                             </h3>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">Filtra automaticamente o calendário pela tua associação regional.</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">{t('settings_default_region_desc')}</p>
                         </div>
-                        <select className="h-10 px-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors w-full md:w-auto" value={defaultRegiao} onChange={(e) => setDefaultRegiao(e.target.value)}>
-                            <option value="Todas">Nenhuma (Todas)</option>
+                        <select className="h-10 px-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors w-full md:w-auto font-medium cursor-pointer" value={defaultRegiao} onChange={(e) => setDefaultRegiao(e.target.value)}>
+                            <option value="Todas">{t('filter_all_regions')}</option>
                             <option value="AC Minho">AC Minho</option>
                             <option value="AC Porto">AC Porto</option>
                             <option value="AC Vila Real">AC Vila Real</option>
@@ -236,13 +235,13 @@ export default function Conta() {
                     <div className="flex flex-col md:flex-row md:items-center justify-between pt-6 gap-4">
                         <div>
                             <h3 className="font-semibold text-slate-900 dark:text-slate-200 flex items-center mb-1 text-base">
-                                Escalão Predefinido
-                                <button onClick={() => setActiveModal('escalao')} className="ml-2 text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 transition-colors" title="Assistente de Escalão"><HelpCircle size={16} /></button>
+                                {t('settings_default_category_title')}
+                                <button onClick={() => setActiveModal('escalao')} className="ml-2 text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 transition-colors" title={t('escalao_modal_title')}><HelpCircle size={16} /></button>
                             </h3>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">Mostra as provas mais adequadas à tua categoria ao abrir a página.</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">{t('settings_default_category_desc')}</p>
                         </div>
-                        <select className="h-10 px-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors w-full md:w-auto" value={defaultEscalao} onChange={(e) => setDefaultEscalao(e.target.value)}>
-                            <option value="Todos">Nenhum (Todos)</option>
+                        <select className="h-10 px-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors w-full md:w-auto font-medium cursor-pointer" value={defaultEscalao} onChange={(e) => setDefaultEscalao(e.target.value)}>
+                            <option value="Todos">{t('filter_all_categories')}</option>
                             <option value="Elite Amador / Individual">Elite Amador / Individual</option>
                             <option value="Elite / Sub-23">Elite / Sub-23</option>
                             <option value="Sub-23">Sub-23</option>
@@ -260,16 +259,16 @@ export default function Conta() {
                 <section className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/5 rounded-2xl p-6 sm:p-8 shadow-sm dark:shadow-xl">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800/60 gap-2">
                         <div>
-                            <h3 className="font-semibold text-slate-900 dark:text-slate-200 mb-1 text-base">Menu de Navegação & Ordem dos Separadores</h3>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">Reordena os separadores ou desativa os que não utilizas.</p>
+                            <h3 className="font-semibold text-slate-900 dark:text-slate-200 mb-1 text-base">{t('settings_reorder_tabs')}</h3>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">{t('settings_reorder_tabs_desc')}</p>
                         </div>
                         <button 
                             onClick={resetTabsOrder}
-                            className="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors py-1 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-blue-500/40 shrink-0 self-start sm:self-auto cursor-pointer"
-                            title="Repor ordem original dos separadores"
+                            className="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors py-1 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-blue-500/40 shrink-0 self-start sm:self-auto cursor-pointer font-medium"
+                            title={t('settings_reset_tabs')}
                         >
                             <RotateCcw size={13} />
-                            <span>Repor ordem padrão</span>
+                            <span>{t('settings_reset_tabs')}</span>
                         </button>
                     </div>
                     
@@ -278,6 +277,17 @@ export default function Conta() {
                             const isVisible = !hiddenTabs.includes(tab);
                             const isFirst = idx === 0;
                             const isLast = idx === arr.length - 1;
+
+                            // Localize tab display name
+                            let localizedTab = tab;
+                            if (tab === 'Geral') localizedTab = t('nav_general');
+                            else if (tab === 'Minha Agenda' || tab === 'Agenda') localizedTab = t('nav_agenda');
+                            else if (tab === 'Nacionais') localizedTab = t('nav_nationals');
+                            else if (tab === 'Internacionais') localizedTab = t('nav_internationals');
+                            else if (tab === 'Taças') localizedTab = t('nav_cups');
+                            else if (tab === 'Regionais') localizedTab = t('nav_regionals');
+                            else if (tab === 'Lazer') localizedTab = t('nav_leisure');
+                            else if (tab === 'Favoritos') localizedTab = t('nav_favorites');
 
                             return (
                                 <div key={tab} className="flex items-center justify-between py-2.5 px-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60 gap-3">
@@ -288,7 +298,7 @@ export default function Conta() {
                                                 onClick={() => moveTab(idx, -1)}
                                                 disabled={isFirst}
                                                 className={`p-1 rounded transition-colors ${isFirst ? 'opacity-25 cursor-not-allowed' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer'}`}
-                                                title="Mover para cima / esquerda"
+                                                title="Mover para cima"
                                             >
                                                 <ChevronUp size={15} />
                                             </button>
@@ -296,24 +306,24 @@ export default function Conta() {
                                                 onClick={() => moveTab(idx, 1)}
                                                 disabled={isLast}
                                                 className={`p-1 rounded transition-colors ${isLast ? 'opacity-25 cursor-not-allowed' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer'}`}
-                                                title="Mover para baixo / direita"
+                                                title="Mover para baixo"
                                             >
                                                 <ChevronDown size={15} />
                                             </button>
                                         </div>
 
                                         <span className={`text-sm font-semibold truncate ${isVisible ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 dark:text-slate-500 line-through'}`}>
-                                            {tab}
+                                            {localizedTab}
                                         </span>
                                     </div>
 
                                     {/* Visibility Toggle */}
                                     <div className="flex items-center gap-2.5 shrink-0">
-                                        <span className="text-xs text-slate-400 hidden sm:inline">{isVisible ? 'Ativo' : 'Oculto'}</span>
+                                        <span className="text-xs text-slate-400 hidden sm:inline">{isVisible ? t('settings_tab_active') : t('settings_tab_hidden')}</span>
                                         <div 
                                             className={`w-11 h-6 shrink-0 rounded-full transition-all flex items-center px-1 cursor-pointer border ${isVisible ? 'bg-blue-500/20 border-blue-500/50 shadow-[0_0_8px_rgba(59,130,246,0.3)]' : 'bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-700'}`} 
                                             onClick={() => toggleHiddenTab(tab)}
-                                            title={isVisible ? "Ocultar separador" : "Mostrar separador"}
+                                            title={isVisible ? t('settings_tab_hidden') : t('settings_tab_active')}
                                         >
                                             <div className={`w-4 h-4 rounded-full transition-all ${isVisible ? 'translate-x-5 bg-blue-500 dark:bg-blue-400 shadow-[0_0_8px_rgba(59,130,246,0.8)]' : 'translate-x-0 bg-slate-400 dark:bg-slate-500'}`}/>
                                         </div>
@@ -326,8 +336,8 @@ export default function Conta() {
 
                 <section className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/5 rounded-2xl p-6 sm:p-8 shadow-sm dark:shadow-xl">
                     <div className="pb-4">
-                        <h3 className="font-semibold text-slate-900 dark:text-slate-200 mb-1 text-base">Fontes de Dados (Scrapers)</h3>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">Escolhe as plataformas ativas no calendário. O sistema unifica e apresenta automaticamente as informações mais completas de cada prova.</p>
+                        <h3 className="font-semibold text-slate-900 dark:text-slate-200 mb-1 text-base">{t('settings_sources_title')}</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{t('settings_sources_desc')}</p>
                     </div>
 
                     <div className="pt-2 flex flex-col gap-3">
@@ -369,10 +379,10 @@ export default function Conta() {
                                 </div>
                                 <div>
                                     <h3 className="font-bold text-slate-900 dark:text-slate-100 text-base">
-                                        Eliminação de Dados e Favoritos (RGPD)
+                                        {t('settings_gdpr_title')}
                                     </h3>
                                     <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                                        Podes solicitar a eliminação dos teus favoritos, histórico e preferências da plataforma mantendo a tua conta ativa. (Para encerrares a conta definitivamente, usa a opção <em>Eliminar conta</em> no menu de Segurança do perfil).
+                                        {t('settings_gdpr_desc')}
                                     </p>
                                 </div>
                             </div>
@@ -386,10 +396,10 @@ export default function Conta() {
                                         <Clock size={18} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                                         <div>
                                             <span className="font-bold text-xs sm:text-sm text-amber-700 dark:text-amber-300 block">
-                                                🧹 Pedido de Eliminação de Dados Pendente
+                                                {t('settings_gdpr_pending_title')}
                                             </span>
                                             <span className="text-[11px] sm:text-xs text-amber-600/90 dark:text-amber-400/80 block mt-0.5">
-                                                Submetido a {new Date(deletionRequest.createdAt).toLocaleDateString('pt-PT')}. A administração irá processar a limpeza dos teus dados em breve.
+                                                {t('settings_gdpr_pending_desc').replace('{date}', new Date(deletionRequest.createdAt).toLocaleDateString(language === 'en' ? 'en-US' : language === 'es' ? 'es-ES' : language === 'fr' ? 'fr-FR' : 'pt-PT'))}
                                             </span>
                                         </div>
                                     </div>
@@ -398,13 +408,13 @@ export default function Conta() {
                                         disabled={isLoadingDeletion}
                                         className="px-4 py-2 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 transition-all cursor-pointer shrink-0 shadow-sm"
                                     >
-                                        {isLoadingDeletion ? 'A cancelar...' : 'Cancelar Pedido'}
+                                        {isLoadingDeletion ? t('action_loading') : t('settings_gdpr_cancel_btn')}
                                     </button>
                                 </div>
                             ) : (
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                     <span className="text-xs text-slate-500">
-                                        Envia um pedido à equipa de administração para limpar os teus dados:
+                                        {t('settings_gdpr_title')}:
                                     </span>
                                     <button
                                         onClick={() => {
@@ -414,7 +424,7 @@ export default function Conta() {
                                         className="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer shrink-0 flex items-center justify-center gap-1.5"
                                     >
                                         <RotateCcw size={14} />
-                                        <span>Pedir Eliminação de Dados</span>
+                                        <span>{t('settings_gdpr_request_btn')}</span>
                                     </button>
                                 </div>
                             )}

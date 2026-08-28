@@ -319,7 +319,7 @@ export default function CalendarView({
                 {isOffline && (
                     <div className="mb-3.5 py-2 px-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs sm:text-sm font-medium flex items-center justify-center gap-2 animate-fade-in shadow-sm">
                         <WifiOff size={15} className="text-amber-500 shrink-0" />
-                        <span>Modo Offline — A mostrar o calendário guardado no teu telemóvel.</span>
+                        <span>{t('offline_mode_banner')}</span>
                     </div>
                 )}
                 <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center w-full gap-3 sm:gap-4">
@@ -333,8 +333,7 @@ export default function CalendarView({
                             }`}
                         >
                             <Filter size={15} className="shrink-0" />
-                            <span className="truncate">{showFilters ? 'Filtros' : 'Filtrar'}</span>
-                            <span className="hidden sm:inline">{showFilters ? 'Ativos' : 'Calendário'}</span>
+                            <span className="truncate">{showFilters ? t('filter_button_close') : t('filter_button_open')}</span>
                         </button>
 
                         {/* Toggle Switch para Ver Provas Passadas (Default: Futuros) */}
@@ -346,11 +345,11 @@ export default function CalendarView({
                                 ? 'bg-blue-600/10 text-blue-600 dark:text-blue-400 border-blue-500/30 shadow-sm' 
                                 : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 shadow-sm hover:border-slate-300 dark:hover:border-slate-700'
                             }`}
-                            title={pastEventsFilter === 'passados' ? (language === 'en' ? "Showing past events only." : "A mostrar apenas eventos passados.") : (language === 'en' ? "Show past events." : "Ver provas anteriores.")}
+                            title={pastEventsFilter === 'passados' ? t('filter_past_title_past') : t('filter_past_title_upcoming')}
                         >
                             <div className="flex items-center gap-1.5 sm:gap-2 truncate">
                                 <History size={14} className={`shrink-0 ${pastEventsFilter === 'passados' ? 'text-blue-500 dark:text-blue-400' : 'text-slate-400'}`} />
-                                <span className="truncate">{language === 'en' ? 'Past Events' : 'Passados'}</span>
+                                <span className="truncate">{t('filter_past_events')}</span>
                             </div>
                             
                             {/* Smooth Pill Switch */}
@@ -395,9 +394,9 @@ export default function CalendarView({
                 {/* Sub-header info: Counter & Bulk Export */}
                 <div className="flex flex-wrap items-center justify-between gap-3 mt-3 px-1">
                     <div className="text-xs text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1.5">
-                        <span>{language === 'en' ? 'Showing' : 'A mostrar'} <strong className="text-slate-800 dark:text-slate-200 font-semibold">{Math.min(visibleCount, filteredEvents.length)}</strong> {language === 'en' ? 'of' : 'de'} <strong className="text-slate-800 dark:text-slate-200 font-semibold">{filteredEvents.length}</strong> {filteredEvents.length === 1 ? (language === 'en' ? 'event' : 'prova') : (language === 'en' ? 'events' : 'provas')}</span>
+                        <span>{t('filter_counter_showing')} <strong className="text-slate-800 dark:text-slate-200 font-semibold">{Math.min(visibleCount, filteredEvents.length)}</strong> {t('filter_counter_of')} <strong className="text-slate-800 dark:text-slate-200 font-semibold">{filteredEvents.length}</strong> {filteredEvents.length === 1 ? t('filter_counter_event') : t('filter_counter_events')}</span>
                         {events.length > 0 && filteredEvents.length !== events.length && (
-                            <span className="text-slate-400 dark:text-slate-500 font-normal">({events.length} {language === 'en' ? 'total' : 'no total'})</span>
+                            <span className="text-slate-400 dark:text-slate-500 font-normal">({events.length} {t('filter_counter_total')})</span>
                         )}
                     </div>
 
@@ -411,10 +410,10 @@ export default function CalendarView({
                                 });
                             }}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 text-xs font-semibold transition-all cursor-pointer shadow-xs ml-auto"
-                            title={language === 'en' ? "Export all events in this list to your calendar (.ics)" : "Exportar todas as provas desta lista para o teu calendário (.ics)"}
+                            title={t('filter_export_ics')}
                         >
                             <Download size={13} />
-                            <span>{language === 'en' ? 'Export Calendar (.ics)' : 'Exportar Calendário (.ics)'}</span>
+                            <span>{t('filter_export_ics')}</span>
                         </button>
                     )}
                 </div>
@@ -424,7 +423,7 @@ export default function CalendarView({
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 w-full">
                             {activeFilters.includes('year') && (
                                 <div className="flex flex-col gap-2 col-span-full">
-                                    <label className="text-xs text-slate-400 uppercase tracking-wider font-bold ml-1">{language === 'en' ? 'Years' : 'Anos'}</label>
+                                    <label className="text-xs text-slate-400 uppercase tracking-wider font-bold ml-1">{t('filter_years')}</label>
                                     <div className="flex gap-2 flex-wrap">
                                         {availableYears.map(y => (
                                             <button 
@@ -442,7 +441,7 @@ export default function CalendarView({
                             {activeFilters.includes('month') && (
                                 <>
                                     <div className="flex flex-col gap-2">
-                                        <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">{language === 'en' ? 'Start Month' : 'Mês Inicial'}</label>
+                                        <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">{t('filter_start_month')}</label>
                                         <select 
                                             className="w-full h-9 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors"
                                             value={monthNames[monthFrom - 1]} 
@@ -453,7 +452,7 @@ export default function CalendarView({
                                     </div>
                                     
                                     <div className="flex flex-col gap-2">
-                                        <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">{language === 'en' ? 'End Month' : 'Mês Final'}</label>
+                                        <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">{t('filter_end_month')}</label>
                                         <select 
                                             className="w-full h-9 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors"
                                             value={monthNames[monthTo - 1]} 
@@ -468,10 +467,10 @@ export default function CalendarView({
                             {activeFilters.includes('escalao') && !forceEscalao && (
                                 <div className="flex flex-col gap-2 col-span-full">
                                     <div className="flex items-center gap-1 mb-0.5">
-                                        <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1 flex items-center">{language === 'en' ? 'Categories / Age Groups' : 'Escalões'}</label>
+                                        <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1 flex items-center">{t('filter_categories')}</label>
                                         <button 
                                             onClick={() => setShowEscalaoHelp(true)}
-                                            title={language === 'en' ? "Not sure about your category? Click here to find out." : "Não tens a certeza do teu escalão? Clica aqui para descobrir."}
+                                            title={t('escalao_modal_desc')}
                                             className="text-blue-500 hover:text-blue-400 p-0 -mt-[2px] flex items-center justify-center transition-colors"
                                         >
                                             <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -495,7 +494,7 @@ export default function CalendarView({
                             
                             {activeFilters.includes('ambito') && !forceAmbito && (
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">{language === 'en' ? 'Scope / Championship' : 'Âmbito'}</label>
+                                    <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">{t('filter_scope')}</label>
                                     <select 
                                         className="w-full h-9 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors"
                                         value={selectedAmbito} 
@@ -503,7 +502,7 @@ export default function CalendarView({
                                     >
                                         {uniqueAmbitos.map(opt => (
                                             <option key={opt} value={opt}>
-                                                {opt === 'Todos' && language === 'en' ? 'All Scopes' : opt}
+                                                {opt === 'Todos' ? t('filter_all_scopes') : opt}
                                             </option>
                                         ))}
                                     </select>
@@ -512,7 +511,7 @@ export default function CalendarView({
                             
                             {activeFilters.includes('licenca') && !forceLicenca && (
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">{language === 'en' ? 'License Type' : 'Licença'}</label>
+                                    <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">{t('filter_license')}</label>
                                     <select 
                                         className="w-full h-9 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors"
                                         value={selectedLicenca} 
@@ -520,7 +519,7 @@ export default function CalendarView({
                                     >
                                         {uniqueLicencas.map(opt => (
                                             <option key={opt} value={opt}>
-                                                {opt === 'Todas' && language === 'en' ? 'All Licenses' : opt === 'Competição' && language === 'en' ? 'Competition' : opt === 'CPT / Lazer' && language === 'en' ? 'Leisure / Open (CPT)' : opt}
+                                                {opt === 'Todas' ? t('filter_all_licenses') : opt === 'Competição' ? t('escalao_license_competition') : opt === 'CPT / Lazer' ? t('escalao_license_cpt') : opt}
                                             </option>
                                         ))}
                                     </select>
@@ -528,34 +527,34 @@ export default function CalendarView({
                             )}
                             
                             <div className="flex flex-col gap-2">
-                                <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">{language === 'en' ? 'Event Type' : 'Tipo de Prova'}</label>
+                                <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">{t('filter_event_type')}</label>
                                 <select 
                                     className="w-full h-9 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors"
                                     value={selectedType} 
                                     onChange={(e) => setSelectedType(e.target.value)} 
                                 >
-                                    <option value="Todos">{language === 'en' ? 'All Types' : 'Todos'}</option>
-                                    <option value="Etapas">{language === 'en' ? 'Stages (Multi-day)' : 'Etapas (Multi-dia)'}</option>
-                                    <option value="Um Dia">{language === 'en' ? 'Single Day' : 'Um Dia'}</option>
+                                    <option value="Todos">{t('filter_all_types')}</option>
+                                    <option value="Etapas">{t('filter_stages')}</option>
+                                    <option value="Um Dia">{t('filter_single_day')}</option>
                                 </select>
                             </div>
 
                             <div className="flex flex-col gap-2">
-                                <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">{language === 'en' ? 'Past / Upcoming' : 'Eventos Passados / Futuros'}</label>
+                                <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">{t('filter_past_upcoming')}</label>
                                 <select 
                                     className="w-full h-9 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors"
                                     value={pastEventsFilter} 
                                     onChange={(e) => setPastEventsFilter(e.target.value)} 
                                 >
-                                    <option value="todos">{language === 'en' ? 'All Events' : 'Todos os Eventos'}</option>
-                                    <option value="futuros">{language === 'en' ? 'Upcoming Only' : 'Apenas Futuros (Próximos)'}</option>
-                                    <option value="passados">{language === 'en' ? 'Past Only' : 'Apenas Passados (Já Realizados)'}</option>
+                                    <option value="todos">{t('filter_all_events')}</option>
+                                    <option value="futuros">{t('filter_upcoming_only')}</option>
+                                    <option value="passados">{t('filter_past_only')}</option>
                                 </select>
                             </div>
                             
                             {activeFilters.includes('regiao') && (
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">{language === 'en' ? 'Region' : 'Região'}</label>
+                                    <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">{t('filter_region')}</label>
                                     <select 
                                         className="w-full h-9 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors"
                                         value={selectedRegiao} 
@@ -563,7 +562,7 @@ export default function CalendarView({
                                     >
                                         {uniqueRegioes.map(opt => (
                                             <option key={opt} value={opt}>
-                                                {opt === 'Todas' && language === 'en' ? 'All Regions' : opt}
+                                                {opt === 'Todas' ? t('filter_all_regions') : opt}
                                             </option>
                                         ))}
                                     </select>
@@ -573,11 +572,11 @@ export default function CalendarView({
                             {activeFilters.includes('distrito') && (
                                 <div className="flex flex-col gap-2">
                                     <div className="flex items-center gap-1 mb-0.5">
-                                        <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1 flex items-center">{language === 'en' ? 'District' : 'Distrito'}</label>
+                                        <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1 flex items-center">{t('filter_district')}</label>
                                         {selectedDistrito !== 'Todos' && (
                                             <button 
                                                 onClick={() => setSelectedDistrito('Todos')}
-                                                title={language === 'en' ? "Clear District" : "Limpar Distrito"}
+                                                title={t('filter_clear_all')}
                                                 className="text-blue-500 hover:text-blue-400 p-0 -mt-[2px] flex items-center justify-center transition-colors"
                                             >
                                                 <X size={14} />
@@ -591,7 +590,7 @@ export default function CalendarView({
                                     >
                                         {uniqueDistritos.map(opt => (
                                             <option key={opt} value={opt}>
-                                                {opt === 'Todos' && language === 'en' ? 'All Districts' : opt}
+                                                {opt === 'Todos' ? t('filter_all_districts') : opt}
                                             </option>
                                         ))}
                                     </select>
@@ -602,7 +601,7 @@ export default function CalendarView({
                         {activeFilters.includes('modalidade') && (
                             <div className="mt-6 pt-5 border-t border-slate-200 dark:border-slate-700">
                                 <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1 block mb-3">
-                                    Modalidades
+                                    {t('filter_modalities')}
                                 </span>
                                 <div className="flex gap-2 flex-wrap">
                                 {availableTags.map(tag => (
@@ -625,18 +624,18 @@ export default function CalendarView({
                 {isInitialLoading && (
                     <div className="flex flex-col items-center justify-center py-16 text-slate-400">
                         <div className="w-8 h-8 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin mb-4"></div>
-                        <p>A carregar o calendário unificado...</p>
+                        <p>{t('action_loading_events')}</p>
                     </div>
                 )}
 
                 {!isInitialLoading && error && events.length === 0 && (
                     <div className="flex flex-col items-center justify-center py-16 text-slate-400">
-                        <p className="text-red-400">Ocorreu um erro: {error.message || error}</p>
+                        <p className="text-red-400">{t('error_occurred')}: {error.message || error}</p>
                         <button 
                             onClick={() => mutate()}
                             className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors border-none cursor-pointer font-medium"
                         >
-                            {language === 'en' ? 'Try again' : 'Tentar novamente'}
+                            {t('btn_try_again')}
                         </button>
                     </div>
                 )}
@@ -666,12 +665,10 @@ export default function CalendarView({
                                 <div className="bg-slate-800 border border-slate-700 p-8 rounded-xl max-w-lg mx-auto">
                                     <span className="text-4xl block mb-4">🌐</span>
                                     <h3 className="text-slate-50 mb-3 text-xl font-medium">
-                                        {language === 'en' ? 'Looking for regional races?' : 'Procuras provas regionais?'}
+                                         {t('regional_not_found_title')}
                                     </h3>
                                     <p className="text-slate-400 mb-6 text-sm leading-relaxed">
-                                        {language === 'en'
-                                            ? `Many events from ${selectedRegiao} might not be in the central calendar. Check the official source directly:`
-                                            : `Muitas provas da ${selectedRegiao} (como Taças Regionais) podem não ser publicadas no calendário central da FPC. Consulta diretamente a fonte oficial:`}
+                                         {t('regional_not_found_desc')}
                                     </p>
                                     <a 
                                         href={associationLinks[selectedRegiao] || 'https://www.fpciclismo.pt/'} 
@@ -679,13 +676,13 @@ export default function CalendarView({
                                         rel="noopener noreferrer"
                                         className="inline-flex items-center gap-2 bg-slate-900 border border-blue-500 text-slate-50 px-6 py-3 rounded-lg no-underline font-semibold hover:bg-blue-600 transition-colors"
                                     >
-                                        Visitar Site da {selectedRegiao}
-                                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                                        </svg>
-                                    </a>
-                                </div>
-                                            )}
+                                         {t('regional_visit_site')} ({selectedRegiao})
+                                         <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                         </svg>
+                                     </a>
+                                 </div>
+                            )}
                         </div>
                     );
                 })()}
@@ -777,7 +774,7 @@ export default function CalendarView({
                                                         });
                                                     }}
                                                     className={`p-1 rounded-full transition-all flex items-center justify-center shrink-0 cursor-pointer ${isEventFavorited ? 'text-yellow-500 dark:text-yellow-400 bg-yellow-400/15 hover:bg-yellow-400/25' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
-                                                    title={isEventFavorited ? (language === 'en' ? "Remove from Favorites" : "Remover dos Favoritos") : (language === 'en' ? "Add to Favorites" : "Adicionar aos Favoritos")}
+                                                    title={isEventFavorited ? t('card_remove_favorite') : t('card_add_favorite')}
                                                 >
                                                     <Star size={14} fill={isEventFavorited ? "#facc15" : "none"} stroke={isEventFavorited ? "#eab308" : "currentColor"} />
                                                 </button>
@@ -800,15 +797,15 @@ export default function CalendarView({
                                         <div className="flex flex-wrap items-center gap-1.5 flex-1 min-w-0 md:justify-end">
                                             {isEventMarked && (
                                                 <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1 shrink-0">
-                                                    <Check size={11} className="stroke-[3]" /> Na agenda
+                                                    <Check size={11} className="stroke-[3]" /> {t('card_on_agenda')}
                                                 </span>
                                             )}
                                             {dateConflict.hasConflict && !isEventMarked && (
                                                 <span 
                                                     className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-orange-500/15 text-orange-600 dark:text-orange-400 border border-orange-500/30 flex items-center gap-1 shrink-0"
-                                                    title={language === 'en' ? `You already have an event on this date: "${dateConflict.conflictingTitle}"` : `Já tens uma prova marcada neste dia: "${dateConflict.conflictingTitle}"`}
+                                                    title={t('card_conflict_tooltip')}
                                                 >
-                                                    <AlertTriangle size={11} className="stroke-[2.5] text-orange-500" /> {language === 'en' ? 'Same day event' : 'Prova no mesmo dia'}
+                                                    <AlertTriangle size={11} className="stroke-[2.5] text-orange-500" /> {t('card_same_day')}
                                                 </span>
                                             )}
 
@@ -821,8 +818,8 @@ export default function CalendarView({
                                                     const diffDays = Math.ceil((closes - now) / (1000 * 60 * 60 * 24));
                                                     if (diffDays >= 0 && diffDays <= 4) {
                                                         const countdownText = diffDays === 0 
-                                                            ? (language === 'en' ? 'Last day!' : 'Último dia!') 
-                                                            : (language === 'en' ? `${diffDays}d to close` : `${diffDays}d p/ fechar`);
+                                                            ? t('card_last_day') 
+                                                            : t('card_days_to_close').replace('{days}', diffDays);
                                                         return (
                                                             <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 flex items-center gap-1 shrink-0 animate-pulse">
                                                                 <Clock size={10} className="shrink-0" /> {countdownText}
@@ -840,13 +837,12 @@ export default function CalendarView({
                                                 
                                                 if (!isGenericAmbito) {
                                                     let displayAmbito = rawAmbito;
-                                                    if (language === 'en') {
-                                                        if (rawAmbito === 'Taça de Portugal') displayAmbito = 'Portuguese Cup';
-                                                        else if (rawAmbito === 'Nacional' || rawAmbito.includes('Nacional')) displayAmbito = 'National Championship';
-                                                        else if (rawAmbito === 'Prova Aberta') displayAmbito = 'Open Race';
-                                                        else if (rawAmbito === 'Internacional') displayAmbito = 'International';
-                                                        else if (rawAmbito === 'Regional') displayAmbito = 'Regional';
-                                                    }
+                                                    if (rawAmbito === 'Taça de Portugal') displayAmbito = t('badge_cup');
+                                                    else if (rawAmbito === 'Nacional' || rawAmbito.includes('Nacional')) displayAmbito = t('badge_national');
+                                                    else if (rawAmbito === 'Prova Aberta') displayAmbito = t('card_open_race');
+                                                    else if (rawAmbito === 'Internacional') displayAmbito = t('badge_uci');
+                                                    else if (rawAmbito === 'Regional') displayAmbito = t('nav_regionals');
+                                                    
                                                     return (
                                                         <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider shrink-0 ${
                                                             rawAmbito === 'Taça de Portugal'
@@ -866,9 +862,7 @@ export default function CalendarView({
                                                 
                                                 // Se não tem âmbito válido, mostra licença relevante se existir (ex: Competição)
                                                 if (event.licenca && event.licenca !== 'CPT / Lazer') {
-                                                    const displayLicenca = language === 'en' 
-                                                        ? (event.licenca === 'Competição' ? 'Competition' : event.licenca)
-                                                        : event.licenca;
+                                                    const displayLicenca = event.licenca === 'Competição' ? t('escalao_license_competition') : event.licenca;
                                                     return (
                                                         <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30 shrink-0">
                                                             {displayLicenca}
@@ -882,7 +876,7 @@ export default function CalendarView({
                                             {/* Prova por Etapas */}
                                             {isMultiDay && (
                                                 <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/30 shrink-0">
-                                                    {language === 'en' ? 'Stages' : 'Etapas'}
+                                                    {t('card_stages')}
                                                 </span>
                                             )}
                                         </div>

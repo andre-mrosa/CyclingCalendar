@@ -184,7 +184,7 @@ export default function Navigation() {
         <button 
             onClick={() => setTheme(isDarkMode ? 'light' : 'dark')}
             className="relative w-9 h-5 rounded-full bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 flex items-center transition-colors shadow-inner cursor-pointer p-0"
-            title={isDarkMode ? "Mudar para Modo Diurno" : "Mudar para Modo Noturno"}
+            title={isDarkMode ? (t('settings_theme_light') || "Mudar para Modo Diurno") : (t('settings_theme_dark') || "Mudar para Modo Noturno")}
         >
             <div className={`absolute w-4 h-4 rounded-full flex items-center justify-center transition-all duration-300 shadow-[0_1px_2px_rgba(0,0,0,0.2)] ${isDarkMode ? 'bg-slate-900 left-[2px]' : 'bg-white left-[18px]'}`}>
                 {mounted && (isDarkMode ? <Moon size={10} className="text-slate-300" /> : <Sun size={10} className="text-amber-500" />)}
@@ -344,10 +344,10 @@ export default function Navigation() {
                                 <Link 
                                     href="/admin"
                                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30 text-xs font-bold transition-all shadow-sm !no-underline"
-                                    title="Painel de Gestão e Logs"
+                                    title={t('nav_admin')}
                                 >
                                     <Shield size={14} />
-                                    <span>Gestão</span>
+                                    <span>{t('nav_admin')}</span>
                                     {adminPendingCount > 0 && (
                                         <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-black bg-rose-500 text-white shadow-sm animate-pulse">
                                             {adminPendingCount}
@@ -371,25 +371,25 @@ export default function Navigation() {
                                 <UserButton.MenuItems>
                                     {isAdmin && (
                                         <UserButton.Link 
-                                            label="Painel de Gestão"
+                                            label={t('nav_admin')}
                                             labelIcon={<Shield size={16} className="mr-2 text-blue-500" />}
                                             href="/admin"
                                         />
                                     )}
                                     <UserButton.Action 
-                                        label="Definições"
+                                        label={t('nav_settings')}
                                         labelIcon={<Settings size={16} className="mr-2" />}
                                         onClick={() => setIsSettingsModalOpen(true)}
                                     />
                                     <UserButton.Action 
-                                        label="Ajuda"
+                                        label={t('nav_help')}
                                         labelIcon={<HelpCircle size={16} className="mr-2" />}
                                         onClick={() => setIsHelpModalOpen(true)}
                                     />
                                 </UserButton.MenuItems>
 
                                 <UserButton.UserProfilePage
-                                    label="Eliminar Dados"
+                                    label={t('gdpr_title')}
                                     url="delete-data"
                                     labelIcon={<RotateCcw size={15} className="text-amber-500" />}
                                 >
@@ -406,7 +406,7 @@ export default function Navigation() {
                         <Link 
                             href="/admin" 
                             className="relative p-1.5 rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30 flex items-center justify-center transition-colors !no-underline"
-                            title="Painel de Gestão"
+                            title={t('nav_admin')}
                         >
                             <Shield size={16} />
                             {adminPendingCount > 0 && (
@@ -435,7 +435,7 @@ export default function Navigation() {
                     <button 
                         onClick={() => setIsMobileMenuOpen(false)}
                         className="bg-transparent border-none text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer flex items-center justify-center transition-colors p-1"
-                        title="Fechar menu"
+                        title={t('filter_button_close')}
                     >
                         <X size={22} />
                     </button>
@@ -481,13 +481,13 @@ export default function Navigation() {
                                     <UserButton.MenuItems>
                                         {isAdmin && (
                                             <UserButton.Link 
-                                                label="Painel de Gestão"
+                                                label={t('nav_admin')}
                                                 labelIcon={<Shield size={16} className="mr-2 text-blue-500" />}
                                                 href="/admin"
                                             />
                                         )}
                                         <UserButton.Action 
-                                            label="Definições"
+                                            label={t('nav_settings')}
                                             labelIcon={<Settings size={16} className="mr-2" />}
                                             onClick={() => {
                                                 setIsMobileMenuOpen(false);
@@ -495,7 +495,7 @@ export default function Navigation() {
                                             }}
                                         />
                                         <UserButton.Action 
-                                            label="Ajuda"
+                                            label={t('nav_help')}
                                             labelIcon={<HelpCircle size={16} className="mr-2" />}
                                             onClick={() => {
                                                 setIsMobileMenuOpen(false);
@@ -505,24 +505,24 @@ export default function Navigation() {
                                     </UserButton.MenuItems>
 
                                     <UserButton.UserProfilePage
-                                        label="Eliminar Dados"
+                                        label={t('gdpr_title')}
                                         url="delete-data"
                                         labelIcon={<RotateCcw size={15} className="text-amber-500" />}
                                     >
                                         <ClerkPrivacyProfilePage />
                                     </UserButton.UserProfilePage>
                                 </UserButton>
-                                <span className="text-sm font-semibold select-none flex-1">A minha conta</span>
+                                <span className="text-sm font-semibold select-none flex-1">{t('nav_account')}</span>
                             </div>
 
                             {isAdmin && (
                                 <Link 
-                                    href="/admin"
+                                    href="/admin" 
                                     onClick={() => setIsMobileMenuOpen(false)}
                                     className="flex items-center gap-2.5 py-2.5 px-3 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/25 text-sm font-bold transition-colors !no-underline"
                                 >
                                     <Shield size={16} />
-                                    <span>Painel de Gestão</span>
+                                    <span>{t('nav_admin')}</span>
                                 </Link>
                             )}
                         </Show>

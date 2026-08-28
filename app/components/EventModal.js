@@ -939,7 +939,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 ) : (
                     <div className="mb-2 pb-2 border-b border-slate-200 dark:border-slate-800/80 px-4 sm:px-5 shrink-0">
                         <p className="text-slate-500 dark:text-slate-400 text-xs">
-                            {language === 'en' ? 'Detailed information available on the official organization page.' : 'Informação detalhada disponível na página oficial da organização.'}
+                            {t('summary_no_description')}
                         </p>
                     </div>
                 )}
@@ -950,14 +950,14 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 {availableTabs.length === 0 && (
                     <div className="flex flex-col items-center justify-center h-full gap-4 p-6 animate-fade-in">
                         <FileText size={40} className="text-slate-600" />
-                        <h3 className="m-0 text-slate-200 text-center text-lg font-semibold">{language === 'en' ? 'No detailed data available' : 'Não há dados detalhados'}</h3>
+                        <h3 className="m-0 text-slate-200 text-center text-lg font-semibold">{t('summary_no_description')}</h3>
                         <a 
                             href={activeEvent.link} 
                             target="_blank" 
                             rel="noopener noreferrer" 
                             className="bg-blue-600 text-white no-underline px-6 py-2.5 rounded-xl font-semibold inline-block shadow-lg hover:bg-blue-500 transition-colors text-sm"
                         >
-                            {language === 'en' ? 'Visit Organization Website' : 'Visitar Site da Organização'}
+                            {t('action_official_site')}
                         </a>
                     </div>
                 )}
@@ -969,13 +969,14 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         {(() => {
                             if (!activeEvent.registrationClosesAt && !activeEvent.registrationOpensAt) return null;
                             const now = new Date();
+                            const locale = language === 'en' ? 'en-GB' : language === 'es' ? 'es-ES' : language === 'fr' ? 'fr-FR' : 'pt-PT';
                             if (activeEvent.registrationClosesAt) {
                                 const closes = new Date(activeEvent.registrationClosesAt);
                                 const diffDays = Math.ceil((closes - now) / (1000 * 60 * 60 * 24));
                                 if (diffDays >= 0 && diffDays <= 7) {
-                                    const closesLabel = language === 'en'
-                                        ? `Registrations close ${diffDays === 0 ? 'TODAY!' : `in ${diffDays} days (${closes.toLocaleDateString('en-GB')})`}`
-                                        : `Inscrições fecham ${diffDays === 0 ? 'HOJE!' : `em ${diffDays} dias (${closes.toLocaleDateString('pt-PT')})`}`;
+                                    const closesLabel = diffDays === 0
+                                        ? t('card_last_day')
+                                        : `${t('reg_close_title')}: ${t('card_days_to_close').replace('{days}', diffDays)} (${closes.toLocaleDateString(locale)})`;
                                     return (
                                         <div className="mb-2.5 px-3.5 py-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-between gap-2 text-rose-600 dark:text-rose-400 text-xs font-semibold shrink-0">
                                             <div className="flex items-center gap-2">
@@ -998,7 +999,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                     return (
                                         <div className="mb-2.5 px-3.5 py-2.5 rounded-xl bg-lime-500/10 border border-lime-500/30 flex items-center gap-2 text-lime-700 dark:text-lime-400 text-xs font-semibold shrink-0">
                                             <Clock size={15} className="shrink-0 text-lime-500" />
-                                            <span>Inscrições abrem em {diffDays} dias ({opens.toLocaleDateString('pt-PT')})</span>
+                                            <span>{t('reg_open_title')}: {diffDays}d ({opens.toLocaleDateString(locale)})</span>
                                         </div>
                                     );
                                 }
@@ -1051,7 +1052,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                             <div className="min-w-0">
                                                 <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-semibold uppercase leading-tight">{t('summary_location')}</span>
                                                 <span className="font-semibold text-slate-900 dark:text-slate-100 truncate block">
-                                                    {activeEvent.details?.split('|')[0]?.trim() || 'A definir'}
+                                                    {activeEvent.details?.split('|')[0]?.trim() || t('summary_location_tbd')}
                                                     {activeEvent.distrito && !activeEvent.details?.includes(activeEvent.distrito) ? ` (${activeEvent.distrito})` : ''}
                                                 </span>
                                             </div>
@@ -1062,7 +1063,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                             <Bike size={14} className="text-amber-500 shrink-0 mt-0.5" />
                                             <div className="min-w-0">
                                                 <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-semibold uppercase leading-tight">{t('summary_discipline')}</span>
-                                                <span className="font-semibold text-slate-900 dark:text-slate-100 truncate block">{activeEvent.tag || 'Ciclismo'}</span>
+                                                <span className="font-semibold text-slate-900 dark:text-slate-100 truncate block">{activeEvent.tag || t('summary_cycling')}</span>
                                             </div>
                                         </div>
 
@@ -1082,7 +1083,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                     {percursosSummary && percursosSummary.length > 0 && (
                                         <div className="mt-2.5 pt-2 border-t border-slate-200/80 dark:border-slate-800/80">
                                             <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase block mb-1.5">
-                                                🚴 Percursos & Distâncias
+                                                {t('summary_routes_distances')}
                                             </span>
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                                                 {percursosSummary.map((p, idx) => {
@@ -1113,7 +1114,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             {isLoadingFullEvent && (
                                 <div className="w-full h-32 rounded-xl bg-slate-800/30 border border-slate-800/80 animate-pulse flex flex-col items-center justify-center gap-2 mb-2 text-slate-500">
                                     <div className="w-5 h-5 border-2 border-slate-600 border-t-blue-400 rounded-full animate-spin"></div>
-                                    <span className="text-xs font-medium">A carregar detalhes do evento...</span>
+                                    <span className="text-xs font-medium">{t('action_loading_data')}</span>
                                 </div>
                             )}
 
@@ -1123,14 +1124,14 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             {cleanDescriptionHtml ? (
                                 <div className="text-slate-700 dark:text-slate-300 text-xs sm:text-sm leading-relaxed prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: cleanDescriptionHtml }} />
                             ) : !isLoadingFullEvent ? (
-                                <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">Descrição adicional não disponível.</p>
+                                <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">{t('summary_no_description')}</p>
                             ) : null}
 
                             {/* Recursos e Documentos Úteis da Prova */}
                             {parsedLinks.resources.length > 0 && !isLoadingFullEvent && (
                                 <div className="mt-3.5 mb-1 p-3.5 bg-slate-50 dark:bg-slate-950/60 rounded-2xl border border-slate-200 dark:border-slate-800/80">
                                     <h5 className="text-[11px] uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400 mb-2.5 flex items-center gap-1.5">
-                                        <ExternalLink size={12} className="text-blue-500" /> Recursos e Documentos
+                                        <ExternalLink size={12} className="text-blue-500" /> {t('resources_title')}
                                     </h5>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                         {parsedLinks.resources.map((res, idx) => (
@@ -1138,7 +1139,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                                 key={`res-${idx}`} 
                                                 href={res.link} 
                                                 target="_blank" 
-                                                rel="noopener noreferrer"
+                                                rel="noopener noreferrer" 
                                                 className="flex items-center gap-2.5 p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 hover:border-blue-400 dark:hover:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-white transition-colors text-xs font-semibold shadow-2xs group"
                                             >
                                                 <span className="p-1 rounded-lg bg-slate-100 dark:bg-slate-800 group-hover:bg-blue-500/10 transition-colors shrink-0">
@@ -1165,7 +1166,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                         <FileText size={13} className="text-purple-500 dark:text-purple-400" />
                                     </div>
                                     <div className="min-w-0">
-                                        <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold block leading-tight">Licença</span>
+                                        <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold block leading-tight">{t('summary_license')}</span>
                                         <span className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200 truncate block">{activeEvent.licenca}</span>
                                     </div>
                                 </div>
@@ -1176,7 +1177,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                         <Users size={13} className="text-blue-500 dark:text-blue-400" />
                                     </div>
                                     <div className="min-w-0">
-                                        <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold block leading-tight">Organização</span>
+                                        <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold block leading-tight">{t('summary_organizer')}</span>
                                         <span className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200 truncate block">
                                             {activeEvent.organizador 
                                                 ? (activeEvent.organizador === 'U.V.P./F.P.C' ? 'FPC' : activeEvent.organizador) 
@@ -1322,16 +1323,16 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             {activeEvent.prices ? (
                                 <div className="text-slate-700 dark:text-slate-300 text-xs sm:text-sm prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: activeEvent.prices }} />
                             ) : (
-                                <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">Informação não disponível.</p>
+                                <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">{t('summary_no_description')}</p>
                             )}
                         </div>
                         <div className="shrink-0 grid grid-cols-1 sm:grid-cols-2 gap-2 pb-1">
                             <div className="bg-slate-50 dark:bg-slate-950/60 p-3 rounded-xl border border-slate-200 dark:border-slate-800/80 flex flex-col justify-between">
                                 <div className="flex items-start justify-between gap-2">
                                     <div>
-                                        <h4 className="mb-1 text-slate-500 text-[10px] uppercase tracking-wider font-semibold">Abertura das Inscrições</h4>
+                                        <h4 className="mb-1 text-slate-500 text-[10px] uppercase tracking-wider font-semibold">{t('reg_open_title')}</h4>
                                         <p className="text-slate-800 dark:text-slate-200 text-xs sm:text-sm font-semibold">
-                                            {activeEvent.registrationOpensAt ? formatRegDate(activeEvent.registrationOpensAt) : 'A definir'}
+                                            {activeEvent.registrationOpensAt ? formatRegDate(activeEvent.registrationOpensAt) : t('summary_to_be_defined')}
                                         </p>
                                     </div>
                                     {activeEvent.registrationOpensAt && isSignedIn && (() => {
@@ -1340,7 +1341,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                             <button 
                                                 onClick={() => {
                                                     if (isRegOpenMarked) {
-                                                        setDeleteConfirmation({ target: 'registration_open', label: 'o lembrete de abertura das inscrições' });
+                                                        setDeleteConfirmation({ target: 'registration_open', label: t('cal_menu_mark_reg_open') });
                                                     } else {
                                                         handleAddToCalendar('registration_open');
                                                     }
@@ -1353,28 +1354,28 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                                         ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30'
                                                         : 'bg-white hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 text-blue-600 dark:text-blue-400 border border-slate-200 dark:border-slate-700 shadow-sm'
                                                 } ${regOpenCalStatus === 'loading' ? 'opacity-70 cursor-default' : ''}`}
-                                                title={isRegOpenMarked ? "Clica para remover este lembrete do Google Calendar" : regOpenCalMsg || "Avisar no Google Calendar (1 dia antes e 1 hora antes)"}
+                                                title={isRegOpenMarked ? t('action_remove_confirm') : regOpenCalMsg || t('reg_reminder_alert')}
                                             >
                                                 {regOpenCalStatus === 'loading' ? (
                                                     <>
                                                         <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                                                        <span>A marcar...</span>
+                                                        <span>{t('action_marking')}</span>
                                                     </>
                                                 ) : isRegOpenMarked ? (
                                                     <>
                                                         <span className="flex items-center gap-1.5 group-hover:hidden">
                                                             <Check size={13} />
-                                                            <span>Marcado ✓</span>
+                                                            <span>{t('action_marked')} ✓</span>
                                                         </span>
                                                         <span className="hidden group-hover:flex items-center gap-1.5">
                                                             <Trash2 size={13} />
-                                                            <span>Remover?</span>
+                                                            <span>{t('action_remove_confirm')}</span>
                                                         </span>
                                                     </>
                                                 ) : (
                                                     <>
                                                         <CalendarPlus size={13} />
-                                                        <span>{regOpenCalStatus === 'error' ? (regOpenCalMsg || 'Erro!') : 'Lembrar abertura'}</span>
+                                                        <span>{regOpenCalStatus === 'error' ? (regOpenCalMsg || 'Erro!') : t('reg_remind_open')}</span>
                                                     </>
                                                 )}
                                             </button>
@@ -1383,7 +1384,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 </div>
                                 {activeEvent.registrationOpensAt && (
                                     <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
-                                        <Clock size={10} className="text-blue-500" /> Avisa 1 dia antes e 1 hora antes
+                                        <Clock size={10} className="text-blue-500" /> {t('reg_reminder_alert')}
                                     </span>
                                 )}
                             </div>
@@ -1391,9 +1392,9 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             <div className="bg-slate-50 dark:bg-slate-950/60 p-3 rounded-xl border border-slate-200 dark:border-slate-800/80 flex flex-col justify-between">
                                 <div className="flex items-start justify-between gap-2">
                                     <div>
-                                        <h4 className="mb-1 text-slate-500 text-[10px] uppercase tracking-wider font-semibold">Fecho das Inscrições</h4>
+                                        <h4 className="mb-1 text-slate-500 text-[10px] uppercase tracking-wider font-semibold">{t('reg_close_title')}</h4>
                                         <p className="text-slate-800 dark:text-slate-200 text-xs sm:text-sm font-semibold">
-                                            {activeEvent.registrationClosesAt ? formatRegDate(activeEvent.registrationClosesAt) : 'A definir'}
+                                            {activeEvent.registrationClosesAt ? formatRegDate(activeEvent.registrationClosesAt) : t('summary_to_be_defined')}
                                         </p>
                                     </div>
                                     {activeEvent.registrationClosesAt && isSignedIn && (() => {
@@ -1402,7 +1403,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                             <button 
                                                 onClick={() => {
                                                     if (isRegCloseMarked) {
-                                                        setDeleteConfirmation({ target: 'registration_close', label: 'o lembrete de fecho das inscrições' });
+                                                        setDeleteConfirmation({ target: 'registration_close', label: t('cal_menu_mark_reg_close') });
                                                     } else {
                                                         handleAddToCalendar('registration_close');
                                                     }
@@ -1415,28 +1416,28 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                                         ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30'
                                                         : 'bg-white hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 text-blue-600 dark:text-blue-400 border border-slate-200 dark:border-slate-700 shadow-sm'
                                                 } ${regCloseCalStatus === 'loading' ? 'opacity-70 cursor-default' : ''}`}
-                                                title={isRegCloseMarked ? "Clica para remover este lembrete do Google Calendar" : regCloseCalMsg || "Avisar no Google Calendar (1 dia antes e 1 hora antes)"}
+                                                title={isRegCloseMarked ? t('action_remove_confirm') : regCloseCalMsg || t('reg_reminder_alert')}
                                             >
                                                 {regCloseCalStatus === 'loading' ? (
                                                     <>
                                                         <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                                                        <span>A marcar...</span>
+                                                        <span>{t('action_marking')}</span>
                                                     </>
                                                 ) : isRegCloseMarked ? (
                                                     <>
                                                         <span className="flex items-center gap-1.5 group-hover:hidden">
                                                             <Check size={13} />
-                                                            <span>Marcado ✓</span>
+                                                            <span>{t('action_marked')} ✓</span>
                                                         </span>
                                                         <span className="hidden group-hover:flex items-center gap-1.5">
                                                             <Trash2 size={13} />
-                                                            <span>Remover?</span>
+                                                            <span>{t('action_remove_confirm')}</span>
                                                         </span>
                                                     </>
                                                 ) : (
                                                     <>
                                                         <CalendarPlus size={13} />
-                                                        <span>{regCloseCalStatus === 'error' ? (regCloseCalMsg || 'Erro!') : 'Lembrar fecho'}</span>
+                                                        <span>{regCloseCalStatus === 'error' ? (regCloseCalMsg || 'Erro!') : t('reg_remind_close')}</span>
                                                     </>
                                                 )}
                                             </button>
@@ -1445,7 +1446,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 </div>
                                 {activeEvent.registrationClosesAt && (
                                     <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
-                                        <Clock size={10} className="text-amber-500" /> Avisa 1 dia antes e 1 hora antes
+                                        <Clock size={10} className="text-amber-500" /> {t('reg_reminder_alert')}
                                     </span>
                                 )}
                             </div>
@@ -1459,22 +1460,22 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         <div className="flex-1 overflow-y-auto min-h-0 pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent grid grid-cols-1 md:grid-cols-2 gap-3 pb-2 overscroll-contain touch-pan-y">
                             <div className="bg-slate-50 dark:bg-slate-950/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800/80">
                                 <h4 className="mb-2 text-slate-800 dark:text-slate-200 flex items-center gap-2 text-sm font-semibold">
-                                    <Trophy size={15} className="text-amber-500 dark:text-amber-400" /> Prémios
+                                    <Trophy size={15} className="text-amber-500 dark:text-amber-400" /> {t('summary_prizes')}
                                 </h4>
                                 {activeEvent.prizes ? (
                                     <div className="text-slate-700 dark:text-slate-300 text-xs sm:text-sm prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: activeEvent.prizes }} />
                                 ) : (
-                                    <p className="text-slate-500 dark:text-slate-400 text-xs">Informação não disponível.</p>
+                                    <p className="text-slate-500 dark:text-slate-400 text-xs">{t('summary_no_description')}</p>
                                 )}
                             </div>
                             <div className="bg-slate-50 dark:bg-slate-950/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800/80">
                                 <h4 className="mb-2 text-slate-800 dark:text-slate-200 flex items-center gap-2 text-sm font-semibold">
-                                    <Shield size={15} className="text-emerald-500 dark:text-emerald-400" /> Seguro
+                                    <Shield size={15} className="text-emerald-500 dark:text-emerald-400" /> {t('summary_insurance')}
                                 </h4>
                                 {activeEvent.insurance ? (
                                     <div className="text-slate-700 dark:text-slate-300 text-xs sm:text-sm prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: activeEvent.insurance }} />
                                 ) : (
-                                    <p className="text-slate-500 dark:text-slate-400 text-xs">Informação não disponível.</p>
+                                    <p className="text-slate-500 dark:text-slate-400 text-xs">{t('summary_no_description')}</p>
                                 )}
                             </div>
                         </div>
@@ -1494,7 +1495,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 ></iframe>
                             </div>
                         ) : (
-                            <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">Localização a definir.</p>
+                            <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">{t('summary_location_tbd')}</p>
                         )}
                     </div>
                 )}
@@ -1599,7 +1600,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 <button 
                                     onClick={() => {
                                         if (isEventAlreadyMarked) {
-                                            setDeleteConfirmation({ target: 'event', label: 'a data desta prova' });
+                                            setDeleteConfirmation({ target: 'event', label: t('cal_menu_mark_event') });
                                         } else {
                                             handleAddToCalendar('event');
                                         }
@@ -1610,28 +1611,28 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                             ? 'bg-emerald-500/10 hover:bg-rose-500/10 text-emerald-600 hover:text-rose-600 dark:text-emerald-400 dark:hover:text-rose-400 border border-emerald-500/20 hover:border-rose-500/30'
                                             : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700'
                                     } ${isAddingToCalendar ? 'opacity-70 cursor-default' : ''}`}
-                                    title={isEventAlreadyMarked ? "Clica para remover este evento do Google Calendar" : "Marcar no Google Calendar"}
+                                    title={isEventAlreadyMarked ? t('action_remove_confirm') : t('cal_menu_google_cal')}
                                 >
                                     {isAddingToCalendar ? (
                                         <>
                                             <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                                            <span>A marcar...</span>
+                                            <span>{t('action_marking')}</span>
                                         </>
                                     ) : isEventAlreadyMarked ? (
                                         <>
                                             <span className="flex items-center gap-1.5 group-hover:hidden">
                                                 <Check size={15} />
-                                                <span>{calendarMsg || 'Já no calendário'}</span>
+                                                <span>{calendarMsg || `${t('action_marked')} ✓`}</span>
                                             </span>
                                             <span className="hidden group-hover:flex items-center gap-1.5">
                                                 <Trash2 size={15} />
-                                                <span>Remover da agenda?</span>
+                                                <span>{t('action_remove_confirm')}</span>
                                             </span>
                                         </>
                                     ) : (
                                         <>
                                             <CalendarPlus size={15} />
-                                            <span>Marcar prova</span>
+                                            <span>{t('cal_menu_mark_event')}</span>
                                         </>
                                     )}
                                 </button>
@@ -1640,7 +1641,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                     <button
                                         onClick={() => setShowCalMenu(!showCalMenu)}
                                         className="px-2 py-2 rounded-r-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
-                                        title="Mais opções de lembretes no calendário"
+                                        title={t('cal_menu_google_cal')}
                                     >
                                         <ChevronDown size={14} className={`transition-transform duration-200 ${showCalMenu ? 'rotate-180' : ''}`} />
                                     </button>
@@ -1650,14 +1651,14 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             {showCalMenu && (
                                 <div className="absolute bottom-full right-0 mb-2 w-72 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden z-50 animate-fade-in p-1.5 flex flex-col gap-1">
                                     <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800/80">
-                                        Lembretes no Google Calendar
+                                        {t('cal_menu_google_cal')}
                                     </div>
 
                                     <button
                                         onClick={() => {
                                             if (isEventAlreadyMarked) {
                                                 setShowCalMenu(false);
-                                                setDeleteConfirmation({ target: 'event', label: 'a data desta prova' });
+                                                setDeleteConfirmation({ target: 'event', label: t('cal_menu_mark_event') });
                                             } else {
                                                 handleAddToCalendar('event');
                                             }
@@ -1671,8 +1672,8 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                         <div className="flex items-center gap-2">
                                             <Calendar size={14} className={isEventAlreadyMarked ? "text-emerald-500 shrink-0" : "text-blue-500 shrink-0"} />
                                             <div>
-                                                <span className="font-semibold block leading-tight">Data da Prova</span>
-                                                <span className="text-[10px] text-slate-400">Avisa 2 dias e 1 semana antes</span>
+                                                <span className="font-semibold block leading-tight">{t('cal_menu_mark_event')}</span>
+                                                <span className="text-[10px] text-slate-400">{t('reg_reminder_alert')}</span>
                                             </div>
                                         </div>
                                         {isEventAlreadyMarked && (
@@ -1685,7 +1686,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                             onClick={() => {
                                                 if (isRegOpenMarked) {
                                                     setShowCalMenu(false);
-                                                    setDeleteConfirmation({ target: 'registration_open', label: 'o lembrete de abertura das inscrições' });
+                                                    setDeleteConfirmation({ target: 'registration_open', label: t('cal_menu_mark_reg_open') });
                                                 } else {
                                                     handleAddToCalendar('registration_open');
                                                 }
@@ -1699,8 +1700,8 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                             <div className="flex items-center gap-2">
                                                 <Clock size={14} className={isRegOpenMarked ? "text-emerald-500 shrink-0" : "text-blue-500 shrink-0"} />
                                                 <div>
-                                                    <span className="font-semibold block leading-tight">Abertura de Inscrições</span>
-                                                    <span className="text-[10px] text-slate-400">Avisa 1 dia antes e 1h antes</span>
+                                                    <span className="font-semibold block leading-tight">{t('cal_menu_mark_reg_open')}</span>
+                                                    <span className="text-[10px] text-slate-400">{t('reg_reminder_alert')}</span>
                                                 </div>
                                             </div>
                                             {isRegOpenMarked && (
@@ -1714,7 +1715,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                             onClick={() => {
                                                 if (isRegCloseMarked) {
                                                     setShowCalMenu(false);
-                                                    setDeleteConfirmation({ target: 'registration_close', label: 'o lembrete de fecho das inscrições' });
+                                                    setDeleteConfirmation({ target: 'registration_close', label: t('cal_menu_mark_reg_close') });
                                                 } else {
                                                     handleAddToCalendar('registration_close');
                                                 }
@@ -1728,8 +1729,8 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                             <div className="flex items-center gap-2">
                                                 <Clock size={14} className={isRegCloseMarked ? "text-emerald-500 shrink-0" : "text-amber-500 shrink-0"} />
                                                 <div>
-                                                    <span className="font-semibold block leading-tight">Fecho de Inscrições</span>
-                                                    <span className="text-[10px] text-slate-400">Avisa 1 dia antes e 1h antes</span>
+                                                    <span className="font-semibold block leading-tight">{t('cal_menu_mark_reg_close')}</span>
+                                                    <span className="text-[10px] text-slate-400">{t('reg_reminder_alert')}</span>
                                                 </div>
                                             </div>
                                             {isRegCloseMarked && (
@@ -1764,7 +1765,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             </div>
                             <div>
                                 <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                                    Remover do Google Calendar?
+                                    {t('action_confirm_delete_title')}
                                 </h3>
                                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate max-w-[280px]">
                                     {activeEvent.title}
@@ -1773,7 +1774,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         </div>
 
                         <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
-                            Tens a certeza de que pretendes remover <strong className="text-slate-900 dark:text-slate-100 font-semibold">{deleteConfirmation.label || 'este evento'}</strong> do teu Google Calendar?
+                            {t('action_confirm_delete_desc').replace('{label}', deleteConfirmation.label || '')}
                         </p>
 
                         <div className="flex items-center justify-end gap-2.5">
@@ -1782,7 +1783,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 onClick={() => setDeleteConfirmation(null)}
                                 className="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                             >
-                                Cancelar
+                                {t('action_cancel')}
                             </button>
                             <button
                                 disabled={isDeletingFromCalendar}
@@ -1792,12 +1793,12 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 {isDeletingFromCalendar ? (
                                     <>
                                         <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                        <span>A remover...</span>
+                                        <span>{t('action_deleting')}</span>
                                     </>
                                 ) : (
                                     <>
                                         <Trash2 size={14} />
-                                        <span>Sim, Remover</span>
+                                        <span>{t('action_confirm_delete_btn')}</span>
                                     </>
                                 )}
                             </button>

@@ -2,8 +2,10 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { X, Cookie } from 'lucide-react';
+import { useTranslation } from '../i18n/useTranslation';
 
 export default function CookieBanner() {
+    const { t } = useTranslation();
     const [visible, setVisible] = useState(false);
 
     useEffect(() => {
@@ -24,21 +26,20 @@ export default function CookieBanner() {
                 <Cookie size={20} className="text-amber-500 shrink-0 mt-0.5 sm:mt-0 hidden sm:block" />
                 <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed flex-1">
                     <span className="sm:hidden">🍪 </span>
-                    Este site utiliza apenas <strong className="text-slate-900 dark:text-slate-200">cookies essenciais</strong> para autenticação e funcionamento. 
-                    Não usamos cookies de rastreamento nem publicidade.{' '}
-                    <Link href="/privacidade" className="text-blue-600 dark:text-blue-400 hover:underline underline-offset-2">Saber mais</Link>
+                    {t('cookie_text')}{' '}
+                    <Link href="/privacidade" className="text-blue-600 dark:text-blue-400 hover:underline underline-offset-2">{t('footer_privacy')}</Link>
                 </p>
                 <div className="flex gap-2 shrink-0 w-full sm:w-auto">
                     <button 
                         onClick={accept}
                         className="flex-1 sm:flex-none px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors cursor-pointer"
                     >
-                        Aceitar
+                        {t('cookie_accept')}
                     </button>
                     <button 
                         onClick={accept}
                         className="p-2 text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors sm:hidden cursor-pointer"
-                        title="Fechar"
+                        title={t('filter_button_close')}
                     >
                         <X size={18} />
                     </button>

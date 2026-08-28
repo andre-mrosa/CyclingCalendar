@@ -4,9 +4,11 @@ import CalendarView from "../components/CalendarView";
 import { useUser } from '@clerk/nextjs';
 import { CalendarCheck } from 'lucide-react';
 import { useCalendarEvents } from '../hooks/useCalendarEvents';
+import { useTranslation } from '../i18n/useTranslation';
 import Link from 'next/link';
 
 export default function MinhaAgenda() {
+    const { t } = useTranslation();
     const { isSignedIn, isLoaded } = useUser();
     const { markedSet, isLoading } = useCalendarEvents();
 
@@ -24,13 +26,13 @@ export default function MinhaAgenda() {
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 mb-6">
                     <CalendarCheck size={32} className="text-emerald-500 dark:text-emerald-400 opacity-80" />
                 </div>
-                <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-3">Minha Agenda</h1>
+                <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-3">{t('page_agenda_title')}</h1>
                 <p className="text-slate-600 dark:text-slate-400 text-base leading-relaxed mb-6">
-                    Inicia sessão com o Google para sincronizares o teu calendário oficial e veres aqui todas as provas e lembretes da tua época desportiva.
+                    {t('page_agenda_signin_desc')}
                 </p>
                 <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl inline-block shadow-sm">
                     <p className="text-sm text-emerald-600 dark:text-emerald-400 font-semibold m-0">
-                        ↑ Usa o botão de "Entrar" no topo da página.
+                        {t('page_agenda_signin_btn')}
                     </p>
                 </div>
             </div>
@@ -46,12 +48,12 @@ export default function MinhaAgenda() {
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 mb-6">
                     <CalendarCheck size={32} className="text-emerald-500 dark:text-emerald-400" />
                 </div>
-                <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-3">Ainda não tens provas na agenda</h1>
+                <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-3">{t('page_agenda_empty_title')}</h1>
                 <p className="text-slate-600 dark:text-slate-400 text-base leading-relaxed mb-8">
-                    Navega pelo calendário e clica em <strong>"Marcar prova"</strong> em qualquer evento para sincronizar diretamente com o teu Google Calendar e organizares a tua época aqui.
+                    {t('page_agenda_empty_desc')}
                 </p>
                 <Link href="/" className="inline-flex items-center justify-center px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl transition-colors shadow-lg shadow-emerald-500/20">
-                    Explorar Provas
+                    {t('page_favorites_explore_btn')}
                 </Link>
             </div>
         );
@@ -59,8 +61,8 @@ export default function MinhaAgenda() {
 
     return (
         <CalendarView 
-            pageTitle="A Tua Agenda de Provas"
-            pageSubtitle={`${markedRaceCount} ${markedRaceCount === 1 ? 'prova planeada no Google Calendar' : 'provas planeadas no Google Calendar'}`}
+            pageTitle={t('page_agenda_title')}
+            pageSubtitle={t('page_agenda_subtitle')}
             filterByAgenda={true}
             activeFilters={['search', 'month', 'escalao', 'ambito', 'licenca', 'regiao']}
         />

@@ -121,13 +121,14 @@ export default function WeatherWidget({ location, distrito, date, variant = 'def
     if (weatherData.isAvailable && weatherData.data) {
         const d = weatherData.data;
         const iconType = d.condition?.icon || 'sun-cloud';
+        const dayLabel = d.diffDays === 0 ? t('weather_today') : d.diffDays === 1 ? t('weather_tomorrow') : t('weather_in_days').replace('{days}', d.diffDays);
 
         // Variant: Header (Desktop Top Right Pill)
         if (variant === 'header') {
             return (
                 <div 
                     className="hidden sm:flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-sky-500/10 dark:bg-sky-500/15 border border-sky-500/30 text-slate-800 dark:text-slate-200 text-xs shrink-0 select-none transition-all shadow-xs hover:border-sky-500/50"
-                    title={`Meteorologia Prevista (${d.diffDays === 0 ? 'Hoje' : d.diffDays === 1 ? 'Amanhã' : `em ${d.diffDays} dias`}) para ${d.locationName || location || 'o local da prova'}: ${d.condition?.label || ''} • Máx ${d.tempMax}°C / Mín ${d.tempMin}°C • Chuva ${d.rainProb}% (${d.precipitationMm}mm) • Vento ${d.windSpeed} km/h ${d.windDirection}`}
+                    title={`${t('weather_forecast_title')} (${dayLabel}) : ${d.condition?.label || ''} • Máx ${d.tempMax}°C / Mín ${d.tempMin}°C • ${t('weather_rain')} ${d.rainProb}% • ${t('weather_wind')} ${d.windSpeed} km/h ${d.windDirection}`}
                 >
                     <div className="flex items-center gap-1.5 text-sky-600 dark:text-sky-400 font-bold">
                         {getWeatherIcon(iconType, "w-4 h-4 shrink-0")}
@@ -136,10 +137,10 @@ export default function WeatherWidget({ location, distrito, date, variant = 'def
                     </div>
                     <div className="h-3.5 w-px bg-sky-500/30"></div>
                     <div className="flex items-center gap-2 text-[11px] font-medium text-slate-600 dark:text-slate-300">
-                        <span className="flex items-center gap-0.5 text-blue-500 font-semibold" title="Probabilidade de Chuva">
+                        <span className="flex items-center gap-0.5 text-blue-500 font-semibold" title={t('weather_rain_prob')}>
                             <Droplets size={11} className="shrink-0" /> {d.rainProb}%
                         </span>
-                        <span className="flex items-center gap-0.5 text-teal-600 dark:text-teal-400 font-semibold" title={`Vento ${d.windSpeed} km/h`}>
+                        <span className="flex items-center gap-0.5 text-teal-600 dark:text-teal-400 font-semibold" title={`${t('weather_wind')} ${d.windSpeed} km/h`}>
                             <Wind size={11} className="shrink-0" /> {d.windSpeed}km/h
                         </span>
                     </div>
@@ -152,7 +153,7 @@ export default function WeatherWidget({ location, distrito, date, variant = 'def
             return (
                 <div 
                     className="flex sm:hidden items-center gap-1.5 px-2 py-1 rounded-lg bg-sky-500/10 dark:bg-sky-500/15 border border-sky-500/25 text-slate-800 dark:text-slate-200 text-xs shrink-0 select-none"
-                    title={`Meteorologia Prevista: ${d.condition?.label || ''} • ${d.tempMax}°C / ${d.tempMin}°C • Chuva ${d.rainProb}%`}
+                    title={`${t('weather_forecast_title')}: ${d.condition?.label || ''} • ${d.tempMax}°C / ${d.tempMin}°C`}
                 >
                     {getWeatherIcon(iconType, "w-3.5 h-3.5 shrink-0 text-sky-500")}
                     <span className="text-xs font-bold text-slate-900 dark:text-white">{d.tempMax}°C</span>
@@ -173,13 +174,13 @@ export default function WeatherWidget({ location, distrito, date, variant = 'def
                         </div>
                         <div>
                             <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white m-0 tracking-tight flex items-center gap-1.5">
-                                <span>Meteorologia Prevista</span>
+                                <span>{t('weather_forecast_title')}</span>
                                 <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500">
-                                    • {d.diffDays === 0 ? 'Hoje' : d.diffDays === 1 ? 'Amanhã' : `em ${d.diffDays} dias`}
+                                    • {dayLabel}
                                 </span>
                             </h4>
                             <span className="text-[11px] text-slate-600 dark:text-slate-400 font-medium block">
-                                {d.condition?.label || 'Céu Parcialmente Nublado'}
+                                {d.condition?.label || ''}
                             </span>
                         </div>
                     </div>
@@ -195,7 +196,7 @@ export default function WeatherWidget({ location, distrito, date, variant = 'def
                     <div className="p-2.5 rounded-xl bg-white/80 dark:bg-slate-800/70 border border-slate-200/60 dark:border-slate-700/60 flex flex-col justify-between shadow-2xs">
                         <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                             <Thermometer size={12} className="text-rose-500 shrink-0" />
-                            <span>Temperatura</span>
+                            <span>{t('weather_temp')}</span>
                         </div>
                         <div className="flex items-baseline gap-1.5 mt-1">
                             <span className="text-base sm:text-lg font-black text-slate-900 dark:text-white">{d.tempMax}°C</span>
@@ -208,27 +209,27 @@ export default function WeatherWidget({ location, distrito, date, variant = 'def
                     <div className="p-2.5 rounded-xl bg-white/80 dark:bg-slate-800/70 border border-slate-200/60 dark:border-slate-700/60 flex flex-col justify-between shadow-2xs">
                         <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                             <Droplets size={12} className="text-blue-500 shrink-0" />
-                            <span>Chuva</span>
+                            <span>{t('weather_rain')}</span>
                         </div>
                         <div className="flex items-baseline gap-1.5 mt-1">
                             <span className="text-base sm:text-lg font-black text-slate-900 dark:text-white">{d.rainProb}%</span>
                             <span className="text-[11px] font-semibold text-slate-400">({d.precipitationMm}mm)</span>
                         </div>
-                        <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Probabilidade</span>
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{t('weather_rain_prob')}</span>
                     </div>
 
                     {/* Vento */}
                     <div className="p-2.5 rounded-xl bg-white/80 dark:bg-slate-800/70 border border-slate-200/60 dark:border-slate-700/60 flex flex-col justify-between shadow-2xs">
                         <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                             <Wind size={12} className="text-teal-500 shrink-0" />
-                            <span>Vento</span>
+                            <span>{t('weather_wind')}</span>
                         </div>
                         <div className="flex items-baseline gap-1 mt-1">
                             <span className="text-base sm:text-lg font-black text-slate-900 dark:text-white">{d.windSpeed}</span>
                             <span className="text-[11px] font-semibold text-slate-400">km/h</span>
                         </div>
                         <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate" title={d.windDirection}>
-                            {d.windDirection.split(' ')[0]}
+                            {d.windDirection ? d.windDirection.split(' ')[0] : ''}
                         </span>
                     </div>
                 </div>
@@ -253,10 +254,10 @@ export default function WeatherWidget({ location, distrito, date, variant = 'def
             return (
                 <div 
                     className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-slate-500 dark:text-slate-400 text-[11px] shrink-0"
-                    title={`Previsão meteorológica detalhada disponível a 14 dias da prova (${weatherData.availableFrom ? `a partir de ${weatherData.availableFrom}` : `a ${weatherData.diffDays} dias`})`}
+                    title={t('weather_forecast_14d_desc').replace('{available}', weatherData.availableFrom ? weatherData.availableFrom : `${weatherData.diffDays}d`)}
                 >
                     <CloudSun size={14} className="text-blue-500/80 shrink-0" />
-                    <span className="font-medium">Previsão a 14d</span>
+                    <span className="font-medium">{t('weather_forecast_14d_badge')}</span>
                 </div>
             );
         }
@@ -265,10 +266,10 @@ export default function WeatherWidget({ location, distrito, date, variant = 'def
             return (
                 <div 
                     className="flex sm:hidden items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 text-[10px] shrink-0"
-                    title={`Previsão disponível a 14 dias da prova (${weatherData.diffDays} dias)`}
+                    title={t('weather_forecast_14d_desc').replace('{available}', `${weatherData.diffDays}d`)}
                 >
                     <CloudSun size={12} className="text-blue-500/80 shrink-0" />
-                    <span>a 14d</span>
+                    <span>14d</span>
                 </div>
             );
         }
@@ -281,16 +282,16 @@ export default function WeatherWidget({ location, distrito, date, variant = 'def
                     </div>
                     <div className="min-w-0">
                         <span className="font-bold text-slate-800 dark:text-slate-200 block truncate leading-snug">
-                            Meteorologia no Dia da Prova
+                            {t('weather_race_day_title')}
                         </span>
                         <span className="text-[11px] text-slate-500 dark:text-slate-400 block truncate">
-                            Previsão disponível a 14 dias da prova ({weatherData.availableFrom ? `a partir de ${weatherData.availableFrom}` : `a ${weatherData.diffDays} dias`}).
+                            {t('weather_forecast_14d_desc').replace('{available}', weatherData.availableFrom ? weatherData.availableFrom : `${weatherData.diffDays}d`)}
                         </span>
                     </div>
                 </div>
 
                 <span className="hidden sm:inline-flex px-2 py-0.5 rounded-md bg-slate-200/70 dark:bg-slate-800 text-[10px] font-semibold text-slate-600 dark:text-slate-400 shrink-0">
-                    Alta Resolução
+                    {t('weather_high_res')}
                 </span>
             </div>
         );

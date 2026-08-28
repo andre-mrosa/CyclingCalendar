@@ -50,7 +50,7 @@ export default function ContactoPage() {
                 <form onSubmit={handleContactSubmit} className="flex flex-col gap-5">
                     {submitStatus === 'success' ? (
                         <div className="p-6 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl text-center border border-emerald-500/20 text-base font-medium">
-                            <strong className="font-semibold block mb-1">Obrigado!</strong> {t('contact_form_success')}
+                            <strong className="font-semibold block mb-1">{t('contact_form_thank_you')}</strong> {t('contact_form_success')}
                         </div>
                     ) : (
                         <>
@@ -59,7 +59,7 @@ export default function ContactoPage() {
                                     <label className="text-xs uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">{t('contact_form_name')}</label>
                                     <input 
                                         type="text" 
-                                        placeholder="O teu nome..." 
+                                        placeholder={t('contact_placeholder_name')} 
                                         value={formData.name}
                                         onChange={(e) => setFormData({...formData, name: e.target.value})}
                                         disabled={isSubmitting}
@@ -70,7 +70,7 @@ export default function ContactoPage() {
                                     <label className="text-xs uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">{t('contact_form_email')}</label>
                                     <input 
                                         type="email" 
-                                        placeholder="O teu e-mail..." 
+                                        placeholder={t('contact_placeholder_email')} 
                                         value={formData.email}
                                         onChange={(e) => setFormData({...formData, email: e.target.value})}
                                         disabled={isSubmitting}
@@ -81,7 +81,7 @@ export default function ContactoPage() {
                             <div className="flex flex-col gap-2">
                                 <label className="text-xs uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">{t('contact_form_msg')}</label>
                                 <textarea 
-                                    placeholder="Escreve aqui a tua mensagem ou sugestão..." 
+                                    placeholder={t('contact_placeholder_msg')} 
                                     required
                                     value={formData.message}
                                     onChange={(e) => setFormData({...formData, message: e.target.value})}
@@ -93,7 +93,7 @@ export default function ContactoPage() {
                             
                             {submitStatus === 'error' && (
                                 <div className="p-4 bg-red-500/10 text-red-400 rounded-xl text-center border border-red-500/20 text-sm">
-                                    Ocorreu um erro ao enviar. Tenta novamente mais tarde.
+                                    {t('contact_form_error')}
                                 </div>
                             )}
                             
@@ -108,7 +108,7 @@ export default function ContactoPage() {
                                         <span>{t('action_loading')}</span>
                                     </>
                                 ) : (
-                                    t('contact_form_submit')
+                                    <span>{t('contact_form_submit')}</span>
                                 )}
                             </button>
                         </>

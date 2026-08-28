@@ -11,7 +11,7 @@ export default function RegionAssistant({ onApply }) {
     const [suggestedRegiao, setSuggestedRegiao] = useState(null);
 
     const mapDistrictToRegion = (districtStr) => {
-        const d = districtStr.toLowerCase();
+        const d = (districtStr || '').toLowerCase();
         if (d.includes('braga') || d.includes('viana do castelo')) return 'AC Minho';
         if (d.includes('porto')) return 'AC Porto';
         if (d.includes('vila real') || d.includes('bragança') || d.includes('braganca')) return 'AC Vila Real';
@@ -28,11 +28,11 @@ export default function RegionAssistant({ onApply }) {
 
     const handleGeolocation = () => {
         if (!navigator.geolocation) {
-            setLocationMessage("O teu browser não suporta GPS.");
+            setLocationMessage(t('region_no_gps'));
             return;
         }
         setIsLocating(true);
-        setLocationMessage("A detetar satélites...");
+        setLocationMessage(t('region_detecting_satellites'));
         
         navigator.geolocation.getCurrentPosition(async (position) => {
             try {
@@ -44,7 +44,7 @@ export default function RegionAssistant({ onApply }) {
                 const region = mapDistrictToRegion(district);
                 
                 setSuggestedRegiao(region);
-                setLocationMessage(`📍 ${district || 'Encontrado'} ➔ ${region !== 'Todas' ? region : 'Múltiplas'}`);
+                setLocationMessage(`📍 ${district || 'OK'} ➔ ${region !== 'Todas' ? region : 'Múltiplas'}`);
             } catch (err) {
                 setLocationMessage("Erro ao comunicar com o servidor de mapas.");
                 setSuggestedRegiao(null);
@@ -59,7 +59,7 @@ export default function RegionAssistant({ onApply }) {
     const handleAddressSearch = async () => {
         if (!addressInput) return;
         setIsLocating(true);
-        setLocationMessage("A procurar região...");
+        setLocationMessage(t('region_searching'));
         
         try {
             const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&countrycodes=pt&q=${encodeURIComponent(addressInput)}`);
@@ -69,7 +69,7 @@ export default function RegionAssistant({ onApply }) {
                 const result = data[0];
                 const region = mapDistrictToRegion(result.display_name);
                 setSuggestedRegiao(region);
-                setLocationMessage(`📍 Definido ➔ ${region !== 'Todas' ? region : 'Nenhuma Região'}`);
+                setLocationMessage(`📍 ${result.display_name.split(',')[0]} ➔ ${region !== 'Todas' ? region : 'Nenhuma Região'}`);
             } else {
                 setLocationMessage("Localização não encontrada em Portugal.");
                 setSuggestedRegiao(null);
@@ -84,7 +84,7 @@ export default function RegionAssistant({ onApply }) {
     const applyRegiao = () => {
         if (suggestedRegiao && onApply) {
             onApply(suggestedRegiao);
-            setLocationMessage("Região aplicada com sucesso!");
+            setLocationMessage(t('region_applied_success'));
             setTimeout(() => {
                 setSuggestedRegiao(null);
                 setLocationMessage('');
@@ -111,19 +111,19 @@ export default function RegionAssistant({ onApply }) {
                     disabled={isLocating} 
                     className="w-full py-3.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold shadow-lg shadow-blue-500/20 transition-colors text-sm disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                 >
-                    {isLocating ? 'A localizar...' : 'GPS / Localização'}
+                    {isLocating ? t('action_loading') : t('region_btn_gps')}
                 </button>
                 
                 <div className="flex items-center gap-3">
                     <hr className="flex-1 border-slate-200 dark:border-slate-800" />
-                    <span className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase">OU</span>
+                    <span className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase">{t('region_or')}</span>
                     <hr className="flex-1 border-slate-200 dark:border-slate-800" />
                 </div>
 
                 <div className="flex gap-2.5 w-full">
                     <input 
                         type="text" 
-                        placeholder="Cidade, Concelho ou Distrito..."
+                        placeholder={t('region_placeholder_city')}
                         value={addressInput}
                         onChange={e => setAddressInput(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleAddressSearch()}
@@ -134,7 +134,7 @@ export default function RegionAssistant({ onApply }) {
                         disabled={isLocating} 
                         className="py-3 px-5 rounded-xl border border-slate-200 dark:border-slate-700/80 hover:bg-slate-200 dark:hover:bg-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold text-sm transition-colors cursor-pointer"
                     >
-                        Procurar
+                        {t('region_btn_search')}
                     </button>
                 </div>
 

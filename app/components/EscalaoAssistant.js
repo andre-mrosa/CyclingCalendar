@@ -14,7 +14,7 @@ export default function EscalaoAssistant({ onApply }) {
 
     const calculateEscalao = () => {
         if (!birthYear || isNaN(birthYear) || birthYear.length !== 4) {
-            setEscalaoMessage("Introduz um ano de nascimento válido (ex: 1990).");
+            setEscalaoMessage(t('escalao_invalid_year'));
             setSuggestedEscalao(null);
             return;
         }
@@ -22,7 +22,7 @@ export default function EscalaoAssistant({ onApply }) {
         const age = currentYear - parseInt(birthYear);
         
         if (age < 5 || age > 100) {
-            setEscalaoMessage("Idade fora dos limites habituais de competição.");
+            setEscalaoMessage(t('escalao_invalid_age'));
             setSuggestedEscalao(null);
             return;
         }
@@ -58,7 +58,7 @@ export default function EscalaoAssistant({ onApply }) {
     const applyEscalao = () => {
         if (suggestedEscalao && onApply) {
             onApply(suggestedEscalao);
-            setEscalaoMessage("Escalão aplicado com sucesso!");
+            setEscalaoMessage(t('escalao_applied_success'));
             setTimeout(() => {
                 setSuggestedEscalao(null);
                 setEscalaoMessage('');
@@ -97,7 +97,7 @@ export default function EscalaoAssistant({ onApply }) {
                         <select 
                             value={gender} 
                             onChange={e => setGender(e.target.value)}
-                            className="w-full py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 text-sm outline-none focus:border-blue-500 transition-colors shadow-inner"
+                            className="w-full py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 text-sm outline-none focus:border-blue-500 transition-colors shadow-inner font-medium cursor-pointer"
                         >
                             <option value="M">{t('escalao_gender_male')}</option>
                             <option value="F">{t('escalao_gender_female')}</option>
@@ -108,7 +108,7 @@ export default function EscalaoAssistant({ onApply }) {
                         <select 
                             value={licenseType} 
                             onChange={e => setLicenseType(e.target.value)}
-                            className="w-full py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 text-sm outline-none focus:border-blue-500 transition-colors shadow-inner"
+                            className="w-full py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 text-sm outline-none focus:border-blue-500 transition-colors shadow-inner font-medium cursor-pointer"
                         >
                             <option value="Competição">{t('escalao_license_competition')}</option>
                             <option value="CPT">{t('escalao_license_cpt')}</option>
@@ -117,15 +117,15 @@ export default function EscalaoAssistant({ onApply }) {
                 </div>
                 
                 <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Nível / Equipa</label>
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t('escalao_team_level')}</label>
                     <select 
                         value={teamLevel} 
                         onChange={e => setTeamLevel(e.target.value)}
-                        className="w-full py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 text-sm outline-none focus:border-blue-500 transition-colors shadow-inner"
+                        className="w-full py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 text-sm outline-none focus:border-blue-500 transition-colors shadow-inner font-medium cursor-pointer"
                     >
-                        <option value="Clube">Equipa de Clube / Amadora</option>
-                        <option value="Profissional">Equipa Profissional (Continental / WT)</option>
-                        <option value="Individual">Individual (Sem Equipa)</option>
+                        <option value="Clube">{t('escalao_team_club')}</option>
+                        <option value="Profissional">{t('escalao_team_pro')}</option>
+                        <option value="Individual">{t('escalao_team_indiv')}</option>
                     </select>
                 </div>
 
@@ -133,7 +133,7 @@ export default function EscalaoAssistant({ onApply }) {
                     onClick={calculateEscalao}
                     className="w-full py-3.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold shadow-lg shadow-blue-500/20 transition-colors text-sm mt-1 cursor-pointer"
                 >
-                    {t('escalao_modal_title')}
+                    {t('escalao_btn_calc')}
                 </button>
 
                 {escalaoMessage && (

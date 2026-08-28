@@ -4,9 +4,11 @@ import CalendarView from "../components/CalendarView";
 import { useUser } from '@clerk/nextjs';
 import { Star } from 'lucide-react';
 import { useFavorites } from '../hooks/useFavorites';
+import { useTranslation } from '../i18n/useTranslation';
 import Link from 'next/link';
 
 export default function Favoritos() {
+    const { t } = useTranslation();
     const { isSignedIn, isLoaded } = useUser();
     const { favorites } = useFavorites();
 
@@ -24,13 +26,13 @@ export default function Favoritos() {
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 mb-6">
                     <Star size={32} className="text-amber-500 dark:text-amber-400 opacity-60" />
                 </div>
-                <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-3">Favoritos</h1>
+                <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-3">{t('page_favorites_title')}</h1>
                 <p className="text-slate-600 dark:text-slate-400 text-base leading-relaxed mb-6">
-                    Inicia sessão para guardares as provas que não queres perder. Os teus favoritos serão sincronizados em todos os teus dispositivos.
+                    {t('page_favorites_signin_desc')}
                 </p>
                 <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl inline-block shadow-sm">
                     <p className="text-sm text-blue-600 dark:text-blue-400 font-semibold m-0">
-                        ↑ Usa o botão de "Entrar" no topo da página.
+                        {t('page_agenda_signin_btn')}
                     </p>
                 </div>
             </div>
@@ -43,12 +45,12 @@ export default function Favoritos() {
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 mb-6">
                     <Star size={32} className="text-amber-500 dark:text-amber-400" />
                 </div>
-                <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-3">Ainda não tens favoritos</h1>
+                <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-3">{t('page_favorites_empty_title')}</h1>
                 <p className="text-slate-600 dark:text-slate-400 text-base leading-relaxed mb-8">
-                    Navega pelo calendário e clica na Estrela ⭐ ao lado do nome de qualquer prova para a guardares aqui.
+                    {t('page_favorites_empty_desc')}
                 </p>
                 <Link href="/" className="inline-flex items-center justify-center px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-xl transition-colors shadow-lg shadow-blue-500/20">
-                    Explorar Calendário
+                    {t('page_favorites_explore_btn')}
                 </Link>
             </div>
         );
@@ -56,12 +58,11 @@ export default function Favoritos() {
 
     return (
         <CalendarView 
-            pageTitle="As Tuas Provas Guardadas"
-            pageSubtitle={`${favorites.length} ${favorites.length === 1 ? 'prova selecionada' : 'provas selecionadas'}`}
+            pageTitle={t('page_favorites_title')}
+            pageSubtitle={t('page_favorites_subtitle')}
             filterByFavorites={true}
-            // Removemos os filtros de pesquisa de meses para não esconder as provas guardadas sem querer
             activeFilters={['search', 'escalao', 'ambito', 'regiao']} 
-            applyDefaultRegiao={false} // Não queremos forçar a região nos favoritos
+            applyDefaultRegiao={false}
         />
     );
 }
