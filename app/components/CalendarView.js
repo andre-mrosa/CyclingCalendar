@@ -11,7 +11,6 @@ import { mergeEvents } from '../utils/mergeEvents';
 import { exportEventsToICS } from '../utils/exportCalendar';
 import EventModal from './EventModal';
 import EscalaoAssistant from './EscalaoAssistant';
-import OrganizationLogo from './OrganizationLogo';
 import { trackEvent } from './AnalyticsTracker';
 
 const fetcher = (url) => fetch(url).then((res) => res.json()).then((data) => {
@@ -758,7 +757,7 @@ export default function CalendarView({
                                     </div>
 
                                     <div className="flex items-center justify-between gap-2 w-full md:w-auto md:justify-end border-t border-slate-100 dark:border-slate-800/60 md:border-0 pt-2 md:pt-0 pl-[62px] sm:pl-[70px] md:pl-0">
-                                        <div className="flex flex-wrap items-center gap-1.5 flex-1 min-w-0">
+                                        <div className="flex flex-wrap items-center gap-1.5 flex-1 min-w-0 md:justify-end">
                                             {isEventMarked && (
                                                 <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1 shrink-0">
                                                     <Check size={11} className="stroke-[3]" /> Na agenda
@@ -791,39 +790,40 @@ export default function CalendarView({
                                                 return null;
                                             })()}
 
-                                            {/* Main Scope / Âmbito */}
-                                            {event.ambito && (
-                                                <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider shrink-0 ${
-                                                    event.ambito === 'Taça de Portugal'
-                                                        ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30'
-                                                        : event.ambito === 'Nacional' || event.ambito.includes('Nacional')
-                                                        ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30'
-                                                        : event.ambito === 'Prova Aberta'
-                                                        ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
-                                                        : event.ambito === 'Internacional' || event.ambito.includes('UCI')
-                                                        ? 'bg-sky-500/15 text-sky-600 dark:text-sky-400 border border-sky-500/30'
-                                                        : 'bg-slate-500/15 text-slate-700 dark:text-slate-300 border border-slate-500/30'
-                                                }`}>
-                                                    {event.ambito}
-                                                </span>
-                                            )}
-
-                                            {/* Licença / Caráter (Evita duplicar Prova Aberta + CPT/Lazer) */}
-                                            {event.licenca && (
-                                                event.licenca === 'Competição' ? (
-                                                    <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30 shrink-0">
-                                                        Competição
-                                                    </span>
-                                                ) : event.licenca === 'CPT / Lazer' && event.ambito !== 'Prova Aberta' ? (
-                                                    <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0">
-                                                        Lazer
-                                                    </span>
-                                                ) : event.licenca !== 'CPT / Lazer' && event.licenca !== 'Competição' ? (
-                                                    <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 shrink-0">
-                                                        {event.licenca}
-                                                    </span>
-                                                ) : null
-                                            )}
+                                            {/* Main Scope / Âmbito (Ignora "Outro / A Definir") */}
+                                            {(() => {
+                                                const rawAmbito = event.ambito?.trim();
+                                                const isGenericAmbito = !rawAmbito || rawAmbito.toLowerCase().includes('definir') || rawAmbito.toLowerCase() === 'outro';
+                                                
+                                                if (!isGenericAmbito) {
+                                                    return (
+                                                        <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider shrink-0 ${
+                                                            rawAmbito === 'Taça de Portugal'
+                                                                ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30'
+                                                                : rawAmbito === 'Nacional' || rawAmbito.includes('Nacional')
+                                                                ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30'
+                                                                : rawAmbito === 'Prova Aberta'
+                                                                ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
+                                                                : rawAmbito === 'Internacional' || rawAmbito.includes('UCI')
+                                                                ? 'bg-sky-500/15 text-sky-600 dark:text-sky-400 border border-sky-500/30'
+                                                                : 'bg-slate-500/15 text-slate-700 dark:text-slate-300 border border-slate-500/30'
+                                                        }`}>
+                                                            {rawAmbito}
+                                                        </span>
+                                                    );
+                                                }
+                                                
+                                                // Se não tem âmbito válido, mostra licença relevante se existir (ex: Competição)
+                                                if (event.licenca && event.licenca !== 'CPT / Lazer') {
+                                                    return (
+                                                        <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30 shrink-0">
+                                                            {event.licenca}
+                                                        </span>
+                                                    );
+                                                }
+                                                
+                                                return null;
+                                            })()}
 
                                             {/* Prova por Etapas */}
                                             {isMultiDay && (
@@ -831,10 +831,6 @@ export default function CalendarView({
                                                     Etapas
                                                 </span>
                                             )}
-                                        </div>
-                                        
-                                        <div className="pl-2.5 sm:pl-3 md:border-l border-slate-200 dark:border-slate-800 flex items-center shrink-0">
-                                            <OrganizationLogo source={event.source} className="h-4 sm:h-5 w-auto object-contain" />
                                         </div>
                                     </div>
                                 </div>
