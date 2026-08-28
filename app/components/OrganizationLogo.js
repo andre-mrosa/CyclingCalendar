@@ -29,10 +29,10 @@ export default function OrganizationLogo({ source, className = "h-5 w-auto objec
             return (
                 <div 
                     key={key}
-                    className="flex items-center justify-center shrink-0 px-2 py-0.5 rounded-md bg-blue-600/10 dark:bg-blue-500/15 border border-blue-500/30 text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider" 
+                    className="flex items-center justify-center shrink-0 px-1.5 py-0.5 rounded-md bg-cyan-500/15 dark:bg-cyan-400/15 border border-cyan-500/30 text-[9px] font-black text-cyan-600 dark:text-cyan-400 uppercase tracking-tighter" 
                     title="Stop and Go"
                 >
-                    Stop&Go
+                    S&G
                 </div>
             );
         }

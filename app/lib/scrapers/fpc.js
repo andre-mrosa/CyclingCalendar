@@ -1,11 +1,11 @@
-import * as cheerio from 'cheerio'; // trigger hot-reload 2
-import { prisma } from '../db';
+import * as cheerio from 'cheerio';
+import { prisma } from '../db.js';
 import { 
     parseSortDate, getAmbito, getTag, getRegiao, 
     getDistrito, toTitleCase, getLicenca, sanitizeHtml, fetchImageAsBase64 
-} from './utils';
-import { logInfo, logError } from '../logger';
-import { saveOrMergeEvent } from '../merging/eventMerger';
+} from './utils.js';
+import { logInfo, logError } from '../logger.js';
+import { saveOrMergeEvent } from '../merging/eventMerger.js';
 
 export const deepScrapeFPC = async (link) => {
     if (!link) return null;

@@ -1,5 +1,6 @@
 import { scrapeFPC, incrementalDeepScrapeFPC } from './fpc.js';
 import { scrapeCabreira } from './cabreira.js';
+import { scrapeStopAndGo } from './stopandgo.js';
 import { prisma } from '../db.js';
 import { isSameEvent } from '../merging/eventMatcher.js';
 import { mergeEventRecords } from '../merging/eventMerger.js';
@@ -44,7 +45,7 @@ export async function runUnifiedScrapingPipeline(triggeredBy = 'CRON', options =
 
     const stats = {
         mode: shouldScrapePastYears ? 'FULL_HISTORICAL' : 'DAILY_ACTIVE',
-        sourcesScraped: ['FPC', 'Cabreira'],
+        sourcesScraped: ['FPC', 'Cabreira', 'Stop and Go'],
         yearsScraped: yearsToScrape,
         deepScrapedFpc: 0,
         mergedEvents: 0,
@@ -73,7 +74,17 @@ export async function runUnifiedScrapingPipeline(triggeredBy = 'CRON', options =
         await logError('SCRAPER', `Erro na sincronização Cabreira: ${e.message}`, e);
     }
 
-    // 3. Deep Scraping FPC (programas, regulamentos e anexos de forma rápida)
+    // 3. Scraping Stop and Go
+    try {
+        await logInfo('SCRAPER', `Stop and Go: a consultar provas de BTT e Ciclismo...`);
+        const sgCount = await scrapeStopAndGo();
+        await logInfo('SCRAPER', `Stop and Go: sincronização concluída com sucesso.`);
+    } catch (e) {
+        stats.errors.push(`Stop and Go error: ${e.message}`);
+        await logError('SCRAPER', `Erro na sincronização Stop and Go: ${e.message}`, e);
+    }
+
+    // 4. Deep Scraping FPC (programas, regulamentos e anexos de forma rápida)
     try {
         let totalDeep = 0;
         const maxBatches = shouldScrapePastYears ? 2 : 1;

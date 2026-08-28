@@ -1308,6 +1308,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             const sLink = src.link.toLowerCase();
                             if (sLink.includes('cabreira') || sLabel.includes('cabreira')) plat = "Cabreira";
                             else if (sLink.includes('fpc') || sLabel.includes('fpc')) plat = "FPC";
+                            else if (sLink.includes('stopandgo') || sLabel.includes('stop and go') || sLabel.includes('stopandgo')) plat = "Stop and Go";
                             else plat = src.label.replace(/inscrever|inscrição|inscricao|visitar|em|na|no/ig, '').replace(/\s+/g, ' ').trim() || "Plataforma";
                             
                             if (!seenPlats.has(plat)) {

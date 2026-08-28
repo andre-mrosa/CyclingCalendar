@@ -1,11 +1,11 @@
 import * as cheerio from 'cheerio';
-import { prisma } from '../db';
+import { prisma } from '../db.js';
 import { 
     formatDateStr, parseSortDate, getAmbito, getTag, getRegiao, 
     getDistrito, toTitleCase, parsePTDateToISO, sanitizeHtml, fetchImageAsBase64 
-} from './utils';
-import { logInfo, logError } from '../logger';
-import { saveOrMergeEvent } from '../merging/eventMerger';
+} from './utils.js';
+import { logInfo, logError } from '../logger.js';
+import { saveOrMergeEvent } from '../merging/eventMerger.js';
 
 export const deepScrapeCabreira = async (link) => {
     if (!link) return { opensAt: null, closesAt: null, description: null, prices: null, insurance: null, prizes: null, programa: null, additionalLinks: [] };
