@@ -1,16 +1,23 @@
 import * as cheerio from 'cheerio';
 import { prisma } from '../db.js';
-import {
-    getAmbito, getTag, getRegiao, getDistrito,
-    toTitleCase, sanitizeHtml, fetchImageAsBase64
+import { 
+    getAmbito, getTag, getRegiao, getDistrito, 
+    toTitleCase, sanitizeHtml, fetchImageAsBase64 
 } from './utils.js';
 import { logInfo, logError } from '../logger.js';
 import { saveOrMergeEvent } from '../merging/eventMerger.js';
 
-const CYCLING_CATEGORIES = [
-    'btt', 'ciclismo', 'gravel', 'granfondo', 'mediofondo',
-    'xco', 'xcm', 'xce', 'dhi', 'downhill', 'enduro',
-    'bike', 'estrada', 'cycling', 'e-bike', 'ebike'
+const CYCLING_KEYWORDS = [
+    'btt', 'bike', 'ciclismo', 'cycling', 'gravel', 'granfondo', 
+    'mediofondo', 'xco', 'xcm', 'xce', 'dhi', 'downhill', 'enduro',
+    'maratona', 'rota-do-mineiro', 'rota-porca', 'rota-do-mel',
+    'nos-trilhos-do-ceireiro', 'racenature', 'giao-bike'
+];
+
+const NON_CYCLING = [
+    'trail', 'caminhada', 'atletismo', 'triathlon', 'triatlo', 
+    'obstaculos', 'ocr', 'kayak', 'sunset', 'corrida', 
+    'maratona-da-europa', 'meia-maratona'
 ];
 
 const MONTH_MAP = {
@@ -69,18 +76,47 @@ function parseStopAndGoDate(rawDateStr) {
     return { dateText: rawDateStr.toUpperCase(), sortDate: new Date(), year };
 }
 
-export async function deepScrapeStopAndGoEvent(eventUrl) {
-    const defaultData = { registrationLink: null, rulesLink: null, participantsLink: null, programaHtml: null, extraLinks: [] };
-    if (!eventUrl) return defaultData;
+async function scrapeEventPage(url) {
     try {
-        const res = await fetch(eventUrl, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(4000) });
-        if (!res.ok) return defaultData;
+        const res = await fetch(url, { 
+            headers: { 'User-Agent': 'Mozilla/5.0' }, 
+            signal: AbortSignal.timeout(6000) 
+        });
+        if (!res.ok) return null;
         const html = await res.text();
         const $ = cheerio.load(html);
-        const extraLinks = [];
+
+        const pageText = $('body').text().replace(/\s+/g, ' ').trim();
+        const lower = pageText.toLowerCase();
+
+        const h1 = $('h1').first().text().replace(/\s+/g, ' ').trim();
+        let title = h1;
+        if (title.length > 10) {
+            const half = Math.floor(title.length / 2);
+            const firstHalf = title.slice(0, half).trim();
+            const secondHalf = title.slice(half).trim();
+            if (firstHalf === secondHalf) title = firstHalf;
+        }
+
+        let posterUrl = $('img[src*="storage/events"]').first().attr('src') || null;
+        if (posterUrl && !posterUrl.startsWith('http')) posterUrl = 'https://stopandgo.net' + posterUrl;
+
+        let dateText = 'DATA A DEFINIR';
+        let sortDate = new Date();
+        const dateMatch = pageText.match(/\d{1,2}(?:\s*-\s*\d{1,2})?\s+de\s+[a-zçã]+\s+202\d/i);
+        if (dateMatch) {
+            const parsed = parseStopAndGoDate(dateMatch[0]);
+            dateText = parsed.dateText;
+            sortDate = parsed.sortDate;
+        }
+
+        let location = 'Portugal';
+        const locMatch = pageText.match(/([A-ZÀ-Úa-zà-ú\s]+),\s*Portugal/);
+        if (locMatch) location = toTitleCase(locMatch[1].trim());
+
+        const extraLinks = [{ label: 'Página Stop and Go', link: url }];
         let registrationLink = null;
         let rulesLink = null;
-        let participantsLink = null;
 
         $('a').each((_, el) => {
             const href = $(el).attr('href') || '';
@@ -95,7 +131,6 @@ export async function deepScrapeStopAndGoEvent(eventUrl) {
                 rulesLink = fullUrl;
                 if (!extraLinks.some(l => l.link === fullUrl)) extraLinks.push({ label: 'Regulamento Oficial', link: fullUrl });
             } else if (href.includes('/registrations') && !href.includes('/create')) {
-                participantsLink = fullUrl;
                 if (!extraLinks.some(l => l.link === fullUrl)) extraLinks.push({ label: 'Lista de Inscritos', link: fullUrl });
             } else if (href.includes('/conditions')) {
                 if (!extraLinks.some(l => l.link === fullUrl)) extraLinks.push({ label: 'Condições & Cancelamentos', link: fullUrl });
@@ -111,135 +146,81 @@ export async function deepScrapeStopAndGoEvent(eventUrl) {
             programaHtml += '</ul></div>';
         }
 
-        return { registrationLink, rulesLink, participantsLink, programaHtml: programaHtml || null, extraLinks };
+        const tag = lower.includes('btt') ? 'BTT' : lower.includes('gravel') ? 'Gravel' : 'Ciclismo';
+        const regiao = getRegiao(location);
+        const distrito = getDistrito(location);
+        const ambito = getAmbito(title, pageText);
+
+        const slug = url.split('/').filter(Boolean).pop();
+        const id = 'sg_' + slug.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 32);
+
+        return {
+            id,
+            title: toTitleCase(title.replace(/^(BTT|Ciclismo|Gravel|Estrada)\s+/i, '').trim()),
+            date: dateText,
+            sortDate,
+            details: location,
+            regiao,
+            distrito,
+            tag,
+            ambito,
+            licenca: 'CPT / Lazer',
+            source: 'Stop and Go',
+            link: registrationLink || url,
+            image: posterUrl,
+            logo: null,
+            programa: programaHtml || null,
+            extraLinks: JSON.stringify(extraLinks),
+            escaloes: JSON.stringify(['Geral / Aberto']),
+            prices: null
+        };
     } catch (e) {
-        return defaultData;
+        return null;
     }
 }
 
 export async function scrapeStopAndGo(options = {}) {
     try {
-        logInfo('SCRAPER', 'Início da sincronização Stop and Go (https://stopandgo.net/events)');
-        const response = await fetch('https://stopandgo.net/events', {
+        logInfo('SCRAPER', 'Início da sincronização Stop and Go (sitemap.xml + página oficial)');
+
+        const res = await fetch('https://stopandgo.net/sitemap.xml', {
             headers: { 'User-Agent': 'Mozilla/5.0' },
             signal: AbortSignal.timeout(8000)
         });
 
-        if (!response.ok) {
-            logError('SCRAPER', 'Falha ao aceder à Stop and Go (HTTP ' + response.status + ')');
+        if (!res.ok) {
+            logError('SCRAPER', 'Falha ao aceder ao sitemap Stop and Go (HTTP ' + res.status + ')');
             return 0;
         }
 
-        const html = await response.text();
-        const $ = cheerio.load(html);
+        const xml = await res.text();
+        const allUrls = Array.from(new Set(xml.match(/https:\/\/stopandgo\.net\/events\/[a-zA-Z0-9_-]+/g) || []));
 
-        const cards = [];
-        $('a[data-ga4-params]').each((_, el) => {
-            const raw = $(el).attr('data-ga4-params');
-            const href = $(el).attr('href');
-            if (!href || href.endsWith('/events')) return;
+        const currentYear = new Date().getFullYear();
+        const years = options.years || [currentYear.toString(), (currentYear + 1).toString()];
 
-            try {
-                const parsed = JSON.parse(raw);
-                const item = parsed.items?.[0];
-                if (item) {
-                    const fullUrl = href.startsWith('http') ? href : 'https://stopandgo.net' + href;
-                    if (!cards.some(c => c.url === fullUrl)) {
-                        cards.push({
-                            url: fullUrl,
-                            itemId: item.item_id || null,
-                            itemName: item.item_name || '',
-                            itemCategory: item.item_category || '',
-                            itemCategory2: item.item_category2 || '',
-                            el: $(el)
-                        });
-                    }
-                }
-            } catch (err) {}
+        const targetUrls = allUrls.filter(u => {
+            const lower = u.toLowerCase();
+            const matchesYear = years.some(yr => lower.includes(yr));
+            const isCycling = CYCLING_KEYWORDS.some(kw => lower.includes(kw));
+            const isExcluded = NON_CYCLING.some(kw => lower.includes(kw) && !lower.includes('cycling') && !lower.includes('bike'));
+            return matchesYear && isCycling && !isExcluded;
         });
 
-        logInfo('SCRAPER', 'Stop and Go: ' + cards.length + ' eventos totais encontrados na página. A filtrar ciclismo/BTT...');
+        logInfo('SCRAPER', 'Stop and Go: ' + targetUrls.length + ' provas de ciclismo encontradas no sitemap para (' + years.join(', ') + '). A processar...');
+
         let savedOrMergedCount = 0;
-
-        for (const card of cards) {
-            try {
-                const cat = (card.itemCategory + ' ' + card.itemName).toLowerCase();
-                const isCycling = CYCLING_CATEGORIES.some(c => cat.includes(c));
-                if (!isCycling) continue; // Ignora Atletismo, Trail, OCR, etc.
-
-                let title = card.itemName || 'Evento Stop and Go';
-                title = title.replace(/^(BTT|Ciclismo|Gravel|Estrada)\s+/i, '').trim();
-
-                // Extrair imagem do cartaz
-                const posterImg = card.el.find('img[src*="storage/events"]').first();
-                let posterUrl = posterImg.attr('src') || null;
-                if (posterUrl && !posterUrl.startsWith('http')) {
-                    posterUrl = 'https://stopandgo.net' + posterUrl;
-                }
-
-                let posterBase64 = null;
-                if (posterUrl) {
-                    posterBase64 = await fetchImageAsBase64(posterUrl);
-                }
-
-                const cardText = card.el.text().replace(/\s+/g, ' ').trim();
-                const dateMatches = cardText.match(/\d{1,2}(?:\s*-\s*\d{1,2})?\s+de\s+[a-zçã]+\s+202\d/i);
-                const rawDate = dateMatches ? dateMatches[0] : cardText;
-                const { dateText, sortDate, year } = parseStopAndGoDate(rawDate);
-
-                let location = card.itemCategory2 || 'Portugal';
-                const locMatch = cardText.match(/([A-ZÀ-Úa-zà-ú\s]+),\s*Portugal/);
-                if (locMatch) location = toTitleCase(locMatch[1].trim());
-
-                const tag = cat.includes('btt') ? 'BTT' : cat.includes('gravel') ? 'Gravel' : 'Ciclismo';
-                const ambito = getAmbito(title, cardText);
-                const regiao = getRegiao(location);
-                const distrito = getDistrito(location);
-
-                // Deep scraping para links específicos
-                const deepData = await deepScrapeStopAndGoEvent(card.url);
-                const extraLinks = [{ label: 'Página Stop and Go', link: card.url }, ...(deepData.extraLinks || [])];
-                const uniqueLinks = [];
-                const seenUrls = new Set();
-                for (const l of extraLinks) {
-                    if (l.link && !seenUrls.has(l.link)) {
-                        seenUrls.add(l.link);
-                        uniqueLinks.push(l);
-                    }
-                }
-
-                const id = 'sg_' + (card.itemId || Buffer.from(card.url).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, 24));
-
-                const eventData = {
-                    id,
-                    title: toTitleCase(title),
-                    date: dateText,
-                    sortDate,
-                    details: location,
-                    regiao,
-                    distrito,
-                    tag,
-                    ambito,
-                    licenca: 'CPT / Lazer',
-                    source: 'Stop and Go',
-                    link: deepData.registrationLink || card.url,
-                    image: posterBase64 || posterUrl,
-                    logo: null,
-                    programa: deepData.programaHtml,
-                    extraLinks: JSON.stringify(uniqueLinks),
-                    escaloes: JSON.stringify(['Geral / Aberto']),
-                    prices: null
-                };
-
-                await saveOrMergeEvent(prisma, eventData);
+        for (const url of targetUrls) {
+            const ev = await scrapeEventPage(url);
+            if (ev) {
+                await saveOrMergeEvent(prisma, ev);
                 savedOrMergedCount++;
-            } catch (errCard) {
-                console.error('Erro ao processar card Stop and Go:', card.url, errCard);
             }
         }
 
         logInfo('SCRAPER', 'Stop and Go: ' + savedOrMergedCount + ' provas de ciclismo processadas e fundidas com sucesso.');
         return savedOrMergedCount;
+
     } catch (e) {
         logError('SCRAPER', 'Erro global no scraper Stop and Go: ' + e.message, e);
         return 0;
