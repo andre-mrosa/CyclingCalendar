@@ -221,7 +221,7 @@ export default function AdminDashboardPage() {
     // Initial load once user session is loaded
     useEffect(() => {
         if (!isLoaded || !isSignedIn) return;
-        if (activeTab === 'stats') {
+        if (activeTab === 'stats' || activeTab === 'operations') {
             loadStats();
             loadUsers();
         }
@@ -1735,6 +1735,89 @@ export default function AdminDashboardPage() {
             {/* TAB 3: OPERAÇÕES & SCRAPERS */}
             {activeTab === 'operations' && (
                 <div className="space-y-6">
+                    {/* Event Inventory by Platform / Source Grid */}
+                    <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                    Inventário de Provas por Plataforma / Origem
+                                </h4>
+                            </div>
+                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                                Total: {stats?.events?.total || 0} Provas
+                            </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+                            {/* FPC */}
+                            <div className="p-3.5 rounded-xl bg-blue-500/5 dark:bg-blue-500/10 border border-blue-500/20 flex items-center gap-3 transition-all hover:border-blue-500/40">
+                                <div className="w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center font-black text-xs shrink-0 shadow-sm">
+                                    FPC
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-[11px] font-bold text-blue-600 dark:text-blue-400 truncate">FPCiclismo</p>
+                                    <p className="text-lg font-black text-slate-900 dark:text-white leading-tight">
+                                        {stats?.events?.fpc || 0} <span className="text-[10px] font-normal text-slate-400">provas</span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Cabreira */}
+                            <div className="p-3.5 rounded-xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 flex items-center gap-3 transition-all hover:border-amber-500/40">
+                                <div className="w-10 h-10 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center font-black text-xs shrink-0 shadow-sm">
+                                    CAB
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-[11px] font-bold text-amber-600 dark:text-amber-400 truncate">Cabreira Solutions</p>
+                                    <p className="text-lg font-black text-slate-900 dark:text-white leading-tight">
+                                        {stats?.events?.cabreira || 0} <span className="text-[10px] font-normal text-slate-400">provas</span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Stop and Go */}
+                            <div className="p-3.5 rounded-xl bg-cyan-500/5 dark:bg-cyan-500/10 border border-cyan-500/20 flex items-center gap-3 transition-all hover:border-cyan-500/40">
+                                <div className="w-10 h-10 rounded-lg bg-cyan-600 text-white flex items-center justify-center font-black text-xs shrink-0 shadow-sm">
+                                    S&G
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-[11px] font-bold text-cyan-600 dark:text-cyan-400 truncate">Stop and Go</p>
+                                    <p className="text-lg font-black text-slate-900 dark:text-white leading-tight">
+                                        {stats?.events?.stopAndGo || 0} <span className="text-[10px] font-normal text-slate-400">provas</span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Multi-Fonte / Fundidas */}
+                            <div className="p-3.5 rounded-xl bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-3 transition-all hover:border-emerald-500/40">
+                                <div className="w-10 h-10 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-black text-xs shrink-0 shadow-sm">
+                                    ✨
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 truncate">Multi-Fonte</p>
+                                    <p className="text-lg font-black text-slate-900 dark:text-white leading-tight">
+                                        {stats?.events?.multiSource || 0} <span className="text-[10px] font-normal text-slate-400">fundidas</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Extra Quality Badges */}
+                        <div className="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 flex-wrap">
+                            <span className="font-semibold text-slate-400">Enriquecimento de Dados:</span>
+                            <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-medium">
+                                📋 {stats?.events?.withProgramme || 0} Programas/Regulamentos
+                            </span>
+                            <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-medium">
+                                🖼️ {stats?.events?.withImage || 0} Cartazes HD
+                            </span>
+                            <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-medium">
+                                🎟️ {stats?.events?.withRegistration || 0} Prazos Inscrição
+                            </span>
+                        </div>
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Operation 1: Sincronização & Scraping Completo Universal */}
                         <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border-2 border-blue-500/30 dark:border-blue-500/20 shadow-sm space-y-4 col-span-full">

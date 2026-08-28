@@ -32,7 +32,8 @@ export async function GET(request) {
 
         const [
             // Database entity stats
-            totalEvents, fpcEvents, cabreiraEvents, eventsWithRegCloses, eventsWithPrices, eventsWithProgramme,
+            totalEvents, fpcEvents, cabreiraEvents, stopAndGoEvents, multiSourceEvents,
+            eventsWithRegCloses, eventsWithPrices, eventsWithProgramme, eventsWithImage,
             totalLogs, errorLogs, recentLogs,
             totalUsers,
 
@@ -54,11 +55,14 @@ export async function GET(request) {
         ] = await Promise.all([
             // DB Entities
             prisma.event.count().catch(() => 0),
-            prisma.event.count({ where: { source: 'FPC' } }).catch(() => 0),
-            prisma.event.count({ where: { source: 'Cabreira' } }).catch(() => 0),
+            prisma.event.count({ where: { source: { contains: 'FPC' } } }).catch(() => 0),
+            prisma.event.count({ where: { source: { contains: 'Cabreira' } } }).catch(() => 0),
+            prisma.event.count({ where: { source: { contains: 'Stop' } } }).catch(() => 0),
+            prisma.event.count({ where: { source: { contains: ',' } } }).catch(() => 0),
             prisma.event.count({ where: { registrationClosesAt: { not: null } } }).catch(() => 0),
             prisma.event.count({ where: { prices: { not: null } } }).catch(() => 0),
             prisma.event.count({ where: { programa: { not: null } } }).catch(() => 0),
+            prisma.event.count({ where: { image: { not: null } } }).catch(() => 0),
             prisma.systemLog.count().catch(() => 0),
             prisma.systemLog.count({ where: { level: 'ERROR' } }).catch(() => 0),
             prisma.systemLog.findMany({
@@ -232,9 +236,12 @@ export async function GET(request) {
                     total: totalEvents,
                     fpc: fpcEvents,
                     cabreira: cabreiraEvents,
+                    stopAndGo: stopAndGoEvents,
+                    multiSource: multiSourceEvents,
                     withRegistration: eventsWithRegCloses,
                     withPrices: eventsWithPrices,
-                    withProgramme: eventsWithProgramme
+                    withProgramme: eventsWithProgramme,
+                    withImage: eventsWithImage
                 },
                 users: {
                     total: totalUsers
