@@ -115,6 +115,9 @@ export default function AdminDashboardPage() {
     const [liveScraperLogs, setLiveScraperLogs] = useState([]);
     const [scraperElapsedSecs, setScraperElapsedSecs] = useState(0);
     const [scraperActiveStep, setScraperActiveStep] = useState(0); // 0: None, 1: FPC, 2: Cabreira, 3: Stop&Go, 4: DeepScrape, 5: Unificação, 6: Concluído
+    const [scraperStepDurations, setScraperStepDurations] = useState({}); // { 1: '9.2s', 2: '11.4s', ... }
+    const stepStartTimesRef = useRef({});
+    const lastStepRef = useRef(0);
 
     // 1. Fetch Stats & Analytics (with smart background silent refresh)
     const loadStats = useCallback(async (timeframeParam, silent = false) => {
@@ -308,6 +311,9 @@ export default function AdminDashboardPage() {
         setScraperElapsedSecs(0);
         setScraperActiveStep(1);
         setLiveScraperLogs([]);
+        setScraperStepDurations({});
+        stepStartTimesRef.current = { 1: Date.now() };
+        lastStepRef.current = 1;
         setOpOutput({ label, status: 'loading', message: `A executar "${label}"... O pipeline está a consultar os calendários e a fundir as provas.` });
 
         const startTime = Date.now();
@@ -336,6 +342,18 @@ export default function AdminDashboardPage() {
                     });
 
                     if (completionLog && !isDone) {
+                        const now = Date.now();
+                        setScraperStepDurations(prev => {
+                            const updated = { ...prev };
+                            for (let s = 1; s <= 5; s++) {
+                                if (!updated[s] && stepStartTimesRef.current[s]) {
+                                    const nextTime = stepStartTimesRef.current[s + 1] || now;
+                                    const secs = Math.max(0.5, (nextTime - stepStartTimesRef.current[s]) / 1000).toFixed(1);
+                                    updated[s] = `${secs}s`;
+                                }
+                            }
+                            return updated;
+                        });
                         isDone = true;
                         setScraperActiveStep(6);
                         setOpOutput({
@@ -349,29 +367,48 @@ export default function AdminDashboardPage() {
                         setRunningOp(null);
                         await loadStats(null, true);
                         await loadLogs();
+                        return;
                     }
 
                     // Dynamic step detection if not yet completed
                     if (!isDone) {
                         const recentLogs = data.logs.slice(0, 8);
+                        let detectedStep = 1;
                         for (const l of recentLogs) {
                             const msg = (l.message || '').toLowerCase();
                             if (msg.includes('unificação') || msg.includes('fundidas')) {
-                                setScraperActiveStep(5);
+                                detectedStep = 5;
                                 break;
                             } else if (msg.includes('deep scraping') || msg.includes('programas')) {
-                                setScraperActiveStep(4);
+                                detectedStep = 4;
                                 break;
                             } else if (msg.includes('stop and go')) {
-                                setScraperActiveStep(3);
+                                detectedStep = 3;
                                 break;
                             } else if (msg.includes('cabreira')) {
-                                setScraperActiveStep(2);
+                                detectedStep = 2;
                                 break;
                             } else if (msg.includes('fpc')) {
-                                setScraperActiveStep(1);
+                                detectedStep = 1;
                                 break;
                             }
+                        }
+
+                        if (detectedStep > lastStepRef.current) {
+                            const now = Date.now();
+                            setScraperStepDurations(prev => {
+                                const updated = { ...prev };
+                                for (let s = lastStepRef.current; s < detectedStep; s++) {
+                                    if (!updated[s] && stepStartTimesRef.current[s]) {
+                                        const secs = Math.max(0.5, (now - stepStartTimesRef.current[s]) / 1000).toFixed(1);
+                                        updated[s] = `${secs}s`;
+                                    }
+                                }
+                                return updated;
+                            });
+                            stepStartTimesRef.current[detectedStep] = now;
+                            lastStepRef.current = detectedStep;
+                            setScraperActiveStep(detectedStep);
                         }
                     }
                 }
@@ -411,6 +448,18 @@ export default function AdminDashboardPage() {
             if (data.success && !isDone) {
                 // Ensure a final poll to pick up all server logs
                 await pollLogs();
+                const now = Date.now();
+                setScraperStepDurations(prev => {
+                    const updated = { ...prev };
+                    for (let s = 1; s <= 5; s++) {
+                        if (!updated[s] && stepStartTimesRef.current[s]) {
+                            const nextTime = stepStartTimesRef.current[s + 1] || now;
+                            const secs = Math.max(0.5, (nextTime - stepStartTimesRef.current[s]) / 1000).toFixed(1);
+                            updated[s] = `${secs}s`;
+                        }
+                    }
+                    return updated;
+                });
                 isDone = true;
                 setScraperActiveStep(6);
                 setOpOutput({
@@ -2062,23 +2111,37 @@ export default function AdminDashboardPage() {
                                 ].map(s => {
                                     const isDone = scraperActiveStep > s.step || scraperActiveStep === 6;
                                     const isCurrent = scraperActiveStep === s.step && runningOp;
+                                    const duration = scraperStepDurations[s.step];
+
                                     return (
                                         <div 
                                             key={s.step} 
                                             className={`p-2.5 rounded-xl border transition-all ${
                                                 isDone 
-                                                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' 
+                                                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-sm shadow-emerald-500/5' 
                                                     : isCurrent 
                                                     ? 'bg-blue-500/15 border-blue-500/40 text-blue-300 ring-1 ring-blue-500/30 shadow-md shadow-blue-500/10' 
                                                     : 'bg-slate-900/50 border-slate-800 text-slate-500'
                                             }`}
                                         >
-                                            <div className="flex items-center justify-between mb-1">
-                                                <span className="text-xs font-bold">{s.label}</span>
+                                            <div className="flex items-center justify-between mb-1 gap-1">
+                                                <span className="text-xs font-bold truncate">{s.label}</span>
                                                 {isDone ? (
-                                                    <Check size={12} className="text-emerald-400 shrink-0" />
+                                                    <div className="flex items-center gap-1 shrink-0">
+                                                        {duration && (
+                                                            <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                                                {duration}
+                                                            </span>
+                                                        )}
+                                                        <Check size={13} className="text-emerald-400 shrink-0" />
+                                                    </div>
                                                 ) : isCurrent ? (
-                                                    <div className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin shrink-0"></div>
+                                                    <div className="flex items-center gap-1 shrink-0">
+                                                        <span className="text-[10px] font-mono text-blue-300">
+                                                            {Math.max(1, scraperElapsedSecs - Object.values(scraperStepDurations).reduce((acc, d) => acc + (parseFloat(d) || 0), 0)).toFixed(0)}s
+                                                        </span>
+                                                        <div className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin shrink-0"></div>
+                                                    </div>
                                                 ) : (
                                                     <span className="w-1.5 h-1.5 rounded-full bg-slate-700"></span>
                                                 )}
