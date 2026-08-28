@@ -825,9 +825,13 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                         </h4>
                                     </div>
                                     {activeEvent.source && (
-                                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-200/80 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-300/60 dark:border-slate-700">
-                                            {activeEvent.source}
-                                        </span>
+                                        <div className="flex items-center gap-1 flex-wrap">
+                                            {activeEvent.source.split(',').map(s => s.trim()).filter(Boolean).map(src => (
+                                                <span key={src} className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-200/80 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-300/60 dark:border-slate-700">
+                                                    {src}
+                                                </span>
+                                            ))}
+                                        </div>
                                     )}
                                 </div>
 

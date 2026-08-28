@@ -1793,7 +1793,32 @@ export default function AdminDashboardPage() {
                             </button>
                         </div>
 
-                        {/* Operation 3: Cleanup Duplicates */}
+                        {/* Operation 3: Unify & Merge Events */}
+                        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
+                            <div>
+                                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                                    <Sparkles size={14} className="text-purple-500" />
+                                    <span>Unificar & Fundir Provas Multi-Fonte</span>
+                                </h3>
+                                <p className="text-xs text-slate-500 leading-relaxed mt-1">
+                                    Varre a base de dados, identifica provas em comum (FPC e Cabreira) e une-as num único registo enriquecido com todas as fontes e links.
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => handleRunOperation('unify', '/api/admin/unify-events', 'Unificação de Provas')}
+                                disabled={runningOp !== null}
+                                className="w-full py-2.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-bold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+                            >
+                                {runningOp === 'unify' ? (
+                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                ) : (
+                                    <Sparkles size={14} />
+                                )}
+                                <span>{runningOp === 'unify' ? 'A Fundir e Complementar...' : 'Executar Fusão de Provas'}</span>
+                            </button>
+                        </div>
+
+                        {/* Operation 4: Cleanup Duplicates */}
                         <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
                             <div>
                                 <h3 className="text-sm font-bold text-slate-900 dark:text-white">

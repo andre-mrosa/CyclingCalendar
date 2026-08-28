@@ -5,6 +5,7 @@ import {
     getDistrito, toTitleCase, getLicenca, sanitizeHtml, fetchImageAsBase64 
 } from './utils';
 import { logInfo, logError } from '../logger';
+import { saveOrMergeEvent } from '../merging/eventMerger';
 
 export const deepScrapeFPC = async (link) => {
     if (!link) return null;
@@ -289,11 +290,7 @@ export const scrapeFPC = async (year) => {
                         organizador: organizadorText || null
                     };
 
-                    await prisma.event.upsert({
-                        where: { id: id },
-                        update: eventData,
-                        create: { id: id, ...eventData }
-                    });
+                    await saveOrMergeEvent(prisma, { id: id, ...eventData });
                     addedCount++;
                 }
             }

@@ -5,6 +5,7 @@ import {
     getDistrito, toTitleCase, parsePTDateToISO, sanitizeHtml, fetchImageAsBase64 
 } from './utils';
 import { logInfo, logError } from '../logger';
+import { saveOrMergeEvent } from '../merging/eventMerger';
 
 export const deepScrapeCabreira = async (link) => {
     if (!link) return { opensAt: null, closesAt: null, description: null, prices: null, insurance: null, prizes: null, programa: null, additionalLinks: [] };
@@ -331,11 +332,7 @@ export const scrapeCabreira = async (year) => {
                     image: image,
                 };
 
-                await prisma.event.upsert({
-                    where: { id: id },
-                    update: eventData,
-                    create: { id: id, ...eventData }
-                });
+                await saveOrMergeEvent(prisma, { id: id, ...eventData });
                 processedCount++;
             }
         }
