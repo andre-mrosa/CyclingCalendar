@@ -61,27 +61,11 @@ export async function POST(req) {
                 where: { userId },
                 data: { status: 'PROCESSED', updatedAt: new Date() }
             });
-
-            await logWarn('AUTH', `Conta de utilizador ${emailLabel} (${userId}) foi eliminada através do Clerk`, {
-                userId,
-                userEmail: existingReq?.userEmail || null,
-                userName: existingReq?.userName || null,
-                deleted: data.deleted,
-                eventData: data
-            }, { id: userId, email: existingReq?.userEmail || 'Conta Eliminada' });
-
-        } else if (eventType === 'user.created') {
-            const primaryEmail = data.email_addresses?.find(e => e.id === data.primary_email_address_id)?.email_address || data.email_addresses?.[0]?.email_address || 'Sem email';
-            
-            await logInfo('AUTH', `Novo utilizador registado na plataforma: ${primaryEmail}`, {
-                userId: data.id,
-                email: primaryEmail
-            }, { id: data.id, email: primaryEmail });
         }
 
         return Response.json({ success: true, message: 'Webhook processado' });
     } catch (e) {
-        logError('AUTH', `Erro ao processar webhook do Clerk (${eventType}): ${e.message}`, e);
+        logError('SYSTEM', `Erro ao processar webhook do Clerk (${eventType}): ${e.message}`, e);
         console.error('Error processing Clerk webhook:', e);
         return Response.json({ success: false, error: e.message }, { status: 500 });
     }

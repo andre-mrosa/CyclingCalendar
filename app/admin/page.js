@@ -1595,13 +1595,10 @@ export default function AdminDashboardPage() {
                                     className="px-2.5 py-1 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 focus:outline-none"
                                 >
                                     <option value="ALL">Todas as Origens</option>
-                                    <option value="SCRAPER">SCRAPER (FPC / Cabreira)</option>
-                                    <option value="CALENDAR">CALENDAR (Google Sync)</option>
-                                    <option value="AUTH">AUTH (Perfis & Permissões)</option>
-                                    <option value="API">API (Endpoints)</option>
-                                    <option value="CLIENT">CLIENT (Frontend & Navegador)</option>
-                                    <option value="CRON">CRON (Tarefas Automáticas)</option>
-                                    <option value="SYSTEM">SYSTEM (Geral)</option>
+                                    <option value="SCRAPER">SCRAPER (FPC / Cabreira / StopAndGo)</option>
+                                    <option value="CRON">CRON (Tarefas Agendadas 03:00)</option>
+                                    <option value="SYSTEM">SYSTEM (Sistema & Base de Dados)</option>
+                                    <option value="API">API (Endpoints & Meteorologia)</option>
                                 </select>
                             </div>
 
@@ -1681,12 +1678,6 @@ export default function AdminDashboardPage() {
                                                         <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 shrink-0 border border-slate-200/50 dark:border-slate-700/50">
                                                             {log.source}
                                                         </span>
-
-                                                        {log.userEmail && (
-                                                            <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[150px] sm:max-w-[220px]" title={log.userEmail}>
-                                                                👤 {log.userEmail}
-                                                            </span>
-                                                        )}
                                                     </div>
 
                                                     {/* Timestamp on right */}
