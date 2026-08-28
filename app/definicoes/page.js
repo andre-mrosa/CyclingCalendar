@@ -3,12 +3,16 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useUser } from '@clerk/nextjs';
+import { useTheme } from 'next-themes';
 import { useSettingsStore } from '../store/useSettingsStore';
-import { HelpCircle, Settings, ChevronUp, ChevronDown, RotateCcw, Shield, Trash2, AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
+import { useTranslation } from '../i18n/useTranslation';
+import { HelpCircle, Settings, ChevronUp, ChevronDown, RotateCcw, Shield, Trash2, AlertTriangle, CheckCircle2, Clock, Globe, Moon } from 'lucide-react';
 import RegionAssistant from '../components/RegionAssistant';
 import EscalaoAssistant from '../components/EscalaoAssistant';
 
 export default function Conta() {
+    const { theme, setTheme } = useTheme();
+    const { t, language, setLanguage } = useTranslation();
     const { 
         defaultPage, setDefaultPage,
         defaultEscalao, setDefaultEscalao,
@@ -141,7 +145,46 @@ export default function Conta() {
                     </section>
                 )}
                 <section className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/5 rounded-2xl p-6 sm:p-8 shadow-sm dark:shadow-xl">
+                    {/* Idioma da Aplicação */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between pb-6 border-b border-slate-100 dark:border-slate-800/60 gap-4">
+                        <div>
+                            <h3 className="font-semibold text-slate-900 dark:text-slate-200 flex items-center mb-1 text-base gap-2">
+                                <Globe size={16} className="text-blue-500" />
+                                {t('settings_lang_title')}
+                            </h3>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">{t('settings_lang_desc')}</p>
+                        </div>
+                        <select 
+                            className="h-10 px-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors w-full md:w-auto font-medium" 
+                            value={language || 'auto'} 
+                            onChange={(e) => setLanguage(e.target.value === 'auto' ? (navigator.language.startsWith('pt') ? 'pt' : 'en') : e.target.value)}
+                        >
+                            <option value="pt">{t('settings_lang_pt')}</option>
+                            <option value="en">{t('settings_lang_en')}</option>
+                        </select>
+                    </div>
+
+                    {/* Tema Visual */}
+                    <div className="flex flex-col md:flex-row md:items-center justify-between py-6 border-b border-slate-100 dark:border-slate-800/60 gap-4">
+                        <div>
+                            <h3 className="font-semibold text-slate-900 dark:text-slate-200 flex items-center mb-1 text-base gap-2">
+                                <Moon size={16} className="text-amber-500" />
+                                {t('settings_theme_title')}
+                            </h3>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">{t('settings_theme_desc')}</p>
+                        </div>
+                        <select 
+                            className="h-10 px-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors w-full md:w-auto font-medium" 
+                            value={theme || 'system'} 
+                            onChange={(e) => setTheme(e.target.value)}
+                        >
+                            <option value="system">{t('settings_theme_auto')}</option>
+                            <option value="dark">{t('settings_theme_dark')}</option>
+                            <option value="light">{t('settings_theme_light')}</option>
+                        </select>
+                    </div>
+
+                    <div className="flex flex-col md:flex-row md:items-center justify-between py-6 border-b border-slate-100 dark:border-slate-800/60 gap-4">
                         <div>
                             <h3 className="font-semibold text-slate-900 dark:text-slate-200 flex items-center mb-1 text-base">
                                 Página Principal Predefinida

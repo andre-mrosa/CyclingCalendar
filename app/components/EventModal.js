@@ -5,11 +5,13 @@ import SmartLogo from './SmartLogo';
 import { parsePrograma } from '../utils/parsePrograma';
 import { useCalendarEvents } from '../hooks/useCalendarEvents';
 import WeatherWidget from './WeatherWidget';
+import { useTranslation } from '../i18n/useTranslation';
 
 const eventDetailsCache = new Map();
 
 export default function EventModal({ selectedEvent, setSelectedEvent, favorites, toggleFavorite, isSignedIn }) {
     const { resolvedTheme } = useTheme();
+    const { t } = useTranslation();
     const { isMarked, refreshCalendar } = useCalendarEvents();
     const [programaData, setProgramaData] = useState({ loading: false, html: null, error: null, additionalLinks: [] });
     const [fullscreenImage, setFullscreenImage] = useState(null);
@@ -661,13 +663,15 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
     const isMultiDay = rawDate.includes(',') || rawDate.includes(' e ') || rawDate.includes(' a ');
     const monthAbbrs = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
     
-    // Extrai o dia do evento em si (se for intervalo "29 AGO a 30 AGO", usa a data da prova "30")
+    // Extrai o dia ou intervalo real do evento
     let day = '';
     let month = '';
-    const rangeMatch = rawDate.trim().match(/(?:(?:a|-|e)\s*)(\d{1,2})\s+([A-ZÀ-Úa-zà-ú]{3})/i);
-    if (rangeMatch && monthAbbrs.includes(rangeMatch[2].toUpperCase())) {
-        day = rangeMatch[1];
-        month = rangeMatch[2].toUpperCase();
+    const fullRangeMatch = rawDate.trim().match(/^(\d{1,2})\s*(?:[A-ZÀ-Úa-zà-ú]{3})?(?:\s*\d{4})?\s*(?:a|-|e)\s*(\d{1,2})\s+([A-ZÀ-Úa-zà-ú]{3})/i);
+    if (fullRangeMatch && monthAbbrs.includes(fullRangeMatch[3].toUpperCase())) {
+        const startDay = fullRangeMatch[1];
+        const endDay = fullRangeMatch[2];
+        month = fullRangeMatch[3].toUpperCase();
+        day = startDay === endDay ? startDay : `${startDay}-${endDay}`;
     } else {
         const dateParts = rawDate.trim().split(/\s+/);
         day = dateParts[0] ? dateParts[0].replace(/,/g, '') : '';
@@ -722,7 +726,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             <div className="bg-rose-500 text-white text-[8px] font-bold uppercase tracking-wider text-center py-0.5">
                                 {month}
                             </div>
-                            <div className="flex-1 flex items-center justify-center text-slate-900 dark:text-white text-sm font-bold">
+                            <div className={`flex-1 flex items-center justify-center text-slate-900 dark:text-white font-bold ${day.length > 2 ? 'text-[11px] tracking-tight' : 'text-sm'}`}>
                                 {day}
                             </div>
                         </div>
@@ -806,7 +810,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             <div className="bg-rose-500 text-white text-[10px] font-bold uppercase tracking-wider text-center py-0.5">
                                 {month}
                             </div>
-                            <div className="flex-1 flex items-center justify-center text-slate-900 dark:text-white text-lg font-bold">
+                            <div className={`flex-1 flex items-center justify-center text-slate-900 dark:text-white font-bold ${day.length > 2 ? 'text-xs sm:text-sm tracking-tight' : 'text-lg'}`}>
                                 {day}
                             </div>
                         </div>
@@ -836,7 +840,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 title="Partilhar prova ou copiar link direto"
                             >
                                 <Share2 size={13} />
-                                <span className="text-[11px]">{shareCopied ? 'Copiado!' : 'Partilhar'}</span>
+                                <span className="text-[11px]">{shareCopied ? t('action_copied') : t('action_share')}</span>
                             </button>
                             {(() => {
                                 const isEventFavorited = favorites.includes(activeEvent.id) || (activeEvent._allIds && activeEvent._allIds.some(id => favorites.includes(id)));
@@ -884,19 +888,19 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 };
                                 const shortLabels = {
                                     info: 'Info',
-                                    escaloes: 'Escalões',
-                                    programa: activeEvent.source === 'FPC' ? 'Docs' : 'Programa',
-                                    inscricao: 'Inscrição',
-                                    premios: 'Prémios',
-                                    localizacao: 'Mapa'
+                                    escaloes: t('tab_categories'),
+                                    programa: activeEvent.source === 'FPC' ? 'Docs' : t('tab_schedule'),
+                                    inscricao: t('tab_registration'),
+                                    premios: t('tab_prizes'),
+                                    localizacao: t('tab_location')
                                 };
                                 const fullLabels = {
-                                    info: 'Info do Evento',
-                                    escaloes: 'Escalões Elegíveis',
-                                    programa: activeEvent.source === 'FPC' ? 'Documentos & Detalhes' : 'Programa',
-                                    inscricao: 'Inscrição & Preços',
-                                    premios: 'Prémios & Seguro',
-                                    localizacao: 'Localização'
+                                    info: t('tab_info'),
+                                    escaloes: t('tab_categories'),
+                                    programa: activeEvent.source === 'FPC' ? (language === 'en' ? 'Documents & Details' : 'Documentos & Detalhes') : t('tab_schedule'),
+                                    inscricao: t('tab_registration'),
+                                    premios: t('tab_prizes'),
+                                    localizacao: t('tab_location')
                                 };
                                 const isActive = activeTab === tab;
                                 return (
@@ -1474,7 +1478,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                     {programaData.loading ? (
                         <div className="px-3 py-1.5 flex items-center gap-2 text-slate-400 text-xs">
                             <div className="w-3.5 h-3.5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
-                            <span>A carregar dados...</span>
+                            <span>{t('action_loading_data')}</span>
                         </div>
                     ) : (
                         <div className="flex items-center gap-2 flex-wrap">
@@ -1487,7 +1491,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                     className="px-3.5 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30 rounded-xl text-xs sm:text-sm font-semibold transition-colors flex items-center gap-1.5 shadow-sm"
                                 >
                                     <Trophy size={14} className="text-amber-500 shrink-0" />
-                                    <span>Classificações</span>
+                                    <span>{t('action_results')}</span>
                                 </a>
                             )}
 
@@ -1500,7 +1504,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                     className="px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs sm:text-sm font-semibold transition-colors border border-slate-200 dark:border-slate-700 flex items-center gap-1.5"
                                 >
                                     <FileText size={14} className="text-slate-500 dark:text-slate-400 shrink-0" />
-                                    <span>Regulamento</span>
+                                    <span>{t('action_rules')}</span>
                                 </a>
                             )}
 
@@ -1525,14 +1529,14 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                     rel="noopener noreferrer" 
                                     className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs sm:text-sm font-semibold transition-colors shadow-lg shadow-blue-500/20 flex items-center justify-center"
                                 >
-                                    Inscrever
+                                    {t('action_register')}
                                 </a>
                             )}
                             
                             {parsedLinks.registrationList.length > 1 && (
                                 <div className="relative group">
                                     <button className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs sm:text-sm font-semibold transition-colors shadow-lg shadow-blue-500/20 flex items-center gap-1.5 cursor-pointer">
-                                        <span>Inscrever</span>
+                                        <span>{t('action_register')}</span>
                                         <ChevronDown size={13} className="shrink-0" />
                                     </button>
                                     <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block w-48 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl overflow-hidden z-50 animate-fade-in">
@@ -1545,7 +1549,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                                     rel="noopener noreferrer" 
                                                     className="px-3.5 py-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs transition-colors border-b border-slate-100 dark:border-slate-800 last:border-0 font-medium flex items-center justify-between"
                                                 >
-                                                    <span>Inscrever</span>
+                                                    <span>{t('action_register')}</span>
                                                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 font-semibold">{src._plat}</span>
                                                 </a>
                                             ))}

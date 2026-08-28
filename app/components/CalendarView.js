@@ -12,6 +12,7 @@ import { exportEventsToICS } from '../utils/exportCalendar';
 import EventModal from './EventModal';
 import EscalaoAssistant from './EscalaoAssistant';
 import { trackEvent } from './AnalyticsTracker';
+import { useTranslation } from '../i18n/useTranslation';
 
 const fetcher = (url) => fetch(url).then((res) => res.json()).then((data) => {
     if (!data.success) throw new Error(data.error || 'Failed to load events');
@@ -31,6 +32,7 @@ export default function CalendarView({
     activeFilters = ['search', 'year', 'month', 'escalao', 'ambito', 'licenca', 'regiao'],
     applyDefaultRegiao = false
 }) {
+    const { t } = useTranslation();
     const { 
         defaultEscalao, 
         defaultRegiao,
@@ -682,13 +684,15 @@ export default function CalendarView({
                                 const isMultiDay = rawDate.includes(',') || rawDate.includes(' e ') || rawDate.includes(' a ');
                                 const monthAbbrs = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
                                 
-                                // Extrai o dia do evento em si (se for intervalo "29 AGO a 30 AGO", usa a data da prova "30")
+                                // Extrai o dia ou intervalo real do evento
                                 let day = '';
                                 let month = '';
-                                const rangeMatch = rawDate.trim().match(/(?:(?:a|-|e)\s*)(\d{1,2})\s+([A-ZÀ-Úa-zà-ú]{3})/i);
-                                if (rangeMatch && monthAbbrs.includes(rangeMatch[2].toUpperCase())) {
-                                    day = rangeMatch[1];
-                                    month = rangeMatch[2].toUpperCase();
+                                const fullRangeMatch = rawDate.trim().match(/^(\d{1,2})\s*(?:[A-ZÀ-Úa-zà-ú]{3})?(?:\s*\d{4})?\s*(?:a|-|e)\s*(\d{1,2})\s+([A-ZÀ-Úa-zà-ú]{3})/i);
+                                if (fullRangeMatch && monthAbbrs.includes(fullRangeMatch[3].toUpperCase())) {
+                                    const startDay = fullRangeMatch[1];
+                                    const endDay = fullRangeMatch[2];
+                                    month = fullRangeMatch[3].toUpperCase();
+                                    day = startDay === endDay ? startDay : `${startDay}-${endDay}`;
                                 } else {
                                     const dateParts = rawDate.trim().split(/\s+/);
                                     day = dateParts[0] ? dateParts[0].replace(/,/g, '') : '';
@@ -727,7 +731,7 @@ export default function CalendarView({
                                             <div className="bg-rose-500 text-white text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-center py-0.5">
                                                 {month}
                                             </div>
-                                            <div className="flex-1 flex items-center justify-center text-slate-900 dark:text-white text-base sm:text-lg font-bold">
+                                            <div className={`flex-1 flex items-center justify-center text-slate-900 dark:text-white font-bold ${day.length > 2 ? 'text-xs sm:text-sm tracking-tight' : 'text-base sm:text-lg'}`}>
                                                 {day}
                                             </div>
                                         </div>

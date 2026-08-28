@@ -78,7 +78,7 @@ export default function RootLayout({ children }) {
         <ClientErrorLogger />
         <PWAUpdateHandler />
         <FaviconManager />
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem={true}>
           <ThemeClerkProvider>
             <AnalyticsTracker />
             <Navigation />

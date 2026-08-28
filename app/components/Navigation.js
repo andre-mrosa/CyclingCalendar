@@ -8,12 +8,14 @@ import { Home, Trophy, MapPin, Bike, HelpCircle, Settings, Menu, X, Moon, Sun, F
 import SettingsPage from '../definicoes/page';
 import HelpPage from '../ajuda/page';
 import { useSettingsStore } from '../store/useSettingsStore';
+import { useTranslation } from '../i18n/useTranslation';
 import DynamicLogo from './DynamicLogo';
 import ClerkPrivacyProfilePage from './ClerkPrivacyProfilePage';
 
 export default function Navigation() {
     const pathname = usePathname();
     const { theme, setTheme } = useTheme();
+    const { t, language, setLanguage } = useTranslation();
     const { isLoaded, isSignedIn, user } = useUser();
     const { getToken } = useAuth();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -133,31 +135,31 @@ export default function Navigation() {
     const { hiddenTabs, tabsOrder } = useSettingsStore();
 
     const allLinks = [
-        { href: "/", label: "Geral", icon: <Home size={18} />, exact: true },
-        { href: "/agenda", label: "Minha Agenda", icon: <CalendarCheck size={18} /> },
-        { href: "/nacionais", label: "Nacionais", icon: <Flag size={18} /> },
-        { href: "/internacionais", label: "Internacionais", icon: <Globe size={18} /> },
-        { href: "/tacas", label: "Taças", icon: <Trophy size={18} /> },
-        { href: "/regionais", label: "Regionais", icon: <MapPin size={18} /> },
-        { href: "/lazer", label: "Lazer", icon: <Bike size={18} /> },
-        { href: "/favoritos", label: "Favoritos", icon: <Star size={18} /> }
+        { href: "/", label: t('nav_general'), keyName: "Geral", icon: <Home size={18} />, exact: true },
+        { href: "/agenda", label: t('nav_agenda'), keyName: "Minha Agenda", icon: <CalendarCheck size={18} /> },
+        { href: "/nacionais", label: t('nav_nationals'), keyName: "Nacionais", icon: <Flag size={18} /> },
+        { href: "/internacionais", label: t('nav_internationals'), keyName: "Internacionais", icon: <Globe size={18} /> },
+        { href: "/tacas", label: t('nav_cups'), keyName: "Taças", icon: <Trophy size={18} /> },
+        { href: "/regionais", label: t('nav_regionals'), keyName: "Regionais", icon: <MapPin size={18} /> },
+        { href: "/lazer", label: t('nav_leisure'), keyName: "Lazer", icon: <Bike size={18} /> },
+        { href: "/favoritos", label: t('nav_favorites'), keyName: "Favoritos", icon: <Star size={18} /> }
     ];
 
     const sortedLinks = [...allLinks].sort((a, b) => {
         const order = tabsOrder || [];
-        const indexA = order.indexOf(a.label);
-        const indexB = order.indexOf(b.label);
+        const indexA = order.indexOf(a.keyName);
+        const indexB = order.indexOf(b.keyName);
         if (indexA === -1 && indexB === -1) return 0;
         if (indexA === -1) return 1;
         if (indexB === -1) return -1;
         return indexA - indexB;
     });
 
-    const links = sortedLinks.filter(link => !hiddenTabs.includes(link.label));
+    const links = sortedLinks.filter(link => !hiddenTabs.includes(link.keyName));
     
     const rightLinks = [
-        { href: "/ajuda", label: "Ajuda", icon: <HelpCircle size={18} /> },
-        { href: "/definicoes", label: "Definições", icon: <Settings size={18} /> }
+        { href: "/ajuda", label: t('nav_help'), icon: <HelpCircle size={18} /> },
+        { href: "/definicoes", label: t('nav_settings'), icon: <Settings size={18} /> }
     ];
 
     const renderLink = (link) => {
@@ -189,19 +191,30 @@ export default function Navigation() {
         </button>
     );
 
+    const LanguageToggle = () => (
+        <button 
+            onClick={() => setLanguage(language === 'pt' ? 'en' : 'pt')}
+            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 transition-colors cursor-pointer"
+            title={language === 'pt' ? "Switch to English" : "Mudar para Português"}
+        >
+            <Globe size={12} className="text-blue-500" />
+            <span>{language ? language.toUpperCase() : 'PT'}</span>
+        </button>
+    );
+
     const getPageInfo = (path) => {
-        if (path === '/') return { label: 'Geral', icon: <Home size={17} className="text-blue-500 dark:text-blue-400" /> };
-        if (path.startsWith('/agenda')) return { label: 'Minha Agenda', icon: <CalendarCheck size={17} className="text-blue-500 dark:text-blue-400" /> };
-        if (path.startsWith('/nacionais')) return { label: 'Nacionais', icon: <Flag size={17} className="text-blue-500 dark:text-blue-400" /> };
-        if (path.startsWith('/internacionais')) return { label: 'Internacionais', icon: <Globe size={17} className="text-blue-500 dark:text-blue-400" /> };
-        if (path.startsWith('/tacas')) return { label: 'Taças', icon: <Trophy size={17} className="text-blue-500 dark:text-blue-400" /> };
-        if (path.startsWith('/regionais')) return { label: 'Regionais', icon: <MapPin size={17} className="text-blue-500 dark:text-blue-400" /> };
-        if (path.startsWith('/lazer')) return { label: 'Lazer', icon: <Bike size={17} className="text-blue-500 dark:text-blue-400" /> };
-        if (path.startsWith('/favoritos')) return { label: 'Favoritos', icon: <Star size={17} className="text-blue-500 dark:text-blue-400" /> };
-        if (path.startsWith('/definicoes')) return { label: 'Definições', icon: <Settings size={17} className="text-blue-500 dark:text-blue-400" /> };
-        if (path.startsWith('/ajuda')) return { label: 'Ajuda', icon: <HelpCircle size={17} className="text-blue-500 dark:text-blue-400" /> };
-        if (path.startsWith('/admin')) return { label: 'Painel de Gestão', icon: <Shield size={17} className="text-blue-500 dark:text-blue-400" /> };
-        return { label: 'Calendário', icon: <DynamicLogo className="w-5 h-5 rounded" /> };
+        if (path === '/') return { label: t('nav_general'), icon: <Home size={17} className="text-blue-500 dark:text-blue-400" /> };
+        if (path.startsWith('/agenda')) return { label: t('nav_agenda'), icon: <CalendarCheck size={17} className="text-blue-500 dark:text-blue-400" /> };
+        if (path.startsWith('/nacionais')) return { label: t('nav_nationals'), icon: <Flag size={17} className="text-blue-500 dark:text-blue-400" /> };
+        if (path.startsWith('/internacionais')) return { label: t('nav_internationals'), icon: <Globe size={17} className="text-blue-500 dark:text-blue-400" /> };
+        if (path.startsWith('/tacas')) return { label: t('nav_cups'), icon: <Trophy size={17} className="text-blue-500 dark:text-blue-400" /> };
+        if (path.startsWith('/regionais')) return { label: t('nav_regionals'), icon: <MapPin size={17} className="text-blue-500 dark:text-blue-400" /> };
+        if (path.startsWith('/lazer')) return { label: t('nav_leisure'), icon: <Bike size={17} className="text-blue-500 dark:text-blue-400" /> };
+        if (path.startsWith('/favoritos')) return { label: t('nav_favorites'), icon: <Star size={17} className="text-blue-500 dark:text-blue-400" /> };
+        if (path.startsWith('/definicoes')) return { label: t('nav_settings'), icon: <Settings size={17} className="text-blue-500 dark:text-blue-400" /> };
+        if (path.startsWith('/ajuda')) return { label: t('nav_help'), icon: <HelpCircle size={17} className="text-blue-500 dark:text-blue-400" /> };
+        if (path.startsWith('/admin')) return { label: t('nav_admin'), icon: <Shield size={17} className="text-blue-500 dark:text-blue-400" /> };
+        return { label: t('nav_calendar'), icon: <DynamicLogo className="w-5 h-5 rounded" /> };
     };
 
     const currentPage = getPageInfo(pathname);
@@ -216,13 +229,15 @@ export default function Navigation() {
                             {adminPendingCount}
                         </span>
                         <span>
-                            Aviso de Administração: Tens {adminPendingCount} {adminPendingCount === 1 ? 'pedido' : 'pedidos'} de eliminação de conta pendente{adminPendingCount === 1 ? '' : 's'} de revisão.
+                            {adminPendingCount === 1 
+                                ? t('admin_alert_single') 
+                                : t('admin_alert_plural', { count: adminPendingCount })}
                         </span>
                         <Link 
                             href="/admin" 
                             className="inline-flex items-center gap-1 underline font-black text-slate-950 hover:text-white transition-colors ml-2"
                         >
-                            Ver no Painel &rarr;
+                            {t('admin_alert_link')}
                         </Link>
                     </div>
                     <button 
@@ -262,7 +277,8 @@ export default function Navigation() {
                         {links.map(renderLink)}
                     </div>
                     
-                    <div className="ml-auto flex gap-4 items-center">
+                    <div className="ml-auto flex gap-3 items-center">
+                        <LanguageToggle />
                         <ThemeToggle />
                         
                         <Show when="signed-out">
@@ -270,7 +286,7 @@ export default function Navigation() {
                             <SignInButton mode="modal">
                                 <button className="flex items-center gap-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 px-4 py-1.5 rounded-lg transition-colors font-bold shadow-[0_0_10px_rgba(59,130,246,0.1)] hover:shadow-[0_0_15px_rgba(59,130,246,0.2)] cursor-pointer">
                                     <LogIn size={16} />
-                                    Entrar
+                                    {t('nav_signin')}
                                 </button>
                             </SignInButton>
                         </Show>
@@ -351,6 +367,7 @@ export default function Navigation() {
                             )}
                         </Link>
                     )}
+                    <LanguageToggle />
                     <ThemeToggle />
                 </div>
             </nav>
@@ -384,7 +401,7 @@ export default function Navigation() {
                                 <SignInButton mode="modal">
                                     <button className="flex items-center justify-center gap-2 w-full bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 px-4 py-2 rounded-lg transition-colors font-bold shadow-[0_0_10px_rgba(59,130,246,0.1)] cursor-pointer">
                                         <LogIn size={18} />
-                                        Entrar
+                                        {t('nav_signin')}
                                     </button>
                                 </SignInButton>
                             </div>

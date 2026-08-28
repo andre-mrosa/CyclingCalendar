@@ -11,6 +11,7 @@ export const useSettingsStore = create(
             defaultPage: '/',
             defaultEscalao: 'Todos',
             defaultRegiao: 'Todas',
+            language: null, // null means auto-detect from device
             selectedSources: DEFAULT_SOURCES,
             hiddenTabs: [],
             tabsOrder: DEFAULT_TABS,
@@ -18,6 +19,7 @@ export const useSettingsStore = create(
             setDefaultPage: (val) => set({ defaultPage: val }),
             setDefaultEscalao: (val) => set({ defaultEscalao: val }),
             setDefaultRegiao: (val) => set({ defaultRegiao: val }),
+            setLanguage: (val) => set({ language: val }),
             
             toggleSource: (source) => set((state) => {
                 const current = state.selectedSources || [];
