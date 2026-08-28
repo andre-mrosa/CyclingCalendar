@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { useTranslation } from '../i18n/useTranslation';
+import { translateEscalao } from '../i18n/formatters';
 
 export default function EscalaoAssistant({ onApply }) {
-    const { t } = useTranslation();
+    const { t, language } = useTranslation();
     const [birthYear, setBirthYear] = useState('');
     const [gender, setGender] = useState('M');
     const [licenseType, setLicenseType] = useState('Competição');
@@ -52,7 +53,7 @@ export default function EscalaoAssistant({ onApply }) {
         }
         
         setSuggestedEscalao(result);
-        setEscalaoMessage(`${t('escalao_detected_title')} ${result}`);
+        setEscalaoMessage(`${t('escalao_detected_title')} ${translateEscalao(result, language)}`);
     };
 
     const applyEscalao = () => {
@@ -144,7 +145,7 @@ export default function EscalaoAssistant({ onApply }) {
                                 onClick={applyEscalao}
                                 className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold text-sm transition-colors shadow-md cursor-pointer"
                             >
-                                {t('escalao_btn_apply')} ({suggestedEscalao})
+                                {t('escalao_btn_apply')} ({translateEscalao(suggestedEscalao, language)})
                             </button>
                         )}
                     </div>

@@ -142,6 +142,7 @@ export default {
     summary_insurance: "Seguro",
     summary_prizes: "Prémios",
     summary_location_tbd: "Localização a definir.",
+    schedule_not_available: "Programa detalhado não disponível na Base de Dados. A aguardar recolha do sistema.",
 
     // Event Modal - Action Buttons & Resources
     action_register: "Inscrever",

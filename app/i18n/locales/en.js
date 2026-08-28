@@ -142,6 +142,7 @@ export default {
     summary_insurance: "Insurance",
     summary_prizes: "Prizes",
     summary_location_tbd: "Location to be defined.",
+    schedule_not_available: "Detailed schedule not available in the database. Awaiting system collection.",
 
     // Event Modal - Action Buttons & Resources
     action_register: "Register",

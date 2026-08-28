@@ -13,7 +13,7 @@ import EventModal from './EventModal';
 import EscalaoAssistant from './EscalaoAssistant';
 import { trackEvent } from './AnalyticsTracker';
 import { useTranslation } from '../i18n/useTranslation';
-import { formatMonthAbbr, translateDateString, translateEscalao, translateAmbito, translateLicenca, translateTag } from '../i18n/formatters';
+import { formatMonthAbbr, translateDateString, translateEscalao, translateAmbito, translateLicenca, translateTag, MONTH_FULL } from '../i18n/formatters';
 import { isStageRace, getEventDiscipline } from '../utils/eventClassifier';
 
 const fetcher = (url) => fetch(url).then((res) => res.json()).then((data) => {
@@ -268,7 +268,7 @@ export default function CalendarView({
     const uniqueDistritos = ['Todos', ...distritosList];
     const availableTags = [...new Set(events.map(e => getEventDiscipline(e)).filter(Boolean))].sort();
 
-    const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    const monthNames = MONTH_FULL[language] || MONTH_FULL.pt;
 
     const eventYears = useMemo(() => {
         return [...new Set(events.map(e => e.sortDate ? new Date(e.sortDate).getFullYear().toString() : (e.date ? e.date.match(/20\d\d/)?.[0] : null)).filter(Boolean))].sort();
@@ -513,10 +513,10 @@ export default function CalendarView({
                                         <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">{t('filter_start_month')}</label>
                                         <select 
                                             className="w-full h-9 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors"
-                                            value={monthNames[monthFrom - 1]} 
-                                            onChange={(e) => onMonthFromChange({target:{value: monthNames.indexOf(e.target.value) + 1}})} 
+                                            value={monthFrom} 
+                                            onChange={(e) => onMonthFromChange({target:{value: parseInt(e.target.value, 10)}})} 
                                         >
-                                            {monthNames.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                            {monthNames.map((name, idx) => <option key={idx + 1} value={idx + 1}>{name}</option>)}
                                         </select>
                                     </div>
                                     
@@ -524,10 +524,10 @@ export default function CalendarView({
                                         <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">{t('filter_end_month')}</label>
                                         <select 
                                             className="w-full h-9 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors"
-                                            value={monthNames[monthTo - 1]} 
-                                            onChange={(e) => onMonthToChange({target:{value: monthNames.indexOf(e.target.value) + 1}})} 
+                                            value={monthTo} 
+                                            onChange={(e) => onMonthToChange({target:{value: parseInt(e.target.value, 10)}})} 
                                         >
-                                            {monthNames.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                            {monthNames.map((name, idx) => <option key={idx + 1} value={idx + 1}>{name}</option>)}
                                         </select>
                                     </div>
                                 </>

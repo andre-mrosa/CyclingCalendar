@@ -752,10 +752,10 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         <button 
                             onClick={handleShare}
                             className={`flex items-center justify-center gap-1 h-8 px-2 rounded-full transition-all cursor-pointer text-xs font-semibold ${shareCopied ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40' : 'bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
-                            title="Partilhar prova ou copiar link direto"
+                            title={t('action_share')}
                         >
                             <Share2 size={13} />
-                            {shareCopied && <span className="text-[10px]">Copiado!</span>}
+                            {shareCopied && <span className="text-[10px]">{t('action_copied')}</span>}
                         </button>
                         {(() => {
                             const isEventFavorited = favorites.includes(activeEvent.id) || (activeEvent._allIds && activeEvent._allIds.some(id => favorites.includes(id)));
@@ -766,7 +766,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                         toggleFavorite(activeEvent.id);
                                     }}
                                     className={`flex items-center justify-center w-8 h-8 rounded-full transition-all cursor-pointer ${isEventFavorited ? 'bg-amber-400/15 border border-amber-500/40 text-amber-400' : 'bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-400'}`}
-                                    title={isEventFavorited ? "Remover dos Favoritos" : "Adicionar aos Favoritos"}
+                                    title={isEventFavorited ? t('card_remove_favorite') : t('card_add_favorite')}
                                 >
                                     <Star 
                                         size={15} 
@@ -778,7 +778,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         <button 
                             className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors p-1.5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 cursor-pointer" 
                             onClick={closeModal} 
-                            title="Fechar"
+                            title={t('action_close')}
                         >
                             <X size={17} />
                         </button>
@@ -815,7 +815,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                 {/* Desktop Header (hidden sm:flex) */}
                 <div className="hidden sm:flex items-center justify-between gap-3.5 pr-14 p-5 pb-2 min-w-0 shrink-0">
-                    <button className="absolute top-4 right-4 text-slate-400 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors z-10 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer" onClick={closeModal} title="Fechar">
+                    <button className="absolute top-4 right-4 text-slate-400 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors z-10 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer" onClick={closeModal} title={t('action_close')}>
                         <X size={20} />
                     </button>
                     
@@ -829,7 +829,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             </div>
                         </div>
                         {activeEvent.logo && (
-                            <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="flex shrink-0" title="Abrir página do evento">
+                            <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="flex shrink-0" title={t('action_official_site')}>
                                 <SmartLogo 
                                     src={activeEvent.logo} 
                                     alt={`Logo ${activeEvent.title}`} 
@@ -858,7 +858,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             <button 
                                 onClick={handleShare}
                                 className={`flex shrink-0 items-center justify-center gap-1.5 h-7 px-2.5 rounded-full transition-all cursor-pointer text-xs font-semibold ${shareCopied ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40' : 'bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
-                                title="Partilhar prova ou copiar link direto"
+                                title={t('action_share')}
                             >
                                 <Share2 size={13} />
                                 <span className="text-[11px]">{shareCopied ? t('action_copied') : t('action_share')}</span>
@@ -872,7 +872,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                             toggleFavorite(activeEvent.id);
                                         }}
                                         className={`flex shrink-0 items-center justify-center w-7 h-7 rounded-full transition-all cursor-pointer ${isEventFavorited ? 'bg-amber-400/15 border border-amber-500/40 text-amber-400' : 'bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
-                                        title={isEventFavorited ? "Remover dos Favoritos" : "Adicionar aos Favoritos"}
+                                        title={isEventFavorited ? t('card_remove_favorite') : t('card_add_favorite')}
                                     >
                                         <Star 
                                             size={14} 
@@ -1315,7 +1315,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             ) : (
                                 <div className="p-4 bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-500 dark:text-slate-400 text-xs flex items-center gap-2.5">
                                     <FileText size={16} className="text-slate-400 dark:text-slate-500 shrink-0" />
-                                    <span>Programa detalhado não disponível na Base de Dados. A aguardar recolha do sistema.</span>
+                                    <span>{t('schedule_not_available')}</span>
                                 </div>
                             )}
                         </div>
@@ -1829,7 +1829,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             setFullscreenImage(null);
                             setIsImageZoomed(false);
                         }}
-                        title="Fechar imagem"
+                        title={t('action_close')}
                     >
                         <X size={20} />
                     </button>

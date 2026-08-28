@@ -6,6 +6,7 @@ import { useUser } from '@clerk/nextjs';
 import { useTheme } from 'next-themes';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { useTranslation } from '../i18n/useTranslation';
+import { translateEscalao } from '../i18n/formatters';
 import { HelpCircle, Settings, ChevronUp, ChevronDown, RotateCcw, Shield, Trash2, AlertTriangle, CheckCircle2, Clock, Globe, Moon } from 'lucide-react';
 import RegionAssistant from '../components/RegionAssistant';
 import EscalaoAssistant from '../components/EscalaoAssistant';
@@ -117,9 +118,9 @@ export default function Conta() {
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-500/10 border border-blue-500/20 mb-4">
                     <Settings size={28} className="text-blue-500 dark:text-blue-400" />
                 </div>
-                <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-2">Definições</h1>
+                <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-2">{t('settings_title')}</h1>
                 <p className="text-slate-600 dark:text-slate-400 text-base sm:text-lg">
-                    Personaliza a tua experiência no Calendário Ciclismo.
+                    {t('settings_subtitle')}
                 </p>
             </header>
 
@@ -242,15 +243,15 @@ export default function Conta() {
                         </div>
                         <select className="h-10 px-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors w-full md:w-auto font-medium cursor-pointer" value={defaultEscalao} onChange={(e) => setDefaultEscalao(e.target.value)}>
                             <option value="Todos">{t('filter_all_categories')}</option>
-                            <option value="Elite Amador / Individual">Elite Amador / Individual</option>
-                            <option value="Elite / Sub-23">Elite / Sub-23</option>
-                            <option value="Sub-23">Sub-23</option>
-                            <option value="Sub-19 (Juniores)">Sub-19 (Juniores)</option>
-                            <option value="Sub-17 (Cadetes)">Sub-17 (Cadetes)</option>
-                            <option value="Sub-15 (Juvenis)">Sub-15 (Juvenis)</option>
-                            <option value="Masters / Veteranos">Masters / Veteranos</option>
-                            <option value="Femininas">Femininas</option>
-                            <option value="Escolas">Escolas</option>
+                            <option value="Elite Amador / Individual">{translateEscalao('Elite Amador', language)} / {t('escalao_team_indiv')}</option>
+                            <option value="Elite / Sub-23">{translateEscalao('Elite', language)} / {translateEscalao('Sub-23', language)}</option>
+                            <option value="Sub-23">{translateEscalao('Sub-23', language)}</option>
+                            <option value="Sub-19 (Juniores)">{translateEscalao('Sub-19 (Juniores)', language)}</option>
+                            <option value="Sub-17 (Cadetes)">{translateEscalao('Sub-17 (Cadetes)', language)}</option>
+                            <option value="Sub-15 (Juvenis)">{translateEscalao('Sub-15 (Juvenis)', language)}</option>
+                            <option value="Masters / Veteranos">{translateEscalao('Masters / Veteranos', language)}</option>
+                            <option value="Femininas">{translateEscalao('Femininas', language)}</option>
+                            <option value="Escolas">{translateEscalao('Escolas', language)}</option>
                         </select>
                     </div>
 
