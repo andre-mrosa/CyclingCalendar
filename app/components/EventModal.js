@@ -659,10 +659,20 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
     const rawDate = activeEvent.date || '';
     const isMultiDay = rawDate.includes(',') || rawDate.includes(' e ') || rawDate.includes(' a ');
-    const dateParts = rawDate.split(' ');
     const monthAbbrs = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
-    const day = dateParts[0] ? dateParts[0].replace(/,/g, '') : '';
-    const month = dateParts.find(p => monthAbbrs.includes(p.toUpperCase()))?.toUpperCase() || '';
+    
+    // Extrai o dia do evento em si (se for intervalo "29 AGO a 30 AGO", usa a data da prova "30")
+    let day = '';
+    let month = '';
+    const rangeMatch = rawDate.trim().match(/(?:(?:a|-|e)\s*)(\d{1,2})\s+([A-ZÀ-Úa-zà-ú]{3})/i);
+    if (rangeMatch && monthAbbrs.includes(rangeMatch[2].toUpperCase())) {
+        day = rangeMatch[1];
+        month = rangeMatch[2].toUpperCase();
+    } else {
+        const dateParts = rawDate.trim().split(/\s+/);
+        day = dateParts[0] ? dateParts[0].replace(/,/g, '') : '';
+        month = dateParts.find(p => monthAbbrs.includes(p.toUpperCase()))?.toUpperCase() || '';
+    }
 
     return (
         <div 
@@ -776,11 +786,6 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 <span>{activeEvent.title}</span>
                             )}
                         </h2>
-                        {isMultiDay && (
-                            <p className="text-slate-500 dark:text-slate-400 text-xs flex items-center gap-1.5 mt-1 mb-0 font-medium">
-                                <Calendar size={12} className="text-blue-500" /> {rawDate}
-                            </p>
-                        )}
                     </div>
                     <WeatherWidget 
                         location={activeEvent.details?.split('|')[0]?.trim()} 
@@ -863,12 +868,6 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         variant="header"
                     />
                 </div>
-
-                {isMultiDay && (
-                    <p className="hidden sm:flex text-slate-500 dark:text-slate-400 text-xs items-center gap-1.5 px-5 mb-1.5 mt-0 shrink-0">
-                        <Calendar size={13} className="text-blue-500 dark:text-blue-400" /> {rawDate}
-                    </p>
-                )}
                 
                 {/* Tabs Navigation */}
                 {availableTabs.length > 0 ? (

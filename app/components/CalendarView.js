@@ -680,10 +680,20 @@ export default function CalendarView({
                                 
                                 const rawDate = event.date || '';
                                 const isMultiDay = rawDate.includes(',') || rawDate.includes(' e ') || rawDate.includes(' a ');
-                                const dateParts = rawDate.split(' ');
                                 const monthAbbrs = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
-                                const day = dateParts[0] ? dateParts[0].replace(/,/g, '') : '';
-                                const month = dateParts.find(p => monthAbbrs.includes(p.toUpperCase()))?.toUpperCase() || '';
+                                
+                                // Extrai o dia do evento em si (se for intervalo "29 AGO a 30 AGO", usa a data da prova "30")
+                                let day = '';
+                                let month = '';
+                                const rangeMatch = rawDate.trim().match(/(?:(?:a|-|e)\s*)(\d{1,2})\s+([A-ZÀ-Úa-zà-ú]{3})/i);
+                                if (rangeMatch && monthAbbrs.includes(rangeMatch[2].toUpperCase())) {
+                                    day = rangeMatch[1];
+                                    month = rangeMatch[2].toUpperCase();
+                                } else {
+                                    const dateParts = rawDate.trim().split(/\s+/);
+                                    day = dateParts[0] ? dateParts[0].replace(/,/g, '') : '';
+                                    month = dateParts.find(p => monthAbbrs.includes(p.toUpperCase()))?.toUpperCase() || '';
+                                }
 
                                 const allIds = [event.id, ...(event._allIds || [])];
                                 const isEventMarked = isMarked(event.id, 'event', allIds);
