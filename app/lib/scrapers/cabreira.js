@@ -256,7 +256,7 @@ export const scrapeCabreira = async (year) => {
         const items = $('.evento-grid-item').toArray();
         let processedCount = 0;
         
-        for (const element of items) {
+        const rawEvents = items.map(element => {
             const aTag = $(element).find('.evento-item-image-container a');
             let href = aTag.attr('href') || '';
             
@@ -276,10 +276,6 @@ export const scrapeCabreira = async (year) => {
                 const match = styleAttr.match(/url\(['"]?(.*?)['"]?\)/);
                 if (match) imageUrl = match[1];
             }
-            
-            // Fetch and convert to base64
-            const logo = await fetchImageAsBase64(logoUrl);
-            const image = await fetchImageAsBase64(imageUrl);
 
             let dateText = $(element).find('.evento-item-data').text().trim().toUpperCase() || 'DATA A DEFINIR';
             const rawDateForSort = dateText;
@@ -291,50 +287,63 @@ export const scrapeCabreira = async (year) => {
             const yearInDateMatch = dateText.match(/202\d/);
             const eventYear = yearInDateMatch ? yearInDateMatch[0] : (year || new Date().getFullYear().toString());
 
-            if (!year || dateText.includes(year)) {
-                const ambitoVal = getAmbito(title);
-                const id = 'cabreira-' + title.replace(/\s+/g, '-').toLowerCase() + '-' + eventYear;
-                
-                // Deep Scrape
-                const deepData = await deepScrapeCabreira(href);
-                
-                let links = href ? [{ label: 'Ver na Cabreira Solutions', link: href }] : [];
-                if (deepData.additionalLinks && Array.isArray(deepData.additionalLinks)) {
-                    for (const addLink of deepData.additionalLinks) {
-                        if (!links.some(l => l.link === addLink.link)) {
-                            links.push(addLink);
+            return { href, title, logoUrl, imageUrl, dateText, rawDateForSort, locText, eventYear };
+        }).filter(ev => !year || ev.dateText.includes(year));
+
+        const BATCH_SIZE = 6;
+        for (let i = 0; i < rawEvents.length; i += BATCH_SIZE) {
+            const chunk = rawEvents.slice(i, i + BATCH_SIZE);
+            await Promise.all(chunk.map(async (ev) => {
+                try {
+                    const [logo, image, deepData] = await Promise.all([
+                        fetchImageAsBase64(ev.logoUrl),
+                        fetchImageAsBase64(ev.imageUrl),
+                        deepScrapeCabreira(ev.href)
+                    ]);
+
+                    const ambitoVal = getAmbito(ev.title);
+                    const id = 'cabreira-' + ev.title.replace(/\s+/g, '-').toLowerCase() + '-' + ev.eventYear;
+
+                    let links = ev.href ? [{ label: 'Ver na Cabreira Solutions', link: ev.href }] : [];
+                    if (deepData.additionalLinks && Array.isArray(deepData.additionalLinks)) {
+                        for (const addLink of deepData.additionalLinks) {
+                            if (!links.some(l => l.link === addLink.link)) {
+                                links.push(addLink);
+                            }
                         }
                     }
+
+                    const eventData = {
+                        title: ev.title,
+                        date: ev.dateText,
+                        sortDate: new Date(parseSortDate(ev.rawDateForSort, ev.eventYear)),
+                        details: ev.locText,
+                        tag: getTag(ev.title),
+                        ambito: ambitoVal,
+                        escaloes: JSON.stringify(['Todos (Aberto)']),
+                        licenca: 'CPT / Lazer',
+                        regiao: getRegiao(ev.title, ev.locText),
+                        distrito: getDistrito(ev.title, ev.locText),
+                        source: 'Cabreira',
+                        link: ev.href || 'https://cabreirasolutions.com/eventos/',
+                        extraLinks: JSON.stringify(links),
+                        registrationOpensAt: deepData.opensAt,
+                        registrationClosesAt: deepData.closesAt,
+                        description: deepData.description,
+                        prices: deepData.prices,
+                        insurance: deepData.insurance,
+                        prizes: deepData.prizes,
+                        programa: deepData.programa,
+                        logo: logo,
+                        image: image,
+                    };
+
+                    await saveOrMergeEvent(prisma, { id: id, ...eventData });
+                    processedCount++;
+                } catch (err) {
+                    console.error('Error processing Cabreira event:', ev.title, err);
                 }
-
-                const eventData = {
-                    title: title,
-                    date: dateText,
-                    sortDate: new Date(parseSortDate(rawDateForSort, eventYear)),
-                    details: locText,
-                    tag: getTag(title),
-                    ambito: ambitoVal,
-                    escaloes: JSON.stringify(['Todos (Aberto)']),
-                    licenca: 'CPT / Lazer',
-                    regiao: getRegiao(title, locText),
-                    distrito: getDistrito(title, locText),
-                    source: 'Cabreira',
-                    link: href || 'https://cabreirasolutions.com/eventos/',
-                    extraLinks: JSON.stringify(links),
-                    registrationOpensAt: deepData.opensAt,
-                    registrationClosesAt: deepData.closesAt,
-                    description: deepData.description,
-                    prices: deepData.prices,
-                    insurance: deepData.insurance,
-                    prizes: deepData.prizes,
-                    programa: deepData.programa,
-                    logo: logo,
-                    image: image,
-                };
-
-                await saveOrMergeEvent(prisma, { id: id, ...eventData });
-                processedCount++;
-            }
+            }));
         }
 
         logInfo('SCRAPER', `Sincronização Cabreira concluída com sucesso (${processedCount} provas atualizadas na BD)`);

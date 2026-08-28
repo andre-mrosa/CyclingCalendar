@@ -210,11 +210,15 @@ export async function scrapeStopAndGo(options = {}) {
         logInfo('SCRAPER', 'Stop and Go: ' + targetUrls.length + ' provas de ciclismo encontradas no sitemap para (' + years.join(', ') + '). A processar...');
 
         let savedOrMergedCount = 0;
-        for (const url of targetUrls) {
-            const ev = await scrapeEventPage(url);
-            if (ev) {
-                await saveOrMergeEvent(prisma, ev);
-                savedOrMergedCount++;
+        const BATCH_SIZE = 8;
+        for (let i = 0; i < targetUrls.length; i += BATCH_SIZE) {
+            const chunk = targetUrls.slice(i, i + BATCH_SIZE);
+            const events = await Promise.all(chunk.map(url => scrapeEventPage(url)));
+            for (const ev of events) {
+                if (ev) {
+                    await saveOrMergeEvent(prisma, ev);
+                    savedOrMergedCount++;
+                }
             }
         }
 

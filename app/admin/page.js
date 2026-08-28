@@ -310,6 +310,9 @@ export default function AdminDashboardPage() {
         setLiveScraperLogs([]);
         setOpOutput({ label, status: 'loading', message: `A executar "${label}"... O pipeline está a consultar os calendários e a fundir as provas.` });
 
+        const startTime = Date.now();
+        let isDone = false;
+
         // Start elapsed timer
         const timerInterval = setInterval(() => {
             setScraperElapsedSecs(prev => prev + 1);
@@ -318,31 +321,57 @@ export default function AdminDashboardPage() {
         // Real-time logs polling helper
         const pollLogs = async () => {
             try {
-                const res = await authFetch('/api/admin/logs?source=SCRAPER&limit=15');
+                const res = await authFetch('/api/admin/logs?source=SCRAPER&limit=25');
                 const text = await res.text();
                 const data = JSON.parse(text);
                 if (data.success && Array.isArray(data.logs)) {
                     setLiveScraperLogs(data.logs);
 
-                    // Dynamic step detection based on latest log message
-                    const recentLogs = data.logs.slice(0, 5);
-                    for (const l of recentLogs) {
+                    // Check for completion log created after this run started
+                    const completionLog = data.logs.find(l => {
+                        const logTime = new Date(l.createdAt).getTime();
+                        const isRecent = logTime >= (startTime - 5000);
                         const msg = (l.message || '').toLowerCase();
-                        if (msg.includes('unificação') || msg.includes('fundidas')) {
-                            setScraperActiveStep(5);
-                            break;
-                        } else if (msg.includes('deep scraping') || msg.includes('programas')) {
-                            setScraperActiveStep(4);
-                            break;
-                        } else if (msg.includes('stop and go')) {
-                            setScraperActiveStep(3);
-                            break;
-                        } else if (msg.includes('cabreira')) {
-                            setScraperActiveStep(2);
-                            break;
-                        } else if (msg.includes('fpc')) {
-                            setScraperActiveStep(1);
-                            break;
+                        return isRecent && (msg.includes('sincronização global concluída') || msg.includes('concluída em '));
+                    });
+
+                    if (completionLog && !isDone) {
+                        isDone = true;
+                        setScraperActiveStep(6);
+                        setOpOutput({
+                            label,
+                            status: 'success',
+                            message: completionLog.message || 'Sincronização global e unificação concluídas com sucesso!',
+                            raw: { success: true }
+                        });
+                        clearInterval(timerInterval);
+                        clearInterval(logsInterval);
+                        setRunningOp(null);
+                        await loadStats(null, true);
+                        await loadLogs();
+                    }
+
+                    // Dynamic step detection if not yet completed
+                    if (!isDone) {
+                        const recentLogs = data.logs.slice(0, 8);
+                        for (const l of recentLogs) {
+                            const msg = (l.message || '').toLowerCase();
+                            if (msg.includes('unificação') || msg.includes('fundidas')) {
+                                setScraperActiveStep(5);
+                                break;
+                            } else if (msg.includes('deep scraping') || msg.includes('programas')) {
+                                setScraperActiveStep(4);
+                                break;
+                            } else if (msg.includes('stop and go')) {
+                                setScraperActiveStep(3);
+                                break;
+                            } else if (msg.includes('cabreira')) {
+                                setScraperActiveStep(2);
+                                break;
+                            } else if (msg.includes('fpc')) {
+                                setScraperActiveStep(1);
+                                break;
+                            }
                         }
                     }
                 }
@@ -353,11 +382,20 @@ export default function AdminDashboardPage() {
 
         // Poll immediately and start interval
         await pollLogs();
-        const logsInterval = setInterval(pollLogs, 1500);
+        const logsInterval = setInterval(async () => {
+            if (isDone) {
+                clearInterval(logsInterval);
+                clearInterval(timerInterval);
+                setRunningOp(null);
+                return;
+            }
+            await pollLogs();
+        }, 1500);
 
+        // Fire the background execution request (non-blocking safety)
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 60000);
+            const timeoutId = setTimeout(() => controller.abort(), 90000);
 
             const res = await authFetch(endpoint, { signal: controller.signal });
             clearTimeout(timeoutId);
@@ -367,44 +405,42 @@ export default function AdminDashboardPage() {
             try {
                 data = JSON.parse(text);
             } catch {
-                data = { 
-                    success: res.ok, 
-                    message: res.ok ? 'Operação concluída com sucesso.' : (text.includes('504') ? 'A Vercel excedeu o tempo de resposta HTTP, mas a tarefa foi iniciada no servidor.' : `Resposta do servidor: ${text.slice(0, 120)}`) 
-                };
+                data = { success: res.ok };
             }
 
-            // Final poll to get complete logs
-            await pollLogs();
-
-            if (data.success) {
-                setScraperActiveStep(6); // 6: Concluído
-            } else {
-                setScraperActiveStep(0);
+            if (data.success && !isDone) {
+                isDone = true;
+                setScraperActiveStep(6);
+                setOpOutput({
+                    label,
+                    status: 'success',
+                    message: data.message || `Operação concluída com sucesso (${data.mergedEvents || data.count || 0} provas processadas).`,
+                    raw: data
+                });
+                clearInterval(timerInterval);
+                clearInterval(logsInterval);
+                setRunningOp(null);
+                await loadStats(null, true);
+                await loadLogs();
             }
-
-            setOpOutput({
-                label,
-                status: data.success ? 'success' : 'error',
-                message: data.message || `Operação concluída com sucesso (${data.mergedEvents || data.count || 0} provas processadas).`,
-                raw: data
-            });
-            await loadStats(null, true);
-            await loadLogs();
         } catch (e) {
-            setScraperActiveStep(0);
-            setOpOutput({
-                label,
-                status: 'error',
-                message: e.name === 'AbortError' ? 'A operação demorou mais de 60s. O pipeline continua a correr em segundo plano no servidor.' : `Erro na execução: ${e.message}`,
-                raw: { error: e.message }
-            });
-            await loadStats(null, true);
-            await loadLogs();
-        } finally {
-            clearInterval(timerInterval);
-            clearInterval(logsInterval);
-            setRunningOp(null);
+            console.log('Fetch ended (background pipeline continuing):', e.message);
         }
+
+        // Safety fallback timer after 90s if no completion log arrived
+        setTimeout(() => {
+            if (!isDone) {
+                clearInterval(logsInterval);
+                clearInterval(timerInterval);
+                setRunningOp(null);
+                setOpOutput(prev => prev?.status === 'loading' ? {
+                    label,
+                    status: 'success',
+                    message: 'O pipeline foi iniciado no servidor. Podes acompanhar os registos em direto nos Logs.',
+                    raw: null
+                } : prev);
+            }
+        }, 90000);
     };
 
     // Copy log details
