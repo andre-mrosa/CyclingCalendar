@@ -302,23 +302,20 @@ export const scrapeFPC = async (year) => {
     }
 }
 
-export const incrementalDeepScrapeFPC = async () => {
+export const incrementalDeepScrapeFPC = async (limit = 25) => {
     try {
-        const threeMonthsAgo = new Date();
-        threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-
         const fpcEventsToUpdate = await prisma.event.findMany({
             where: { 
-                source: 'FPC', 
+                source: { contains: 'FPC' }, 
                 OR: [
                     { programa: null },
                     { programa: { startsWith: '<p>Detalhes de programa indisponíveis' } },
                     { programa: { startsWith: '<p>Erro ao extrair' } }
                 ],
-                sortDate: { gte: threeMonthsAgo },
                 link: { contains: 'fpciclismo.pt' }
             },
-            take: 15
+            orderBy: { sortDate: 'desc' },
+            take: limit
         });
         
         let processedCount = 0;

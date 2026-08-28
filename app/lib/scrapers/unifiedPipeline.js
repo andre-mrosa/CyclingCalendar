@@ -13,43 +13,56 @@ export async function runUnifiedScrapingPipeline(triggeredBy = 'CRON') {
     const startTime = Date.now();
     await logInfo('SCRAPER', `Iniciada sincronização global de provas (${triggeredBy})...`);
 
-    const year = new Date().getFullYear().toString();
-    const nextYear = (new Date().getFullYear() + 1).toString();
+    const currentYear = new Date().getFullYear();
+    const yearsToScrape = [
+        (currentYear - 2).toString(), // 2024 (passado)
+        (currentYear - 1).toString(), // 2025 (passado recente)
+        currentYear.toString(),       // 2026 (presente)
+        (currentYear + 1).toString()  // 2027 (futuro)
+    ];
+
     const stats = {
         sourcesScraped: ['FPC', 'Cabreira'],
+        yearsScraped: yearsToScrape,
         deepScrapedFpc: 0,
         mergedEvents: 0,
         errors: []
     };
 
-    // 1. Scraping FPC (Anos Atual e Seguinte)
+    // 1. Scraping FPC (Passadas, Presentes e Futuras: 2024 a 2027)
     try {
-        await logInfo('SCRAPER', `FPC: a consultar calendários oficiais (${year} e ${nextYear})...`);
-        await scrapeFPC(year);
-        await scrapeFPC(nextYear);
+        await logInfo('SCRAPER', `FPC: a consultar calendários oficiais para todos os anos (${yearsToScrape.join(', ')})...`);
+        for (const yr of yearsToScrape) {
+            await scrapeFPC(yr);
+        }
         await logInfo('SCRAPER', `FPC: sincronização de calendários concluída com sucesso.`);
     } catch (e) {
         stats.errors.push(`FPC error: ${e.message}`);
         await logError('SCRAPER', `Erro na sincronização FPC: ${e.message}`, e);
     }
 
-    // 2. Scraping Cabreira Solutions (Anos Atual e Seguinte)
+    // 2. Scraping Cabreira Solutions (Passadas, Presentes e Futuras)
     try {
-        await logInfo('SCRAPER', `Cabreira: a consultar provas e Granfondos (${year} e ${nextYear})...`);
-        await scrapeCabreira(year);
-        await scrapeCabreira(nextYear);
-        await logInfo('SCRAPER', `Cabreira: sincronização concluída com sucesso.`);
+        await logInfo('SCRAPER', `Cabreira: a consultar todas as provas e Granfondos (passadas, presentes e futuras)...`);
+        await scrapeCabreira(null); // null = recolhe todas as provas da plataforma
+        await logInfo('SCRAPER', `Cabreira: sincronização de todas as provas concluída com sucesso.`);
     } catch (e) {
         stats.errors.push(`Cabreira error: ${e.message}`);
         await logError('SCRAPER', `Erro na sincronização Cabreira: ${e.message}`, e);
     }
 
-    // 3. Deep Scraping FPC (programas, regulamentos e anexos)
+    // 3. Deep Scraping FPC (programas, regulamentos e anexos de todas as provas)
     try {
-        const deepCount = await incrementalDeepScrapeFPC();
-        stats.deepScrapedFpc = deepCount;
-        if (deepCount > 0) {
-            await logInfo('SCRAPER', `Deep Scraping FPC: ${deepCount} programas/cartazes atualizados.`);
+        let totalDeep = 0;
+        // Processar até 3 lotes de 25 provas por execução para garantir cobertura total
+        for (let batch = 0; batch < 3; batch++) {
+            const deepCount = await incrementalDeepScrapeFPC(25);
+            totalDeep += deepCount;
+            if (deepCount === 0) break;
+        }
+        stats.deepScrapedFpc = totalDeep;
+        if (totalDeep > 0) {
+            await logInfo('SCRAPER', `Deep Scraping FPC: ${totalDeep} programas/cartazes atualizados.`);
         }
     } catch (e) {
         stats.errors.push(`Deep scrape error: ${e.message}`);
