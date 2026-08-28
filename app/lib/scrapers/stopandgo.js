@@ -44,7 +44,7 @@ const MONTH_ABBR = {
 /**
  * Normaliza datas do Stop and Go para formato padrão e sortDate
  */
-function parseStopAndGoDate(rawDateStr, fallbackYear = '2026') {
+function parseStopAndGoDate(rawDateStr, fallbackYear = new Date().getFullYear().toString()) {
     if (!rawDateStr) return { dateText: 'DATA A DEFINIR', sortDate: new Date(), year: fallbackYear };
     const clean = rawDateStr.replace(/\s+/g, ' ').trim().toLowerCase();
     const yearMatch = clean.match(/202\d/);
@@ -145,7 +145,7 @@ async function scrapeEventPage(url) {
         // Data precisa do cabeçalho da prova
         const slug = url.split('/').filter(Boolean).pop();
         const slugYearMatch = slug.match(/202\d/);
-        const fallbackYear = slugYearMatch ? slugYearMatch[0] : '2026';
+        const fallbackYear = slugYearMatch ? slugYearMatch[0] : new Date().getFullYear().toString();
 
         let rawDate = null;
         $('[data-icon*="calendar"]').each((_, icon) => {
