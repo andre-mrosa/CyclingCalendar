@@ -290,19 +290,45 @@ export const scrapeCabreira = async (year) => {
             return { href, title, logoUrl, imageUrl, dateText, rawDateForSort, locText, eventYear };
         }).filter(ev => !year || ev.dateText.includes(year));
 
-        const BATCH_SIZE = 6;
+        // Consultar provas Cabreira já existentes na base de dados para acelerar sincronização
+        const existingEvents = await prisma.event.findMany({
+            where: { source: { contains: 'Cabreira' } },
+            select: { id: true, logo: true, image: true, registrationClosesAt: true, prices: true, description: true, insurance: true, prizes: true, programa: true, extraLinks: true }
+        });
+        const existingMap = new Map(existingEvents.map(e => [e.id, e]));
+
+        const BATCH_SIZE = 8;
         for (let i = 0; i < rawEvents.length; i += BATCH_SIZE) {
             const chunk = rawEvents.slice(i, i + BATCH_SIZE);
             await Promise.all(chunk.map(async (ev) => {
                 try {
-                    const [logo, image, deepData] = await Promise.all([
-                        fetchImageAsBase64(ev.logoUrl),
-                        fetchImageAsBase64(ev.imageUrl),
-                        deepScrapeCabreira(ev.href)
-                    ]);
+                    const id = 'cabreira-' + ev.title.replace(/\s+/g, '-').toLowerCase() + '-' + ev.eventYear;
+                    const existing = existingMap.get(id);
+
+                    let logo = existing?.logo || null;
+                    let image = existing?.image || null;
+                    let deepData = null;
+
+                    // Apenas descarrega imagens se ainda não existirem na BD
+                    if (!logo && ev.logoUrl) logo = await fetchImageAsBase64(ev.logoUrl);
+                    if (!image && ev.imageUrl) image = await fetchImageAsBase64(ev.imageUrl);
+
+                    if (existing && existing.registrationClosesAt && existing.prices && existing.description) {
+                        deepData = {
+                            opensAt: existing.registrationOpensAt,
+                            closesAt: existing.registrationClosesAt,
+                            description: existing.description,
+                            prices: existing.prices,
+                            insurance: existing.insurance,
+                            prizes: existing.prizes,
+                            programa: existing.programa,
+                            additionalLinks: []
+                        };
+                    } else {
+                        deepData = await deepScrapeCabreira(ev.href);
+                    }
 
                     const ambitoVal = getAmbito(ev.title);
-                    const id = 'cabreira-' + ev.title.replace(/\s+/g, '-').toLowerCase() + '-' + ev.eventYear;
 
                     let links = ev.href ? [{ label: 'Ver na Cabreira Solutions', link: ev.href }] : [];
                     if (deepData.additionalLinks && Array.isArray(deepData.additionalLinks)) {

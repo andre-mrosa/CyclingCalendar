@@ -52,37 +52,46 @@ export async function runUnifiedScrapingPipeline(triggeredBy = 'CRON', options =
         errors: []
     };
 
-    // 1. Scraping FPC (Anos Selecionados)
-    try {
-        await logInfo('SCRAPER', `FPC: a consultar calendários oficiais (${yearsToScrape.join(', ')})...`);
-        for (const yr of yearsToScrape) {
-            await scrapeFPC(yr);
-        }
-        await logInfo('SCRAPER', `FPC: sincronização de calendários concluída com sucesso.`);
-    } catch (e) {
-        stats.errors.push(`FPC error: ${e.message}`);
-        await logError('SCRAPER', `Erro na sincronização FPC: ${e.message}`, e);
-    }
+    // 1, 2 & 3. Execução Paralela Concorrente (FPCiclismo + Cabreira Solutions + Stop and Go)
+    await Promise.allSettled([
+        // FPCiclismo
+        (async () => {
+            try {
+                await logInfo('SCRAPER', `FPC: a consultar calendários oficiais (${yearsToScrape.join(', ')})...`);
+                for (const yr of yearsToScrape) {
+                    await scrapeFPC(yr);
+                }
+                await logInfo('SCRAPER', `FPC: sincronização de calendários concluída com sucesso.`);
+            } catch (e) {
+                stats.errors.push(`FPC error: ${e.message}`);
+                await logError('SCRAPER', `Erro na sincronização FPC: ${e.message}`, e);
+            }
+        })(),
 
-    // 2. Scraping Cabreira Solutions (Passadas, Presentes e Futuras)
-    try {
-        await logInfo('SCRAPER', `Cabreira: a consultar provas e Granfondos...`);
-        await scrapeCabreira(null);
-        await logInfo('SCRAPER', `Cabreira: sincronização concluída com sucesso.`);
-    } catch (e) {
-        stats.errors.push(`Cabreira error: ${e.message}`);
-        await logError('SCRAPER', `Erro na sincronização Cabreira: ${e.message}`, e);
-    }
+        // Cabreira Solutions
+        (async () => {
+            try {
+                await logInfo('SCRAPER', `Cabreira: a consultar provas e Granfondos...`);
+                await scrapeCabreira(null);
+                await logInfo('SCRAPER', `Cabreira: sincronização concluída com sucesso.`);
+            } catch (e) {
+                stats.errors.push(`Cabreira error: ${e.message}`);
+                await logError('SCRAPER', `Erro na sincronização Cabreira: ${e.message}`, e);
+            }
+        })(),
 
-    // 3. Scraping Stop and Go
-    try {
-        await logInfo('SCRAPER', `Stop and Go: a consultar provas de BTT e Ciclismo...`);
-        const sgCount = await scrapeStopAndGo();
-        await logInfo('SCRAPER', `Stop and Go: sincronização concluída com sucesso.`);
-    } catch (e) {
-        stats.errors.push(`Stop and Go error: ${e.message}`);
-        await logError('SCRAPER', `Erro na sincronização Stop and Go: ${e.message}`, e);
-    }
+        // Stop and Go
+        (async () => {
+            try {
+                await logInfo('SCRAPER', `Stop and Go: a consultar provas de BTT e Ciclismo...`);
+                const sgCount = await scrapeStopAndGo();
+                await logInfo('SCRAPER', `Stop and Go: sincronização concluída com sucesso.`);
+            } catch (e) {
+                stats.errors.push(`Stop and Go error: ${e.message}`);
+                await logError('SCRAPER', `Erro na sincronização Stop and Go: ${e.message}`, e);
+            }
+        })()
+    ]);
 
     // 4. Deep Scraping FPC (programas, regulamentos e anexos de forma rápida)
     try {

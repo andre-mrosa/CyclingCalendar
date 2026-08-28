@@ -63,7 +63,9 @@ export async function GET() {
             });
         }
 
-        // If start log was within the last 15 minutes and NO completion log exists -> IT IS RUNNING!
+        // If start log was within the last 30 minutes and NO completion log exists, check if active or stalled
+        const latestLogTime = logs[0] ? new Date(logs[0].createdAt).getTime() : startTime;
+        const timeSinceLatestLog = Date.now() - latestLogTime;
         const elapsedSeconds = Math.max(0, Math.floor((Date.now() - startTime) / 1000));
         
         // Compute active step and step durations from logs between start and now
@@ -99,6 +101,23 @@ export async function GET() {
                 const secs = Math.max(0.5, (stepTimestamps[s + 1] - stepTimestamps[s]) / 1000).toFixed(1);
                 stepDurations[s] = `${secs}s`;
             }
+        }
+
+        // If no log emitted for > 75 seconds, serverless instance was terminated
+        if (timeSinceLatestLog > 75000) {
+            return Response.json({
+                success: true,
+                isRunning: false,
+                completed: false,
+                interrupted: true,
+                status: 'interrupted',
+                message: 'A sincronização anterior foi interrompida pelo servidor. Clica em "Retomar Scraping" para continuar exatamente de onde ficou.',
+                activeStep,
+                elapsedSeconds: Math.floor((latestLogTime - startTime) / 1000),
+                startTime,
+                stepDurations,
+                logs: logs.slice(0, 25)
+            });
         }
 
         return Response.json({

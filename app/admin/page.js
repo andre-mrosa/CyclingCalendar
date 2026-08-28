@@ -1918,14 +1918,26 @@ export default function AdminDashboardPage() {
                                 <button
                                     onClick={() => handleRunOperation('unified_scrape', '/api/force-scrape', 'Sincronização & Scraping Completo')}
                                     disabled={runningOp !== null}
-                                    className="w-full sm:w-auto py-3 px-6 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold text-sm shadow-md transition-all cursor-pointer flex items-center justify-center gap-2.5"
+                                    className={`w-full sm:w-auto py-3 px-6 rounded-xl font-bold text-sm shadow-md transition-all cursor-pointer flex items-center justify-center gap-2.5 text-white ${
+                                        opOutput?.status === 'interrupted'
+                                            ? 'bg-amber-600 hover:bg-amber-500 shadow-amber-500/20'
+                                            : 'bg-blue-600 hover:bg-blue-500 disabled:opacity-50'
+                                    }`}
                                 >
                                     {runningOp === 'unified_scrape' ? (
                                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                    ) : opOutput?.status === 'interrupted' ? (
+                                        <RotateCcw size={16} />
                                     ) : (
                                         <Play size={16} />
                                     )}
-                                    <span>{runningOp === 'unified_scrape' ? 'A Sincronizar Tudo & Fundir Provas...' : 'Executar Scraping Completo'}</span>
+                                    <span>
+                                        {runningOp === 'unified_scrape' 
+                                            ? 'A Sincronizar Tudo & Fundir Provas...' 
+                                            : opOutput?.status === 'interrupted'
+                                            ? 'Retomar Scraping (Continuar onde ficou)'
+                                            : 'Executar Scraping Completo'}
+                                    </span>
                                 </button>
 
                                 <span className="text-xs text-slate-400 text-center sm:text-left">
@@ -1961,7 +1973,7 @@ export default function AdminDashboardPage() {
                             {/* Header: Title, Live Timer, Status Badge */}
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
                                 <div className="flex items-center gap-2.5">
-                                    <div className={`p-2 rounded-lg ${runningOp ? 'bg-blue-500/20 text-blue-400' : opOutput?.status === 'success' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                                    <div className={`p-2 rounded-lg ${runningOp ? 'bg-blue-500/20 text-blue-400' : opOutput?.status === 'success' ? 'bg-emerald-500/20 text-emerald-400' : opOutput?.status === 'interrupted' ? 'bg-amber-500/20 text-amber-400' : 'bg-rose-500/20 text-rose-400'}`}>
                                         <Terminal size={18} />
                                     </div>
                                     <div>
@@ -1974,16 +1986,18 @@ export default function AdminDashboardPage() {
                                             )}
                                         </h4>
                                         <p className="text-xs text-slate-400 m-0">
-                                            {runningOp ? 'Pipeline em execução com recolha de dados multi-fonte e fusão automática' : opOutput?.message}
+                                            {runningOp ? 'Pipeline em execução paralela com recolha de dados multi-fonte e fusão automática' : opOutput?.message}
                                         </p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2 self-start sm:self-auto">
                                     <span className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 ${
-                                        opOutput?.status === 'success'
-                                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                                            : opOutput?.status === 'loading' || runningOp
+                                        runningOp
                                             ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30 animate-pulse'
+                                            : opOutput?.status === 'success'
+                                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                            : opOutput?.status === 'interrupted'
+                                            ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
                                             : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
                                     }`}>
                                         {runningOp ? (
@@ -1995,6 +2009,11 @@ export default function AdminDashboardPage() {
                                             <>
                                                 <CheckCircle2 size={13} />
                                                 <span>CONCLUÍDO COM SUCESSO</span>
+                                            </>
+                                        ) : opOutput?.status === 'interrupted' ? (
+                                            <>
+                                                <RotateCcw size={13} />
+                                                <span>PAUSADO (RETOMAR DISPONÍVEL)</span>
                                             </>
                                         ) : (
                                             <>

@@ -114,15 +114,24 @@ function parseStopAndGoDate(rawDateStr, fallbackYear = new Date().getFullYear().
 }
 
 /**
- * Scrape detalhado de uma prova específica da Stop and Go
+ * Scrape detalhado de uma prova específica da Stop and Go com retentativas automáticas
  */
-async function scrapeEventPage(url) {
+async function scrapeEventPage(url, retries = 2) {
     try {
-        const res = await fetch(url, { 
-            headers: { 'User-Agent': 'Mozilla/5.0' }, 
-            signal: AbortSignal.timeout(6000) 
-        });
-        if (!res.ok) return null;
+        let res = null;
+        for (let attempt = 0; attempt <= retries; attempt++) {
+            try {
+                res = await fetch(url, { 
+                    headers: { 'User-Agent': 'Mozilla/5.0' }, 
+                    signal: AbortSignal.timeout(6000) 
+                });
+                if (res.ok) break;
+            } catch (err) {
+                if (attempt === retries) return null;
+                await new Promise(r => setTimeout(r, 400 * (attempt + 1)));
+            }
+        }
+        if (!res || !res.ok) return null;
         const html = await res.text();
         const $ = cheerio.load(html);
 
@@ -271,12 +280,35 @@ export async function scrapeStopAndGo(options = {}) {
             return matchesYear && isCycling && !isExcluded;
         });
 
-        logInfo('SCRAPER', `Stop and Go: ${targetUrls.length} provas de ciclismo encontradas no sitemap para (${years.join(', ')}). A processar...`);
+        // Consultar provas Stop and Go já existentes na base de dados para retoma incremental instantânea
+        const existingEvents = await prisma.event.findMany({
+            where: { source: { contains: 'Stop' } },
+            select: { id: true, date: true, image: true, details: true }
+        });
+        const existingMap = new Map(existingEvents.map(e => [e.id, e]));
 
-        let savedOrMergedCount = 0;
+        // Identificar quais os URLs que realmente precisam de download completo
+        const urlsToScrape = [];
+        let alreadySyncedCount = 0;
+
+        for (const u of targetUrls) {
+            const slug = u.split('/').filter(Boolean).pop() || '';
+            const id = 'sg_' + slug.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 32);
+            const existing = existingMap.get(id);
+
+            if (existing && existing.date && !existing.date.includes('DEFINIR') && existing.image && existing.details && !options.forceAll) {
+                alreadySyncedCount++;
+            } else {
+                urlsToScrape.push(u);
+            }
+        }
+
+        logInfo('SCRAPER', `Stop and Go: ${targetUrls.length} provas (${alreadySyncedCount} já sincronizadas, ${urlsToScrape.length} a processar/atualizar)...`);
+
+        let savedOrMergedCount = alreadySyncedCount;
         const BATCH_SIZE = 8;
-        for (let i = 0; i < targetUrls.length; i += BATCH_SIZE) {
-            const chunk = targetUrls.slice(i, i + BATCH_SIZE);
+        for (let i = 0; i < urlsToScrape.length; i += BATCH_SIZE) {
+            const chunk = urlsToScrape.slice(i, i + BATCH_SIZE);
             const events = await Promise.all(chunk.map(url => scrapeEventPage(url)));
             for (const ev of events) {
                 if (ev) {
