@@ -92,7 +92,7 @@ export default function CalendarView({
         }
     }, [defaultEscalao, defaultRegiao, forceEscalao, forceAmbito, forceLicenca, applyDefaultRegiao]);
 
-    const effectiveSources = (selectedSources && selectedSources.length > 0) ? selectedSources : ['FPC', 'Cabreira'];
+    const effectiveSources = (selectedSources && selectedSources.length > 0) ? selectedSources : ['FPC', 'Cabreira', 'Stop and Go'];
     const { data: fetchedEvents, error, isLoading: loading, mutate } = useSWR(
         `/api/events?years=all&sources=${effectiveSources.join(',')}`,
         fetcher,

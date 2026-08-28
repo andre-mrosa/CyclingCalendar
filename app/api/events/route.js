@@ -8,16 +8,21 @@ export async function GET(request) {
         const isAllYears = yearsParam === 'all';
         const years = isAllYears ? [] : yearsParam.split(',').filter(Boolean).map(y => y.trim());
         
-        const sourcesParam = searchParams.get('sources') || 'FPC,Cabreira';
-        const activeSources = sourcesParam.split(',');
+        const sourcesParam = searchParams.get('sources') || 'FPC,Cabreira,Stop and Go';
+        const activeSources = sourcesParam.split(',').map(s => s.trim()).filter(Boolean);
 
-        const andConditions = [
-            {
-                source: {
-                    in: activeSources
-                }
-            }
-        ];
+        const andConditions = [];
+
+        if (activeSources.length > 0) {
+            andConditions.push({
+                OR: activeSources.map(src => ({
+                    source: {
+                        contains: src,
+                        mode: 'insensitive'
+                    }
+                }))
+            });
+        }
 
         if (!isAllYears && years.length > 0) {
             andConditions.push({

@@ -3,13 +3,15 @@ import { persist } from 'zustand/middleware';
 
 export const DEFAULT_TABS = ['Geral', 'Minha Agenda', 'Nacionais', 'Internacionais', 'Taças', 'Regionais', 'Lazer', 'Favoritos'];
 
+export const DEFAULT_SOURCES = ['FPC', 'Cabreira', 'Stop and Go'];
+
 export const useSettingsStore = create(
     persist(
         (set) => ({
             defaultPage: '/',
             defaultEscalao: 'Todos',
             defaultRegiao: 'Todas',
-            selectedSources: ['FPC', 'Cabreira'],
+            selectedSources: DEFAULT_SOURCES,
             hiddenTabs: [],
             tabsOrder: DEFAULT_TABS,
 
@@ -18,9 +20,10 @@ export const useSettingsStore = create(
             setDefaultRegiao: (val) => set({ defaultRegiao: val }),
             
             toggleSource: (source) => set((state) => {
-                const newSources = state.selectedSources.includes(source)
-                    ? state.selectedSources.filter(s => s !== source)
-                    : [...state.selectedSources, source];
+                const current = state.selectedSources || [];
+                const newSources = current.includes(source)
+                    ? current.filter(s => s !== source)
+                    : [...current, source];
                 return { selectedSources: newSources };
             }),
 
@@ -50,6 +53,14 @@ export const useSettingsStore = create(
         }),
         {
             name: 'cycling-calendar-settings', // unique name in localStorage
+            onRehydrateStorage: () => (state) => {
+                if (state && Array.isArray(state.selectedSources)) {
+                    // Auto-migrate to include Stop and Go if not present
+                    if (!state.selectedSources.includes('Stop and Go')) {
+                        state.selectedSources = [...state.selectedSources, 'Stop and Go'];
+                    }
+                }
+            }
         }
     )
 );

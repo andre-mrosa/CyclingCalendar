@@ -288,7 +288,8 @@ export default function Conta() {
                     <div className="pt-2 flex flex-col gap-3">
                         {[
                             { id: 'FPC', name: 'Federação Portuguesa de Ciclismo (FPC)', desc: 'Provas nacionais, regionais, taças e campeonatos oficiais.' },
-                            { id: 'Cabreira', name: 'Cabreira Solutions', desc: 'Granfondos, eventos de lazer e turismo desportivo.' }
+                            { id: 'Cabreira', name: 'Cabreira Solutions', desc: 'Granfondos, eventos de lazer e turismo desportivo.' },
+                            { id: 'Stop and Go', name: 'Stop and Go', desc: 'Provas de BTT, Ciclismo, Granfondos e cronometragens oficiais.' }
                         ].map(source => {
                             const isSelected = selectedSources.includes(source.id);
                             return (
