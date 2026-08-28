@@ -25,7 +25,10 @@ export function useTranslation() {
                 ? (navigator.language || (navigator.languages && navigator.languages[0]) || 'pt').toLowerCase() 
                 : 'pt';
             
-            const detected = deviceLang.startsWith('pt') ? 'pt' : 'en';
+            let detected = 'en';
+            if (deviceLang.startsWith('pt')) detected = 'pt';
+            else if (deviceLang.startsWith('es')) detected = 'es';
+            else if (deviceLang.startsWith('fr')) detected = 'fr';
             setActiveLang(detected);
         }
     }, [storedLanguage]);

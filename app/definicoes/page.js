@@ -156,11 +156,13 @@ export default function Conta() {
                         </div>
                         <select 
                             className="h-10 px-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors w-full md:w-auto font-medium" 
-                            value={language || 'auto'} 
-                            onChange={(e) => setLanguage(e.target.value === 'auto' ? (navigator.language.startsWith('pt') ? 'pt' : 'en') : e.target.value)}
+                            value={language || 'pt'} 
+                            onChange={(e) => setLanguage(e.target.value)}
                         >
                             <option value="pt">{t('settings_lang_pt')}</option>
                             <option value="en">{t('settings_lang_en')}</option>
+                            <option value="es">{t('settings_lang_es')}</option>
+                            <option value="fr">{t('settings_lang_fr')}</option>
                         </select>
                     </div>
 

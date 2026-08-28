@@ -783,8 +783,9 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 <div className="sm:hidden px-4 pt-1 pb-2 shrink-0 flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
                         {(() => {
-                            const translation = activeEvent.translations?.find(t => t.language === language);
-                            const modalTitle = translation?.title || activeEvent.title;
+                            const translation = activeEvent.translations?.find(t => t.language === language)
+                                || (language !== 'pt' ? activeEvent.translations?.find(t => t.language === 'en') : null);
+                            const modalTitle = language === 'pt' ? activeEvent.title : (translation?.title || activeEvent.title);
                             return (
                                 <h2 className="text-base font-bold text-slate-900 dark:text-white m-0 leading-snug line-clamp-2">
                                     {activeEvent.logo ? (
@@ -833,8 +834,9 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         )}
                         <div className="flex items-center gap-2.5 min-w-0 flex-1">
                             {(() => {
-                                const translation = activeEvent.translations?.find(t => t.language === language);
-                                const modalTitle = translation?.title || activeEvent.title;
+                                const translation = activeEvent.translations?.find(t => t.language === language)
+                                    || (language !== 'pt' ? activeEvent.translations?.find(t => t.language === 'en') : null);
+                                const modalTitle = language === 'pt' ? activeEvent.title : (translation?.title || activeEvent.title);
                                 return (
                                     <h2 className="text-xl font-bold text-slate-900 dark:text-white m-0 truncate">
                                         {activeEvent.logo ? (

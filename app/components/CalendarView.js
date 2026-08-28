@@ -727,9 +727,10 @@ export default function CalendarView({
                                     cardBorderAndBg = 'border-yellow-400/70 dark:border-yellow-400/60 shadow-[0_0_15px_rgba(250,204,21,0.12)] bg-yellow-400/[0.02] dark:bg-yellow-400/[0.03]';
                                 }
 
-                                const translation = event.translations?.find(t => t.language === language);
-                                const displayTitle = translation?.title || event.title;
-                                const displayDetails = translation?.details || event.details;
+                                const translation = event.translations?.find(t => t.language === language) 
+                                    || (language !== 'pt' ? event.translations?.find(t => t.language === 'en') : null);
+                                const displayTitle = (language === 'pt' ? event.title : (translation?.title || event.title));
+                                const displayDetails = (language === 'pt' ? event.details : (translation?.details || event.details));
                                 const location = (displayDetails || '').split('|')[0]?.trim() || event.distrito || 'Portugal';
                                 const extraDetails = (displayDetails || '').includes('|') ? (displayDetails || '').split('|').slice(1).join('|').trim() : '';
 
