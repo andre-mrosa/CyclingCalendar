@@ -36,6 +36,7 @@ export function getMasterAdminEmails() {
         'andremrosa@gmail.com',
         'andre_rosa',
         'andrerosa',
+        'user_3HpcOqdlvjNVk8LTexM9hXcP5DE',
         'user_3HoiHwpGl9suYXrYx0QFhDMXHWD'
     ];
     return [...new Set([...list, ...defaults])];

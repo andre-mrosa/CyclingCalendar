@@ -32,12 +32,17 @@ export async function POST(request) {
         }
 
         const reqHeaders = await headers();
+        const cookieHeader = reqHeaders.get('cookie') || '';
         const geoAndDevice = extractGeoAndDevice(reqHeaders);
 
-        // Check if current user is admin (to flag & exclude admin traffic)
+        // Check if current user is admin (to flag & completely drop admin traffic)
         let isAdmin = false;
         let userId = null;
         let userEmail = null;
+
+        if (cookieHeader.includes('cc_admin_device=1')) {
+            isAdmin = true;
+        }
 
         try {
             const authUser = await getAuthUser();
@@ -45,7 +50,7 @@ export async function POST(request) {
                 userId = authUser.userId;
                 userEmail = authUser.userEmail;
                 const role = authUser.role;
-                if (role === 'admin' || isMasterAdmin(authUser)) {
+                if (role === 'admin' || isMasterAdmin(authUser) || isMasterAdmin(userId) || isMasterAdmin(userEmail)) {
                     isAdmin = true;
                 }
             }
@@ -54,8 +59,16 @@ export async function POST(request) {
         if (userEmail && isMasterAdmin(userEmail)) {
             isAdmin = true;
         }
+        if (userId && isMasterAdmin(userId)) {
+            isAdmin = true;
+        }
         if (path && path.startsWith('/admin')) {
             isAdmin = true;
+        }
+
+        // SE FOR ADMIN / DISPOSITIVO DO ADMINISTRADOR, DESCARTAR SILENCIOSAMENTE!
+        if (isAdmin) {
+            return Response.json({ success: true, ignored: true, reason: 'Admin traffic excluded' });
         }
 
         const activeSessionId = sessionId || `sess_${visitorId}_${Date.now()}`;

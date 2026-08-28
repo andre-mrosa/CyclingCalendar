@@ -208,6 +208,16 @@ export default function AdminDashboardPage() {
         }
     }, [authFetch, logLevelFilter, logSourceFilter, logSearch]);
 
+    // Set permanent admin device flag (Mobile and Desktop)
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            try {
+                localStorage.setItem('cc_admin_device', 'true');
+                document.cookie = "cc_admin_device=1; path=/; max-age=31536000; SameSite=Lax";
+            } catch {}
+        }
+    }, []);
+
     // Initial load once user session is loaded
     useEffect(() => {
         if (!isLoaded || !isSignedIn) return;
