@@ -224,9 +224,35 @@ export default function AdminDashboardPage() {
         }
     }, []);
 
+    // Check if a scraping pipeline is currently running on the server (e.g. on mount or after F5)
+    const checkScraperRunningStatus = useCallback(async () => {
+        try {
+            const res = await authFetch('/api/admin/scraper-status');
+            if (!res.ok) return;
+            const data = await res.json();
+            if (data.success && data.isRunning) {
+                setRunningOp('unified_scrape');
+                setScraperActiveStep(data.activeStep || 1);
+                setScraperElapsedSecs(data.elapsedSeconds || 0);
+                if (data.stepDurations) setScraperStepDurations(data.stepDurations);
+                if (data.logs) setLiveScraperLogs(data.logs);
+                setOpOutput({
+                    label: 'Sincronização & Scraping Completo',
+                    status: 'loading',
+                    message: 'Pipeline em execução no servidor (progresso ativo restaurado).'
+                });
+                stepStartTimesRef.current = { 1: data.startTime || Date.now() };
+                lastStepRef.current = data.activeStep || 1;
+            }
+        } catch (e) {
+            console.error('Error checking scraper running status:', e);
+        }
+    }, [authFetch]);
+
     // Initial load once user session is loaded
     useEffect(() => {
         if (!isLoaded || !isSignedIn) return;
+        checkScraperRunningStatus();
         if (activeTab === 'stats' || activeTab === 'operations') {
             loadStats();
             loadUsers();
@@ -236,7 +262,7 @@ export default function AdminDashboardPage() {
             loadStats();
         }
         if (activeTab === 'logs') loadLogs();
-    }, [isLoaded, isSignedIn, activeTab, loadStats, loadUsers, loadLogs]);
+    }, [isLoaded, isSignedIn, activeTab, loadStats, loadUsers, loadLogs, checkScraperRunningStatus]);
 
     // Smart Low-Traffic Auto-Refresh for Stats (15s, stops when tab is backgrounded)
     useEffect(() => {
@@ -305,7 +331,57 @@ export default function AdminDashboardPage() {
         }
     };
 
-    // Run Scraper / Maintenance Operation with Real-Time Progress, Logs Polling and Step Detection
+    // Active pipeline polling loop (handles both user click and F5 refresh resume)
+    useEffect(() => {
+        if (!runningOp) return;
+
+        const timerInterval = setInterval(() => {
+            setScraperElapsedSecs(prev => prev + 1);
+        }, 1000);
+
+        const pollStatus = async () => {
+            try {
+                const res = await authFetch('/api/admin/scraper-status');
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.success) {
+                    if (data.logs) setLiveScraperLogs(data.logs);
+                    if (data.stepDurations) setScraperStepDurations(prev => ({ ...prev, ...data.stepDurations }));
+                    if (data.elapsedSeconds !== undefined) setScraperElapsedSecs(data.elapsedSeconds);
+
+                    if (data.isRunning) {
+                        setScraperActiveStep(data.activeStep || 1);
+                        lastStepRef.current = data.activeStep || 1;
+                    } else if (data.completed) {
+                        // Truly finished on the server!
+                        setScraperActiveStep(6);
+                        if (data.stepDurations) setScraperStepDurations(data.stepDurations);
+                        setOpOutput({
+                            label: 'Sincronização & Scraping Completo',
+                            status: data.status || 'success',
+                            message: data.message || `Operação concluída com sucesso (${data.durationSeconds}s).`,
+                            raw: data
+                        });
+                        setRunningOp(null);
+                        await loadStats(null, true);
+                        await loadLogs();
+                    }
+                }
+            } catch (err) {
+                // Silent poll error
+            }
+        };
+
+        pollStatus();
+        const pollInterval = setInterval(pollStatus, 1500);
+
+        return () => {
+            clearInterval(timerInterval);
+            clearInterval(pollInterval);
+        };
+    }, [runningOp, authFetch, loadStats, loadLogs]);
+
+    // Run Scraper / Maintenance Operation
     const handleRunOperation = async (opKey, endpoint, label) => {
         setRunningOp(opKey);
         setScraperElapsedSecs(0);
@@ -314,184 +390,14 @@ export default function AdminDashboardPage() {
         setScraperStepDurations({});
         stepStartTimesRef.current = { 1: Date.now() };
         lastStepRef.current = 1;
-        setOpOutput({ label, status: 'loading', message: `A executar "${label}"... O pipeline está a consultar os calendários e a fundir as provas.` });
+        setOpOutput({ label, status: 'loading', message: `A executar "${label}"... O pipeline está a recolher calendários e a fundir as provas.` });
 
-        const startTime = Date.now();
-        let isDone = false;
-
-        // Start elapsed timer
-        const timerInterval = setInterval(() => {
-            setScraperElapsedSecs(prev => prev + 1);
-        }, 1000);
-
-        // Real-time logs polling helper
-        const pollLogs = async () => {
-            try {
-                const res = await authFetch('/api/admin/logs?source=SCRAPER&limit=25');
-                const text = await res.text();
-                const data = JSON.parse(text);
-                if (data.success && Array.isArray(data.logs)) {
-                    setLiveScraperLogs(data.logs);
-
-                    // Check for completion log created after this run started
-                    const completionLog = data.logs.find(l => {
-                        const logTime = new Date(l.createdAt).getTime();
-                        const isRecent = logTime >= (startTime - 5000);
-                        const msg = (l.message || '').toLowerCase();
-                        return isRecent && (msg.includes('sincronização global concluída') || msg.includes('concluída em '));
-                    });
-
-                    if (completionLog && !isDone) {
-                        const now = Date.now();
-                        setScraperStepDurations(prev => {
-                            const updated = { ...prev };
-                            for (let s = 1; s <= 5; s++) {
-                                if (!updated[s] && stepStartTimesRef.current[s]) {
-                                    const nextTime = stepStartTimesRef.current[s + 1] || now;
-                                    const secs = Math.max(0.5, (nextTime - stepStartTimesRef.current[s]) / 1000).toFixed(1);
-                                    updated[s] = `${secs}s`;
-                                }
-                            }
-                            return updated;
-                        });
-                        isDone = true;
-                        setScraperActiveStep(6);
-                        setOpOutput({
-                            label,
-                            status: 'success',
-                            message: completionLog.message || 'Sincronização global e unificação concluídas com sucesso!',
-                            raw: { success: true }
-                        });
-                        clearInterval(timerInterval);
-                        clearInterval(logsInterval);
-                        setRunningOp(null);
-                        await loadStats(null, true);
-                        await loadLogs();
-                        return;
-                    }
-
-                    // Dynamic step detection if not yet completed
-                    if (!isDone) {
-                        const recentLogs = data.logs.slice(0, 8);
-                        let detectedStep = 1;
-                        for (const l of recentLogs) {
-                            const msg = (l.message || '').toLowerCase();
-                            if (msg.includes('unificação') || msg.includes('fundidas')) {
-                                detectedStep = 5;
-                                break;
-                            } else if (msg.includes('deep scraping') || msg.includes('programas')) {
-                                detectedStep = 4;
-                                break;
-                            } else if (msg.includes('stop and go')) {
-                                detectedStep = 3;
-                                break;
-                            } else if (msg.includes('cabreira')) {
-                                detectedStep = 2;
-                                break;
-                            } else if (msg.includes('fpc')) {
-                                detectedStep = 1;
-                                break;
-                            }
-                        }
-
-                        if (detectedStep > lastStepRef.current) {
-                            const now = Date.now();
-                            setScraperStepDurations(prev => {
-                                const updated = { ...prev };
-                                for (let s = lastStepRef.current; s < detectedStep; s++) {
-                                    if (!updated[s] && stepStartTimesRef.current[s]) {
-                                        const secs = Math.max(0.5, (now - stepStartTimesRef.current[s]) / 1000).toFixed(1);
-                                        updated[s] = `${secs}s`;
-                                    }
-                                }
-                                return updated;
-                            });
-                            stepStartTimesRef.current[detectedStep] = now;
-                            lastStepRef.current = detectedStep;
-                            setScraperActiveStep(detectedStep);
-                        }
-                    }
-                }
-            } catch (err) {
-                // Silent poll error
-            }
-        };
-
-        // Poll immediately and start interval
-        await pollLogs();
-        const logsInterval = setInterval(async () => {
-            if (isDone) {
-                clearInterval(logsInterval);
-                clearInterval(timerInterval);
-                setRunningOp(null);
-                return;
-            }
-            await pollLogs();
-        }, 1500);
-
-        // Fire the background execution request (non-blocking safety)
         try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 180000);
-
-            const res = await authFetch(endpoint, { signal: controller.signal });
-            clearTimeout(timeoutId);
-
-            const text = await res.text();
-            let data;
-            try {
-                data = JSON.parse(text);
-            } catch {
-                data = { success: res.ok };
-            }
-
-            if (data.success && !isDone) {
-                // Ensure a final poll to pick up all server logs
-                await pollLogs();
-                const now = Date.now();
-                setScraperStepDurations(prev => {
-                    const updated = { ...prev };
-                    for (let s = 1; s <= 5; s++) {
-                        if (!updated[s] && stepStartTimesRef.current[s]) {
-                            const nextTime = stepStartTimesRef.current[s + 1] || now;
-                            const secs = Math.max(0.5, (nextTime - stepStartTimesRef.current[s]) / 1000).toFixed(1);
-                            updated[s] = `${secs}s`;
-                        }
-                    }
-                    return updated;
-                });
-                isDone = true;
-                setScraperActiveStep(6);
-                setOpOutput({
-                    label,
-                    status: 'success',
-                    message: data.message || `Operação concluída com sucesso (${data.mergedEvents || data.count || 0} provas processadas).`,
-                    raw: data
-                });
-                clearInterval(timerInterval);
-                clearInterval(logsInterval);
-                setRunningOp(null);
-                await loadStats(null, true);
-                await loadLogs();
-            }
+            // Trigger server operation (non-blocking fetch)
+            authFetch(endpoint).catch(e => console.log('Background request triggered:', e.message));
         } catch (e) {
-            console.log('Fetch connection ended (server continues in background):', e.message);
+            console.error('Trigger error:', e);
         }
-
-        // Safety fallback timer after 300s (5 minutes) if no completion log arrived
-        setTimeout(() => {
-            if (!isDone) {
-                clearInterval(logsInterval);
-                clearInterval(timerInterval);
-                setRunningOp(null);
-                setOpOutput(prev => prev?.status === 'loading' ? {
-                    label,
-                    status: 'error',
-                    message: 'O pipeline excedeu o tempo limite máximo de acompanhamento (5 minutos). Podes consultar o estado nos Logs.',
-                    raw: null
-                } : prev);
-            }
-        }, 300000);
     };
 
     // Copy log details
