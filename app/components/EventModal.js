@@ -4,6 +4,7 @@ import { useTheme } from 'next-themes';
 import SmartLogo from './SmartLogo';
 import { parsePrograma } from '../utils/parsePrograma';
 import { useCalendarEvents } from '../hooks/useCalendarEvents';
+import WeatherWidget from './WeatherWidget';
 
 const eventDetailsCache = new Map();
 
@@ -903,6 +904,13 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 )}
                             </div>
 
+                            {/* Meteorologia no Dia da Prova */}
+                            <WeatherWidget 
+                                location={activeEvent.details?.split('|')[0]?.trim()} 
+                                distrito={activeEvent.distrito} 
+                                date={activeEvent.sortDate ? new Date(activeEvent.sortDate).toISOString().substring(0, 10) : activeEvent.date} 
+                            />
+
                             {isLoadingFullEvent && (
                                 <div className="w-full h-32 rounded-xl bg-slate-800/30 border border-slate-800/80 animate-pulse flex flex-col items-center justify-center gap-2 mb-2 text-slate-500">
                                     <div className="w-5 h-5 border-2 border-slate-600 border-t-blue-400 rounded-full animate-spin"></div>
@@ -1245,9 +1253,14 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                 {/* Tab: LOCALIZACAO */}
                 {activeTab === 'localizacao' && (
-                    <div className="flex flex-col h-full animate-fade-in pb-2 min-h-0">
+                    <div className="flex flex-col h-full animate-fade-in pb-2 min-h-0 overflow-y-auto pr-1">
+                        <WeatherWidget 
+                            location={activeEvent.details?.split('|')[0]?.trim()} 
+                            distrito={activeEvent.distrito} 
+                            date={activeEvent.sortDate ? new Date(activeEvent.sortDate).toISOString().substring(0, 10) : activeEvent.date} 
+                        />
                         {activeEvent.details && activeEvent.details !== 'A definir' ? (
-                            <div className="w-full h-full min-h-[220px] rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm">
+                            <div className="w-full flex-1 min-h-[240px] rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm">
                                 <iframe 
                                     className="w-full h-full border-0 dark:[filter:invert(90%)_hue-rotate(180deg)] transition-all duration-300"
                                     loading="lazy" 
