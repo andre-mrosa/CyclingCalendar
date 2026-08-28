@@ -41,6 +41,13 @@ model Event {
   updatedAt            DateTime  @updatedAt
 
   translations         EventTranslation[]
+
+  @@index([sortDate])
+  @@index([source])
+  @@index([regiao])
+  @@index([distrito])
+  @@index([ambito])
+  @@index([tag])
 }
 
 model EventTranslation {

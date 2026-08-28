@@ -782,15 +782,21 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 {/* Mobile Title & Date & Weather Badge (sm:hidden) */}
                 <div className="sm:hidden px-4 pt-1 pb-2 shrink-0 flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                        <h2 className="text-base font-bold text-slate-900 dark:text-white m-0 leading-snug line-clamp-2">
-                            {activeEvent.logo ? (
-                                <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="text-inherit no-underline hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                                    {activeEvent.title}
-                                </a>
-                            ) : (
-                                <span>{activeEvent.title}</span>
-                            )}
-                        </h2>
+                        {(() => {
+                            const translation = activeEvent.translations?.find(t => t.language === language);
+                            const modalTitle = translation?.title || activeEvent.title;
+                            return (
+                                <h2 className="text-base font-bold text-slate-900 dark:text-white m-0 leading-snug line-clamp-2">
+                                    {activeEvent.logo ? (
+                                        <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="text-inherit no-underline hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                                            {modalTitle}
+                                        </a>
+                                    ) : (
+                                        <span>{modalTitle}</span>
+                                    )}
+                                </h2>
+                            );
+                        })()}
                     </div>
                     <WeatherWidget 
                         location={activeEvent.details?.split('|')[0]?.trim()} 

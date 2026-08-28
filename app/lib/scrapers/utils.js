@@ -226,10 +226,33 @@ export const parsePTDateToISO = (dateStr) => {
 };
 
 export const sanitizeHtml = (htmlString) => {
-    if (!htmlString) return '';
-    const $c = cheerio.load(htmlString);
-    $c('*').removeAttr('style').removeAttr('class').removeAttr('id').removeAttr('dir').removeAttr('align');
-    $c('span').each(function() { $c(this).replaceWith($c(this).html()); });
-    $c('img, svg, i').remove();
-    return $c('body').html() || htmlString;
+    if (!htmlString || typeof htmlString !== 'string') return '';
+    try {
+        const $c = cheerio.load(htmlString);
+        // Remove dangerous tags completely
+        $c('script, iframe, object, embed, form, input, button, select, textarea, link, meta, style').remove();
+        
+        // Remove all on* event handlers and javascript: hrefs
+        $c('*').each(function() {
+            const el = $c(this);
+            const attribs = el.attr() || {};
+            for (const attr of Object.keys(attribs)) {
+                const lower = attr.toLowerCase();
+                if (lower.startsWith('on') || lower === 'srcdoc') {
+                    el.removeAttr(attr);
+                }
+            }
+            const href = el.attr('href');
+            if (href && href.trim().toLowerCase().startsWith('javascript:')) {
+                el.removeAttr('href');
+            }
+        });
+
+        $c('*').removeAttr('style').removeAttr('class').removeAttr('id').removeAttr('dir').removeAttr('align');
+        $c('span').each(function() { $c(this).replaceWith($c(this).html()); });
+        $c('img, svg, i').remove();
+        return $c('body').html() || htmlString;
+    } catch {
+        return '';
+    }
 };

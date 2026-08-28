@@ -52,7 +52,7 @@ export function isMasterAdmin(userOrEmail) {
     
     if (typeof userOrEmail === 'string') {
         const clean = userOrEmail.toLowerCase().trim();
-        return masterList.some(m => clean === m || clean.includes(m) || m.includes(clean));
+        return masterList.includes(clean);
     }
     
     // Se for objeto User do Clerk (backend ou frontend)
@@ -60,7 +60,7 @@ export function isMasterAdmin(userOrEmail) {
         return true;
     }
 
-    if (userOrEmail.username && masterList.some(m => userOrEmail.username.toLowerCase().includes(m))) {
+    if (userOrEmail.username && masterList.includes(userOrEmail.username.toLowerCase().trim())) {
         return true;
     }
     
@@ -71,7 +71,7 @@ export function isMasterAdmin(userOrEmail) {
         ...(userOrEmail.externalAccounts || []).map(a => a?.emailAddress)
     ].filter(Boolean).map(e => String(e).toLowerCase().trim());
     
-    return allEmails.some(e => masterList.some(m => e === m || e.includes(m) || m.includes(e)));
+    return allEmails.some(e => masterList.includes(e));
 }
 
 /**

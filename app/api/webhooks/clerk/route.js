@@ -22,7 +22,11 @@ export async function POST(req) {
         return Response.json({ success: false, error: 'Cannot read body' }, { status: 400 });
     }
 
-    if (WEBHOOK_SECRET && svix_id && svix_timestamp && svix_signature) {
+    if (WEBHOOK_SECRET) {
+        if (!svix_id || !svix_timestamp || !svix_signature) {
+            logWarn('SYSTEM', 'Tentativa de chamada a webhook do Clerk sem cabeçalhos Svix obrigatórios');
+            return Response.json({ success: false, error: 'Missing svix headers' }, { status: 400 });
+        }
         const wh = new Webhook(WEBHOOK_SECRET);
         try {
             payload = wh.verify(body, {
@@ -31,7 +35,7 @@ export async function POST(req) {
                 "svix-signature": svix_signature,
             });
         } catch (err) {
-            console.error('Error verifying Clerk webhook:', err);
+            logWarn('SYSTEM', `Assinatura de webhook do Clerk inválida: ${err.message}`);
             return Response.json({ success: false, error: 'Invalid signature' }, { status: 400 });
         }
     } else {

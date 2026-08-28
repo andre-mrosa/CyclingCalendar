@@ -68,8 +68,55 @@ export function mergeSources(source1, source2) {
  */
 export function mergeEventRecords(existing, incoming) {
     const sources = mergeSources(existing.source, incoming.source);
-    const extraLinks = mergeExtraLinks(existing.extraLinks, incoming.extraLinks);
     const escaloes = mergeEscaloes(existing.escaloes, incoming.escaloes);
+
+    // Links cruzados: Preservação inteligente de todas as plataformas
+    const parseLinks = (linksJson) => {
+        if (!linksJson) return [];
+        if (Array.isArray(linksJson)) return linksJson;
+        try {
+            const parsed = JSON.parse(linksJson);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch {
+            return [];
+        }
+    };
+
+    let extraLinksList = [...parseLinks(existing.extraLinks), ...parseLinks(incoming.extraLinks)];
+    let primaryLink = existing.link || incoming.link;
+
+    if (existing.link && incoming.link && existing.link.toLowerCase() !== incoming.link.toLowerCase()) {
+        const isExistingFpc = existing.link.includes('fpciclismo.pt');
+        const isIncomingOrg = incoming.link.includes('cabreirasolutions.com') || incoming.link.includes('stopandgo.net');
+
+        if (isExistingFpc && isIncomingOrg) {
+            if (!extraLinksList.some(l => l.link?.toLowerCase() === existing.link.toLowerCase())) {
+                extraLinksList.push({ label: 'Ficha Homologação FPC', link: existing.link });
+            }
+            primaryLink = incoming.link;
+        } else {
+            const incomingLabel = incoming.source?.includes('Cabreira')
+                ? 'Site Oficial Cabreira'
+                : incoming.source?.includes('Stop')
+                    ? 'Inscrições Stop & Go'
+                    : 'Página da Organização';
+
+            if (!extraLinksList.some(l => l.link?.toLowerCase() === incoming.link.toLowerCase())) {
+                extraLinksList.push({ label: incomingLabel, link: incoming.link });
+            }
+        }
+    }
+
+    // Deduplicar lista final de links extras
+    const seenUrls = new Set();
+    const finalExtraLinks = [];
+    for (const item of extraLinksList) {
+        if (item && item.link && !seenUrls.has(item.link.toLowerCase())) {
+            seenUrls.add(item.link.toLowerCase());
+            finalExtraLinks.push(item);
+        }
+    }
+    const extraLinks = finalExtraLinks.length > 0 ? JSON.stringify(finalExtraLinks) : null;
 
     // Priorizar data real caso uma delas seja placeholder ou se incoming tiver intervalo " a "
     const isExistingPlaceholder = !existing.date || existing.date.includes('DEFINIR') || existing.date.includes('A definir');
@@ -97,11 +144,10 @@ export function mergeEventRecords(existing, incoming) {
         details = incoming.details;
     }
 
-    // Programa e Documentos: se ambos tiverem conteúdo útil, podemos enriquecer
+    // Programa e Documentos: se ambos tiverem conteúdo útil, combina sem perda
     let programa = existing.programa || incoming.programa;
     if (existing.programa && incoming.programa && existing.programa !== incoming.programa) {
-        // Se a FPC tem downloads e a Cabreira tem programa, combina ambos
-        if (existing.source?.includes('FPC') && incoming.source?.includes('Cabreira')) {
+        if (existing.source?.includes('FPC') && (incoming.source?.includes('Cabreira') || incoming.source?.includes('Stop'))) {
             programa = `${incoming.programa}<br/><br/>${existing.programa}`;
         }
     }
@@ -118,7 +164,7 @@ export function mergeEventRecords(existing, incoming) {
         regiao: existing.regiao && existing.regiao !== 'Todas' ? existing.regiao : (incoming.regiao || existing.regiao),
         distrito: existing.distrito && existing.distrito !== 'Todos' ? existing.distrito : (incoming.distrito || existing.distrito),
         source: sources,
-        link: existing.link || incoming.link,
+        link: primaryLink,
         extraLinks: extraLinks,
         organizador: existing.organizador || incoming.organizador,
         registrationOpensAt: existing.registrationOpensAt || incoming.registrationOpensAt,
