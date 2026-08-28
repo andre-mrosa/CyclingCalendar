@@ -81,6 +81,8 @@ export default function AdminDashboardPage() {
     // Stats & Analytics State
     const [stats, setStats] = useState(null);
     const [isLoadingStats, setIsLoadingStats] = useState(true);
+    const [isLiveRefreshing, setIsLiveRefreshing] = useState(false);
+    const [autoRefreshStats, setAutoRefreshStats] = useState(true);
     const [analyticsTimeframe, setAnalyticsTimeframe] = useState('7d'); // '24h' | '7d' | '30d' | 'all'
 
     // Users State
@@ -111,10 +113,12 @@ export default function AdminDashboardPage() {
     const [runningOp, setRunningOp] = useState(null);
     const [opOutput, setOpOutput] = useState(null);
 
-    // 1. Fetch Stats & Analytics
-    const loadStats = useCallback(async (timeframeParam) => {
+    // 1. Fetch Stats & Analytics (with smart background silent refresh)
+    const loadStats = useCallback(async (timeframeParam, silent = false) => {
         const tf = timeframeParam || analyticsTimeframe;
-        setIsLoadingStats(true);
+        if (!silent) setIsLoadingStats(true);
+        else setIsLiveRefreshing(true);
+
         try {
             const res = await authFetch(`/api/admin/stats?timeframe=${tf}`);
             const text = await res.text();
@@ -130,13 +134,14 @@ export default function AdminDashboardPage() {
                 setApiError(null);
             } else {
                 console.error('Stats error:', data.error);
-                setApiError(`Estatísticas: ${data.error || 'Erro no servidor'}`);
+                if (!silent) setApiError(`Estatísticas: ${data.error || 'Erro no servidor'}`);
             }
         } catch (e) {
             console.error('Error loading stats:', e);
-            setApiError(`Estatísticas: ${e.message}`);
+            if (!silent) setApiError(`Estatísticas: ${e.message}`);
         } finally {
-            setIsLoadingStats(false);
+            if (!silent) setIsLoadingStats(false);
+            else setIsLiveRefreshing(false);
         }
     }, [authFetch, analyticsTimeframe]);
 
@@ -216,6 +221,19 @@ export default function AdminDashboardPage() {
         }
         if (activeTab === 'logs') loadLogs();
     }, [isLoaded, isSignedIn, activeTab, loadStats, loadUsers, loadLogs]);
+
+    // Smart Low-Traffic Auto-Refresh for Stats (15s, stops when tab is backgrounded)
+    useEffect(() => {
+        if (!autoRefreshStats || activeTab !== 'stats') return;
+
+        const interval = setInterval(() => {
+            if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+                loadStats(analyticsTimeframe, true);
+            }
+        }, 15000);
+
+        return () => clearInterval(interval);
+    }, [autoRefreshStats, activeTab, analyticsTimeframe, loadStats]);
 
     // Auto-refresh logs timer
     useEffect(() => {
@@ -462,7 +480,21 @@ export default function AdminDashboardPage() {
                             </p>
                         </div>
 
-                        <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                            {/* Live Toggle Pill */}
+                            <button
+                                onClick={() => setAutoRefreshStats(!autoRefreshStats)}
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer select-none ${
+                                    autoRefreshStats
+                                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 shadow-2xs'
+                                        : 'bg-slate-100 dark:bg-slate-800/80 text-slate-500 border-slate-200 dark:border-slate-700'
+                                }`}
+                                title={autoRefreshStats ? "Atualização em direto ativa a cada 15s (pausa se minimizares o separador)" : "Atualização automática desativada. Clica para ligar."}
+                            >
+                                <span className={`w-2 h-2 rounded-full ${autoRefreshStats ? (isLiveRefreshing ? 'bg-emerald-400 scale-125' : 'bg-emerald-500 animate-pulse') : 'bg-slate-400'}`} />
+                                <span className="font-bold">{autoRefreshStats ? 'Em Direto (15s)' : 'Pausado'}</span>
+                            </button>
+
                             {/* Timeframe Selector */}
                             <div className="flex items-center bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200/60 dark:border-slate-700/60 text-xs font-semibold">
                                 {[
@@ -492,9 +524,9 @@ export default function AdminDashboardPage() {
                                 onClick={() => loadStats(analyticsTimeframe)}
                                 disabled={isLoadingStats}
                                 className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all cursor-pointer shrink-0 disabled:opacity-50"
-                                title="Atualizar estatísticas"
+                                title="Atualizar estatísticas agora"
                             >
-                                <RefreshCw size={14} className={isLoadingStats ? 'animate-spin text-blue-500' : ''} />
+                                <RefreshCw size={14} className={isLoadingStats || isLiveRefreshing ? 'animate-spin text-blue-500' : ''} />
                             </button>
                         </div>
                     </div>
