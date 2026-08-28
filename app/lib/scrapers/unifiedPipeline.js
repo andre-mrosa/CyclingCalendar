@@ -9,19 +9,41 @@ import { logInfo, logError } from '../logger.js';
  * Pipeline Universal de Scraping, Enriquecimento e Fusão de Provas
  * Usado tanto pelo CRON da Vercel (03:00) como pelo botão único no Painel de Gestão
  */
-export async function runUnifiedScrapingPipeline(triggeredBy = 'CRON') {
+export async function runUnifiedScrapingPipeline(triggeredBy = 'CRON', options = {}) {
     const startTime = Date.now();
-    await logInfo('SCRAPER', `Iniciada sincronização global de provas (${triggeredBy})...`);
 
-    const currentYear = new Date().getFullYear();
-    const yearsToScrape = [
-        (currentYear - 2).toString(), // 2024 (passado)
-        (currentYear - 1).toString(), // 2025 (passado recente)
-        currentYear.toString(),       // 2026 (presente)
-        (currentYear + 1).toString()  // 2027 (futuro)
-    ];
+    const now = new Date();
+    const currentYear = now.getFullYear();
+
+    // Domingo (day 0) OU 1º dia do mês (date 1) OU execução manual no Admin = Auditoria Histórica Completa
+    const isWeeklyOrMonthly = now.getDay() === 0 || now.getDate() === 1;
+    const shouldScrapePastYears = options.fullHistorical !== undefined 
+        ? Boolean(options.fullHistorical) 
+        : (isWeeklyOrMonthly || triggeredBy.includes('ADMIN') || triggeredBy.includes('MANUAL'));
+
+    let yearsToScrape;
+    if (shouldScrapePastYears) {
+        yearsToScrape = [
+            (currentYear - 2).toString(), // 2024 (passado)
+            (currentYear - 1).toString(), // 2025 (passado recente)
+            currentYear.toString(),       // 2026 (presente)
+            (currentYear + 1).toString()  // 2027 (futuro)
+        ];
+    } else {
+        yearsToScrape = [
+            currentYear.toString(),       // 2026 (presente ativo)
+            (currentYear + 1).toString()  // 2027 (futuro)
+        ];
+    }
+
+    const modeLabel = shouldScrapePastYears 
+        ? `Auditoria Histórica Semanal/Mensal (${yearsToScrape.join(', ')})` 
+        : `Sincronização Diária Ativa (${yearsToScrape.join(', ')})`;
+
+    await logInfo('SCRAPER', `Iniciada sincronização global [${modeLabel}] via ${triggeredBy}...`);
 
     const stats = {
+        mode: shouldScrapePastYears ? 'FULL_HISTORICAL' : 'DAILY_ACTIVE',
         sourcesScraped: ['FPC', 'Cabreira'],
         yearsScraped: yearsToScrape,
         deepScrapedFpc: 0,
@@ -29,9 +51,9 @@ export async function runUnifiedScrapingPipeline(triggeredBy = 'CRON') {
         errors: []
     };
 
-    // 1. Scraping FPC (Passadas, Presentes e Futuras: 2024 a 2027)
+    // 1. Scraping FPC (Anos Selecionados)
     try {
-        await logInfo('SCRAPER', `FPC: a consultar calendários oficiais para todos os anos (${yearsToScrape.join(', ')})...`);
+        await logInfo('SCRAPER', `FPC: a consultar calendários oficiais (${yearsToScrape.join(', ')})...`);
         for (const yr of yearsToScrape) {
             await scrapeFPC(yr);
         }
