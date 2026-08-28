@@ -32,7 +32,7 @@ export default function CalendarView({
     activeFilters = ['search', 'year', 'month', 'escalao', 'ambito', 'licenca', 'regiao'],
     applyDefaultRegiao = false
 }) {
-    const { t } = useTranslation();
+    const { t, language } = useTranslation();
     const { 
         defaultEscalao, 
         defaultRegiao,
@@ -346,11 +346,11 @@ export default function CalendarView({
                                 ? 'bg-blue-600/10 text-blue-600 dark:text-blue-400 border-blue-500/30 shadow-sm' 
                                 : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 shadow-sm hover:border-slate-300 dark:hover:border-slate-700'
                             }`}
-                            title={pastEventsFilter === 'passados' ? "A mostrar apenas eventos passados." : "Ver provas anteriores."}
+                            title={pastEventsFilter === 'passados' ? (language === 'en' ? "Showing past events only." : "A mostrar apenas eventos passados.") : (language === 'en' ? "Show past events." : "Ver provas anteriores.")}
                         >
                             <div className="flex items-center gap-1.5 sm:gap-2 truncate">
                                 <History size={14} className={`shrink-0 ${pastEventsFilter === 'passados' ? 'text-blue-500 dark:text-blue-400' : 'text-slate-400'}`} />
-                                <span className="truncate">{pastEventsFilter === 'passados' ? 'Histórico' : 'Passados'}</span>
+                                <span className="truncate">{pastEventsFilter === 'passados' ? (language === 'en' ? 'History' : 'Histórico') : (language === 'en' ? 'Past' : 'Passados')}</span>
                             </div>
                             
                             {/* Smooth Pill Switch */}
@@ -395,9 +395,9 @@ export default function CalendarView({
                 {/* Sub-header info: Counter & Bulk Export */}
                 <div className="flex flex-wrap items-center justify-between gap-3 mt-3 px-1">
                     <div className="text-xs text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1.5">
-                        <span>A mostrar <strong className="text-slate-800 dark:text-slate-200 font-semibold">{Math.min(visibleCount, filteredEvents.length)}</strong> de <strong className="text-slate-800 dark:text-slate-200 font-semibold">{filteredEvents.length}</strong> {filteredEvents.length === 1 ? 'prova' : 'provas'}</span>
+                        <span>{language === 'en' ? 'Showing' : 'A mostrar'} <strong className="text-slate-800 dark:text-slate-200 font-semibold">{Math.min(visibleCount, filteredEvents.length)}</strong> {language === 'en' ? 'of' : 'de'} <strong className="text-slate-800 dark:text-slate-200 font-semibold">{filteredEvents.length}</strong> {filteredEvents.length === 1 ? (language === 'en' ? 'event' : 'prova') : (language === 'en' ? 'events' : 'provas')}</span>
                         {events.length > 0 && filteredEvents.length !== events.length && (
-                            <span className="text-slate-400 dark:text-slate-500 font-normal">({events.length} no total)</span>
+                            <span className="text-slate-400 dark:text-slate-500 font-normal">({events.length} {language === 'en' ? 'total' : 'no total'})</span>
                         )}
                     </div>
 
@@ -411,10 +411,10 @@ export default function CalendarView({
                                 });
                             }}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 text-xs font-semibold transition-all cursor-pointer shadow-xs ml-auto"
-                            title="Exportar todas as provas desta lista para o teu calendário (.ics)"
+                            title={language === 'en' ? "Export all events in this list to your calendar (.ics)" : "Exportar todas as provas desta lista para o teu calendário (.ics)"}
                         >
                             <Download size={13} />
-                            <span>Exportar Calendário (.ics)</span>
+                            <span>{language === 'en' ? 'Export Calendar (.ics)' : 'Exportar Calendário (.ics)'}</span>
                         </button>
                     )}
                 </div>
@@ -424,7 +424,7 @@ export default function CalendarView({
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 w-full">
                             {activeFilters.includes('year') && (
                                 <div className="flex flex-col gap-2 col-span-full">
-                                    <label className="text-xs text-slate-400 uppercase tracking-wider font-bold ml-1">Anos</label>
+                                    <label className="text-xs text-slate-400 uppercase tracking-wider font-bold ml-1">{language === 'en' ? 'Years' : 'Anos'}</label>
                                     <div className="flex gap-2 flex-wrap">
                                         {availableYears.map(y => (
                                             <button 
@@ -442,7 +442,7 @@ export default function CalendarView({
                             {activeFilters.includes('month') && (
                                 <>
                                     <div className="flex flex-col gap-2">
-                                        <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">Mês Inicial</label>
+                                        <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">{language === 'en' ? 'Start Month' : 'Mês Inicial'}</label>
                                         <select 
                                             className="w-full h-9 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors"
                                             value={monthNames[monthFrom - 1]} 
@@ -453,7 +453,7 @@ export default function CalendarView({
                                     </div>
                                     
                                     <div className="flex flex-col gap-2">
-                                        <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">Mês Final</label>
+                                        <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">{language === 'en' ? 'End Month' : 'Mês Final'}</label>
                                         <select 
                                             className="w-full h-9 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors"
                                             value={monthNames[monthTo - 1]} 
@@ -468,10 +468,10 @@ export default function CalendarView({
                             {activeFilters.includes('escalao') && !forceEscalao && (
                                 <div className="flex flex-col gap-2 col-span-full">
                                     <div className="flex items-center gap-1 mb-0.5">
-                                        <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1 flex items-center">Escalões</label>
+                                        <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1 flex items-center">{language === 'en' ? 'Categories / Age Groups' : 'Escalões'}</label>
                                         <button 
                                             onClick={() => setShowEscalaoHelp(true)}
-                                            title="Não tens a certeza do teu escalão? Clica aqui para descobrir."
+                                            title={language === 'en' ? "Not sure about your category? Click here to find out." : "Não tens a certeza do teu escalão? Clica aqui para descobrir."}
                                             className="text-blue-500 hover:text-blue-400 p-0 -mt-[2px] flex items-center justify-center transition-colors"
                                         >
                                             <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -495,65 +495,77 @@ export default function CalendarView({
                             
                             {activeFilters.includes('ambito') && !forceAmbito && (
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">Âmbito</label>
+                                    <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">{language === 'en' ? 'Scope / Championship' : 'Âmbito'}</label>
                                     <select 
                                         className="w-full h-9 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors"
                                         value={selectedAmbito} 
                                         onChange={(e) => setSelectedAmbito(e.target.value)} 
                                     >
-                                        {uniqueAmbitos.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                        {uniqueAmbitos.map(opt => (
+                                            <option key={opt} value={opt}>
+                                                {opt === 'Todos' && language === 'en' ? 'All Scopes' : opt}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
                             )}
                             
                             {activeFilters.includes('licenca') && !forceLicenca && (
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">Licença</label>
+                                    <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">{language === 'en' ? 'License Type' : 'Licença'}</label>
                                     <select 
                                         className="w-full h-9 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors"
                                         value={selectedLicenca} 
                                         onChange={(e) => setSelectedLicenca(e.target.value)} 
                                     >
-                                        {uniqueLicencas.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                        {uniqueLicencas.map(opt => (
+                                            <option key={opt} value={opt}>
+                                                {opt === 'Todas' && language === 'en' ? 'All Licenses' : opt === 'Competição' && language === 'en' ? 'Competition' : opt === 'CPT / Lazer' && language === 'en' ? 'Leisure / Open (CPT)' : opt}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
                             )}
                             
                             <div className="flex flex-col gap-2">
-                                <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">Tipo de Prova</label>
+                                <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">{language === 'en' ? 'Event Type' : 'Tipo de Prova'}</label>
                                 <select 
                                     className="w-full h-9 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors"
                                     value={selectedType} 
                                     onChange={(e) => setSelectedType(e.target.value)} 
                                 >
-                                    <option value="Todos">Todos</option>
-                                    <option value="Etapas">Etapas (Multi-dia)</option>
-                                    <option value="Um Dia">Um Dia</option>
+                                    <option value="Todos">{language === 'en' ? 'All Types' : 'Todos'}</option>
+                                    <option value="Etapas">{language === 'en' ? 'Stages (Multi-day)' : 'Etapas (Multi-dia)'}</option>
+                                    <option value="Um Dia">{language === 'en' ? 'Single Day' : 'Um Dia'}</option>
                                 </select>
                             </div>
 
                             <div className="flex flex-col gap-2">
-                                <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">Eventos Passados / Futuros</label>
+                                <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">{language === 'en' ? 'Past / Upcoming' : 'Eventos Passados / Futuros'}</label>
                                 <select 
                                     className="w-full h-9 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors"
                                     value={pastEventsFilter} 
                                     onChange={(e) => setPastEventsFilter(e.target.value)} 
                                 >
-                                    <option value="todos">Todos os Eventos</option>
-                                    <option value="futuros">Apenas Futuros (Próximos)</option>
-                                    <option value="passados">Apenas Passados (Já Realizados)</option>
+                                    <option value="todos">{language === 'en' ? 'All Events' : 'Todos os Eventos'}</option>
+                                    <option value="futuros">{language === 'en' ? 'Upcoming Only' : 'Apenas Futuros (Próximos)'}</option>
+                                    <option value="passados">{language === 'en' ? 'Past Only' : 'Apenas Passados (Já Realizados)'}</option>
                                 </select>
                             </div>
                             
                             {activeFilters.includes('regiao') && (
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">Região</label>
+                                    <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">{language === 'en' ? 'Region' : 'Região'}</label>
                                     <select 
                                         className="w-full h-9 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors"
                                         value={selectedRegiao} 
                                         onChange={(e) => setSelectedRegiao(e.target.value)} 
                                     >
-                                        {uniqueRegioes.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                        {uniqueRegioes.map(opt => (
+                                            <option key={opt} value={opt}>
+                                                {opt === 'Todas' && language === 'en' ? 'All Regions' : opt}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
                             )}
@@ -561,11 +573,11 @@ export default function CalendarView({
                             {activeFilters.includes('distrito') && (
                                 <div className="flex flex-col gap-2">
                                     <div className="flex items-center gap-1 mb-0.5">
-                                        <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1 flex items-center">Distrito</label>
+                                        <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1 flex items-center">{language === 'en' ? 'District' : 'Distrito'}</label>
                                         {selectedDistrito !== 'Todos' && (
                                             <button 
                                                 onClick={() => setSelectedDistrito('Todos')}
-                                                title="Limpar Distrito"
+                                                title={language === 'en' ? "Clear District" : "Limpar Distrito"}
                                                 className="text-blue-500 hover:text-blue-400 p-0 -mt-[2px] flex items-center justify-center transition-colors"
                                             >
                                                 <X size={14} />
@@ -577,7 +589,11 @@ export default function CalendarView({
                                         value={selectedDistrito} 
                                         onChange={(e) => setSelectedDistrito(e.target.value)} 
                                     >
-                                        {uniqueDistritos.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                        {uniqueDistritos.map(opt => (
+                                            <option key={opt} value={opt}>
+                                                {opt === 'Todos' && language === 'en' ? 'All Districts' : opt}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
                             )}
@@ -620,7 +636,7 @@ export default function CalendarView({
                             onClick={() => mutate()}
                             className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors border-none cursor-pointer font-medium"
                         >
-                            Tentar novamente
+                            {language === 'en' ? 'Try again' : 'Tentar novamente'}
                         </button>
                     </div>
                 )}
@@ -643,17 +659,19 @@ export default function CalendarView({
                     return (
                         <div className="text-center py-16 px-4">
                             <p className="text-slate-400 mb-8 text-lg">
-                                Nenhum evento encontrado com os filtros atuais.
+                                {t('filter_no_events')}
                             </p>
                             
                             {selectedRegiao !== 'Todas' && (
                                 <div className="bg-slate-800 border border-slate-700 p-8 rounded-xl max-w-lg mx-auto">
                                     <span className="text-4xl block mb-4">🌐</span>
                                     <h3 className="text-slate-50 mb-3 text-xl font-medium">
-                                        Procuras provas regionais?
+                                        {language === 'en' ? 'Looking for regional races?' : 'Procuras provas regionais?'}
                                     </h3>
                                     <p className="text-slate-400 mb-6 text-sm leading-relaxed">
-                                        Muitas provas da <strong className="text-slate-200">{selectedRegiao}</strong> (como Taças Regionais) podem não ser publicadas no calendário central da FPC. Consulta diretamente a fonte oficial:
+                                        {language === 'en'
+                                            ? `Many events from ${selectedRegiao} might not be in the central calendar. Check the official source directly:`
+                                            : `Muitas provas da ${selectedRegiao} (como Taças Regionais) podem não ser publicadas no calendário central da FPC. Consulta diretamente a fonte oficial:`}
                                     </p>
                                     <a 
                                         href={associationLinks[selectedRegiao] || 'https://www.fpciclismo.pt/'} 
@@ -731,7 +749,12 @@ export default function CalendarView({
                                     <div className="flex gap-3 sm:gap-4 flex-1 min-w-0 w-full">
                                         <div className="flex flex-col shrink-0 w-[50px] h-[50px] sm:w-[56px] sm:h-[56px] bg-slate-100 dark:bg-slate-950 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800">
                                             <div className="bg-rose-500 text-white text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-center py-0.5">
-                                                {month}
+                                                {(() => {
+                                                    const monthAbbrsPt = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+                                                    const monthAbbrsEn = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+                                                    const idx = monthAbbrsPt.indexOf(month);
+                                                    return (language === 'en' && idx !== -1) ? monthAbbrsEn[idx] : month;
+                                                })()}
                                             </div>
                                             <div className={`flex-1 flex items-center justify-center text-slate-900 dark:text-white font-bold ${day.length > 2 ? 'text-xs sm:text-sm tracking-tight' : 'text-base sm:text-lg'}`}>
                                                 {day}
@@ -753,7 +776,7 @@ export default function CalendarView({
                                                         });
                                                     }}
                                                     className={`p-1 rounded-full transition-all flex items-center justify-center shrink-0 cursor-pointer ${isEventFavorited ? 'text-yellow-500 dark:text-yellow-400 bg-yellow-400/15 hover:bg-yellow-400/25' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
-                                                    title={isEventFavorited ? "Remover dos Favoritos" : "Adicionar aos Favoritos"}
+                                                    title={isEventFavorited ? (language === 'en' ? "Remove from Favorites" : "Remover dos Favoritos") : (language === 'en' ? "Add to Favorites" : "Adicionar aos Favoritos")}
                                                 >
                                                     <Star size={14} fill={isEventFavorited ? "#facc15" : "none"} stroke={isEventFavorited ? "#eab308" : "currentColor"} />
                                                 </button>
@@ -782,9 +805,9 @@ export default function CalendarView({
                                             {dateConflict.hasConflict && !isEventMarked && (
                                                 <span 
                                                     className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-orange-500/15 text-orange-600 dark:text-orange-400 border border-orange-500/30 flex items-center gap-1 shrink-0"
-                                                    title={`Já tens uma prova marcada neste dia: "${dateConflict.conflictingTitle}"`}
+                                                    title={language === 'en' ? `You already have an event on this date: "${dateConflict.conflictingTitle}"` : `Já tens uma prova marcada neste dia: "${dateConflict.conflictingTitle}"`}
                                                 >
-                                                    <AlertTriangle size={11} className="stroke-[2.5] text-orange-500" /> Prova no mesmo dia
+                                                    <AlertTriangle size={11} className="stroke-[2.5] text-orange-500" /> {language === 'en' ? 'Same day event' : 'Prova no mesmo dia'}
                                                 </span>
                                             )}
 
@@ -796,9 +819,12 @@ export default function CalendarView({
                                                     const closes = new Date(event.registrationClosesAt);
                                                     const diffDays = Math.ceil((closes - now) / (1000 * 60 * 60 * 24));
                                                     if (diffDays >= 0 && diffDays <= 4) {
+                                                        const countdownText = diffDays === 0 
+                                                            ? (language === 'en' ? 'Last day!' : 'Último dia!') 
+                                                            : (language === 'en' ? `${diffDays}d to close` : `${diffDays}d p/ fechar`);
                                                         return (
                                                             <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 flex items-center gap-1 shrink-0 animate-pulse">
-                                                                <Clock size={10} className="shrink-0" /> {diffDays === 0 ? 'Último dia!' : `${diffDays}d p/ fechar`}
+                                                                <Clock size={10} className="shrink-0" /> {countdownText}
                                                             </span>
                                                         );
                                                     }
@@ -812,6 +838,14 @@ export default function CalendarView({
                                                 const isGenericAmbito = !rawAmbito || rawAmbito.toLowerCase().includes('definir') || rawAmbito.toLowerCase() === 'outro';
                                                 
                                                 if (!isGenericAmbito) {
+                                                    let displayAmbito = rawAmbito;
+                                                    if (language === 'en') {
+                                                        if (rawAmbito === 'Taça de Portugal') displayAmbito = 'Portuguese Cup';
+                                                        else if (rawAmbito === 'Nacional' || rawAmbito.includes('Nacional')) displayAmbito = 'National Championship';
+                                                        else if (rawAmbito === 'Prova Aberta') displayAmbito = 'Open Race';
+                                                        else if (rawAmbito === 'Internacional') displayAmbito = 'International';
+                                                        else if (rawAmbito === 'Regional') displayAmbito = 'Regional';
+                                                    }
                                                     return (
                                                         <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider shrink-0 ${
                                                             rawAmbito === 'Taça de Portugal'
@@ -824,16 +858,19 @@ export default function CalendarView({
                                                                 ? 'bg-sky-500/15 text-sky-600 dark:text-sky-400 border border-sky-500/30'
                                                                 : 'bg-slate-500/15 text-slate-700 dark:text-slate-300 border border-slate-500/30'
                                                         }`}>
-                                                            {rawAmbito}
+                                                            {displayAmbito}
                                                         </span>
                                                     );
                                                 }
                                                 
                                                 // Se não tem âmbito válido, mostra licença relevante se existir (ex: Competição)
                                                 if (event.licenca && event.licenca !== 'CPT / Lazer') {
+                                                    const displayLicenca = language === 'en' 
+                                                        ? (event.licenca === 'Competição' ? 'Competition' : event.licenca)
+                                                        : event.licenca;
                                                     return (
                                                         <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30 shrink-0">
-                                                            {event.licenca}
+                                                            {displayLicenca}
                                                         </span>
                                                     );
                                                 }
@@ -844,7 +881,7 @@ export default function CalendarView({
                                             {/* Prova por Etapas */}
                                             {isMultiDay && (
                                                 <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/30 shrink-0">
-                                                    Etapas
+                                                    {language === 'en' ? 'Stages' : 'Etapas'}
                                                 </span>
                                             )}
                                         </div>

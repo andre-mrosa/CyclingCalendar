@@ -936,7 +936,9 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                     </div>
                 ) : (
                     <div className="mb-2 pb-2 border-b border-slate-200 dark:border-slate-800/80 px-4 sm:px-5 shrink-0">
-                        <p className="text-slate-500 dark:text-slate-400 text-xs">Informação detalhada disponível na página oficial da organização.</p>
+                        <p className="text-slate-500 dark:text-slate-400 text-xs">
+                            {language === 'en' ? 'Detailed information available on the official organization page.' : 'Informação detalhada disponível na página oficial da organização.'}
+                        </p>
                     </div>
                 )}
 
@@ -946,14 +948,14 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 {availableTabs.length === 0 && (
                     <div className="flex flex-col items-center justify-center h-full gap-4 p-6 animate-fade-in">
                         <FileText size={40} className="text-slate-600" />
-                        <h3 className="m-0 text-slate-200 text-center text-lg font-semibold">Não há dados detalhados</h3>
+                        <h3 className="m-0 text-slate-200 text-center text-lg font-semibold">{language === 'en' ? 'No detailed data available' : 'Não há dados detalhados'}</h3>
                         <a 
                             href={activeEvent.link} 
                             target="_blank" 
                             rel="noopener noreferrer" 
                             className="bg-blue-600 text-white no-underline px-6 py-2.5 rounded-xl font-semibold inline-block shadow-lg hover:bg-blue-500 transition-colors text-sm"
                         >
-                            Visitar Site da Organização
+                            {language === 'en' ? 'Visit Organization Website' : 'Visitar Site da Organização'}
                         </a>
                     </div>
                 )}
@@ -969,15 +971,18 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 const closes = new Date(activeEvent.registrationClosesAt);
                                 const diffDays = Math.ceil((closes - now) / (1000 * 60 * 60 * 24));
                                 if (diffDays >= 0 && diffDays <= 7) {
+                                    const closesLabel = language === 'en'
+                                        ? `Registrations close ${diffDays === 0 ? 'TODAY!' : `in ${diffDays} days (${closes.toLocaleDateString('en-GB')})`}`
+                                        : `Inscrições fecham ${diffDays === 0 ? 'HOJE!' : `em ${diffDays} dias (${closes.toLocaleDateString('pt-PT')})`}`;
                                     return (
                                         <div className="mb-2.5 px-3.5 py-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-between gap-2 text-rose-600 dark:text-rose-400 text-xs font-semibold shrink-0">
                                             <div className="flex items-center gap-2">
                                                 <Clock size={15} className="shrink-0 animate-pulse text-rose-500" />
-                                                <span>Inscrições fecham {diffDays === 0 ? 'HOJE!' : `em ${diffDays} dias (${closes.toLocaleDateString('pt-PT')})`}</span>
+                                                <span>{closesLabel}</span>
                                             </div>
                                             {activeEvent.link && (
                                                 <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-bold no-underline transition-colors shrink-0">
-                                                    Inscrever
+                                                    {t('action_register')}
                                                 </a>
                                             )}
                                         </div>
