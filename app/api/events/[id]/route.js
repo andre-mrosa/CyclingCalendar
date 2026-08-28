@@ -10,7 +10,10 @@ export async function GET(request, { params }) {
         }
 
         const event = await prisma.event.findUnique({
-            where: { id }
+            where: { id },
+            include: {
+                translations: true
+            }
         });
 
         if (!event) {

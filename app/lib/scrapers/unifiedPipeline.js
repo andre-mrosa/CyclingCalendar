@@ -5,6 +5,7 @@ import { prisma } from '../db.js';
 import { isSameEvent } from '../merging/eventMatcher.js';
 import { mergeEventRecords } from '../merging/eventMerger.js';
 import { logInfo, logError } from '../logger.js';
+import { translateAllPendingEvents } from '../translationService.js';
 
 /**
  * Pipeline Universal de Scraping, Enriquecimento e Fusão de Provas
@@ -150,6 +151,16 @@ export async function runUnifiedScrapingPipeline(triggeredBy = 'CRON', options =
     } catch (e) {
         stats.errors.push(`Unify error: ${e.message}`);
         await logError('SCRAPER', `Erro na unificação de provas: ${e.message}`, e);
+    }
+
+    // 5. Tradução Automática das Provas Pendentes (para Inglês / outras línguas)
+    try {
+        await logInfo('SCRAPER', `Tradução: a verificar provas pendentes de tradução para inglês...`);
+        const transResult = await translateAllPendingEvents('en', 100);
+        stats.translations = transResult;
+    } catch (e) {
+        stats.errors.push(`Translation error: ${e.message}`);
+        await logError('SCRAPER', `Erro na tradução de provas: ${e.message}`, e);
     }
 
     const durationSeconds = ((Date.now() - startTime) / 1000).toFixed(1);

@@ -39,6 +39,27 @@ model Event {
   
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
+
+  translations         EventTranslation[]
+}
+
+model EventTranslation {
+  id          String   @id @default(cuid())
+  eventId     String
+  language    String   // "en", "es", "fr", etc.
+  title       String
+  details     String?
+  description String?
+  programa    String?
+  
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([eventId, language])
+  @@index([language])
+  @@index([eventId])
 }
 
 model SystemLog {

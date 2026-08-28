@@ -826,15 +826,21 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             </a>
                         )}
                         <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                            <h2 className="text-xl font-bold text-slate-900 dark:text-white m-0 truncate">
-                                {activeEvent.logo ? (
-                                    <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="text-inherit no-underline hover:text-blue-600 dark:hover:text-blue-400 transition-colors truncate">
-                                        {activeEvent.title}
-                                    </a>
-                                ) : (
-                                    <span className="text-slate-900 dark:text-white truncate">{activeEvent.title}</span>
-                                )}
-                            </h2>
+                            {(() => {
+                                const translation = activeEvent.translations?.find(t => t.language === language);
+                                const modalTitle = translation?.title || activeEvent.title;
+                                return (
+                                    <h2 className="text-xl font-bold text-slate-900 dark:text-white m-0 truncate">
+                                        {activeEvent.logo ? (
+                                            <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="text-inherit no-underline hover:text-blue-600 dark:hover:text-blue-400 transition-colors truncate">
+                                                {modalTitle}
+                                            </a>
+                                        ) : (
+                                            <span className="text-slate-900 dark:text-white truncate">{modalTitle}</span>
+                                        )}
+                                    </h2>
+                                );
+                            })()}
                             <button 
                                 onClick={handleShare}
                                 className={`flex shrink-0 items-center justify-center gap-1.5 h-7 px-2.5 rounded-full transition-all cursor-pointer text-xs font-semibold ${shareCopied ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40' : 'bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}

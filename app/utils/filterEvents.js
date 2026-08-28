@@ -45,7 +45,11 @@ export function filterEvents(events, filters) {
             const organizadorMatch = event.organizador?.toLowerCase().includes(term);
             const tagMatch = event.tag?.toLowerCase().includes(term);
             const sourceMatch = event.source?.toLowerCase().includes(term);
-            return titleMatch || detailsMatch || distritoMatch || regiaoMatch || organizadorMatch || tagMatch || sourceMatch;
+            const translationMatch = event.translations?.some(t => 
+                t.title?.toLowerCase().includes(term) || 
+                t.details?.toLowerCase().includes(term)
+            );
+            return titleMatch || detailsMatch || distritoMatch || regiaoMatch || organizadorMatch || tagMatch || sourceMatch || translationMatch;
         });
     }
 

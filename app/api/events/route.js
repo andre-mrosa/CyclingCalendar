@@ -64,7 +64,16 @@ export async function GET(request) {
                 organizador: true,
                 registrationOpensAt: true,
                 registrationClosesAt: true,
-                logo: true
+                logo: true,
+                translations: {
+                    select: {
+                        language: true,
+                        title: true,
+                        details: true,
+                        description: true,
+                        programa: true
+                    }
+                }
             },
             orderBy: {
                 sortDate: 'asc'

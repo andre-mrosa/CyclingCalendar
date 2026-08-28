@@ -676,10 +676,6 @@ export default function CalendarView({
                     <>
                         <div className="flex flex-col gap-2">
                             {filteredEvents.slice(0, visibleCount).map(event => {
-                                const parts = event.details ? event.details.split('|') : [];
-                                const location = parts.length > 0 && parts[0].trim() !== '' ? parts[0].trim() : "A definir";
-                                const extraDetails = parts.length > 1 ? parts.slice(1).join('|').trim() : "";
-                                
                                 const rawDate = event.date || '';
                                 const isMultiDay = rawDate.includes(',') || rawDate.includes(' e ') || rawDate.includes(' a ');
                                 const monthAbbrs = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
@@ -713,6 +709,12 @@ export default function CalendarView({
                                     cardBorderAndBg = 'border-yellow-400/70 dark:border-yellow-400/60 shadow-[0_0_15px_rgba(250,204,21,0.12)] bg-yellow-400/[0.02] dark:bg-yellow-400/[0.03]';
                                 }
 
+                                const translation = event.translations?.find(t => t.language === language);
+                                const displayTitle = translation?.title || event.title;
+                                const displayDetails = translation?.details || event.details;
+                                const location = (displayDetails || '').split('|')[0]?.trim() || event.distrito || 'Portugal';
+                                const extraDetails = (displayDetails || '').includes('|') ? (displayDetails || '').split('|').slice(1).join('|').trim() : '';
+
                                 return (
                                 <div 
                                     key={event.id} 
@@ -739,7 +741,7 @@ export default function CalendarView({
                                         <div className="flex flex-col justify-center min-w-0 flex-1">
                                             <div className="flex items-center justify-between md:justify-start gap-2 mb-1 min-w-0">
                                                 <h3 className="text-sm sm:text-[0.95rem] font-bold text-slate-900 dark:text-slate-100 truncate leading-snug">
-                                                    {event.title}
+                                                    {displayTitle}
                                                 </h3>
                                                 <button 
                                                     onClick={(e) => {
