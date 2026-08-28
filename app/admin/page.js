@@ -1735,111 +1735,45 @@ export default function AdminDashboardPage() {
             {activeTab === 'operations' && (
                 <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* Operation 1: Scrape Cabreira */}
-                        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
-                            <div className="flex items-start justify-between gap-3">
+                        {/* Operation 1: Sincronização & Scraping Completo Universal */}
+                        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border-2 border-blue-500/30 dark:border-blue-500/20 shadow-sm space-y-4 col-span-full">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <div>
-                                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                                        Sincronizar Cabreira Solutions
-                                    </h3>
-                                    <p className="text-xs text-slate-500 leading-relaxed mt-1">
-                                        Executa o scraper semântico para recolher resumo de percursos, programas, preços, seguros e links StopAndGo.
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                                            Sincronização & Scraping Completo (Universal)
+                                        </h3>
+                                    </div>
+                                    <p className="text-xs text-slate-500 leading-relaxed mt-1 max-w-2xl">
+                                        Executa o pipeline completo: recolhe FPCiclismo + Cabreira Solutions, extrai programas e anexos (Deep Scraping), e aplica automaticamente a <strong>fusão e complementação inteligente</strong> de provas multi-fonte.
                                     </p>
                                 </div>
-                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/15 text-blue-600 dark:text-blue-400">
-                                    {stats?.events?.cabreira || 25} Provas
-                                </span>
-                            </div>
-                            <button
-                                onClick={() => handleRunOperation('cabreira', '/api/force-cabreira', 'Sincronizar Cabreira Solutions')}
-                                disabled={runningOp !== null}
-                                className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
-                            >
-                                {runningOp === 'cabreira' ? (
-                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                ) : (
-                                    <Play size={14} />
-                                )}
-                                <span>{runningOp === 'cabreira' ? 'A Sincronizar Cabreira...' : 'Executar Scrape Cabreira'}</span>
-                            </button>
-                        </div>
-
-                        {/* Operation 2: Scrape FPC */}
-                        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
-                            <div className="flex items-start justify-between gap-3">
-                                <div>
-                                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                                        Sincronizar FPCiclismo
-                                    </h3>
-                                    <p className="text-xs text-slate-500 leading-relaxed mt-1">
-                                        Recolhe o calendário oficial da Federação Portuguesa de Ciclismo para o ano atual e seguinte.
-                                    </p>
+                                <div className="flex items-center gap-2">
+                                    <span className="px-3 py-1 rounded-lg text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                        {stats?.events?.total || 0} Provas na BD
+                                    </span>
                                 </div>
-                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
-                                    {stats?.events?.fpc || 0} Provas
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
+                                <button
+                                    onClick={() => handleRunOperation('unified_scrape', '/api/force-scrape', 'Sincronização & Scraping Completo')}
+                                    disabled={runningOp !== null}
+                                    className="w-full sm:w-auto py-3 px-6 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold text-sm shadow-md transition-all cursor-pointer flex items-center justify-center gap-2.5"
+                                >
+                                    {runningOp === 'unified_scrape' ? (
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                    ) : (
+                                        <Play size={16} />
+                                    )}
+                                    <span>{runningOp === 'unified_scrape' ? 'A Sincronizar Tudo & Fundir Provas...' : 'Executar Scraping Completo'}</span>
+                                </button>
+
+                                <span className="text-xs text-slate-400 text-center sm:text-left">
+                                    🕒 Executado automaticamente pela Vercel todos os dias às 03:00.
                                 </span>
                             </div>
-                            <button
-                                onClick={() => handleRunOperation('fpc', '/api/force-scrape', 'Sincronizar FPC')}
-                                disabled={runningOp !== null}
-                                className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
-                            >
-                                {runningOp === 'fpc' ? (
-                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                ) : (
-                                    <Play size={14} />
-                                )}
-                                <span>{runningOp === 'fpc' ? 'A Sincronizar FPC...' : 'Executar Scrape FPC'}</span>
-                            </button>
-                        </div>
-
-                        {/* Operation 3: Unify & Merge Events */}
-                        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
-                            <div>
-                                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                                    <Sparkles size={14} className="text-purple-500" />
-                                    <span>Unificar & Fundir Provas Multi-Fonte</span>
-                                </h3>
-                                <p className="text-xs text-slate-500 leading-relaxed mt-1">
-                                    Varre a base de dados, identifica provas em comum (FPC e Cabreira) e une-as num único registo enriquecido com todas as fontes e links.
-                                </p>
-                            </div>
-                            <button
-                                onClick={() => handleRunOperation('unify', '/api/admin/unify-events', 'Unificação de Provas')}
-                                disabled={runningOp !== null}
-                                className="w-full py-2.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-bold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
-                            >
-                                {runningOp === 'unify' ? (
-                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                ) : (
-                                    <Sparkles size={14} />
-                                )}
-                                <span>{runningOp === 'unify' ? 'A Fundir e Complementar...' : 'Executar Fusão de Provas'}</span>
-                            </button>
-                        </div>
-
-                        {/* Operation 4: Cleanup Duplicates */}
-                        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
-                            <div>
-                                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                                    Limpeza de Duplicados & Manutenção
-                                </h3>
-                                <p className="text-xs text-slate-500 leading-relaxed mt-1">
-                                    Verifica a integridade da base de dados e remove duplicados criados por alterações de títulos.
-                                </p>
-                            </div>
-                            <button
-                                onClick={() => handleRunOperation('cleanup', '/api/cleanup-duplicates', 'Limpeza de Duplicados')}
-                                disabled={runningOp !== null}
-                                className="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
-                            >
-                                {runningOp === 'cleanup' ? (
-                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                ) : (
-                                    <Activity size={14} />
-                                )}
-                                <span>{runningOp === 'cleanup' ? 'A Limpar...' : 'Executar Limpeza de Duplicados'}</span>
-                            </button>
                         </div>
 
                         {/* Operation 4: Maintenance Logs */}
