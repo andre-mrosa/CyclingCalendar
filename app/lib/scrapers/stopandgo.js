@@ -41,11 +41,14 @@ const MONTH_ABBR = {
     '09': 'SET', '10': 'OUT', '11': 'NOV', '12': 'DEZ'
 };
 
-function parseStopAndGoDate(rawDateStr) {
-    if (!rawDateStr) return { dateText: 'DATA A DEFINIR', sortDate: new Date(), year: new Date().getFullYear().toString() };
+/**
+ * Normaliza datas do Stop and Go para formato padrão e sortDate
+ */
+function parseStopAndGoDate(rawDateStr, fallbackYear = '2026') {
+    if (!rawDateStr) return { dateText: 'DATA A DEFINIR', sortDate: new Date(), year: fallbackYear };
     const clean = rawDateStr.replace(/\s+/g, ' ').trim().toLowerCase();
     const yearMatch = clean.match(/202\d/);
-    const year = yearMatch ? yearMatch[0] : new Date().getFullYear().toString();
+    const year = yearMatch ? yearMatch[0] : fallbackYear;
 
     let monthNum = '01';
     for (const [mName, mCode] of Object.entries(MONTH_MAP)) {
@@ -60,22 +63,25 @@ function parseStopAndGoDate(rawDateStr) {
     if (rangeMatch) {
         const startDay = rangeMatch[1].padStart(2, '0');
         const endDay = rangeMatch[2].padStart(2, '0');
-        const sortDate = new Date(year + '-' + monthNum + '-' + startDay + 'T08:00:00Z');
-        const dateText = startDay + ' ' + monthAbbr + ' a ' + endDay + ' ' + monthAbbr + ' ' + year;
+        const sortDate = new Date(`${year}-${monthNum}-${startDay}T08:00:00Z`);
+        const dateText = `${startDay} ${monthAbbr} a ${endDay} ${monthAbbr} ${year}`;
         return { dateText, sortDate, year };
     }
 
     const singleDayMatch = clean.match(/(\d{1,2})/);
     if (singleDayMatch) {
         const day = singleDayMatch[1].padStart(2, '0');
-        const sortDate = new Date(year + '-' + monthNum + '-' + day + 'T08:00:00Z');
-        const dateText = day + ' ' + monthAbbr + ' ' + year;
+        const sortDate = new Date(`${year}-${monthNum}-${day}T08:00:00Z`);
+        const dateText = `${day} ${monthAbbr} ${year}`;
         return { dateText, sortDate, year };
     }
 
     return { dateText: rawDateStr.toUpperCase(), sortDate: new Date(), year };
 }
 
+/**
+ * Scrape detalhado de uma prova específica da Stop and Go
+ */
 async function scrapeEventPage(url) {
     try {
         const res = await fetch(url, { 
@@ -98,22 +104,42 @@ async function scrapeEventPage(url) {
             if (firstHalf === secondHalf) title = firstHalf;
         }
 
+        // Cartaz oficial
         let posterUrl = $('img[src*="storage/events"]').first().attr('src') || null;
         if (posterUrl && !posterUrl.startsWith('http')) posterUrl = 'https://stopandgo.net' + posterUrl;
 
-        let dateText = 'DATA A DEFINIR';
-        let sortDate = new Date();
-        const dateMatch = pageText.match(/\d{1,2}(?:\s*-\s*\d{1,2})?\s+de\s+[a-zçã]+\s+202\d/i);
-        if (dateMatch) {
-            const parsed = parseStopAndGoDate(dateMatch[0]);
-            dateText = parsed.dateText;
-            sortDate = parsed.sortDate;
+        // Data precisa do cabeçalho da prova
+        const slug = url.split('/').filter(Boolean).pop();
+        const slugYearMatch = slug.match(/202\d/);
+        const fallbackYear = slugYearMatch ? slugYearMatch[0] : '2026';
+
+        let rawDate = null;
+        $('[data-icon*="calendar"]').each((_, icon) => {
+            const text = $(icon).parent().text().replace(/\s+/g, ' ').trim();
+            if (/\d{1,2}/.test(text) && !rawDate) {
+                rawDate = text;
+            }
+        });
+
+        if (!rawDate) {
+            $('span.truncate').each((_, span) => {
+                const text = $(span).text().replace(/\s+/g, ' ').trim();
+                if (/\d{1,2}\s+[a-zçã]+\s+202\d/i.test(text) || /\d{1,2}\s+[a-zçã]+/i.test(text)) {
+                    if (!rawDate) rawDate = text;
+                }
+            });
         }
 
+        const parsedDate = parseStopAndGoDate(rawDate, fallbackYear);
+        const dateText = parsedDate.dateText;
+        const sortDate = parsedDate.sortDate;
+
+        // Localização
         let location = 'Portugal';
         const locMatch = pageText.match(/([A-ZÀ-Úa-zà-ú\s]+),\s*Portugal/);
         if (locMatch) location = toTitleCase(locMatch[1].trim());
 
+        // Links de Inscrição, Regulamento e Inscritos
         const extraLinks = [{ label: 'Página Stop and Go', link: url }];
         let registrationLink = null;
         let rulesLink = null;
@@ -141,7 +167,7 @@ async function scrapeEventPage(url) {
         if (extraLinks.length > 0) {
             programaHtml += '<div style="margin-top: 1rem;"><p><strong>Documentos e Acessos Stop and Go:</strong></p><ul style="padding-left: 1.25rem;">';
             for (const item of extraLinks) {
-                programaHtml += '<li><a href="' + item.link + '" target="_blank" rel="noopener noreferrer" style="color: #0284c7; text-decoration: underline; font-weight: 500;">' + sanitizeHtml(item.label) + '</a></li>';
+                programaHtml += `<li><a href="${item.link}" target="_blank" rel="noopener noreferrer" style="color: #0284c7; text-decoration: underline; font-weight: 500;">${sanitizeHtml(item.label)}</a></li>`;
             }
             programaHtml += '</ul></div>';
         }
@@ -151,7 +177,6 @@ async function scrapeEventPage(url) {
         const distrito = getDistrito(location);
         const ambito = getAmbito(title, pageText);
 
-        const slug = url.split('/').filter(Boolean).pop();
         const id = 'sg_' + slug.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 32);
 
         return {
@@ -179,6 +204,10 @@ async function scrapeEventPage(url) {
     }
 }
 
+/**
+ * Scraper Universal Stop and Go
+ * Consulta o sitemap e a página de eventos para extrair todas as provas de ciclismo
+ */
 export async function scrapeStopAndGo(options = {}) {
     try {
         logInfo('SCRAPER', 'Início da sincronização Stop and Go (sitemap.xml + página oficial)');
@@ -189,13 +218,14 @@ export async function scrapeStopAndGo(options = {}) {
         });
 
         if (!res.ok) {
-            logError('SCRAPER', 'Falha ao aceder ao sitemap Stop and Go (HTTP ' + res.status + ')');
+            logError('SCRAPER', `Falha ao aceder ao sitemap Stop and Go (HTTP ${res.status})`);
             return 0;
         }
 
         const xml = await res.text();
         const allUrls = Array.from(new Set(xml.match(/https:\/\/stopandgo\.net\/events\/[a-zA-Z0-9_-]+/g) || []));
 
+        // Filtrar provas de ciclismo dos anos ativos (2026, 2027)
         const currentYear = new Date().getFullYear();
         const years = options.years || [currentYear.toString(), (currentYear + 1).toString()];
 
@@ -207,7 +237,7 @@ export async function scrapeStopAndGo(options = {}) {
             return matchesYear && isCycling && !isExcluded;
         });
 
-        logInfo('SCRAPER', 'Stop and Go: ' + targetUrls.length + ' provas de ciclismo encontradas no sitemap para (' + years.join(', ') + '). A processar...');
+        logInfo('SCRAPER', `Stop and Go: ${targetUrls.length} provas de ciclismo encontradas no sitemap para (${years.join(', ')}). A processar...`);
 
         let savedOrMergedCount = 0;
         const BATCH_SIZE = 8;
@@ -222,11 +252,11 @@ export async function scrapeStopAndGo(options = {}) {
             }
         }
 
-        logInfo('SCRAPER', 'Stop and Go: ' + savedOrMergedCount + ' provas de ciclismo processadas e fundidas com sucesso.');
+        logInfo('SCRAPER', `Stop and Go: ${savedOrMergedCount} provas de ciclismo processadas e fundidas com sucesso.`);
         return savedOrMergedCount;
 
     } catch (e) {
-        logError('SCRAPER', 'Erro global no scraper Stop and Go: ' + e.message, e);
+        logError('SCRAPER', `Erro global no scraper Stop and Go: ${e.message}`, e);
         return 0;
     }
 }
