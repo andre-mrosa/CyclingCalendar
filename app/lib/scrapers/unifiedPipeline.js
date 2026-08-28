@@ -15,11 +15,11 @@ export async function runUnifiedScrapingPipeline(triggeredBy = 'CRON', options =
     const now = new Date();
     const currentYear = now.getFullYear();
 
-    // Domingo (day 0) OU 1º dia do mês (date 1) OU execução manual no Admin = Auditoria Histórica Completa
+    // Domingo (day 0) OU 1º dia do mês (date 1) OU pedido explícito de histórico
     const isWeeklyOrMonthly = now.getDay() === 0 || now.getDate() === 1;
     const shouldScrapePastYears = options.fullHistorical !== undefined 
         ? Boolean(options.fullHistorical) 
-        : (isWeeklyOrMonthly || triggeredBy.includes('ADMIN') || triggeredBy.includes('MANUAL'));
+        : isWeeklyOrMonthly;
 
     let yearsToScrape;
     if (shouldScrapePastYears) {
@@ -37,8 +37,8 @@ export async function runUnifiedScrapingPipeline(triggeredBy = 'CRON', options =
     }
 
     const modeLabel = shouldScrapePastYears 
-        ? `Auditoria Histórica Semanal/Mensal (${yearsToScrape.join(', ')})` 
-        : `Sincronização Diária Ativa (${yearsToScrape.join(', ')})`;
+        ? `Auditoria Histórica (${yearsToScrape.join(', ')})` 
+        : `Sincronização Rápida Ativa (${yearsToScrape.join(', ')})`;
 
     await logInfo('SCRAPER', `Iniciada sincronização global [${modeLabel}] via ${triggeredBy}...`);
 
@@ -65,20 +65,20 @@ export async function runUnifiedScrapingPipeline(triggeredBy = 'CRON', options =
 
     // 2. Scraping Cabreira Solutions (Passadas, Presentes e Futuras)
     try {
-        await logInfo('SCRAPER', `Cabreira: a consultar todas as provas e Granfondos (passadas, presentes e futuras)...`);
-        await scrapeCabreira(null); // null = recolhe todas as provas da plataforma
-        await logInfo('SCRAPER', `Cabreira: sincronização de todas as provas concluída com sucesso.`);
+        await logInfo('SCRAPER', `Cabreira: a consultar provas e Granfondos...`);
+        await scrapeCabreira(null);
+        await logInfo('SCRAPER', `Cabreira: sincronização concluída com sucesso.`);
     } catch (e) {
         stats.errors.push(`Cabreira error: ${e.message}`);
         await logError('SCRAPER', `Erro na sincronização Cabreira: ${e.message}`, e);
     }
 
-    // 3. Deep Scraping FPC (programas, regulamentos e anexos de todas as provas)
+    // 3. Deep Scraping FPC (programas, regulamentos e anexos de forma rápida)
     try {
         let totalDeep = 0;
-        // Processar até 3 lotes de 25 provas por execução para garantir cobertura total
-        for (let batch = 0; batch < 3; batch++) {
-            const deepCount = await incrementalDeepScrapeFPC(25);
+        const maxBatches = shouldScrapePastYears ? 2 : 1;
+        for (let batch = 0; batch < maxBatches; batch++) {
+            const deepCount = await incrementalDeepScrapeFPC(10);
             totalDeep += deepCount;
             if (deepCount === 0) break;
         }

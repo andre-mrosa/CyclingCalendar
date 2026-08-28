@@ -302,25 +302,42 @@ export default function AdminDashboardPage() {
     // Run Scraper / Maintenance Operation
     const handleRunOperation = async (opKey, endpoint, label) => {
         setRunningOp(opKey);
-        setOpOutput({ label, status: 'loading', message: `A executar "${label}"...` });
+        setOpOutput({ label, status: 'loading', message: `A executar "${label}"... O pipeline está a consultar os calendários e a fundir as provas.` });
         try {
-            const res = await authFetch(endpoint);
-            const data = await res.json();
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 45000);
+
+            const res = await authFetch(endpoint, { signal: controller.signal });
+            clearTimeout(timeoutId);
+
+            const text = await res.text();
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch {
+                data = { 
+                    success: res.ok, 
+                    message: res.ok ? 'Operação concluída com sucesso.' : (text.includes('504') ? 'A Vercel excedeu o tempo de resposta HTTP, mas a tarefa foi iniciada no servidor.' : `Resposta do servidor: ${text.slice(0, 120)}`) 
+                };
+            }
+
             setOpOutput({
                 label,
                 status: data.success ? 'success' : 'error',
-                message: data.message || `Operação concluída com sucesso (${data.count || 0} eventos processados).`,
+                message: data.message || `Operação concluída com sucesso (${data.mergedEvents || data.count || 0} provas processadas).`,
                 raw: data
             });
             await loadStats();
-            if (activeTab === 'logs') await loadLogs();
+            await loadLogs();
         } catch (e) {
             setOpOutput({
                 label,
                 status: 'error',
-                message: `Erro na execução: ${e.message}`,
-                raw: e
+                message: e.name === 'AbortError' ? 'A operação demorou mais de 45s. Podes verificar o progresso no separador Logs.' : `Erro na execução: ${e.message}`,
+                raw: { error: e.message }
             });
+            await loadStats();
+            await loadLogs();
         } finally {
             setRunningOp(null);
         }
