@@ -30,7 +30,7 @@ function getWeatherIcon(iconType, className = "w-6 h-6") {
     }
 }
 
-export default function WeatherWidget({ location, distrito, date }) {
+export default function WeatherWidget({ location, distrito, date, variant = 'default' }) {
     const [weatherData, setWeatherData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -82,6 +82,22 @@ export default function WeatherWidget({ location, distrito, date }) {
     }, [location, distrito, date]);
 
     if (isLoading) {
+        if (variant === 'header') {
+            return (
+                <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 animate-pulse shrink-0">
+                    <div className="w-4 h-4 rounded-full bg-slate-200 dark:bg-slate-700"></div>
+                    <div className="h-3 w-14 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                </div>
+            );
+        }
+        if (variant === 'mobile-badge') {
+            return (
+                <div className="flex sm:hidden items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800/80 animate-pulse shrink-0">
+                    <div className="w-3.5 h-3.5 rounded-full bg-slate-200 dark:bg-slate-700"></div>
+                    <div className="h-3 w-8 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                </div>
+            );
+        }
         return (
             <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 shadow-xs animate-pulse">
                 <div className="flex items-center justify-between gap-2 mb-2">
@@ -105,6 +121,47 @@ export default function WeatherWidget({ location, distrito, date }) {
     if (weatherData.isAvailable && weatherData.data) {
         const d = weatherData.data;
         const iconType = d.condition?.icon || 'sun-cloud';
+
+        // Variant: Header (Desktop Top Right Pill)
+        if (variant === 'header') {
+            return (
+                <div 
+                    className="hidden sm:flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-sky-500/10 dark:bg-sky-500/15 border border-sky-500/30 text-slate-800 dark:text-slate-200 text-xs shrink-0 select-none transition-all shadow-xs hover:border-sky-500/50"
+                    title={`Meteorologia Prevista (${d.diffDays === 0 ? 'Hoje' : d.diffDays === 1 ? 'Amanhã' : `em ${d.diffDays} dias`}) para ${d.locationName || location || 'o local da prova'}: ${d.condition?.label || ''} • Máx ${d.tempMax}°C / Mín ${d.tempMin}°C • Chuva ${d.rainProb}% (${d.precipitationMm}mm) • Vento ${d.windSpeed} km/h ${d.windDirection}`}
+                >
+                    <div className="flex items-center gap-1.5 text-sky-600 dark:text-sky-400 font-bold">
+                        {getWeatherIcon(iconType, "w-4 h-4 shrink-0")}
+                        <span className="text-sm font-black text-slate-900 dark:text-white">{d.tempMax}°C</span>
+                        <span className="text-[10px] text-slate-400 font-semibold">/{d.tempMin}°</span>
+                    </div>
+                    <div className="h-3.5 w-px bg-sky-500/30"></div>
+                    <div className="flex items-center gap-2 text-[11px] font-medium text-slate-600 dark:text-slate-300">
+                        <span className="flex items-center gap-0.5 text-blue-500 font-semibold" title="Probabilidade de Chuva">
+                            <Droplets size={11} className="shrink-0" /> {d.rainProb}%
+                        </span>
+                        <span className="flex items-center gap-0.5 text-teal-600 dark:text-teal-400 font-semibold" title={`Vento ${d.windSpeed} km/h`}>
+                            <Wind size={11} className="shrink-0" /> {d.windSpeed}km/h
+                        </span>
+                    </div>
+                </div>
+            );
+        }
+
+        // Variant: Mobile Badge
+        if (variant === 'mobile-badge') {
+            return (
+                <div 
+                    className="flex sm:hidden items-center gap-1.5 px-2 py-1 rounded-lg bg-sky-500/10 dark:bg-sky-500/15 border border-sky-500/25 text-slate-800 dark:text-slate-200 text-xs shrink-0 select-none"
+                    title={`Meteorologia Prevista: ${d.condition?.label || ''} • ${d.tempMax}°C / ${d.tempMin}°C • Chuva ${d.rainProb}%`}
+                >
+                    {getWeatherIcon(iconType, "w-3.5 h-3.5 shrink-0 text-sky-500")}
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">{d.tempMax}°C</span>
+                    <span className="text-[10px] text-blue-500 font-medium flex items-center gap-0.5">
+                        <Droplets size={9} />{d.rainProb}%
+                    </span>
+                </div>
+            );
+        }
 
         return (
             <div className="mb-3 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-br from-sky-500/[0.07] via-slate-50 to-slate-100/90 dark:from-sky-500/10 dark:via-slate-900/90 dark:to-slate-950/80 border border-sky-500/25 shadow-sm animate-fade-in">
@@ -192,6 +249,30 @@ export default function WeatherWidget({ location, distrito, date }) {
 
     // 2. Prova a mais de 14 dias (Previsão futura fora da janela de 14 dias)
     if (weatherData.isFuture) {
+        if (variant === 'header') {
+            return (
+                <div 
+                    className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-slate-500 dark:text-slate-400 text-[11px] shrink-0"
+                    title={`Previsão meteorológica detalhada disponível a 14 dias da prova (${weatherData.availableFrom ? `a partir de ${weatherData.availableFrom}` : `a ${weatherData.diffDays} dias`})`}
+                >
+                    <CloudSun size={14} className="text-blue-500/80 shrink-0" />
+                    <span className="font-medium">Previsão a 14d</span>
+                </div>
+            );
+        }
+
+        if (variant === 'mobile-badge') {
+            return (
+                <div 
+                    className="flex sm:hidden items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 text-[10px] shrink-0"
+                    title={`Previsão disponível a 14 dias da prova (${weatherData.diffDays} dias)`}
+                >
+                    <CloudSun size={12} className="text-blue-500/80 shrink-0" />
+                    <span>a 14d</span>
+                </div>
+            );
+        }
+
         return (
             <div className="mb-3 p-3 sm:p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800 shadow-2xs flex items-center justify-between gap-3 text-xs">
                 <div className="flex items-center gap-2.5 min-w-0">

@@ -523,8 +523,8 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
             onClick={closeModal}
         >
             <div 
-                className={`bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-2xl w-full max-w-4xl ${
-                    isExpanded ? 'h-[96dvh] max-h-[96dvh]' : 'h-[88dvh] sm:h-[86vh] max-h-[calc(100dvh-2.5rem)] sm:max-h-[86vh]'
+                className={`bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-2xl w-full max-w-5xl ${
+                    isExpanded ? 'h-[96dvh] max-h-[96dvh]' : 'h-[90dvh] sm:h-[88vh] max-h-[calc(100dvh-2rem)] sm:max-h-[88vh]'
                 } flex flex-col shadow-2xl overflow-hidden relative ${
                     isDragging ? 'transition-none' : 'transition-all duration-300 ease-out'
                 } transform ${
@@ -612,85 +612,104 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                     </div>
                 </div>
 
-                {/* Mobile Title & Date (sm:hidden) */}
-                <div className="sm:hidden px-4 pt-1 pb-2 shrink-0">
-                    <h2 className="text-base font-bold text-slate-900 dark:text-white m-0 leading-snug line-clamp-2">
-                        {activeEvent.logo ? (
-                            <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="text-inherit no-underline hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                                {activeEvent.title}
-                            </a>
-                        ) : (
-                            <span>{activeEvent.title}</span>
-                        )}
-                    </h2>
-                    {isMultiDay && (
-                        <p className="text-slate-500 dark:text-slate-400 text-xs flex items-center gap-1.5 mt-1 mb-0 font-medium">
-                            <Calendar size={12} className="text-blue-500" /> {rawDate}
-                        </p>
-                    )}
-                </div>
-
-                {/* Desktop Header (hidden sm:flex) */}
-                <div className="hidden sm:flex items-center justify-start gap-3.5 pr-12 p-5 pb-2 min-w-0 shrink-0">
-                    <button className="absolute top-4 right-4 text-slate-400 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors z-10 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer" onClick={closeModal} title="Fechar">
-                        <X size={20} />
-                    </button>
-                    <div className="flex flex-col shrink-0 w-[54px] h-[54px] bg-slate-100 dark:bg-slate-950 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
-                        <div className="bg-rose-500 text-white text-[10px] font-bold uppercase tracking-wider text-center py-0.5">
-                            {month}
-                        </div>
-                        <div className="flex-1 flex items-center justify-center text-slate-900 dark:text-white text-lg font-bold">
-                            {day}
-                        </div>
-                    </div>
-                    {activeEvent.logo && (
-                        <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="flex shrink-0" title="Abrir página do evento">
-                            <SmartLogo 
-                                src={activeEvent.logo} 
-                                alt={`Logo ${activeEvent.title}`} 
-                                className="h-8 w-auto object-contain" 
-                                style={{ height: '32px', width: 'auto', objectFit: 'contain' }}
-                            />
-                        </a>
-                    )}
-                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        <h2 className="text-xl font-bold text-slate-900 dark:text-white m-0 truncate">
+                {/* Mobile Title & Date & Weather Badge (sm:hidden) */}
+                <div className="sm:hidden px-4 pt-1 pb-2 shrink-0 flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                        <h2 className="text-base font-bold text-slate-900 dark:text-white m-0 leading-snug line-clamp-2">
                             {activeEvent.logo ? (
-                                <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="text-inherit no-underline hover:text-blue-600 dark:hover:text-blue-400 transition-colors truncate">
+                                <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="text-inherit no-underline hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                                     {activeEvent.title}
                                 </a>
                             ) : (
-                                <span className="text-slate-900 dark:text-white truncate">{activeEvent.title}</span>
+                                <span>{activeEvent.title}</span>
                             )}
                         </h2>
-                        <button 
-                            onClick={handleShare}
-                            className={`flex shrink-0 items-center justify-center gap-1.5 h-7 px-2.5 rounded-full transition-all cursor-pointer text-xs font-semibold ${shareCopied ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40' : 'bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
-                            title="Partilhar prova ou copiar link direto"
-                        >
-                            <Share2 size={13} />
-                            <span className="text-[11px]">{shareCopied ? 'Copiado!' : 'Partilhar'}</span>
-                        </button>
-                        {(() => {
-                            const isEventFavorited = favorites.includes(activeEvent.id) || (activeEvent._allIds && activeEvent._allIds.some(id => favorites.includes(id)));
-                            return (
-                                <button 
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        toggleFavorite(activeEvent.id);
-                                    }}
-                                    className={`flex shrink-0 items-center justify-center w-7 h-7 rounded-full transition-all cursor-pointer ${isEventFavorited ? 'bg-amber-400/15 border border-amber-500/40 text-amber-400' : 'bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
-                                    title={isEventFavorited ? "Remover dos Favoritos" : "Adicionar aos Favoritos"}
-                                >
-                                    <Star 
-                                        size={14} 
-                                        className="transition-transform"
-                                        fill={isEventFavorited ? "#fbbf24" : "none"}
-                                    />
-                                </button>
-                            );
-                        })()}
+                        {isMultiDay && (
+                            <p className="text-slate-500 dark:text-slate-400 text-xs flex items-center gap-1.5 mt-1 mb-0 font-medium">
+                                <Calendar size={12} className="text-blue-500" /> {rawDate}
+                            </p>
+                        )}
                     </div>
+                    <WeatherWidget 
+                        location={activeEvent.details?.split('|')[0]?.trim()} 
+                        distrito={activeEvent.distrito} 
+                        date={activeEvent.sortDate ? new Date(activeEvent.sortDate).toISOString().substring(0, 10) : activeEvent.date}
+                        variant="mobile-badge"
+                    />
+                </div>
+
+                {/* Desktop Header (hidden sm:flex) */}
+                <div className="hidden sm:flex items-center justify-between gap-3.5 pr-14 p-5 pb-2 min-w-0 shrink-0">
+                    <button className="absolute top-4 right-4 text-slate-400 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors z-10 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer" onClick={closeModal} title="Fechar">
+                        <X size={20} />
+                    </button>
+                    
+                    <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                        <div className="flex flex-col shrink-0 w-[54px] h-[54px] bg-slate-100 dark:bg-slate-950 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
+                            <div className="bg-rose-500 text-white text-[10px] font-bold uppercase tracking-wider text-center py-0.5">
+                                {month}
+                            </div>
+                            <div className="flex-1 flex items-center justify-center text-slate-900 dark:text-white text-lg font-bold">
+                                {day}
+                            </div>
+                        </div>
+                        {activeEvent.logo && (
+                            <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="flex shrink-0" title="Abrir página do evento">
+                                <SmartLogo 
+                                    src={activeEvent.logo} 
+                                    alt={`Logo ${activeEvent.title}`} 
+                                    className="h-8 w-auto object-contain" 
+                                    style={{ height: '32px', width: 'auto', objectFit: 'contain' }}
+                                />
+                            </a>
+                        )}
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                            <h2 className="text-xl font-bold text-slate-900 dark:text-white m-0 truncate">
+                                {activeEvent.logo ? (
+                                    <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="text-inherit no-underline hover:text-blue-600 dark:hover:text-blue-400 transition-colors truncate">
+                                        {activeEvent.title}
+                                    </a>
+                                ) : (
+                                    <span className="text-slate-900 dark:text-white truncate">{activeEvent.title}</span>
+                                )}
+                            </h2>
+                            <button 
+                                onClick={handleShare}
+                                className={`flex shrink-0 items-center justify-center gap-1.5 h-7 px-2.5 rounded-full transition-all cursor-pointer text-xs font-semibold ${shareCopied ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40' : 'bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
+                                title="Partilhar prova ou copiar link direto"
+                            >
+                                <Share2 size={13} />
+                                <span className="text-[11px]">{shareCopied ? 'Copiado!' : 'Partilhar'}</span>
+                            </button>
+                            {(() => {
+                                const isEventFavorited = favorites.includes(activeEvent.id) || (activeEvent._allIds && activeEvent._allIds.some(id => favorites.includes(id)));
+                                return (
+                                    <button 
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            toggleFavorite(activeEvent.id);
+                                        }}
+                                        className={`flex shrink-0 items-center justify-center w-7 h-7 rounded-full transition-all cursor-pointer ${isEventFavorited ? 'bg-amber-400/15 border border-amber-500/40 text-amber-400' : 'bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
+                                        title={isEventFavorited ? "Remover dos Favoritos" : "Adicionar aos Favoritos"}
+                                    >
+                                        <Star 
+                                            size={14} 
+                                            className="transition-transform"
+                                            fill={isEventFavorited ? "#fbbf24" : "none"}
+                                        />
+                                    </button>
+                                );
+                            })()}
+                        </div>
+                    </div>
+
+                    {/* Weather in Header (Top Right box) */}
+                    <WeatherWidget 
+                        location={activeEvent.details?.split('|')[0]?.trim()} 
+                        distrito={activeEvent.distrito} 
+                        date={activeEvent.sortDate ? new Date(activeEvent.sortDate).toISOString().substring(0, 10) : activeEvent.date}
+                        variant="header"
+                    />
                 </div>
 
                 {isMultiDay && (
@@ -1257,16 +1276,11 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                 {/* Tab: LOCALIZACAO */}
                 {activeTab === 'localizacao' && (
-                    <div className="flex flex-col h-full animate-fade-in pb-2 min-h-0 overflow-y-auto pr-1">
-                        <WeatherWidget 
-                            location={activeEvent.details?.split('|')[0]?.trim()} 
-                            distrito={activeEvent.distrito} 
-                            date={activeEvent.sortDate ? new Date(activeEvent.sortDate).toISOString().substring(0, 10) : activeEvent.date} 
-                        />
+                    <div className="flex flex-col h-full animate-fade-in pb-2 min-h-0 overflow-hidden pr-1">
                         {activeEvent.details && activeEvent.details !== 'A definir' ? (
-                            <div className="w-full flex-1 min-h-[240px] rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm">
+                            <div className="w-full h-full min-h-[300px] flex-1 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm relative">
                                 <iframe 
-                                    className="w-full h-full border-0 dark:[filter:invert(90%)_hue-rotate(180deg)] transition-all duration-300"
+                                    className="w-full h-full border-0 dark:[filter:invert(90%)_hue-rotate(180deg)] transition-all duration-300 min-h-[300px]"
                                     loading="lazy" 
                                     allowFullScreen 
                                     src={`https://maps.google.com/maps?q=${encodeURIComponent(activeEvent.details.split('|')[0] + ', Portugal')}&output=embed`}
