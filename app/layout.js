@@ -69,6 +69,7 @@ import CookieBanner from "./components/CookieBanner";
 import FaviconManager from "./components/FaviconManager";
 import PWAUpdateHandler from "./components/PWAUpdateHandler";
 import ClientErrorLogger from "./components/ClientErrorLogger";
+import AnalyticsTracker from "./components/AnalyticsTracker";
 
 export default function RootLayout({ children }) {
   return (
@@ -79,6 +80,7 @@ export default function RootLayout({ children }) {
         <FaviconManager />
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
           <ThemeClerkProvider>
+            <AnalyticsTracker />
             <Navigation />
             <main className="min-h-[calc(100vh-120px)] w-full overflow-x-hidden">
               {children}

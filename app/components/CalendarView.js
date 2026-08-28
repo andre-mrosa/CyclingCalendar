@@ -12,6 +12,7 @@ import { exportEventsToICS } from '../utils/exportCalendar';
 import EventModal from './EventModal';
 import EscalaoAssistant from './EscalaoAssistant';
 import OrganizationLogo from './OrganizationLogo';
+import { trackEvent } from './AnalyticsTracker';
 
 const fetcher = (url) => fetch(url).then((res) => res.json()).then((data) => {
     if (!data.success) throw new Error(data.error || 'Failed to load events');
@@ -157,6 +158,18 @@ export default function CalendarView({
     }, [events, selectedEvent]);
 
     const isInitialLoading = !mounted || (loading && events.length === 0);
+
+    // Track search queries with debounce
+    useEffect(() => {
+        if (!searchTerm || searchTerm.trim().length < 3) return;
+        const timer = setTimeout(() => {
+            trackEvent('SEARCH', {
+                path: typeof window !== 'undefined' ? window.location.pathname : '/',
+                metadata: { query: searchTerm.trim() }
+            });
+        }, 1500);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
 
     useEffect(() => {
         let filtered = filterEvents(events, {
@@ -369,6 +382,9 @@ export default function CalendarView({
                             onClick={() => {
                                 if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(10);
                                 exportEventsToICS(filteredEvents, filterByAgenda ? 'minha_agenda.ics' : 'favoritos.ics');
+                                trackEvent('ICS_EXPORT', {
+                                    metadata: { page: pageTitle, count: filteredEvents.length }
+                                });
                             }}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 text-xs font-semibold transition-all cursor-pointer shadow-xs ml-auto"
                             title="Exportar todas as provas desta lista para o teu calendário (.ics)"
@@ -674,7 +690,14 @@ export default function CalendarView({
                                 return (
                                 <div 
                                     key={event.id} 
-                                    onClick={() => setSelectedEvent(event)} 
+                                    onClick={() => {
+                                        setSelectedEvent(event);
+                                        trackEvent('EVENT_CLICK', {
+                                            targetId: event.id,
+                                            targetTitle: event.title,
+                                            path: typeof window !== 'undefined' ? window.location.pathname : '/'
+                                        });
+                                    }} 
                                     className={`group flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-4 bg-white dark:bg-slate-900 border ${cardBorderAndBg} rounded-xl p-3 sm:py-3 sm:px-4 cursor-pointer hover:border-blue-400 dark:hover:border-slate-600 shadow-sm transition-all overflow-hidden`}
                                 >
                                     <div className="flex gap-3 sm:gap-4 flex-1 min-w-0 w-full">
@@ -696,6 +719,10 @@ export default function CalendarView({
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         toggleFavorite(event.id);
+                                                        trackEvent('FAVORITE_TOGGLE', {
+                                                            targetId: event.id,
+                                                            targetTitle: event.title
+                                                        });
                                                     }}
                                                     className={`p-1 rounded-full transition-all flex items-center justify-center shrink-0 cursor-pointer ${isEventFavorited ? 'text-yellow-500 dark:text-yellow-400 bg-yellow-400/15 hover:bg-yellow-400/25' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
                                                     title={isEventFavorited ? "Remover dos Favoritos" : "Adicionar aos Favoritos"}

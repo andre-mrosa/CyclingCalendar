@@ -6,8 +6,43 @@ import {
     Users, FileText, Activity, Shield, AlertTriangle, CheckCircle2, 
     XCircle, Info, RefreshCw, Search, Trash2, Download, ExternalLink, 
     Clock, Calendar, UserCheck, UserX, Database, Play, Check, ChevronDown, ChevronRight, Copy, RotateCcw,
-    LayoutDashboard
+    LayoutDashboard, Globe, Smartphone, Monitor, Tablet, Eye, TrendingUp, Compass, Flame, MapPin, MousePointerClick, Radio, Sparkles
 } from 'lucide-react';
+
+function getCountryFlag(countryCode) {
+    if (!countryCode || countryCode === 'Desconhecido') return '🌍';
+    const code = countryCode.toUpperCase();
+    if (code === 'PT') return '🇵🇹';
+    if (code === 'ES') return '🇪🇸';
+    if (code === 'FR') return '🇫🇷';
+    if (code === 'GB' || code === 'UK') return '🇬🇧';
+    if (code === 'US') return '🇺🇸';
+    if (code === 'BR') return '🇧🇷';
+    if (code === 'DE') return '🇩🇪';
+    if (code === 'IT') return '🇮🇹';
+    if (code === 'NL') return '🇳🇱';
+    if (code === 'CH') return '🇨🇭';
+    if (code === 'BE') return '🇧🇪';
+    if (code.length === 2) {
+        const offset = 127397;
+        return String.fromCodePoint(...[...code].map(c => c.charCodeAt(0) + offset));
+    }
+    return '🌍';
+}
+
+function formatTimeAgo(dateStr) {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffSec = Math.floor((now - date) / 1000);
+    if (diffSec < 60) return 'agora mesmo';
+    const diffMin = Math.floor(diffSec / 60);
+    if (diffMin < 60) return `há ${diffMin} min`;
+    const diffHours = Math.floor(diffMin / 60);
+    if (diffHours < 24) return `há ${diffHours}h`;
+    const diffDays = Math.floor(diffHours / 24);
+    return `há ${diffDays}d`;
+}
 
 export default function AdminDashboardPage() {
     const { isLoaded, isSignedIn, user } = useUser();
@@ -43,9 +78,10 @@ export default function AdminDashboardPage() {
         return res;
     }, [getToken]);
 
-    // Stats State
+    // Stats & Analytics State
     const [stats, setStats] = useState(null);
     const [isLoadingStats, setIsLoadingStats] = useState(true);
+    const [analyticsTimeframe, setAnalyticsTimeframe] = useState('7d'); // '24h' | '7d' | '30d' | 'all'
 
     // Users State
     const [users, setUsers] = useState([]);
@@ -75,11 +111,12 @@ export default function AdminDashboardPage() {
     const [runningOp, setRunningOp] = useState(null);
     const [opOutput, setOpOutput] = useState(null);
 
-    // 1. Fetch Stats
-    const loadStats = useCallback(async () => {
+    // 1. Fetch Stats & Analytics
+    const loadStats = useCallback(async (timeframeParam) => {
+        const tf = timeframeParam || analyticsTimeframe;
         setIsLoadingStats(true);
         try {
-            const res = await authFetch('/api/admin/stats');
+            const res = await authFetch(`/api/admin/stats?timeframe=${tf}`);
             const text = await res.text();
             let data;
             try {
@@ -101,7 +138,7 @@ export default function AdminDashboardPage() {
         } finally {
             setIsLoadingStats(false);
         }
-    }, [authFetch]);
+    }, [authFetch, analyticsTimeframe]);
 
     // 2. Fetch Users
     const loadUsers = useCallback(async () => {
@@ -407,166 +444,563 @@ export default function AdminDashboardPage() {
             {/* TAB 0: ESTATÍSTICAS / VISÃO GERAL */}
             {activeTab === 'stats' && (
                 <div className="space-y-6 animate-fade-in">
-                    {/* Key Metric Cards */}
+                    {/* Header Controls & Filter */}
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                    <TrendingUp size={18} className="text-blue-500" />
+                                    <span>Métricas de Tráfego & Audiência</span>
+                                </h2>
+                                <span className="hidden min-[480px]:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Em direto
+                                </span>
+                            </div>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-1.5">
+                                <Shield size={12} className="text-blue-500 shrink-0" />
+                                <span>Tráfego do Administrador excluído automaticamente (dados reais).</span>
+                            </p>
+                        </div>
+
+                        <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                            {/* Timeframe Selector */}
+                            <div className="flex items-center bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200/60 dark:border-slate-700/60 text-xs font-semibold">
+                                {[
+                                    { id: '24h', label: '24h' },
+                                    { id: '7d', label: '7d' },
+                                    { id: '30d', label: '30d' },
+                                    { id: 'all', label: 'Tudo' }
+                                ].map(tf => (
+                                    <button
+                                        key={tf.id}
+                                        onClick={() => {
+                                            setAnalyticsTimeframe(tf.id);
+                                            loadStats(tf.id);
+                                        }}
+                                        className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                                            analyticsTimeframe === tf.id
+                                                ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs font-bold'
+                                                : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                                        }`}
+                                    >
+                                        {tf.label}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <button
+                                onClick={() => loadStats(analyticsTimeframe)}
+                                disabled={isLoadingStats}
+                                className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all cursor-pointer shrink-0 disabled:opacity-50"
+                                title="Atualizar estatísticas"
+                            >
+                                <RefreshCw size={14} className={isLoadingStats ? 'animate-spin text-blue-500' : ''} />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* 4 Hero Analytics Cards */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                        <div 
-                            onClick={() => {
-                                setActiveTab('users');
-                                loadUsers();
-                            }}
-                            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex flex-col justify-between cursor-pointer hover:border-blue-500/50 transition-all group"
-                        >
-                            <div className="flex items-center justify-between gap-1.5 mb-2">
-                                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Utilizadores</span>
-                                <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                    <Users size={16} />
+                        {/* Unique Visitors */}
+                        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex flex-col justify-between hover:border-blue-500/40 transition-all">
+                            <div className="flex items-center justify-between gap-1.5 mb-1.5">
+                                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Visitantes Únicos</span>
+                                <div className="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                                    <Globe size={15} />
                                 </div>
                             </div>
                             <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
-                                {isLoadingStats ? '...' : (stats?.users?.total ?? users.length)}
+                                {isLoadingStats ? '...' : (stats?.analytics?.uniqueVisitors ?? 0)}
                             </div>
-                            <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500">
-                                <span>Contas registadas</span>
-                                <span className="text-blue-500 font-bold group-hover:translate-x-0.5 transition-transform">Gerir →</span>
+                            <div className="text-[11px] text-slate-500 mt-1 pt-1.5 border-t border-slate-100 dark:border-slate-800/80">
+                                Dispositivos distintos
                             </div>
                         </div>
 
-                        <div 
-                            onClick={() => setActiveTab('operations')}
-                            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex flex-col justify-between cursor-pointer hover:border-emerald-500/50 transition-all group"
-                        >
-                            <div className="flex items-center justify-between gap-1.5 mb-2">
-                                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Eventos no BD</span>
-                                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                    <Database size={16} />
+                        {/* Page Views */}
+                        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex flex-col justify-between hover:border-emerald-500/40 transition-all">
+                            <div className="flex items-center justify-between gap-1.5 mb-1.5">
+                                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Visualizações</span>
+                                <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                                    <Eye size={15} />
                                 </div>
                             </div>
                             <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
-                                {isLoadingStats ? '...' : (stats?.events?.total ?? 0)}
+                                {isLoadingStats ? '...' : (stats?.analytics?.totalPageViews ?? 0)}
                             </div>
-                            <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500">
-                                <span>{stats?.events ? `${stats.events.fpc} FPC • ${stats.events.cabreira} Cabr.` : 'A carregar...'}</span>
-                                <span className="text-emerald-500 font-bold group-hover:translate-x-0.5 transition-transform">Scrapers →</span>
-                            </div>
-                        </div>
-
-                        <div 
-                            onClick={() => {
-                                setLogLevelFilter('ERROR');
-                                setActiveTab('logs');
-                                loadLogs();
-                            }}
-                            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex flex-col justify-between cursor-pointer hover:border-rose-500/50 transition-all group"
-                        >
-                            <div className="flex items-center justify-between gap-1.5 mb-2">
-                                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Erros</span>
-                                <div className="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                    <AlertTriangle size={16} />
-                                </div>
-                            </div>
-                            <div className="text-2xl sm:text-3xl font-black text-rose-600 dark:text-rose-400">
-                                {isLoadingStats ? '...' : (stats?.logs?.errors ?? 0)}
-                            </div>
-                            <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500">
-                                <span>Nível ERROR</span>
-                                <span className="text-rose-500 font-bold group-hover:translate-x-0.5 transition-transform">Ver Logs →</span>
+                            <div className="text-[11px] text-slate-500 mt-1 pt-1.5 border-t border-slate-100 dark:border-slate-800/80">
+                                Total de páginas vistas
                             </div>
                         </div>
 
-                        <div 
-                            onClick={() => {
-                                setActiveTab('logs');
-                                loadLogs();
-                            }}
-                            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex flex-col justify-between cursor-pointer hover:border-purple-500/50 transition-all group"
-                        >
-                            <div className="flex items-center justify-between gap-1.5 mb-2">
-                                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total de Logs</span>
-                                <div className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                    <Activity size={16} />
+                        {/* Average Session Duration */}
+                        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex flex-col justify-between hover:border-amber-500/40 transition-all">
+                            <div className="flex items-center justify-between gap-1.5 mb-1.5">
+                                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Tempo Médio</span>
+                                <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                                    <Clock size={15} />
                                 </div>
                             </div>
                             <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
-                                {isLoadingStats ? '...' : (stats?.logs?.total ?? 0)}
+                                {isLoadingStats ? '...' : (stats?.analytics?.avgDurationFormatted || '0s')}
                             </div>
-                            <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500">
-                                <span>Histórico auditado</span>
-                                <span className="text-purple-500 font-bold group-hover:translate-x-0.5 transition-transform">Abrir →</span>
+                            <div className="text-[11px] text-slate-500 mt-1 pt-1.5 border-t border-slate-100 dark:border-slate-800/80">
+                                Duração por sessão
+                            </div>
+                        </div>
+
+                        {/* Interactivity / Events */}
+                        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex flex-col justify-between hover:border-purple-500/40 transition-all">
+                            <div className="flex items-center justify-between gap-1.5 mb-1.5">
+                                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Interações</span>
+                                <div className="w-7 h-7 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+                                    <MousePointerClick size={15} />
+                                </div>
+                            </div>
+                            <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+                                {isLoadingStats ? '...' : (stats?.analytics?.totalEvents ?? 0)}
+                            </div>
+                            <div className="text-[11px] text-slate-500 mt-1 pt-1.5 border-t border-slate-100 dark:border-slate-800/80">
+                                Provas, buscas e favoritos
                             </div>
                         </div>
                     </div>
 
-                    {/* Detailed Insights & Breakdown */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* Event Distribution */}
-                        <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+                    {/* Geography & Devices Section */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        {/* 1. Where they are from (Countries & Cities) */}
+                        <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                    <Calendar size={16} className="text-blue-500" />
-                                    <span>Distribuição de Eventos</span>
+                                    <Globe size={16} className="text-blue-500" />
+                                    <span>De Onde São (Geolocalização)</span>
                                 </h3>
-                                <span className="text-xs font-semibold text-slate-500">{stats?.events?.total || 0} no total</span>
+                                <span className="text-xs font-semibold text-slate-500">
+                                    {stats?.analytics?.countries?.length || 0} países
+                                </span>
                             </div>
-                            <div className="grid grid-cols-2 gap-2 text-xs">
-                                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60">
-                                    <div className="text-slate-500 text-[11px]">Federação (FPC)</div>
-                                    <div className="text-lg font-bold text-slate-900 dark:text-white">{stats?.events?.fpc || 0}</div>
+
+                            {/* Top Countries & Cities */}
+                            {stats?.analytics?.cities?.length > 0 || stats?.analytics?.countries?.length > 0 ? (
+                                <div className="space-y-3">
+                                    {/* Cities list with visual bars */}
+                                    <div className="space-y-2">
+                                        <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Principais Cidades & Regiões</div>
+                                        {stats.analytics.cities.slice(0, 5).map((c, idx) => {
+                                            const totalVisitors = stats.analytics.totalSessions || 1;
+                                            const pct = Math.min(100, Math.round((c.count / totalVisitors) * 100));
+                                            return (
+                                                <div key={idx} className="space-y-1">
+                                                    <div className="flex items-center justify-between text-xs font-medium">
+                                                        <span className="flex items-center gap-1.5 text-slate-800 dark:text-slate-200">
+                                                            <span>{getCountryFlag(c.country)}</span>
+                                                            <strong className="font-semibold">{c.city}</strong>
+                                                            <span className="text-[11px] text-slate-400">({c.country})</span>
+                                                        </span>
+                                                        <span className="text-slate-500 font-mono text-[11px]">{c.count} ({pct}%)</span>
+                                                    </div>
+                                                    <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                                        <div 
+                                                            className="bg-blue-500 h-full rounded-full transition-all duration-500" 
+                                                            style={{ width: `${Math.max(5, pct)}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {/* Countries badges */}
+                                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-1.5">
+                                        <span className="text-[11px] font-medium text-slate-400 mr-1">Países:</span>
+                                        {stats.analytics.countries.slice(0, 6).map((co, i) => (
+                                            <span key={i} className="px-2 py-0.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 text-[11px] font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                                                <span>{getCountryFlag(co.country)}</span>
+                                                <span>{co.country}</span>
+                                                <span className="font-bold text-slate-400">({co.count})</span>
+                                            </span>
+                                        ))}
+                                    </div>
                                 </div>
-                                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60">
-                                    <div className="text-slate-500 text-[11px]">Cabreira Solutions</div>
-                                    <div className="text-lg font-bold text-slate-900 dark:text-white">{stats?.events?.cabreira || 0}</div>
+                            ) : (
+                                <div className="py-8 text-center text-xs text-slate-400">
+                                    <Globe size={24} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
+                                    A registar primeiros visitantes anónimos...
                                 </div>
-                                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60">
-                                    <div className="text-slate-500 text-[11px]">Com Prazo Inscrição</div>
-                                    <div className="text-lg font-bold text-slate-900 dark:text-white">{stats?.events?.withRegistration || 0}</div>
-                                </div>
-                                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60">
-                                    <div className="text-slate-500 text-[11px]">Com Preços / Info</div>
-                                    <div className="text-lg font-bold text-slate-900 dark:text-white">{stats?.events?.withPrices || 0}</div>
-                                </div>
-                            </div>
+                            )}
                         </div>
 
-                        {/* Recent Logs & Quick Health */}
+                        {/* 2. Devices & Technology */}
+                        <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                    <Smartphone size={16} className="text-emerald-500" />
+                                    <span>Dispositivos & Tecnologia</span>
+                                </h3>
+                                <span className="text-xs font-semibold text-slate-500">Plataformas</span>
+                            </div>
+
+                            {/* Device Breakdown Cards */}
+                            {(() => {
+                                const devices = stats?.analytics?.devices || [];
+                                const total = devices.reduce((sum, d) => sum + d.count, 0) || 1;
+                                const mobileCount = devices.find(d => d.device === 'Mobile')?.count || 0;
+                                const desktopCount = devices.find(d => d.device === 'Desktop')?.count || 0;
+                                const tabletCount = devices.find(d => d.device === 'Tablet')?.count || 0;
+
+                                const mobilePct = Math.round((mobileCount / total) * 100);
+                                const desktopPct = Math.round((desktopCount / total) * 100);
+                                const tabletPct = Math.round((tabletCount / total) * 100);
+
+                                return (
+                                    <div className="space-y-4">
+                                        <div className="grid grid-cols-3 gap-2">
+                                            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 flex flex-col items-center justify-center text-center">
+                                                <Smartphone size={18} className="text-blue-500 mb-1" />
+                                                <div className="text-xs font-bold text-slate-900 dark:text-white">Mobile</div>
+                                                <div className="text-base font-black text-blue-600 dark:text-blue-400">{mobilePct}%</div>
+                                                <div className="text-[10px] text-slate-400">{mobileCount} visitas</div>
+                                            </div>
+
+                                            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 flex flex-col items-center justify-center text-center">
+                                                <Monitor size={18} className="text-emerald-500 mb-1" />
+                                                <div className="text-xs font-bold text-slate-900 dark:text-white">Desktop</div>
+                                                <div className="text-base font-black text-emerald-600 dark:text-emerald-400">{desktopPct}%</div>
+                                                <div className="text-[10px] text-slate-400">{desktopCount} visitas</div>
+                                            </div>
+
+                                            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 flex flex-col items-center justify-center text-center">
+                                                <Tablet size={18} className="text-purple-500 mb-1" />
+                                                <div className="text-xs font-bold text-slate-900 dark:text-white">Tablet</div>
+                                                <div className="text-base font-black text-purple-600 dark:text-purple-400">{tabletPct}%</div>
+                                                <div className="text-[10px] text-slate-400">{tabletCount} visitas</div>
+                                            </div>
+                                        </div>
+
+                                        {/* Top Browsers and OS */}
+                                        <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100 dark:border-slate-800">
+                                            <div>
+                                                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Navegadores</span>
+                                                <div className="space-y-1">
+                                                    {(stats?.analytics?.browsers || []).slice(0, 3).map((b, i) => (
+                                                        <div key={i} className="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-400">
+                                                            <span>{b.browser}</span>
+                                                            <span className="font-semibold text-slate-900 dark:text-slate-200">{b.count}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Sistemas Operativos</span>
+                                                <div className="space-y-1">
+                                                    {(stats?.analytics?.os || []).slice(0, 3).map((o, i) => (
+                                                        <div key={i} className="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-400">
+                                                            <span>{o.os}</span>
+                                                            <span className="font-semibold text-slate-900 dark:text-slate-200">{o.count}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+                        </div>
+                    </div>
+
+                    {/* What they did: Top Events, Searches & Top Pages */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        {/* 1. Most Popular Events Consulted */}
                         <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                    <Activity size={16} className="text-purple-500" />
-                                    <span>Última Atividade do Sistema</span>
+                                    <Flame size={16} className="text-orange-500" />
+                                    <span>Provas Mais Consultadas</span>
                                 </h3>
-                                <button
-                                    onClick={() => {
-                                        setActiveTab('logs');
-                                        loadLogs();
-                                    }}
-                                    className="text-xs font-bold text-purple-500 hover:underline cursor-pointer"
-                                >
-                                    Ver todos
-                                </button>
+                                <span className="text-xs font-semibold text-slate-500">Cliques</span>
                             </div>
-                            {stats?.logs?.recent?.length > 0 ? (
+
+                            {stats?.analytics?.topEvents?.length > 0 ? (
                                 <div className="space-y-2">
-                                    {stats.logs.recent.slice(0, 4).map(l => (
-                                        <div key={l.id} className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between gap-2 text-xs">
+                                    {stats.analytics.topEvents.slice(0, 5).map((ev, i) => (
+                                        <div key={i} className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between gap-2 text-xs">
                                             <div className="min-w-0 flex items-center gap-2">
-                                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-black shrink-0 ${
-                                                    l.level === 'ERROR' ? 'bg-rose-500 text-white' :
-                                                    l.level === 'WARN' ? 'bg-amber-500 text-white' :
-                                                    'bg-blue-500 text-white'
-                                                }`}>
-                                                    {l.level}
+                                                <span className="w-5 h-5 rounded-md bg-orange-500/10 text-orange-600 dark:text-orange-400 text-[10px] font-bold flex items-center justify-center shrink-0">
+                                                    #{i + 1}
                                                 </span>
-                                                <span className="truncate font-medium text-slate-700 dark:text-slate-300">{l.message}</span>
+                                                <span className="truncate font-semibold text-slate-800 dark:text-slate-200" title={ev.title}>
+                                                    {ev.title}
+                                                </span>
                                             </div>
-                                            <span className="text-[10px] text-slate-400 shrink-0 font-mono">
-                                                {new Date(l.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            <span className="px-2 py-0.5 rounded-md bg-orange-500/10 text-orange-600 dark:text-orange-400 text-[11px] font-bold shrink-0">
+                                                {ev.clicks} {ev.clicks === 1 ? 'clique' : 'cliques'}
                                             </span>
                                         </div>
                                     ))}
                                 </div>
                             ) : (
-                                <p className="text-xs text-slate-500 py-4 text-center">Nenhum registo recente.</p>
+                                <p className="text-xs text-slate-400 py-6 text-center">Nenhum clique em provas registado.</p>
                             )}
+                        </div>
+
+                        {/* 2. Top Searches */}
+                        <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                    <Search size={16} className="text-purple-500" />
+                                    <span>Termos Mais Pesquisados</span>
+                                </h3>
+                                <span className="text-xs font-semibold text-slate-500">Buscas</span>
+                            </div>
+
+                            {stats?.analytics?.topSearches?.length > 0 ? (
+                                <div className="flex flex-wrap gap-2 pt-1">
+                                    {stats.analytics.topSearches.slice(0, 10).map((s, i) => (
+                                        <span key={i} className="px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5 shadow-2xs">
+                                            <Search size={11} className="text-purple-500 shrink-0" />
+                                            <span>"{s.query}"</span>
+                                            <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                                                {s.count}
+                                            </span>
+                                        </span>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-xs text-slate-400 py-6 text-center">Nenhuma pesquisa realizada no período.</p>
+                            )}
+                        </div>
+
+                        {/* 3. Top Visited Pages */}
+                        <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                    <Compass size={16} className="text-blue-500" />
+                                    <span>Páginas Mais Acedidas</span>
+                                </h3>
+                                <span className="text-xs font-semibold text-slate-500">Views</span>
+                            </div>
+
+                            {stats?.analytics?.topPages?.length > 0 ? (
+                                <div className="space-y-2">
+                                    {stats.analytics.topPages.slice(0, 5).map((p, i) => (
+                                        <div key={i} className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between gap-2 text-xs">
+                                            <span className="font-mono text-[11px] text-slate-700 dark:text-slate-300 truncate">
+                                                {p.path === '/' ? '/ (Geral)' : p.path}
+                                            </span>
+                                            <span className="font-bold text-slate-900 dark:text-white shrink-0">
+                                                {p.views} views
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-xs text-slate-400 py-6 text-center">A aguardar dados de navegação.</p>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Live Recent Sessions Feed */}
+                    {stats?.analytics?.recentSessions?.length > 0 && (
+                        <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                    <Radio size={16} className="text-rose-500 animate-pulse" />
+                                    <span>Últimas Visitas em Tempo Real</span>
+                                </h3>
+                                <span className="text-xs text-slate-500 font-medium">Sessões recentes anónimas</span>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                                {stats.analytics.recentSessions.slice(0, 6).map((s) => (
+                                    <div key={s.id} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 flex flex-col justify-between gap-2 text-xs">
+                                        <div className="flex items-center justify-between">
+                                            <span className="flex items-center gap-1.5 font-bold text-slate-800 dark:text-slate-200">
+                                                <span>{getCountryFlag(s.country)}</span>
+                                                <span className="truncate">{s.city !== 'Desconhecido' ? s.city : s.country}</span>
+                                            </span>
+                                            <span className="text-[10px] text-slate-400 font-medium">{formatTimeAgo(s.lastActiveAt)}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-[11px] text-slate-500">
+                                            <span className="flex items-center gap-1">
+                                                {s.device === 'Mobile' ? <Smartphone size={12} /> : <Monitor size={12} />}
+                                                <span>{s.browser} • {s.os}</span>
+                                            </span>
+                                            <span className="font-semibold text-slate-700 dark:text-slate-300">
+                                                {s.pageViewsCount} {s.pageViewsCount === 1 ? 'view' : 'views'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Section 4: System & Database Health Metrics */}
+                    <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-4">
+                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                            <Database size={14} className="text-slate-400" />
+                            <span>Estado da Base de Dados & Sistema</span>
+                        </div>
+
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                            <div 
+                                onClick={() => {
+                                    setActiveTab('users');
+                                    loadUsers();
+                                }}
+                                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex flex-col justify-between cursor-pointer hover:border-blue-500/50 transition-all group"
+                            >
+                                <div className="flex items-center justify-between gap-1.5 mb-2">
+                                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Utilizadores</span>
+                                    <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                        <Users size={16} />
+                                    </div>
+                                </div>
+                                <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+                                    {isLoadingStats ? '...' : (stats?.users?.total ?? users.length)}
+                                </div>
+                                <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500">
+                                    <span>Contas registadas</span>
+                                    <span className="text-blue-500 font-bold group-hover:translate-x-0.5 transition-transform">Gerir →</span>
+                                </div>
+                            </div>
+
+                            <div 
+                                onClick={() => setActiveTab('operations')}
+                                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex flex-col justify-between cursor-pointer hover:border-emerald-500/50 transition-all group"
+                            >
+                                <div className="flex items-center justify-between gap-1.5 mb-2">
+                                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Eventos no BD</span>
+                                    <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                        <Database size={16} />
+                                    </div>
+                                </div>
+                                <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+                                    {isLoadingStats ? '...' : (stats?.events?.total ?? 0)}
+                                </div>
+                                <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500">
+                                    <span>{stats?.events ? `${stats.events.fpc} FPC • ${stats.events.cabreira} Cabr.` : 'A carregar...'}</span>
+                                    <span className="text-emerald-500 font-bold group-hover:translate-x-0.5 transition-transform">Scrapers →</span>
+                                </div>
+                            </div>
+
+                            <div 
+                                onClick={() => {
+                                    setLogLevelFilter('ERROR');
+                                    setActiveTab('logs');
+                                    loadLogs();
+                                }}
+                                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex flex-col justify-between cursor-pointer hover:border-rose-500/50 transition-all group"
+                            >
+                                <div className="flex items-center justify-between gap-1.5 mb-2">
+                                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Erros</span>
+                                    <div className="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                        <AlertTriangle size={16} />
+                                    </div>
+                                </div>
+                                <div className="text-2xl sm:text-3xl font-black text-rose-600 dark:text-rose-400">
+                                    {isLoadingStats ? '...' : (stats?.logs?.errors ?? 0)}
+                                </div>
+                                <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500">
+                                    <span>Nível ERROR</span>
+                                    <span className="text-rose-500 font-bold group-hover:translate-x-0.5 transition-transform">Ver Logs →</span>
+                                </div>
+                            </div>
+
+                            <div 
+                                onClick={() => {
+                                    setActiveTab('logs');
+                                    loadLogs();
+                                }}
+                                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex flex-col justify-between cursor-pointer hover:border-purple-500/50 transition-all group"
+                            >
+                                <div className="flex items-center justify-between gap-1.5 mb-2">
+                                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total de Logs</span>
+                                    <div className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                        <Activity size={16} />
+                                    </div>
+                                </div>
+                                <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+                                    {isLoadingStats ? '...' : (stats?.logs?.total ?? 0)}
+                                </div>
+                                <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500">
+                                    <span>Histórico auditado</span>
+                                    <span className="text-purple-500 font-bold group-hover:translate-x-0.5 transition-transform">Abrir →</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Event Details and Scraper Breakdown */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                        <Calendar size={16} className="text-blue-500" />
+                                        <span>Distribuição de Eventos</span>
+                                    </h3>
+                                    <span className="text-xs font-semibold text-slate-500">{stats?.events?.total || 0} no total</span>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 text-xs">
+                                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60">
+                                        <div className="text-slate-500 text-[11px]">Federação (FPC)</div>
+                                        <div className="text-lg font-bold text-slate-900 dark:text-white">{stats?.events?.fpc || 0}</div>
+                                    </div>
+                                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60">
+                                        <div className="text-slate-500 text-[11px]">Cabreira Solutions</div>
+                                        <div className="text-lg font-bold text-slate-900 dark:text-white">{stats?.events?.cabreira || 0}</div>
+                                    </div>
+                                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60">
+                                        <div className="text-slate-500 text-[11px]">Com Prazo Inscrição</div>
+                                        <div className="text-lg font-bold text-slate-900 dark:text-white">{stats?.events?.withRegistration || 0}</div>
+                                    </div>
+                                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60">
+                                        <div className="text-slate-500 text-[11px]">Com Preços / Info</div>
+                                        <div className="text-lg font-bold text-slate-900 dark:text-white">{stats?.events?.withPrices || 0}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                        <Activity size={16} className="text-purple-500" />
+                                        <span>Última Atividade do Sistema</span>
+                                    </h3>
+                                    <button
+                                        onClick={() => {
+                                            setActiveTab('logs');
+                                            loadLogs();
+                                        }}
+                                        className="text-xs font-bold text-purple-500 hover:underline cursor-pointer"
+                                    >
+                                        Ver todos
+                                    </button>
+                                </div>
+                                {stats?.logs?.recent?.length > 0 ? (
+                                    <div className="space-y-2">
+                                        {stats.logs.recent.slice(0, 4).map(l => (
+                                            <div key={l.id} className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between gap-2 text-xs">
+                                                <div className="min-w-0 flex items-center gap-2">
+                                                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-black shrink-0 ${
+                                                        l.level === 'ERROR' ? 'bg-rose-500 text-white' :
+                                                        l.level === 'WARN' ? 'bg-amber-500 text-white' :
+                                                        'bg-blue-500 text-white'
+                                                    }`}>
+                                                        {l.level}
+                                                    </span>
+                                                    <span className="truncate font-medium text-slate-700 dark:text-slate-300">{l.message}</span>
+                                                </div>
+                                                <span className="text-[10px] text-slate-400 shrink-0 font-mono">
+                                                    {new Date(l.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-xs text-slate-500 py-4 text-center">Nenhum registo recente.</p>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>

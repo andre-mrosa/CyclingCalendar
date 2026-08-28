@@ -72,4 +72,59 @@ model AccountDeletionRequest {
   @@index([createdAt])
 }
 
+model AnalyticsSession {
+  id              String           @id @default(cuid())
+  visitorId       String           // Anonymous visitor hash stored in client localStorage
+  userId          String?          // Clerk userId if user is logged in
+  userEmail       String?          // User email if logged in
+  isAdmin         Boolean          @default(false) // Flag to exclude master admin & admins
+  country         String           @default("Desconhecido")
+  city            String           @default("Desconhecido")
+  region          String?          // e.g. district / state code
+  device          String           @default("Desktop") // "Mobile" | "Desktop" | "Tablet"
+  browser         String           @default("Outro")   // "Chrome" | "Safari" | "Firefox" | "Edge" | etc.
+  os              String           @default("Outro")   // "iOS" | "Android" | "Windows" | "macOS" | "Linux"
+  referrer        String?          // Source URL or domain (e.g. google.com, direct)
+  initialPath     String           @default("/")
+  durationSeconds Int              @default(0)
+  pageViewsCount  Int              @default(1)
+  eventsCount     Int              @default(0)
+  lastActiveAt    DateTime         @default(now())
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  events          AnalyticsEvent[]
+
+  @@index([createdAt])
+  @@index([visitorId])
+  @@index([isAdmin])
+  @@index([country])
+  @@index([city])
+  @@index([device])
+  @@index([lastActiveAt])
+}
+
+model AnalyticsEvent {
+  id          String            @id @default(cuid())
+  sessionId   String
+  visitorId   String
+  type        String            // "PAGE_VIEW" | "EVENT_CLICK" | "SEARCH" | "FAVORITE_ADD" | "AGENDA_ADD" | "ICS_EXPORT" | "FILTER_CHANGE"
+  path        String            // e.g. "/nacionais"
+  targetId    String?           // e.g. event ID
+  targetTitle String?           // e.g. "Granfondo Aldeias do Xisto"
+  metadata    String?           // JSON string with extra details (search query, filter value, etc.)
+  isAdmin     Boolean           @default(false)
+  createdAt   DateTime          @default(now())
+
+  session     AnalyticsSession? @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([sessionId])
+  @@index([visitorId])
+  @@index([type])
+  @@index([targetId])
+  @@index([isAdmin])
+  @@index([path])
+}
+
 
