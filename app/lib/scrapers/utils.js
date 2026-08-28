@@ -39,25 +39,10 @@ export const fetchImageAsBase64 = async (url) => {
     }
 };
 
+import { getEventDiscipline } from '../../utils/eventClassifier.js';
+
 export const getTag = (name, det = '') => {
-    const lowerName = name.toLowerCase();
-    const lowerDet = det.toLowerCase();
-    
-    let tag = 'Evento';
-    if (lowerName.includes('xco') || lowerDet.includes('xco')) tag = 'BTT XCO';
-    else if (lowerName.includes('xcm') || lowerName.includes('maratona') || lowerDet.includes('xcm')) tag = 'BTT XCM';
-    else if (lowerName.includes('enduro')) tag = 'BTT Enduro';
-    else if (lowerName.includes('dhu') || lowerName.includes('dhi') || lowerName.includes('downhill')) tag = 'BTT DHI/DHU';
-    else if (lowerName.includes('btt')) tag = 'BTT XCM'; 
-    else if (lowerName.includes('circuito') || lowerName.includes('prémio') || lowerName.includes('premio')) tag = 'Estrada Circuito';
-    else if (lowerName.includes('estrada') || lowerName.includes('volta') || lowerName.includes('clássica') || lowerName.includes('classica')) tag = 'Estrada Linha';
-    else if (lowerName.includes('pista') || lowerDet.includes('pista') || lowerName.includes('velódromo')) tag = 'Pista';
-    else if (lowerName.includes('passeio') || lowerName.includes('cicloturismo') || lowerName.includes('granfondo') || lowerName.includes('gran fondo') || lowerName.includes('audace') || lowerName.includes('urban race')) tag = 'Passeio / Granfondo';
-    else if (lowerName.includes('bmx') || lowerName.includes('pump track')) tag = 'BMX';
-    else if (lowerName.includes('gravel')) tag = 'Gravel';
-    else if (lowerName.includes('ciclocross') || lowerName.includes('ciclocrosse')) tag = 'Ciclocrosse';
-    
-    return tag;
+    return getEventDiscipline(name, det);
 };
 
 export const getAmbito = (name, det = '') => {

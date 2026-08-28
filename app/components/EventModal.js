@@ -7,6 +7,7 @@ import { useCalendarEvents } from '../hooks/useCalendarEvents';
 import WeatherWidget from './WeatherWidget';
 import { useTranslation } from '../i18n/useTranslation';
 import { formatMonthAbbr, translateDateString, translateEscalao, translateAmbito, translateLicenca, translateTag } from '../i18n/formatters';
+import { getEventDiscipline } from '../utils/eventClassifier';
 import { detectRaceDate } from '../utils/detectRaceDate';
 
 const eventDetailsCache = new Map();
@@ -1068,7 +1069,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                             <Bike size={14} className="text-amber-500 shrink-0 mt-0.5" />
                                             <div className="min-w-0">
                                                 <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-semibold uppercase leading-tight">{t('summary_discipline')}</span>
-                                                <span className="font-semibold text-slate-900 dark:text-slate-100 truncate block">{translateTag(activeEvent.tag, language) || t('summary_cycling')}</span>
+                                                <span className="font-semibold text-slate-900 dark:text-slate-100 truncate block">{translateTag(getEventDiscipline(activeEvent), language) || t('summary_cycling')}</span>
                                             </div>
                                         </div>
 

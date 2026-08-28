@@ -215,7 +215,7 @@ async function scrapeEventPage(url, retries = 2) {
             programaHtml += '</ul></div>';
         }
 
-        const tag = lower.includes('btt') ? 'BTT' : lower.includes('gravel') ? 'Gravel' : 'Ciclismo';
+        const tag = getTag(title, location + ' ' + pageText);
         const regiao = getRegiao(location);
         const distrito = getDistrito(location);
         const ambito = getAmbito(title, pageText);

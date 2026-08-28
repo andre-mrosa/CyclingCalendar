@@ -1,3 +1,5 @@
+import { getEventDiscipline } from './eventClassifier';
+
 export function mergeEvents(events) {
     const merged = [];
     
@@ -74,6 +76,7 @@ export function mergeEvents(events) {
             bestEvent._allIds = [bestEvent.id];
         }
 
+        bestEvent.tag = getEventDiscipline(bestEvent);
         merged.push(bestEvent);
     }
     return merged;

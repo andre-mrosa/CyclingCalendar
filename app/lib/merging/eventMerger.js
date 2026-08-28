@@ -1,4 +1,5 @@
 import { isSameEvent } from './eventMatcher.js';
+import { getEventDiscipline } from '../../utils/eventClassifier.js';
 
 /**
  * Combina duas listas de links extras sem duplicar URLs
@@ -157,7 +158,7 @@ export function mergeEventRecords(existing, incoming) {
         date: date,
         sortDate: sortDate,
         details: details,
-        tag: existing.tag || incoming.tag,
+        tag: getEventDiscipline(existing.title || incoming.title, (details || '') + ' ' + (existing.description || incoming.description || '')) || existing.tag || incoming.tag,
         ambito: existing.ambito && existing.ambito !== 'Nacional' ? existing.ambito : (incoming.ambito || existing.ambito),
         escaloes: escaloes,
         licenca: existing.licenca && existing.licenca !== 'Todas' ? existing.licenca : (incoming.licenca || existing.licenca),

@@ -14,6 +14,7 @@ import EscalaoAssistant from './EscalaoAssistant';
 import { trackEvent } from './AnalyticsTracker';
 import { useTranslation } from '../i18n/useTranslation';
 import { formatMonthAbbr, translateDateString, translateEscalao, translateAmbito, translateLicenca, translateTag } from '../i18n/formatters';
+import { isStageRace, getEventDiscipline } from '../utils/eventClassifier';
 
 const fetcher = (url) => fetch(url).then((res) => res.json()).then((data) => {
     if (!data.success) throw new Error(data.error || 'Failed to load events');
@@ -260,7 +261,7 @@ export default function CalendarView({
     const uniqueRegioes = ['Todas', ...new Set([...TODAS_AS_REGIOES, ...events.map(e => e.regiao).filter(r => r)])];
     const distritosList = [...new Set(events.map(e => e.distrito).filter(d => d))].sort();
     const uniqueDistritos = ['Todos', ...distritosList];
-    const availableTags = [...new Set(events.map(e => e.tag))];
+    const availableTags = [...new Set(events.map(e => getEventDiscipline(e)).filter(Boolean))].sort();
 
     const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
@@ -735,7 +736,8 @@ export default function CalendarView({
                                 const monthHeading = isNewMonth ? formatMonthHeading(currentMY.year, currentMY.monthIdx, language) : '';
 
                                 const rawDate = event.date || '';
-                                const isMultiDay = rawDate.includes(',') || rawDate.includes(' e ') || rawDate.includes(' a ');
+                                const isStage = isStageRace(event);
+                                const discipline = getEventDiscipline(event);
                                 const monthAbbrs = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
                                 
                                 // Extrai o dia ou intervalo real do evento
@@ -772,7 +774,6 @@ export default function CalendarView({
                                 const displayTitle = (language === 'pt' ? event.title : (translation?.title || event.title));
                                 const displayDetails = (language === 'pt' ? event.details : (translation?.details || event.details));
                                 const location = (displayDetails || '').split('|')[0]?.trim() || event.distrito || 'Portugal';
-                                const extraDetails = (displayDetails || '').includes('|') ? (displayDetails || '').split('|').slice(1).join('|').trim() : '';
 
                                 return (
                                 <Fragment key={event.id}>
@@ -838,7 +839,7 @@ export default function CalendarView({
                                                 <span className="text-slate-300 dark:text-slate-700">•</span>
                                                 <span className="flex items-center gap-1 min-w-0 flex-1 truncate">
                                                     <Bike size={12} className="text-slate-400 dark:text-slate-500 shrink-0" />
-                                                    <span className="truncate">{(event.escaloes || []).map(esc => translateEscalao(esc, language)).join(' | ')} {extraDetails ? `(${translateTag(extraDetails, language)})` : ''}</span>
+                                                    <span className="truncate">{(event.escaloes || []).map(esc => translateEscalao(esc, language)).join(' | ')} {discipline ? `(${translateTag(discipline, language)})` : ''}</span>
                                                 </span>
                                             </div>
                                         </div>
@@ -925,7 +926,7 @@ export default function CalendarView({
                                             })()}
 
                                             {/* Prova por Etapas */}
-                                            {isMultiDay && (
+                                            {isStage && (
                                                 <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/30 shrink-0">
                                                     {t('card_stages')}
                                                 </span>

@@ -1,3 +1,5 @@
+import { isStageRace, getEventDiscipline } from './eventClassifier';
+
 export function filterEvents(events, filters) {
     let filtered = events;
     const {
@@ -38,12 +40,13 @@ export function filterEvents(events, filters) {
     if (searchTerm) {
         const term = searchTerm.toLowerCase().trim();
         filtered = filtered.filter(event => {
+            const effectiveTag = getEventDiscipline(event);
             const titleMatch = event.title?.toLowerCase().includes(term);
             const detailsMatch = event.details?.toLowerCase().includes(term);
             const distritoMatch = event.distrito?.toLowerCase().includes(term);
             const regiaoMatch = event.regiao?.toLowerCase().includes(term);
             const organizadorMatch = event.organizador?.toLowerCase().includes(term);
-            const tagMatch = event.tag?.toLowerCase().includes(term);
+            const tagMatch = (event.tag?.toLowerCase().includes(term)) || (effectiveTag.toLowerCase().includes(term));
             const sourceMatch = event.source?.toLowerCase().includes(term);
             const translationMatch = event.translations?.some(t => 
                 t.title?.toLowerCase().includes(term) || 
@@ -56,7 +59,6 @@ export function filterEvents(events, filters) {
     if (selectedEscaloes && selectedEscaloes.length > 0) {
         filtered = filtered.filter(event => {
             const evEscaloes = event.escaloes || [];
-            const ambito = event.ambito;
             
             // Se o único escalão selecionado for Profissional UCI, apenas mostrar eventos UCI
             if (selectedEscaloes.length === 1 && selectedEscaloes[0] === 'Profissional (UCI)') {
@@ -69,8 +71,6 @@ export function filterEvents(events, filters) {
             
             // Regra especial para Elite Amador
             if (selectedEscaloes.includes('Elite Amador')) {
-                // Elite Amador pode ir a provas Elite (incluindo Taças e Nacionais)
-                // DESDE QUE a prova não seja estritamente Profissional (UCI)
                 const isElite = evEscaloes.includes('Elite');
                 const isUCI = evEscaloes.includes('Profissional (UCI)');
                 
@@ -83,8 +83,6 @@ export function filterEvents(events, filters) {
             
             // Se o utilizador procura algo amador e o evento é 'Todos (Aberto)' ou 'Geral'
             const isOpenEvent = evEscaloes.includes('Todos (Aberto)') || evEscaloes.includes('Geral / Vários');
-            
-            // Se o utilizador selecionou apenas UCI, não cai no isOpenEvent porque já foi tratado acima.
             return isOpenEvent;
         });
     }
@@ -109,7 +107,7 @@ export function filterEvents(events, filters) {
         const monthMap = {'JAN':1, 'FEV':2, 'MAR':3, 'ABR':4, 'MAI':5, 'JUN':6, 'JUL':7, 'AGO':8, 'SET':9, 'OUT':10, 'NOV':11, 'DEZ':12};
         
         filtered = filtered.filter(event => {
-            const dateStr = event.date.toUpperCase();
+            const dateStr = (event.date || '').toUpperCase();
             for (const [mStr, mNum] of Object.entries(monthMap)) {
                 if (dateStr.includes(mStr)) {
                     return mNum >= monthFrom && mNum <= monthTo;
@@ -120,18 +118,19 @@ export function filterEvents(events, filters) {
     }
 
     if (selectedTags && selectedTags.length > 0) {
-        filtered = filtered.filter(event => selectedTags.includes(event.tag));
+        filtered = filtered.filter(event => {
+            const effectiveTag = getEventDiscipline(event);
+            return selectedTags.includes(effectiveTag) || selectedTags.includes(event.tag);
+        });
     }
 
     if (selectedType && selectedType !== 'Todos') {
         filtered = filtered.filter(event => {
-            const rawDate = event.date || '';
-            const isMultiDay = !!event.endDate || rawDate.includes(',') || rawDate.includes(' e ') || rawDate.includes(' a ');
-            
+            const isStage = isStageRace(event);
             if (selectedType === 'Etapas') {
-                return isMultiDay;
+                return isStage;
             } else if (selectedType === 'Um Dia') {
-                return !isMultiDay;
+                return !isStage;
             }
             return true;
         });
