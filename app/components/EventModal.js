@@ -6,6 +6,7 @@ import { parsePrograma } from '../utils/parsePrograma';
 import { useCalendarEvents } from '../hooks/useCalendarEvents';
 import WeatherWidget from './WeatherWidget';
 import { useTranslation } from '../i18n/useTranslation';
+import { formatMonthAbbr, translateDateString, translateEscalao, translateAmbito, translateLicenca, translateTag } from '../i18n/formatters';
 import { detectRaceDate } from '../utils/detectRaceDate';
 
 const eventDetailsCache = new Map();
@@ -188,13 +189,17 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
     }, [selectedEvent, fullscreenImage]);
 
 
-    // Formata datas de inscrição em pt-PT sem segundos (usa UTC para preservar hora original)
+    // Formata datas de inscrição no idioma ativo sem segundos (usa UTC para preservar hora original)
     const formatRegDate = (isoStr) => {
-        if (!isoStr) return 'A definir';
+        if (!isoStr) return t('summary_to_be_defined');
+        const localeMap = { pt: 'pt-PT', en: 'en-US', es: 'es-ES', fr: 'fr-FR' };
+        const loc = localeMap[language] || 'pt-PT';
+        const atWordMap = { pt: 'às', en: 'at', es: 'a las', fr: 'à' };
+        const atWord = atWordMap[language] || 'às';
         const d = new Date(isoStr);
-        const datePart = d.toLocaleDateString('pt-PT', { timeZone: 'UTC', day: '2-digit', month: 'long', year: 'numeric' });
-        const timePart = d.toLocaleTimeString('pt-PT', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' });
-        return `${datePart} às ${timePart}`;
+        const datePart = d.toLocaleDateString(loc, { timeZone: 'UTC', day: '2-digit', month: 'long', year: 'numeric' });
+        const timePart = d.toLocaleTimeString(loc, { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' });
+        return `${datePart} ${atWord} ${timePart}`;
     };
 
     // Separate banner from programa content
@@ -416,27 +421,27 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
         let officialSite = null;
         if (activeEvent?.source === 'Cabreira' || (activeEvent?.organizador && activeEvent.organizador.toLowerCase().includes('cabreira'))) {
             const cabLink = uniqueByUrl.find(isCabreiraPage);
-            officialSite = cabLink ? { label: 'Site da Cabreira', link: cabLink.link } : { label: 'Site da Cabreira', link: 'https://cabreirasolutions.com/eventos/' };
+            officialSite = cabLink ? { label: t('action_cabreira_site'), link: cabLink.link } : { label: t('action_cabreira_site'), link: 'https://cabreirasolutions.com/eventos/' };
         } else if (activeEvent?.link && !activeEvent.link.includes('fpciclismo.pt') && !activeEvent.link.includes('stopandgo.net')) {
-            officialSite = { label: 'Site Oficial', link: activeEvent.link };
+            officialSite = { label: t('action_official_site'), link: activeEvent.link };
         } else if (activeEvent?.source === 'StopAndGo' || (activeEvent?.link && activeEvent.link.includes('stopandgo.net'))) {
-            const sgLink = uniqueByUrl.find(isStopAndGoPage) || { label: 'Página Stop & Go', link: activeEvent.link || 'https://stopandgo.net' };
+            const sgLink = uniqueByUrl.find(isStopAndGoPage) || { label: t('action_stopandgo_page'), link: activeEvent.link || 'https://stopandgo.net' };
             officialSite = sgLink;
         } else if (activeEvent?.link && activeEvent.link.includes('fpciclismo.pt')) {
-            officialSite = { label: 'Página FPC', link: activeEvent.link };
+            officialSite = { label: t('action_fpc_page'), link: activeEvent.link };
         }
 
         // Recursos secundários organizados para o corpo do modal
         const resources = [];
-        tracksList.forEach(t => resources.push({ icon: 'track', label: t.label && (t.label.includes('Percurso') || t.label.includes('Track')) ? t.label : 'Percursos & Tracks (GPX)', link: t.link }));
-        participantsList.forEach(p => resources.push({ icon: 'users', label: 'Lista de Inscritos', link: p.link }));
-        resultsList.forEach(r => resources.push({ icon: 'trophy', label: r.label && (r.label.includes('Resultado') || r.label.includes('Classifica')) ? r.label : 'Classificações Oficiais', link: r.link }));
+        tracksList.forEach(tItem => resources.push({ icon: 'track', label: tItem.label && (tItem.label.includes('Percurso') || tItem.label.includes('Track')) ? tItem.label : t('resource_tracks'), link: tItem.link }));
+        participantsList.forEach(p => resources.push({ icon: 'users', label: t('resource_participants'), link: p.link }));
+        resultsList.forEach(r => resources.push({ icon: 'trophy', label: r.label && (r.label.includes('Resultado') || r.label.includes('Classifica')) ? r.label : t('resource_results'), link: r.link }));
         if (primaryRules) {
-            resources.push({ icon: 'file', label: 'Regulamento Oficial', link: primaryRules.link });
+            resources.push({ icon: 'file', label: t('resource_rules'), link: primaryRules.link });
         }
-        conditionsList.forEach(c => resources.push({ icon: 'shield', label: 'Condições & Cancelamentos', link: c.link }));
+        conditionsList.forEach(c => resources.push({ icon: 'shield', label: t('resource_conditions'), link: c.link }));
         if (fpcList.length > 0 && activeEvent?.source !== 'FPC') {
-            fpcList.forEach(f => resources.push({ icon: 'fpc', label: 'Ficha Homologação FPC', link: f.link }));
+            fpcList.forEach(f => resources.push({ icon: 'fpc', label: t('resource_fpc'), link: f.link }));
         }
 
         // Inscrições limpas e desduplicadas por plataforma
@@ -457,7 +462,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
         }
 
         if (registrationClean.length === 0 && activeEvent?.link && (activeEvent.link.includes('prova-inscrever') || activeEvent.link.includes('stopandgo'))) {
-            registrationClean.push({ label: 'Inscrever', link: activeEvent.link, _plat: 'Oficial' });
+            registrationClean.push({ label: t('action_register'), link: activeEvent.link, _plat: 'Oficial' });
         }
 
         return {
@@ -467,7 +472,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
             officialSite,
             resources: Array.from(new Map(resources.map(r => [r.link, r])).values())
         };
-    }, [programaData.additionalLinks, activeEvent]);
+    }, [programaData.additionalLinks, activeEvent, language, t]);
 
     // Calcula as tabs ativas baseadas nos dados reais do evento
     const availableTabs = useMemo(() => {
@@ -725,7 +730,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                     <div className="flex items-center gap-2.5">
                         <div className="flex flex-col shrink-0 w-[42px] h-[42px] bg-slate-100 dark:bg-slate-950 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
                             <div className="bg-rose-500 text-white text-[8px] font-bold uppercase tracking-wider text-center py-0.5">
-                                {month}
+                                {formatMonthAbbr(month, language)}
                             </div>
                             <div className={`flex-1 flex items-center justify-center text-slate-900 dark:text-white font-bold ${day.length > 2 ? 'text-[11px] tracking-tight' : 'text-sm'}`}>
                                 {day}
@@ -816,7 +821,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                     <div className="flex items-center gap-3.5 min-w-0 flex-1">
                         <div className="flex flex-col shrink-0 w-[54px] h-[54px] bg-slate-100 dark:bg-slate-950 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
                             <div className="bg-rose-500 text-white text-[10px] font-bold uppercase tracking-wider text-center py-0.5">
-                                {month}
+                                {formatMonthAbbr(month, language)}
                             </div>
                             <div className={`flex-1 flex items-center justify-center text-slate-900 dark:text-white font-bold ${day.length > 2 ? 'text-xs sm:text-sm tracking-tight' : 'text-lg'}`}>
                                 {day}
@@ -1039,9 +1044,9 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                             <Calendar size={14} className="text-blue-500 shrink-0 mt-0.5" />
                                             <div className="min-w-0">
                                                 <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-semibold uppercase leading-tight">{t('summary_date')}</span>
-                                                <span className="font-semibold text-slate-900 dark:text-slate-100 truncate block">{activeEvent.date}</span>
+                                                <span className="font-semibold text-slate-900 dark:text-slate-100 truncate block">{translateDateString(activeEvent.date, language)}</span>
                                                 {raceInfo && raceInfo.raceDayOnly && raceInfo.label !== activeEvent.date && (
-                                                    <span className="text-[11px] text-blue-600 dark:text-blue-400 font-bold block mt-0.5">🏁 {raceInfo.label}</span>
+                                                    <span className="text-[11px] text-blue-600 dark:text-blue-400 font-bold block mt-0.5">🏁 {translateDateString(raceInfo.label, language)}</span>
                                                 )}
                                             </div>
                                         </div>
@@ -1063,7 +1068,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                             <Bike size={14} className="text-amber-500 shrink-0 mt-0.5" />
                                             <div className="min-w-0">
                                                 <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-semibold uppercase leading-tight">{t('summary_discipline')}</span>
-                                                <span className="font-semibold text-slate-900 dark:text-slate-100 truncate block">{activeEvent.tag || t('summary_cycling')}</span>
+                                                <span className="font-semibold text-slate-900 dark:text-slate-100 truncate block">{translateTag(activeEvent.tag, language) || t('summary_cycling')}</span>
                                             </div>
                                         </div>
 
@@ -1073,7 +1078,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                             <div className="min-w-0">
                                                 <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-semibold uppercase leading-tight">{t('summary_scope_license')}</span>
                                                 <span className="font-semibold text-slate-900 dark:text-slate-100 truncate block">
-                                                    {activeEvent.ambito} {activeEvent.licenca ? `• ${activeEvent.licenca}` : ''}
+                                                    {translateAmbito(activeEvent.ambito, language)} {activeEvent.licenca ? `• ${translateLicenca(activeEvent.licenca, language)}` : ''}
                                                 </span>
                                             </div>
                                         </div>
@@ -1167,7 +1172,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                     </div>
                                     <div className="min-w-0">
                                         <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold block leading-tight">{t('summary_license')}</span>
-                                        <span className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200 truncate block">{activeEvent.licenca}</span>
+                                        <span className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200 truncate block">{translateLicenca(activeEvent.licenca, language)}</span>
                                     </div>
                                 </div>
                             )}
@@ -1194,17 +1199,17 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 {activeTab === 'escaloes' && (
                     <div className="flex flex-col h-full animate-fade-in min-h-0">
                         {(!activeEvent.escaloes || activeEvent.escaloes.length === 0) ? (
-                            <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">Informação de escalões não disponível.</p>
+                            <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">{t('summary_no_description')}</p>
                         ) : (
                             <div className="flex-1 overflow-y-auto min-h-0 pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent pb-2 overscroll-contain touch-pan-y">
                                 <h4 className="mb-2.5 text-slate-900 dark:text-slate-200 flex items-center gap-2 text-sm font-semibold">
                                     <Bike size={16} className="text-blue-500 dark:text-blue-400" />
-                                    Categorias de Participação
+                                    {t('tab_categories')}
                                 </h4>
                                 <div className="flex flex-wrap gap-2">
                                     {activeEvent.escaloes.map((esc, idx) => (
                                         <div key={`esc-${idx}`} className="inline-flex items-center px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-blue-700 dark:text-blue-300 text-xs font-semibold shadow-sm cursor-default">
-                                            <span>{esc}</span>
+                                            <span>{translateEscalao(esc, language)}</span>
                                         </div>
                                     ))}
                                 </div>

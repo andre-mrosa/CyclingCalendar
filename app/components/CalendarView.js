@@ -13,6 +13,7 @@ import EventModal from './EventModal';
 import EscalaoAssistant from './EscalaoAssistant';
 import { trackEvent } from './AnalyticsTracker';
 import { useTranslation } from '../i18n/useTranslation';
+import { formatMonthAbbr, translateDateString, translateEscalao, translateAmbito, translateLicenca, translateTag } from '../i18n/formatters';
 
 const fetcher = (url) => fetch(url).then((res) => res.json()).then((data) => {
     if (!data.success) throw new Error(data.error || 'Failed to load events');
@@ -522,7 +523,7 @@ export default function CalendarView({
                                                 onClick={() => onEscalaoToggle(esc)} 
                                                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors focus:outline-none ${selectedEscaloes.includes(esc) ? 'bg-blue-600/10 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-300'}`}
                                             >
-                                                {esc}
+                                                {translateEscalao(esc, language)}
                                             </button>
                                         ))}
                                     </div>
@@ -539,7 +540,7 @@ export default function CalendarView({
                                     >
                                         {uniqueAmbitos.map(opt => (
                                             <option key={opt} value={opt}>
-                                                {opt === 'Todos' ? t('filter_all_scopes') : opt}
+                                                {opt === 'Todos' ? t('filter_all_scopes') : translateAmbito(opt, language)}
                                             </option>
                                         ))}
                                     </select>
@@ -556,7 +557,7 @@ export default function CalendarView({
                                     >
                                         {uniqueLicencas.map(opt => (
                                             <option key={opt} value={opt}>
-                                                {opt === 'Todas' ? t('filter_all_licenses') : opt === 'Competição' ? t('escalao_license_competition') : opt === 'CPT / Lazer' ? t('escalao_license_cpt') : opt}
+                                                {opt === 'Todas' ? t('filter_all_licenses') : translateLicenca(opt, language)}
                                             </option>
                                         ))}
                                     </select>
@@ -647,7 +648,7 @@ export default function CalendarView({
                                         onClick={() => onTagToggle(tag)} 
                                         className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors focus:outline-none ${selectedTags.includes(tag) ? 'bg-blue-600/10 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-300'}`}
                                     >
-                                        {tag}
+                                        {translateTag(tag, language)}
                                     </button>
                                 ))}
                                 </div>
@@ -802,12 +803,7 @@ export default function CalendarView({
                                     <div className="flex gap-3 sm:gap-4 flex-1 min-w-0 w-full">
                                         <div className="flex flex-col shrink-0 w-[50px] h-[50px] sm:w-[56px] sm:h-[56px] bg-slate-100 dark:bg-slate-950 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800">
                                             <div className="bg-rose-500 text-white text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-center py-0.5">
-                                                {(() => {
-                                                    const monthAbbrsPt = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
-                                                    const monthAbbrsEn = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-                                                    const idxMonth = monthAbbrsPt.indexOf(month);
-                                                    return (language === 'en' && idxMonth !== -1) ? monthAbbrsEn[idxMonth] : month;
-                                                })()}
+                                                {formatMonthAbbr(month, language)}
                                             </div>
                                             <div className={`flex-1 flex items-center justify-center text-slate-900 dark:text-white font-bold ${day.length > 2 ? 'text-xs sm:text-sm tracking-tight' : 'text-base sm:text-lg'}`}>
                                                 {day}
@@ -842,7 +838,7 @@ export default function CalendarView({
                                                 <span className="text-slate-300 dark:text-slate-700">•</span>
                                                 <span className="flex items-center gap-1 min-w-0 flex-1 truncate">
                                                     <Bike size={12} className="text-slate-400 dark:text-slate-500 shrink-0" />
-                                                    <span className="truncate">{(event.escaloes || []).join(' | ')} {extraDetails ? `(${extraDetails})` : ''}</span>
+                                                    <span className="truncate">{(event.escaloes || []).map(esc => translateEscalao(esc, language)).join(' | ')} {extraDetails ? `(${translateTag(extraDetails, language)})` : ''}</span>
                                                 </span>
                                             </div>
                                         </div>
