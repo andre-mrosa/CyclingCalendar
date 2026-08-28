@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
 import { SignInButton, Show, UserButton, useUser, useAuth } from '@clerk/nextjs';
-import { Home, Trophy, MapPin, Bike, HelpCircle, Settings, Menu, X, Moon, Sun, Flag, Star, Globe, LogIn, CalendarCheck, Shield, Trash2, RotateCcw } from 'lucide-react';
+import { Home, Trophy, MapPin, Bike, HelpCircle, Settings, Menu, X, Moon, Sun, Flag, Star, Globe, LogIn, CalendarCheck, Shield, Trash2, RotateCcw, ChevronDown } from 'lucide-react';
 import SettingsPage from '../definicoes/page';
 import HelpPage from '../ajuda/page';
 import { useSettingsStore } from '../store/useSettingsStore';
@@ -21,6 +21,7 @@ export default function Navigation() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
     const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+    const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
     const [adminPendingCount, setAdminPendingCount] = useState(0);
     const [dismissedAdminBanner, setDismissedAdminBanner] = useState(false);
@@ -191,15 +192,63 @@ export default function Navigation() {
         </button>
     );
 
-    const LanguageToggle = () => (
-        <button 
-            onClick={() => setLanguage(language === 'pt' ? 'en' : 'pt')}
-            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 transition-colors cursor-pointer"
-            title={language === 'pt' ? "Switch to English" : "Mudar para Português"}
-        >
-            <Globe size={12} className="text-blue-500" />
-            <span>{language ? language.toUpperCase() : 'PT'}</span>
-        </button>
+    const languages = [
+        { code: 'pt', label: 'Português', flag: '🇵🇹' },
+        { code: 'en', label: 'English', flag: '🇬🇧' },
+        { code: 'es', label: 'Español', flag: '🇪🇸' },
+        { code: 'fr', label: 'Français', flag: '🇫🇷' },
+    ];
+
+    const currentLangObj = languages.find(l => l.code === language) || languages[0];
+
+    const LanguageDropdown = () => (
+        <div className="relative">
+            <button 
+                type="button"
+                onClick={() => setIsLangDropdownOpen(!isLangDropdownOpen)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 transition-all cursor-pointer shadow-xs"
+                title="Escolher Idioma / Choose Language"
+            >
+                <span className="text-sm leading-none">{currentLangObj.flag}</span>
+                <span>{currentLangObj.code.toUpperCase()}</span>
+                <ChevronDown size={12} className={`text-slate-400 transition-transform ${isLangDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isLangDropdownOpen && (
+                <>
+                    <div 
+                        className="fixed inset-0 z-40" 
+                        onClick={() => setIsLangDropdownOpen(false)} 
+                    />
+                    <div className="absolute right-0 mt-1.5 w-40 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 py-1 z-50 animate-fade-in overflow-hidden">
+                        {languages.map((item) => {
+                            const isSelected = (language || 'pt') === item.code;
+                            return (
+                                <button
+                                    key={item.code}
+                                    type="button"
+                                    onClick={() => {
+                                        setLanguage(item.code);
+                                        setIsLangDropdownOpen(false);
+                                    }}
+                                    className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold transition-colors cursor-pointer text-left ${
+                                        isSelected 
+                                            ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold' 
+                                            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                    }`}
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <span className="text-sm">{item.flag}</span>
+                                        <span>{item.label}</span>
+                                    </span>
+                                    {isSelected && <span className="text-blue-500 font-bold text-xs">✓</span>}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </>
+            )}
+        </div>
     );
 
     const getPageInfo = (path) => {
@@ -278,7 +327,7 @@ export default function Navigation() {
                     </div>
                     
                     <div className="ml-auto flex gap-3 items-center">
-                        <LanguageToggle />
+                        <LanguageDropdown />
                         <ThemeToggle />
                         
                         <Show when="signed-out">
@@ -367,11 +416,11 @@ export default function Navigation() {
                             )}
                         </Link>
                     )}
-                    <LanguageToggle />
                     <ThemeToggle />
                 </div>
             </nav>
 
+            {/* Mobile Navigation Drawer */}
             <div 
                 className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[45] transition-opacity duration-300 md:hidden ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -477,6 +526,34 @@ export default function Navigation() {
                                 </Link>
                             )}
                         </Show>
+
+                        {/* Mobile Drawer Language & Theme Settings */}
+                        <div className="mt-2 pt-3 border-t border-slate-200 dark:border-slate-800 flex flex-col gap-3">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('settings_lang_title')}</span>
+                                <ThemeToggle />
+                            </div>
+                            <div className="grid grid-cols-2 gap-1.5">
+                                {languages.map(item => {
+                                    const isSelected = (language || 'pt') === item.code;
+                                    return (
+                                        <button
+                                            key={item.code}
+                                            type="button"
+                                            onClick={() => setLanguage(item.code)}
+                                            className={`flex items-center gap-2 py-1.5 px-2.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                                                isSelected 
+                                                    ? 'bg-blue-600/10 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30 font-bold' 
+                                                    : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700/60 text-slate-700 dark:text-slate-300'
+                                            }`}
+                                        >
+                                            <span className="text-sm">{item.flag}</span>
+                                            <span className="truncate">{item.label}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
