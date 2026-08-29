@@ -319,5 +319,23 @@ export default {
 
     // Privacy & Terms
     privacy_title: "Política de Privacidad",
-    terms_title: "Términos de Uso"
+    terms_title: "Términos de Uso",
+
+    // Welcome Modal
+    welcome_title: "Bienvenido al Calendario Ciclismo",
+    welcome_version_badge: "Versión {version} (En Desarrollo)",
+    welcome_p1: "¡Hola! Esta plataforma fue creada para facilitar la consulta de todas las carreras del calendario ciclista en Portugal.",
+    welcome_p2_part1: "Todavía nos encontramos en",
+    welcome_p2_active_dev: "desarrollo activo (v{version})",
+    welcome_p2_part2: ". Si encuentras algún error o tienes ideas de mejora, cuéntanos:",
+    welcome_success_title: "¡Gracias!",
+    welcome_success_desc: "Tu mensaje fue enviado con éxito.",
+    welcome_input_name: "Tu nombre (opcional)",
+    welcome_input_email: "Tu e-mail (opcional)",
+    welcome_input_message: "Tu mensaje o sugerencia...",
+    welcome_error: "Ocurrió un error al enviar. Inténtalo de nuevo más tarde.",
+    welcome_btn_sending: "Enviando...",
+    welcome_btn_send: "Enviar Mensaje",
+    welcome_checkbox_dont_show: "No volver a mostrar este aviso",
+    welcome_btn_understand: "Entendido, continuar"
 };

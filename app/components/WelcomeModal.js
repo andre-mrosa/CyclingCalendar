@@ -2,8 +2,10 @@
 import { useState, useEffect } from 'react';
 import { AlertCircle, Send, CheckCircle2 } from 'lucide-react';
 import packageJson from '../../package.json';
+import { useTranslation } from '../i18n/useTranslation';
 
 export default function WelcomeModal() {
+    const { t } = useTranslation();
     const appVersion = packageJson.version;
     const [isOpen, setIsOpen] = useState(false);
     const [neverShow, setNeverShow] = useState(false);
@@ -18,7 +20,7 @@ export default function WelcomeModal() {
         if (!hideWelcome) {
             setIsOpen(true);
         }
-    }, []);
+    }, [appVersion]);
 
     useEffect(() => {
         if (isOpen) {
@@ -85,11 +87,11 @@ export default function WelcomeModal() {
                     </div>
                     <div>
                         <h2 className="m-0 text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-                            Bem-vindo ao Calendário Ciclismo
+                            {t('welcome_title')}
                         </h2>
                         <div className="text-xs text-blue-500 dark:text-blue-400 font-semibold mt-0.5 flex items-center gap-1.5">
                             <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-500 dark:bg-blue-400"></span>
-                            Versão {appVersion} (Em Desenvolvimento)
+                            {t('welcome_version_badge', { version: appVersion })}
                         </div>
                     </div>
                 </div>
@@ -98,24 +100,24 @@ export default function WelcomeModal() {
                 <div className="px-6 sm:px-8 py-4 overflow-y-auto overscroll-contain flex-1 text-slate-600 dark:text-slate-300 leading-relaxed text-sm scrollbar-thin">
                     <div className="mb-4 space-y-2.5">
                         <p className="m-0">
-                            Olá! Esta plataforma foi criada para facilitar a consulta de todas as provas do calendário de ciclismo em Portugal.
+                            {t('welcome_p1')}
                         </p>
                         <p className="m-0">
-                            Ainda nos encontramos em <strong className="text-slate-900 dark:text-slate-100 font-semibold">desenvolvimento ativo (v{appVersion})</strong>. Se encontrares algum erro ou tiveres ideias de melhoria, diz-nos:
+                            {t('welcome_p2_part1')} <strong className="text-slate-900 dark:text-slate-100 font-semibold">{t('welcome_p2_active_dev', { version: appVersion })}</strong>{t('welcome_p2_part2')}
                         </p>
                     </div>
                     
                     <form onSubmit={handleContactSubmit} className="bg-slate-50 dark:bg-slate-950/50 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col gap-3">
                         {submitStatus === 'success' ? (
                             <div className="p-4 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl text-center border border-emerald-500/20 text-sm font-medium">
-                                <strong className="font-semibold block mb-0.5">Obrigado!</strong> A tua mensagem foi enviada com sucesso.
+                                <strong className="font-semibold block mb-0.5">{t('welcome_success_title')}</strong> {t('welcome_success_desc')}
                             </div>
                         ) : (
                             <>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                                     <input 
                                         type="text" 
-                                        placeholder="Teu nome (opcional)" 
+                                        placeholder={t('welcome_input_name')} 
                                         value={formData.name}
                                         onChange={(e) => setFormData({...formData, name: e.target.value})}
                                         disabled={isSubmitting}
@@ -123,7 +125,7 @@ export default function WelcomeModal() {
                                     />
                                     <input 
                                         type="email" 
-                                        placeholder="Teu e-mail (opcional)" 
+                                        placeholder={t('welcome_input_email')} 
                                         value={formData.email}
                                         onChange={(e) => setFormData({...formData, email: e.target.value})}
                                         disabled={isSubmitting}
@@ -131,7 +133,7 @@ export default function WelcomeModal() {
                                     />
                                 </div>
                                 <textarea 
-                                    placeholder="A tua mensagem ou sugestão..." 
+                                    placeholder={t('welcome_input_message')} 
                                     required
                                     value={formData.message}
                                     onChange={(e) => setFormData({...formData, message: e.target.value})}
@@ -141,7 +143,7 @@ export default function WelcomeModal() {
                                 />
                                 {submitStatus === 'error' && (
                                     <span className="text-red-500 dark:text-red-400 text-xs text-center">
-                                        Ocorreu um erro ao enviar. Tenta novamente mais tarde.
+                                        {t('welcome_error')}
                                     </span>
                                 )}
                                 <button 
@@ -152,12 +154,12 @@ export default function WelcomeModal() {
                                     {isSubmitting ? (
                                         <>
                                             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                            A enviar...
+                                            {t('welcome_btn_sending')}
                                         </>
                                     ) : (
                                         <>
                                             <Send size={16} />
-                                             Enviar Mensagem
+                                            {t('welcome_btn_send')}
                                         </>
                                     )}
                                 </button>
@@ -174,7 +176,7 @@ export default function WelcomeModal() {
                             <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors shrink-0 ${neverShow ? 'border-blue-600 bg-blue-600' : 'border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800'}`}>
                                 {neverShow && <CheckCircle2 size={12} color="white" strokeWidth={3} />}
                             </div>
-                            <span className="select-none">Não voltar a mostrar este aviso</span>
+                            <span className="select-none">{t('welcome_checkbox_dont_show')}</span>
                         </label>
                     </div>
                 </div>
@@ -185,7 +187,7 @@ export default function WelcomeModal() {
                         onClick={handleClose}
                         className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-semibold text-sm transition-colors border border-slate-300 dark:border-slate-700 cursor-pointer text-center"
                     >
-                        Entendido, continuar
+                        {t('welcome_btn_understand')}
                     </button>
                 </div>
             </div>

@@ -319,5 +319,23 @@ export default {
 
     // Privacy & Terms
     privacy_title: "Privacy Policy",
-    terms_title: "Terms of Use"
+    terms_title: "Terms of Service",
+
+    // Welcome Modal
+    welcome_title: "Welcome to Cycling Calendar",
+    welcome_version_badge: "Version {version} (In Development)",
+    welcome_p1: "Hello! This platform was created to easily browse all races and cycling events in Portugal.",
+    welcome_p2_part1: "We are still under",
+    welcome_p2_active_dev: "active development (v{version})",
+    welcome_p2_part2: ". If you find any bug or have ideas for improvements, let us know:",
+    welcome_success_title: "Thank you!",
+    welcome_success_desc: "Your message was sent successfully.",
+    welcome_input_name: "Your name (optional)",
+    welcome_input_email: "Your email (optional)",
+    welcome_input_message: "Your message or suggestion...",
+    welcome_error: "An error occurred while sending. Please try again later.",
+    welcome_btn_sending: "Sending...",
+    welcome_btn_send: "Send Message",
+    welcome_checkbox_dont_show: "Don't show this notice again",
+    welcome_btn_understand: "Got it, continue"
 };

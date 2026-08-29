@@ -319,5 +319,23 @@ export default {
 
     // Privacy & Terms
     privacy_title: "Política de Privacidade",
-    terms_title: "Termos de Utilização"
+    terms_title: "Termos de Utilização",
+
+    // Welcome Modal
+    welcome_title: "Bem-vindo ao Calendário Ciclismo",
+    welcome_version_badge: "Versão {version} (Em Desenvolvimento)",
+    welcome_p1: "Olá! Esta plataforma foi criada para facilitar a consulta de todas as provas do calendário de ciclismo em Portugal.",
+    welcome_p2_part1: "Ainda nos encontramos em",
+    welcome_p2_active_dev: "desenvolvimento ativo (v{version})",
+    welcome_p2_part2: ". Se encontrares algum erro ou tiveres ideias de melhoria, diz-nos:",
+    welcome_success_title: "Obrigado!",
+    welcome_success_desc: "A tua mensagem foi enviada com sucesso.",
+    welcome_input_name: "Teu nome (opcional)",
+    welcome_input_email: "Teu e-mail (opcional)",
+    welcome_input_message: "A tua mensagem ou sugestão...",
+    welcome_error: "Ocorreu um erro ao enviar. Tenta novamente mais tarde.",
+    welcome_btn_sending: "A enviar...",
+    welcome_btn_send: "Enviar Mensagem",
+    welcome_checkbox_dont_show: "Não voltar a mostrar este aviso",
+    welcome_btn_understand: "Entendido, continuar"
 };

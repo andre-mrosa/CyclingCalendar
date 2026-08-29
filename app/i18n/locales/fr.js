@@ -319,5 +319,23 @@ export default {
 
     // Privacy & Terms
     privacy_title: "Politique de Confidentialité",
-    terms_title: "Conditions d'Utilisation"
+    terms_title: "Conditions d'Utilisation",
+
+    // Welcome Modal
+    welcome_title: "Bienvenue sur Cycling Calendar",
+    welcome_version_badge: "Version {version} (En Développement)",
+    welcome_p1: "Bonjour ! Cette plateforme a été créée pour faciliter la consultation de toutes les courses du calendrier cycliste au Portugal.",
+    welcome_p2_part1: "Nous sommes encore en",
+    welcome_p2_active_dev: "développement actif (v{version})",
+    welcome_p2_part2: ". Si vous trouvez une erreur ou avez des suggestions d'amélioration, dites-le-nous :",
+    welcome_success_title: "Merci !",
+    welcome_success_desc: "Votre message a été envoyé avec succès.",
+    welcome_input_name: "Votre nom (optionnel)",
+    welcome_input_email: "Votre e-mail (optionnel)",
+    welcome_input_message: "Votre message ou suggestion...",
+    welcome_error: "Une erreur est survenue lors de l'envoi. Veuillez réessayer plus tard.",
+    welcome_btn_sending: "Envoi en cours...",
+    welcome_btn_send: "Envoyer le Message",
+    welcome_checkbox_dont_show: "Ne plus afficher cet avis",
+    welcome_btn_understand: "Compris, continuer"
 };
