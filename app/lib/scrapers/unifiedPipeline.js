@@ -58,12 +58,14 @@ export async function runUnifiedScrapingPipeline(triggeredBy = 'CRON', options =
     await Promise.allSettled([
         // FPCiclismo
         (async () => {
+            const fpcStart = Date.now();
             try {
                 await logInfo('SCRAPER', `FPC: a consultar calendários oficiais (${yearsToScrape.join(', ')})...`);
                 for (const yr of yearsToScrape) {
                     await scrapeFPC(yr);
                 }
-                await logInfo('SCRAPER', `FPC: sincronização de calendários concluída com sucesso.`);
+                const fpcDuration = ((Date.now() - fpcStart) / 1000).toFixed(1);
+                await logInfo('SCRAPER', `FPC: sincronização de calendários concluída com sucesso em ${fpcDuration}s.`);
             } catch (e) {
                 stats.errors.push(`FPC error: ${e.message}`);
                 await logError('SCRAPER', `Erro na sincronização FPC: ${e.message}`, e);
@@ -72,10 +74,12 @@ export async function runUnifiedScrapingPipeline(triggeredBy = 'CRON', options =
 
         // Cabreira Solutions
         (async () => {
+            const cabStart = Date.now();
             try {
                 await logInfo('SCRAPER', `Cabreira: a consultar provas e Granfondos...`);
                 await scrapeCabreira(null);
-                await logInfo('SCRAPER', `Cabreira: sincronização concluída com sucesso.`);
+                const cabDuration = ((Date.now() - cabStart) / 1000).toFixed(1);
+                await logInfo('SCRAPER', `Cabreira: sincronização concluída com sucesso em ${cabDuration}s.`);
             } catch (e) {
                 stats.errors.push(`Cabreira error: ${e.message}`);
                 await logError('SCRAPER', `Erro na sincronização Cabreira: ${e.message}`, e);
@@ -84,10 +88,12 @@ export async function runUnifiedScrapingPipeline(triggeredBy = 'CRON', options =
 
         // Stop and Go
         (async () => {
+            const sgStart = Date.now();
             try {
                 await logInfo('SCRAPER', `Stop and Go: a consultar provas de BTT e Ciclismo...`);
                 const sgCount = await scrapeStopAndGo({ years: yearsToScrape });
-                await logInfo('SCRAPER', `Stop and Go: sincronização concluída com sucesso.`);
+                const sgDuration = ((Date.now() - sgStart) / 1000).toFixed(1);
+                await logInfo('SCRAPER', `Stop and Go: sincronização concluída (${sgCount || 0} provas) em ${sgDuration}s.`);
             } catch (e) {
                 stats.errors.push(`Stop and Go error: ${e.message}`);
                 await logError('SCRAPER', `Erro na sincronização Stop and Go: ${e.message}`, e);
@@ -96,10 +102,12 @@ export async function runUnifiedScrapingPipeline(triggeredBy = 'CRON', options =
 
         // Classificações.net
         (async () => {
+            const cnStart = Date.now();
             try {
                 await logInfo('SCRAPER', `Classificações.net: a consultar resultados e provas oficiais...`);
                 const classCount = await scrapeClassificacoes({ years: yearsToScrape });
-                await logInfo('SCRAPER', `Classificações.net: sincronização concluída com sucesso.`);
+                const cnDuration = ((Date.now() - cnStart) / 1000).toFixed(1);
+                await logInfo('SCRAPER', `Classificações.net: sincronização concluída (${classCount || 0} provas) em ${cnDuration}s.`);
             } catch (e) {
                 stats.errors.push(`Classificações.net error: ${e.message}`);
                 await logError('SCRAPER', `Erro na sincronização Classificações.net: ${e.message}`, e);

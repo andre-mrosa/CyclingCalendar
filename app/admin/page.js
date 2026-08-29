@@ -2026,16 +2026,17 @@ export default function AdminDashboardPage() {
                                 </div>
                             </div>
 
-                            {/* 5-Step Visual Stepper */}
-                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1">
+                            {/* 6-Step Visual Stepper */}
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 pt-1">
                                 {[
                                     { step: 1, label: '1. FPCiclismo', desc: 'Calendários 26/27' },
                                     { step: 2, label: '2. Cabreira', desc: 'Granfondos & Provas' },
                                     { step: 3, label: '3. Stop & Go', desc: 'Sitemap Ciclismo' },
-                                    { step: 4, label: '4. Deep Scrape', desc: 'Programas & Cartazes' },
-                                    { step: 5, label: '5. Unificação', desc: 'Fusão Multi-Fonte' },
+                                    { step: 4, label: '4. Classificações', desc: 'Rankings & PDFs' },
+                                    { step: 5, label: '5. Deep Scrape', desc: 'Programas & Cartazes' },
+                                    { step: 6, label: '6. Unificação', desc: 'Fusão Multi-Fonte' },
                                 ].map(s => {
-                                    const isDone = scraperActiveStep > s.step || scraperActiveStep === 6;
+                                    const isDone = scraperActiveStep > s.step || scraperActiveStep === 7;
                                     const isCurrent = scraperActiveStep === s.step && runningOp;
                                     const duration = scraperStepDurations[s.step];
 

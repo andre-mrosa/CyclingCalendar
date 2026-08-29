@@ -72,35 +72,42 @@ export async function GET() {
         const runLogs = logs.filter(l => new Date(l.createdAt).getTime() >= (startTime - 2000));
         
         let activeStep = 1;
-        const stepTimestamps = { 1: startTime };
         const stepDurations = {};
 
-        // Find timestamps for each step
         for (const l of runLogs) {
-            const msg = (l.message || '').toLowerCase();
-            const logTime = new Date(l.createdAt).getTime();
+            const msg = (l.message || '');
+            const lowerMsg = msg.toLowerCase();
 
-            if (msg.includes('unificação') || msg.includes('fundidas')) {
+            // Extract explicit logged durations (e.g. "concluída com sucesso em 12.4s")
+            const durationMatch = msg.match(/em\s*([0-9\.]+)s/i);
+
+            if (lowerMsg.includes('fpc: sincronização')) {
+                if (durationMatch) stepDurations[1] = `${durationMatch[1]}s`;
+            } else if (lowerMsg.includes('cabreira: sincronização')) {
+                if (durationMatch) stepDurations[2] = `${durationMatch[1]}s`;
+            } else if (lowerMsg.includes('stop and go: sincronização')) {
+                if (durationMatch) stepDurations[3] = `${durationMatch[1]}s`;
+            } else if (lowerMsg.includes('classificações.net: sincronização')) {
+                if (durationMatch) stepDurations[4] = `${durationMatch[1]}s`;
+            } else if (lowerMsg.includes('deep scraping fpc')) {
                 if (activeStep < 5) activeStep = 5;
-                if (!stepTimestamps[5] || logTime < stepTimestamps[5]) stepTimestamps[5] = logTime;
-            } else if (msg.includes('deep scraping') || msg.includes('programas')) {
-                if (activeStep < 4) activeStep = 4;
-                if (!stepTimestamps[4] || logTime < stepTimestamps[4]) stepTimestamps[4] = logTime;
-            } else if (msg.includes('stop and go')) {
-                if (activeStep < 3) activeStep = 3;
-                if (!stepTimestamps[3] || logTime < stepTimestamps[3]) stepTimestamps[3] = logTime;
-            } else if (msg.includes('cabreira')) {
-                if (activeStep < 2) activeStep = 2;
-                if (!stepTimestamps[2] || logTime < stepTimestamps[2]) stepTimestamps[2] = logTime;
+                if (durationMatch) stepDurations[5] = `${durationMatch[1]}s`;
+            } else if (lowerMsg.includes('unificação') || lowerMsg.includes('fundidas')) {
+                if (activeStep < 6) activeStep = 6;
+                if (durationMatch) stepDurations[6] = `${durationMatch[1]}s`;
             }
         }
 
-        // Calculate durations for completed steps
-        for (let s = 1; s < activeStep; s++) {
-            if (stepTimestamps[s] && stepTimestamps[s + 1]) {
-                const secs = Math.max(0.5, (stepTimestamps[s + 1] - stepTimestamps[s]) / 1000).toFixed(1);
-                stepDurations[s] = `${secs}s`;
-            }
+        // Determine active step based on progress
+        if (!stepDurations[1] || !stepDurations[2] || !stepDurations[3] || !stepDurations[4]) {
+            if (stepDurations[1] && stepDurations[2] && stepDurations[3]) activeStep = 4;
+            else if (stepDurations[1] && stepDurations[2]) activeStep = 3;
+            else if (stepDurations[1]) activeStep = 2;
+            else activeStep = 1;
+        } else if (!stepDurations[5]) {
+            activeStep = 5;
+        } else {
+            activeStep = 6;
         }
 
         // If no log emitted for > 75 seconds, serverless instance was terminated
