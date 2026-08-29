@@ -2116,8 +2116,10 @@ export default function AdminDashboardPage() {
                         </div>
                     )}
 
-                    {/* Live Pipeline Execution Dashboard & Stepper */}
-                    {(runningOp || opOutput) && (
+                    {/* Live Pipeline Execution Dashboard & Stepper
+                        Only shown while actively running, interrupted (resume needed), or on error.
+                        After a successful completion the compact "Último Scrape" panel above handles it. */}
+                    {(runningOp || (opOutput && opOutput.status !== 'success')) && (
                         <div className="bg-slate-950 rounded-2xl border border-slate-800 p-5 space-y-4 shadow-xl animate-fade-in text-slate-200">
                             {/* Header: Title, Live Timer, Status Badge */}
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
