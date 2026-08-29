@@ -116,6 +116,7 @@ export async function runUnifiedScrapingPipeline(triggeredBy = 'CRON', options =
     ]);
 
     // 4. Deep Scraping FPC (programas, regulamentos e anexos de forma rápida)
+    const deepStart = Date.now();
     try {
         let totalDeep = 0;
         const maxBatches = shouldScrapePastYears ? 2 : 1;
@@ -125,15 +126,19 @@ export async function runUnifiedScrapingPipeline(triggeredBy = 'CRON', options =
             if (deepCount === 0) break;
         }
         stats.deepScrapedFpc = totalDeep;
+        const deepDuration = ((Date.now() - deepStart) / 1000).toFixed(1);
         if (totalDeep > 0) {
-            await logInfo('SCRAPER', `Deep Scraping FPC: ${totalDeep} programas/cartazes atualizados.`);
+            await logInfo('SCRAPER', `Deep Scraping FPC: ${totalDeep} programas/cartazes atualizados em ${deepDuration}s.`);
+        } else {
+            await logInfo('SCRAPER', `Deep Scraping FPC: programas e anexos atualizados em ${deepDuration}s.`);
         }
     } catch (e) {
         stats.errors.push(`Deep scrape error: ${e.message}`);
         await logError('SCRAPER', `Erro no Deep Scraping FPC: ${e.message}`, e);
     }
 
-    // 4. Passagem Global de Unificação & Complementação de Duplicados
+    // 5. Passagem Global de Unificação & Complementação de Duplicados
+    const unifyStart = Date.now();
     try {
         await logInfo('SCRAPER', `Unificação: a verificar provas em comum para fusão multi-fonte...`);
         const allEvents = await prisma.event.findMany({ orderBy: { sortDate: 'asc' } });
@@ -164,21 +169,25 @@ export async function runUnifiedScrapingPipeline(triggeredBy = 'CRON', options =
             }
         }
         stats.mergedEvents = mergedCount;
+        const unifyDuration = ((Date.now() - unifyStart) / 1000).toFixed(1);
         if (mergedCount > 0) {
-            await logInfo('SCRAPER', `Unificação concluída: ${mergedCount} provas fundidas e complementadas com sucesso.`);
+            await logInfo('SCRAPER', `Unificação concluída: ${mergedCount} provas fundidas e complementadas com sucesso em ${unifyDuration}s.`);
         } else {
-            await logInfo('SCRAPER', `Unificação concluída: todas as provas já estavam unificadas.`);
+            await logInfo('SCRAPER', `Unificação concluída: todas as provas já estavam unificadas em ${unifyDuration}s.`);
         }
     } catch (e) {
         stats.errors.push(`Unify error: ${e.message}`);
         await logError('SCRAPER', `Erro na unificação de provas: ${e.message}`, e);
     }
 
-    // 5. Tradução Automática das Provas Pendentes (para Inglês / outras línguas)
+    // 6. Tradução Automática das Provas Pendentes (para Inglês / outras línguas)
+    const transStart = Date.now();
     try {
-        await logInfo('SCRAPER', `Tradução: a verificar provas pendentes de tradução para inglês...`);
+        await logInfo('SCRAPER', `Tradução: a verificar provas pendentes de tradução...`);
         const transResult = await translateAllPendingEvents('en', 100);
         stats.translations = transResult;
+        const transDuration = ((Date.now() - transStart) / 1000).toFixed(1);
+        await logInfo('SCRAPER', `Tradução concluída: ${transResult?.translatedCount || 0} eventos traduzidos em ${transDuration}s.`);
     } catch (e) {
         stats.errors.push(`Translation error: ${e.message}`);
         await logError('SCRAPER', `Erro na tradução de provas: ${e.message}`, e);

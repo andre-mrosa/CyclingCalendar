@@ -116,6 +116,8 @@ export default function AdminDashboardPage() {
     const [scraperElapsedSecs, setScraperElapsedSecs] = useState(0);
     const [scraperActiveStep, setScraperActiveStep] = useState(0); // 0: None, 1: FPC, 2: Cabreira, 3: Stop&Go, 4: DeepScrape, 5: Unificação, 6: Concluído
     const [scraperStepDurations, setScraperStepDurations] = useState({}); // { 1: '9.2s', 2: '11.4s', ... }
+    const [scraperSources, setScraperSources] = useState(null);
+    const [scraperSteps, setScraperSteps] = useState(null);
     const stepStartTimesRef = useRef({});
     const lastStepRef = useRef(0);
 
@@ -234,6 +236,8 @@ export default function AdminDashboardPage() {
                 setRunningOp('unified_scrape');
                 setScraperActiveStep(data.activeStep || 1);
                 setScraperElapsedSecs(data.elapsedSeconds || 0);
+                if (data.sources) setScraperSources(data.sources);
+                if (data.steps) setScraperSteps(data.steps);
                 if (data.stepDurations) setScraperStepDurations(data.stepDurations);
                 if (data.logs) setLiveScraperLogs(data.logs);
                 setOpOutput({
@@ -346,6 +350,8 @@ export default function AdminDashboardPage() {
                 const data = await res.json();
                 if (data.success) {
                     if (data.logs) setLiveScraperLogs(data.logs);
+                    if (data.sources) setScraperSources(data.sources);
+                    if (data.steps) setScraperSteps(data.steps);
                     if (data.stepDurations) setScraperStepDurations(prev => ({ ...prev, ...data.stepDurations }));
                     if (data.elapsedSeconds !== undefined) setScraperElapsedSecs(data.elapsedSeconds);
 
@@ -355,6 +361,8 @@ export default function AdminDashboardPage() {
                     } else if (data.completed) {
                         // Truly finished on the server!
                         setScraperActiveStep(6);
+                        if (data.sources) setScraperSources(data.sources);
+                        if (data.steps) setScraperSteps(data.steps);
                         if (data.stepDurations) setScraperStepDurations(data.stepDurations);
                         setOpOutput({
                             label: 'Sincronização & Scraping Completo',
@@ -388,6 +396,17 @@ export default function AdminDashboardPage() {
         setScraperActiveStep(1);
         setLiveScraperLogs([]);
         setScraperStepDurations({});
+        setScraperSources({
+            fpc: { id: 'fpc', name: 'FPCiclismo', desc: 'Calendários FPC 26/27', status: 'running', duration: null, count: 0, message: 'A recolher...' },
+            cabreira: { id: 'cabreira', name: 'Cabreira Solutions', desc: 'Granfondos & Provas', status: 'running', duration: null, count: 0, message: 'A recolher...' },
+            stopandgo: { id: 'stopandgo', name: 'Stop & Go', desc: 'Sitemap Ciclismo/BTT', status: 'running', duration: null, count: 0, message: 'A recolher...' },
+            classificacoes: { id: 'classificacoes', name: 'Classificações.net', desc: 'Rankings & PDFs', status: 'running', duration: null, count: 0, message: 'A recolher...' }
+        });
+        setScraperSteps({
+            deepScrape: { id: 'deepScrape', name: 'Deep Scraping FPC', desc: 'Programas & Cartazes', status: 'idle', duration: null, count: 0, message: 'Pendente' },
+            unification: { id: 'unification', name: 'Unificação & Fusão', desc: 'Deduplicação Multi-Fonte', status: 'idle', duration: null, count: 0, message: 'Pendente' },
+            translation: { id: 'translation', name: 'Tradução Multilíngue', desc: 'EN / ES / FR', status: 'idle', duration: null, count: 0, message: 'Pendente' }
+        });
         stepStartTimesRef.current = { 1: Date.now() };
         lastStepRef.current = 1;
         setOpOutput({ label, status: 'loading', message: `A executar "${label}"... O pipeline está a recolher calendários e a fundir as provas.` });
@@ -2026,57 +2045,190 @@ export default function AdminDashboardPage() {
                                 </div>
                             </div>
 
-                            {/* 6-Step Visual Stepper */}
-                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 pt-1">
-                                {[
-                                    { step: 1, label: '1. FPCiclismo', desc: 'Calendários 26/27' },
-                                    { step: 2, label: '2. Cabreira', desc: 'Granfondos & Provas' },
-                                    { step: 3, label: '3. Stop & Go', desc: 'Sitemap Ciclismo' },
-                                    { step: 4, label: '4. Classificações', desc: 'Rankings & PDFs' },
-                                    { step: 5, label: '5. Deep Scrape', desc: 'Programas & Cartazes' },
-                                    { step: 6, label: '6. Unificação', desc: 'Fusão Multi-Fonte' },
-                                ].map(s => {
-                                    const isDone = scraperActiveStep > s.step || scraperActiveStep === 7;
-                                    const isCurrent = scraperActiveStep === s.step && runningOp;
-                                    const duration = scraperStepDurations[s.step];
-
-                                    return (
-                                        <div 
-                                            key={s.step} 
-                                            className={`p-2.5 rounded-xl border transition-all ${
-                                                isDone 
-                                                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-sm shadow-emerald-500/5' 
-                                                    : isCurrent 
-                                                    ? 'bg-blue-500/15 border-blue-500/40 text-blue-300 ring-1 ring-blue-500/30 shadow-md shadow-blue-500/10' 
-                                                    : 'bg-slate-900/50 border-slate-800 text-slate-500'
-                                            }`}
-                                        >
-                                            <div className="flex items-center justify-between mb-1 gap-1">
-                                                <span className="text-xs font-bold truncate">{s.label}</span>
-                                                {isDone ? (
-                                                    <div className="flex items-center gap-1 shrink-0">
-                                                        {duration && (
-                                                            <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                                                                {duration}
-                                                            </span>
-                                                        )}
-                                                        <Check size={13} className="text-emerald-400 shrink-0" />
-                                                    </div>
-                                                ) : isCurrent ? (
-                                                    <div className="flex items-center gap-1 shrink-0">
-                                                        <span className="text-[10px] font-mono text-blue-300">
-                                                            {Math.max(1, scraperElapsedSecs - Object.values(scraperStepDurations).reduce((acc, d) => acc + (parseFloat(d) || 0), 0)).toFixed(0)}s
-                                                        </span>
-                                                        <div className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin shrink-0"></div>
-                                                    </div>
-                                                ) : (
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-slate-700"></span>
-                                                )}
-                                            </div>
-                                            <p className="text-[10px] opacity-80 m-0 truncate">{s.desc}</p>
+                            {/* 2-Phase Visual Execution Dashboard */}
+                            <div className="space-y-3.5 pt-1">
+                                {/* Phase 1: Extração Paralela Multi-Fonte (4 Fontes Concorrentes) */}
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Fase 1: Extração Paralela (Simultâneo)</span>
+                                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold flex items-center gap-1">
+                                                <span className={`w-1.5 h-1.5 rounded-full ${runningOp ? 'bg-blue-400 animate-pulse' : 'bg-slate-500'}`}></span>
+                                                4 Fontes Concorrentes
+                                            </span>
                                         </div>
-                                    );
-                                })}
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                                        {[
+                                            { 
+                                                key: 'fpc', 
+                                                label: 'FPCiclismo', 
+                                                icon: '🏛️',
+                                                desc: 'Calendários FPC 26/27', 
+                                                data: scraperSources?.fpc || { status: scraperStepDurations[1] ? 'done' : runningOp ? 'running' : 'idle', duration: scraperStepDurations[1], count: null }
+                                            },
+                                            { 
+                                                key: 'cabreira', 
+                                                label: 'Cabreira Solutions', 
+                                                icon: '⛰️',
+                                                desc: 'Granfondos & Provas', 
+                                                data: scraperSources?.cabreira || { status: scraperStepDurations[2] ? 'done' : runningOp ? 'running' : 'idle', duration: scraperStepDurations[2], count: null }
+                                            },
+                                            { 
+                                                key: 'stopandgo', 
+                                                label: 'Stop & Go', 
+                                                icon: '⏱️',
+                                                desc: 'Sitemap BTT & Estrada', 
+                                                data: scraperSources?.stopandgo || { status: scraperStepDurations[3] ? 'done' : runningOp ? 'running' : 'idle', duration: scraperStepDurations[3], count: null }
+                                            },
+                                            { 
+                                                key: 'classificacoes', 
+                                                label: 'Classificações.net', 
+                                                icon: '🏆',
+                                                desc: 'Rankings & PDFs', 
+                                                data: scraperSources?.classificacoes || { status: scraperStepDurations[4] ? 'done' : runningOp ? 'running' : 'idle', duration: scraperStepDurations[4], count: null }
+                                            },
+                                        ].map(src => {
+                                            const isDone = src.data.status === 'done' || (!runningOp && opOutput?.status === 'success');
+                                            const isRunning = runningOp && src.data.status === 'running' && !isDone;
+                                            
+                                            return (
+                                                <div 
+                                                    key={src.key}
+                                                    className={`p-3 rounded-xl border transition-all ${
+                                                        isDone
+                                                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300 shadow-sm shadow-emerald-500/5'
+                                                            : isRunning
+                                                            ? 'bg-blue-500/15 border-blue-500/40 text-blue-200 ring-1 ring-blue-500/30 shadow-md shadow-blue-500/10'
+                                                            : 'bg-slate-900/60 border-slate-800 text-slate-400'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center justify-between mb-1.5">
+                                                        <div className="flex items-center gap-1.5 min-w-0">
+                                                            <span className="text-base select-none shrink-0">{src.icon}</span>
+                                                            <span className="text-xs font-bold truncate text-slate-100">{src.label}</span>
+                                                        </div>
+                                                        {isDone ? (
+                                                            <div className="flex items-center gap-1 shrink-0">
+                                                                {src.data.duration && (
+                                                                    <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                                                        {src.data.duration}
+                                                                    </span>
+                                                                )}
+                                                                <div className="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                                                                    <Check size={11} strokeWidth={3} />
+                                                                </div>
+                                                            </div>
+                                                        ) : isRunning ? (
+                                                            <div className="flex items-center gap-1 shrink-0">
+                                                                <span className="text-[10px] font-mono font-bold text-blue-300">
+                                                                    {scraperElapsedSecs}s
+                                                                </span>
+                                                                <div className="w-3.5 h-3.5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-[10px] text-slate-600 font-mono">Pendente</span>
+                                                        )}
+                                                    </div>
+                                                    
+                                                    <div className="flex items-center justify-between text-[11px] opacity-90 mt-1">
+                                                        <span className="text-slate-400 truncate">{src.desc}</span>
+                                                        {src.data.count ? (
+                                                            <span className="font-semibold text-emerald-400 font-mono text-[10px] shrink-0">
+                                                                {src.data.count} provas
+                                                            </span>
+                                                        ) : isRunning ? (
+                                                            <span className="text-blue-400 text-[10px] animate-pulse shrink-0">A varrer...</span>
+                                                        ) : null}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                {/* Phase 2: Processamento e Unificação Global (Sequencial) */}
+                                <div className="space-y-2 pt-1">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Fase 2: Processamento e Fusão Global</span>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                                        {[
+                                            {
+                                                key: 'deepScrape',
+                                                stepNum: 1,
+                                                label: 'Deep Scraping FPC',
+                                                desc: 'Programas, Regulamentos e Cartazes',
+                                                data: scraperSteps?.deepScrape || { status: scraperStepDurations[5] ? 'done' : 'idle', duration: scraperStepDurations[5] }
+                                            },
+                                            {
+                                                key: 'unification',
+                                                stepNum: 2,
+                                                label: 'Unificação & Fusão',
+                                                desc: 'Cruzamento Multi-Fonte e Desduplicação',
+                                                data: scraperSteps?.unification || { status: scraperStepDurations[6] ? 'done' : 'idle', duration: scraperStepDurations[6] }
+                                            },
+                                            {
+                                                key: 'translation',
+                                                stepNum: 3,
+                                                label: 'Tradução Multilíngue',
+                                                desc: 'EN / ES / FR Automático',
+                                                data: scraperSteps?.translation || { status: (!runningOp && opOutput?.status === 'success') ? 'done' : 'idle', duration: null }
+                                            }
+                                        ].map(st => {
+                                            const isDone = st.data.status === 'done' || (!runningOp && opOutput?.status === 'success');
+                                            const isRunning = runningOp && st.data.status === 'running' && !isDone;
+
+                                            return (
+                                                <div 
+                                                    key={st.key}
+                                                    className={`p-3 rounded-xl border transition-all ${
+                                                        isDone
+                                                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300 shadow-sm shadow-emerald-500/5'
+                                                            : isRunning
+                                                            ? 'bg-blue-500/15 border-blue-500/40 text-blue-200 ring-1 ring-blue-500/30 shadow-md shadow-blue-500/10'
+                                                            : 'bg-slate-900/60 border-slate-800 text-slate-500'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center justify-between mb-1.5">
+                                                        <div className="flex items-center gap-1.5 min-w-0">
+                                                            <span className="text-xs font-bold text-slate-100 truncate">{st.stepNum}. {st.label}</span>
+                                                        </div>
+                                                        {isDone ? (
+                                                            <div className="flex items-center gap-1 shrink-0">
+                                                                {st.data.duration && (
+                                                                    <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                                                        {st.data.duration}
+                                                                    </span>
+                                                                )}
+                                                                <div className="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                                                                    <Check size={11} strokeWidth={3} />
+                                                                </div>
+                                                            </div>
+                                                        ) : isRunning ? (
+                                                            <div className="flex items-center gap-1 shrink-0">
+                                                                <span className="text-[10px] font-mono font-bold text-blue-300">A processar</span>
+                                                                <div className="w-3.5 h-3.5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-[10px] text-slate-600 font-mono">Aguardar</span>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex items-center justify-between text-[11px] opacity-80 mt-1">
+                                                        <p className="m-0 text-slate-400 truncate">{st.desc}</p>
+                                                        {st.data.count ? (
+                                                            <span className="font-semibold text-emerald-400 font-mono text-[10px] shrink-0">
+                                                                {st.data.count}
+                                                            </span>
+                                                        ) : null}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
                             </div>
 
                             {/* Live Streaming Logs Terminal Feed */}
