@@ -355,7 +355,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
         const isResults = (item) => {
             const l = (item.label || '').toLowerCase();
             const url = (item.link || '').toLowerCase();
-            return l.includes('resultado') || l.includes('classifica') || l.includes('ranking') || l.includes('tempos') || l.includes('results') || url.includes('/results') || url.includes('/classificacoes');
+            return l.includes('resultado') || l.includes('classifica') || l.includes('ranking') || l.includes('tempos') || l.includes('results') || url.includes('/results') || url.includes('/classificacoes') || url.includes('classificacoes.net') || url.includes('/download/');
         };
 
         const isRules = (item) => {
@@ -400,6 +400,12 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
             return (l.includes('stopandgo') || l.includes('stop and go') || url.includes('stopandgo.net')) && !isRegistration(item) && !isRules(item);
         };
 
+        const isClassificacoesPage = (item) => {
+            const l = (item.label || '').toLowerCase();
+            const url = (item.link || '').toLowerCase();
+            return (l.includes('classificacoes') || url.includes('classificacoes.net')) && !isRegistration(item) && !isRules(item);
+        };
+
         // Categoriza
         const registrationList = uniqueByUrl.filter(isRegistration);
         const resultsList = uniqueByUrl.filter(isResults);
@@ -420,14 +426,16 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
         // Site oficial da organização
         let officialSite = null;
-        if (activeEvent?.source === 'Cabreira' || (activeEvent?.organizador && activeEvent.organizador.toLowerCase().includes('cabreira'))) {
+        if (activeEvent?.source?.includes('Cabreira') || (activeEvent?.organizador && activeEvent.organizador.toLowerCase().includes('cabreira'))) {
             const cabLink = uniqueByUrl.find(isCabreiraPage);
             officialSite = cabLink ? { label: t('action_cabreira_site'), link: cabLink.link } : { label: t('action_cabreira_site'), link: 'https://cabreirasolutions.com/eventos/' };
-        } else if (activeEvent?.link && !activeEvent.link.includes('fpciclismo.pt') && !activeEvent.link.includes('stopandgo.net')) {
-            officialSite = { label: t('action_official_site'), link: activeEvent.link };
-        } else if (activeEvent?.source === 'StopAndGo' || (activeEvent?.link && activeEvent.link.includes('stopandgo.net'))) {
+        } else if (activeEvent?.source?.includes('Stop') || (activeEvent?.link && activeEvent.link.includes('stopandgo.net'))) {
             const sgLink = uniqueByUrl.find(isStopAndGoPage) || { label: t('action_stopandgo_page'), link: activeEvent.link || 'https://stopandgo.net' };
             officialSite = sgLink;
+        } else if (activeEvent?.source?.includes('Classificações') || (activeEvent?.link && activeEvent.link.includes('classificacoes.net'))) {
+            officialSite = { label: 'Classificações.net', link: activeEvent.link || 'https://www.classificacoes.net' };
+        } else if (activeEvent?.link && !activeEvent.link.includes('fpciclismo.pt')) {
+            officialSite = { label: t('action_official_site'), link: activeEvent.link };
         } else if (activeEvent?.link && activeEvent.link.includes('fpciclismo.pt')) {
             officialSite = { label: t('action_fpc_page'), link: activeEvent.link };
         }
@@ -441,7 +449,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
             resources.push({ icon: 'file', label: t('resource_rules'), link: primaryRules.link });
         }
         conditionsList.forEach(c => resources.push({ icon: 'shield', label: t('resource_conditions'), link: c.link }));
-        if (fpcList.length > 0 && activeEvent?.source !== 'FPC') {
+        if (fpcList.length > 0 && !activeEvent?.source?.startsWith('FPC')) {
             fpcList.forEach(f => resources.push({ icon: 'fpc', label: t('resource_fpc'), link: f.link }));
         }
 
@@ -453,6 +461,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
             const sLink = (src.link || '').toLowerCase();
             if (sLink.includes('stopandgo')) plat = "Stop & Go";
             else if (sLink.includes('cabreira')) plat = "Cabreira";
+            else if (sLink.includes('classificacoes')) plat = "Classificações.net";
             else if (sLink.includes('fpc')) plat = "FPC";
             else plat = (src.label || 'Oficial').replace(/inscrever|inscrição|inscricao|visitar|em|na|no/ig, '').trim() || "Oficial";
 
