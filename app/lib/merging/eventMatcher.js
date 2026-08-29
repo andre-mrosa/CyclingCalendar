@@ -11,7 +11,7 @@ export function normalizeText(text) {
         .replace(/\b(20\d\d)\b/g, '') // remove anos (2024, 2025, 2026, 2027)
         .replace(/\b(\d+)[ºª\.]?\b/g, '') // remove edições (1º, 2ª, 10.)
         .replace(/\b(i|ii|iii|iv|v|vi|vii|viii|ix|x|xi|xii)\b/g, '') // numeração romana
-        .replace(/\b(edicao|trofeu|taca|campeonato|prova|grande|premio|circuito|passeio|maratona|meia|mini|open)\b/g, '') // palavras genéricas
+        .replace(/\b(edicao|prova|grande|premio|circuito|passeio|maratona|meia|mini|open)\b/g, '') // palavras genéricas
         .replace(/\b(de|do|da|dos|das|em|na|no|o|a|os|as|e)\b/g, '') // stop words
         .replace(/[^a-z0-9]/g, ' ') // caracteres especiais
         .replace(/\s+/g, ' ')
@@ -61,7 +61,33 @@ export function isSameEvent(existingEvent, candidateEvent) {
     // 1. Verificação de ID direto
     if (existingEvent.id === candidateEvent.id) return true;
 
-    // 2. Verificação de Datas
+    // 2. Se ambos os eventos vêm da FPC (IDs começam por fpc-), são linhas oficiais distintas
+    if (existingEvent.id?.startsWith('fpc-') && candidateEvent.id?.startsWith('fpc-')) {
+        return false;
+    }
+
+    // 3. Campeonatos vs Taças: NUNCA fundir um Campeonato Nacional com uma Taça de Portugal
+    const t1 = (existingEvent.title || '').toLowerCase();
+    const t2 = (candidateEvent.title || '').toLowerCase();
+    const isCamp1 = t1.includes('campeonato') || existingEvent.ambito === 'Campeonato Nacional';
+    const isCamp2 = t2.includes('campeonato') || candidateEvent.ambito === 'Campeonato Nacional';
+    const isTaca1 = t1.includes('taca') || t1.includes('taça') || existingEvent.ambito === 'Taça de Portugal';
+    const isTaca2 = t2.includes('taca') || t2.includes('taça') || candidateEvent.ambito === 'Taça de Portugal';
+
+    if ((isCamp1 && !isCamp2 && isTaca2) || (isCamp2 && !isCamp1 && isTaca1)) {
+        return false;
+    }
+
+    // 4. Etapas ou Rondas numeradas (#1, #2, #3, etc.) não devem ser fundidas entre si
+    const roundMatch1 = t1.match(/#(\d+)|etapa\s*(\d+)|prova\s*(\d+)/i);
+    const roundMatch2 = t2.match(/#(\d+)|etapa\s*(\d+)|prova\s*(\d+)/i);
+    if (roundMatch1 && roundMatch2) {
+        const num1 = roundMatch1[1] || roundMatch1[2] || roundMatch1[3];
+        const num2 = roundMatch2[1] || roundMatch2[2] || roundMatch2[3];
+        if (num1 !== num2) return false;
+    }
+
+    // 5. Verificação de Datas
     const existingDate = existingEvent.sortDate ? new Date(existingEvent.sortDate) : null;
     const candidateDate = candidateEvent.sortDate ? new Date(candidateEvent.sortDate) : null;
 

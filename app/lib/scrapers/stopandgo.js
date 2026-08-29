@@ -20,7 +20,8 @@ const CYCLING_KEYWORDS = [
 const NON_CYCLING = [
     'caminhada', 'atletismo', 'triathlon', 'triatlo', 
     'obstaculos', 'ocr', 'kayak', 'sunset-trail', 'corrida', 
-    'maratona-da-europa', 'meia-maratona', 'trail-run', 'trail-noturno'
+    'maratona-da-europa', 'meia-maratona', 'trail-run', 'trail-noturno',
+    'skyrace', 'trail', 'ultra-trail', 'crosstrail', 'night-race'
 ];
 
 const MONTH_MAP = {
@@ -180,7 +181,12 @@ async function scrapeEventPage(url, retries = 2) {
 
         // Data precisa do cabeçalho da prova
         const slug = url.split('/').filter(Boolean).pop();
-        const slugYearMatch = slug.match(/202\d/);
+        const oldYearMatch = slug.match(/\b(201\d|202[0-3])\b/);
+        if (oldYearMatch) {
+            return null; // Provas históricas antigas fora do horizonte ativo
+        }
+
+        const slugYearMatch = slug.match(/202[4-9]/);
         const fallbackYear = slugYearMatch ? slugYearMatch[0] : new Date().getFullYear().toString();
 
         let rawDate = null;
@@ -201,6 +207,9 @@ async function scrapeEventPage(url, retries = 2) {
         }
 
         const parsedDate = parseStopAndGoDate(rawDate, fallbackYear);
+        if (parsedDate.year < 2024) {
+            return null;
+        }
         const dateText = parsedDate.dateText;
         const sortDate = parsedDate.sortDate;
 
