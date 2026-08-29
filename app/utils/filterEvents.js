@@ -1,5 +1,14 @@
 import { isStageRace, getEventDiscipline } from './eventClassifier';
 
+export function normalizeSearchString(str) {
+    if (!str) return '';
+    return String(str)
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim();
+}
+
 export function filterEvents(events, filters) {
     let filtered = events;
     const {
@@ -38,22 +47,45 @@ export function filterEvents(events, filters) {
     }
     
     if (searchTerm) {
-        const term = searchTerm.toLowerCase().trim();
-        filtered = filtered.filter(event => {
-            const effectiveTag = getEventDiscipline(event);
-            const titleMatch = event.title?.toLowerCase().includes(term);
-            const detailsMatch = event.details?.toLowerCase().includes(term);
-            const distritoMatch = event.distrito?.toLowerCase().includes(term);
-            const regiaoMatch = event.regiao?.toLowerCase().includes(term);
-            const organizadorMatch = event.organizador?.toLowerCase().includes(term);
-            const tagMatch = (event.tag?.toLowerCase().includes(term)) || (effectiveTag.toLowerCase().includes(term));
-            const sourceMatch = event.source?.toLowerCase().includes(term);
-            const translationMatch = event.translations?.some(t => 
-                t.title?.toLowerCase().includes(term) || 
-                t.details?.toLowerCase().includes(term)
-            );
-            return titleMatch || detailsMatch || distritoMatch || regiaoMatch || organizadorMatch || tagMatch || sourceMatch || translationMatch;
-        });
+        const normalizedQuery = normalizeSearchString(searchTerm);
+        const tokens = normalizedQuery.split(/\s+/).filter(Boolean);
+        
+        if (tokens.length > 0) {
+            filtered = filtered.filter(event => {
+                const effectiveTag = getEventDiscipline(event);
+                const titleNorm = normalizeSearchString(event.title);
+                const detailsNorm = normalizeSearchString(event.details);
+                const distritoNorm = normalizeSearchString(event.distrito);
+                const regiaoNorm = normalizeSearchString(event.regiao);
+                const organizadorNorm = normalizeSearchString(event.organizador);
+                const tagNorm = normalizeSearchString(event.tag) + ' ' + normalizeSearchString(effectiveTag);
+                const sourceNorm = normalizeSearchString(event.source);
+                const descNorm = normalizeSearchString(event.description);
+                const dateNorm = normalizeSearchString(event.date);
+
+                return tokens.every(token => {
+                    const fieldMatch = titleNorm.includes(token) ||
+                        detailsNorm.includes(token) ||
+                        distritoNorm.includes(token) ||
+                        regiaoNorm.includes(token) ||
+                        organizadorNorm.includes(token) ||
+                        tagNorm.includes(token) ||
+                        sourceNorm.includes(token) ||
+                        descNorm.includes(token) ||
+                        dateNorm.includes(token);
+
+                    if (fieldMatch) return true;
+
+                    const translationMatch = event.translations?.some(t => 
+                        normalizeSearchString(t.title).includes(token) || 
+                        normalizeSearchString(t.details).includes(token) ||
+                        normalizeSearchString(t.description).includes(token)
+                    );
+
+                    return Boolean(translationMatch);
+                });
+            });
+        }
     }
 
     if (selectedEscaloes && selectedEscaloes.length > 0) {

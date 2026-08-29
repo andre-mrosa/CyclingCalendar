@@ -440,9 +440,10 @@ export default function AdminDashboardPage() {
             if (userRoleFilter === 'user' && (u.role === 'admin' || u.isMaster)) return false;
             if (userRoleFilter === 'deletions' && !u.deletionRequested) return false;
             if (userSearch.trim()) {
-                const q = userSearch.toLowerCase();
-                const matchName = u.fullName?.toLowerCase().includes(q);
-                const matchEmail = u.email?.toLowerCase().includes(q);
+                const norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                const q = norm(userSearch);
+                const matchName = norm(u.fullName).includes(q);
+                const matchEmail = norm(u.email).includes(q);
                 return matchName || matchEmail;
             }
             return true;

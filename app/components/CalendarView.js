@@ -305,7 +305,7 @@ export default function CalendarView({
         }
     }, [events, eventYears]);
 
-    const onSearchChange = (e) => setSearchTerm(e.target.value.toLowerCase());
+    const onSearchChange = (e) => setSearchTerm(e.target.value);
     const onYearToggle = (y) => {
         const newYears = selectedYears.includes(y) 
             ? selectedYears.filter(yr => yr !== y) 
