@@ -42,6 +42,18 @@ export default function OrganizationLogo({ source, className = "h-5 w-auto objec
             );
         }
 
+        if (srcName.includes('Classifica')) {
+            return (
+                <div 
+                    key={key}
+                    className="flex items-center justify-center shrink-0 px-1.5 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-[10px] font-black text-amber-600 dark:text-amber-400 tracking-wider shadow-sm" 
+                    title="Classificações.net (Cronometragem e Resultados Oficiais)"
+                >
+                    CN
+                </div>
+            );
+        }
+
         // FPC and default
         return (
             <div 

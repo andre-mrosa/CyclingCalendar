@@ -100,7 +100,9 @@ export function mergeEventRecords(existing, incoming) {
                 ? 'Site Oficial Cabreira'
                 : incoming.source?.includes('Stop')
                     ? 'Inscrições Stop & Go'
-                    : 'Página da Organização';
+                    : incoming.source?.includes('Classificações')
+                        ? 'Classificações e Resultados'
+                        : 'Página da Organização';
 
             if (!extraLinksList.some(l => l.link?.toLowerCase() === incoming.link.toLowerCase())) {
                 extraLinksList.push({ label: incomingLabel, link: incoming.link });

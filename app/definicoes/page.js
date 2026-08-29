@@ -345,7 +345,8 @@ export default function Conta() {
                         {[
                             { id: 'FPC', name: 'Federação Portuguesa de Ciclismo (FPC)', desc: 'Provas nacionais, regionais, taças e campeonatos oficiais.' },
                             { id: 'Cabreira', name: 'Cabreira Solutions', desc: 'Granfondos, eventos de lazer e turismo desportivo.' },
-                            { id: 'Stop and Go', name: 'Stop and Go', desc: 'Provas de BTT, Ciclismo, Granfondos e cronometragens oficiais.' }
+                            { id: 'Stop and Go', name: 'Stop and Go', desc: 'Provas de BTT, Ciclismo, Granfondos e cronometragens oficiais.' },
+                            { id: 'Classificações.net', name: 'Classificações.net', desc: 'Volta a Portugal, GPs, 24h BTT, Taças e classificações oficiais.' }
                         ].map(source => {
                             const isSelected = selectedSources.includes(source.id);
                             return (

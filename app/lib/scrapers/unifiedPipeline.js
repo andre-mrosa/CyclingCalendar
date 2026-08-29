@@ -1,6 +1,7 @@
 import { scrapeFPC, incrementalDeepScrapeFPC } from './fpc.js';
 import { scrapeCabreira } from './cabreira.js';
 import { scrapeStopAndGo } from './stopandgo.js';
+import { scrapeClassificacoes } from './classificacoes.js';
 import { prisma } from '../db.js';
 import { isSameEvent } from '../merging/eventMatcher.js';
 import { mergeEventRecords } from '../merging/eventMerger.js';
@@ -46,14 +47,14 @@ export async function runUnifiedScrapingPipeline(triggeredBy = 'CRON', options =
 
     const stats = {
         mode: shouldScrapePastYears ? 'FULL_HISTORICAL' : 'DAILY_ACTIVE',
-        sourcesScraped: ['FPC', 'Cabreira', 'Stop and Go'],
+        sourcesScraped: ['FPC', 'Cabreira', 'Stop and Go', 'Classificações.net'],
         yearsScraped: yearsToScrape,
         deepScrapedFpc: 0,
         mergedEvents: 0,
         errors: []
     };
 
-    // 1, 2 & 3. Execução Paralela Concorrente (FPCiclismo + Cabreira Solutions + Stop and Go)
+    // 1, 2, 3 & 4. Execução Paralela Concorrente (FPCiclismo + Cabreira Solutions + Stop and Go + Classificações.net)
     await Promise.allSettled([
         // FPCiclismo
         (async () => {
@@ -85,11 +86,23 @@ export async function runUnifiedScrapingPipeline(triggeredBy = 'CRON', options =
         (async () => {
             try {
                 await logInfo('SCRAPER', `Stop and Go: a consultar provas de BTT e Ciclismo...`);
-                const sgCount = await scrapeStopAndGo();
+                const sgCount = await scrapeStopAndGo({ years: yearsToScrape });
                 await logInfo('SCRAPER', `Stop and Go: sincronização concluída com sucesso.`);
             } catch (e) {
                 stats.errors.push(`Stop and Go error: ${e.message}`);
                 await logError('SCRAPER', `Erro na sincronização Stop and Go: ${e.message}`, e);
+            }
+        })(),
+
+        // Classificações.net
+        (async () => {
+            try {
+                await logInfo('SCRAPER', `Classificações.net: a consultar resultados e provas oficiais...`);
+                const classCount = await scrapeClassificacoes({ years: yearsToScrape });
+                await logInfo('SCRAPER', `Classificações.net: sincronização concluída com sucesso.`);
+            } catch (e) {
+                stats.errors.push(`Classificações.net error: ${e.message}`);
+                await logError('SCRAPER', `Erro na sincronização Classificações.net: ${e.message}`, e);
             }
         })()
     ]);

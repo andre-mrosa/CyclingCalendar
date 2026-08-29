@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 
 export const DEFAULT_TABS = ['Geral', 'Minha Agenda', 'Nacionais', 'Internacionais', 'Taças', 'Regionais', 'Lazer', 'Favoritos'];
 
-export const DEFAULT_SOURCES = ['FPC', 'Cabreira', 'Stop and Go'];
+export const DEFAULT_SOURCES = ['FPC', 'Cabreira', 'Stop and Go', 'Classificações.net'];
 
 export const useSettingsStore = create(
     persist(
@@ -57,9 +57,11 @@ export const useSettingsStore = create(
             name: 'cycling-calendar-settings', // unique name in localStorage
             onRehydrateStorage: () => (state) => {
                 if (state && Array.isArray(state.selectedSources)) {
-                    // Auto-migrate to include Stop and Go if not present
                     if (!state.selectedSources.includes('Stop and Go')) {
                         state.selectedSources = [...state.selectedSources, 'Stop and Go'];
+                    }
+                    if (!state.selectedSources.includes('Classificações.net')) {
+                        state.selectedSources = [...state.selectedSources, 'Classificações.net'];
                     }
                 }
             }

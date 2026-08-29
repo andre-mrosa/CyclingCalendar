@@ -1,5 +1,5 @@
-import { prisma } from './db';
-import { logInfo, logWarn, logError } from './logger';
+import { prisma } from './db.js';
+import { logInfo, logWarn, logError } from './logger.js';
 
 /**
  * Translates a single text string using Google Translate engine.

@@ -8,12 +8,14 @@ import { logInfo, logError } from '../logger.js';
 import { saveOrMergeEvent } from '../merging/eventMerger.js';
 
 export const deepScrapeCabreira = async (link) => {
-    if (!link) return { opensAt: null, closesAt: null, description: null, prices: null, insurance: null, prizes: null, programa: null, additionalLinks: [] };
+    if (!link) return { pageTitle: null, opensAt: null, closesAt: null, description: null, prices: null, insurance: null, prizes: null, programa: null, additionalLinks: [] };
     try {
         const response = await fetch(link, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-        if (!response.ok) return { opensAt: null, closesAt: null, description: null, prices: null, insurance: null, prizes: null, programa: null, additionalLinks: [] };
+        if (!response.ok) return { pageTitle: null, opensAt: null, closesAt: null, description: null, prices: null, insurance: null, prizes: null, programa: null, additionalLinks: [] };
         const html = await response.text();
         const $ = cheerio.load(html);
+
+        const pageTitle = $('h1').first().text().replace(/\s+/g, ' ').trim() || null;
         
         let opensAt = null;
         let closesAt = null;
@@ -233,9 +235,9 @@ export const deepScrapeCabreira = async (link) => {
         if (prizesParts.length > 0) prizes = prizesParts.join('<br/><br/>');
         if (!programa && scheduleParts.length > 0) programa = scheduleParts.join('<br/><br/>');
 
-        return { opensAt, closesAt, description, prices, insurance, prizes, programa, additionalLinks };
+        return { pageTitle, opensAt, closesAt, description, prices, insurance, prizes, programa, additionalLinks };
     } catch(e) {
-        return { opensAt: null, closesAt: null, description: null, prices: null, insurance: null, prizes: null, programa: null, additionalLinks: [] };
+        return { pageTitle: null, opensAt: null, closesAt: null, description: null, prices: null, insurance: null, prizes: null, programa: null, additionalLinks: [] };
     }
 };
 
@@ -328,7 +330,8 @@ export const scrapeCabreira = async (year) => {
                         deepData = await deepScrapeCabreira(ev.href);
                     }
 
-                    const ambitoVal = getAmbito(ev.title);
+                    const finalTitle = deepData?.pageTitle ? toTitleCase(deepData.pageTitle) : ev.title;
+                    const ambitoVal = getAmbito(finalTitle);
 
                     let links = ev.href ? [{ label: 'Ver na Cabreira Solutions', link: ev.href }] : [];
                     if (deepData.additionalLinks && Array.isArray(deepData.additionalLinks)) {
@@ -340,16 +343,16 @@ export const scrapeCabreira = async (year) => {
                     }
 
                     const eventData = {
-                        title: ev.title,
+                        title: finalTitle,
                         date: ev.dateText,
                         sortDate: new Date(parseSortDate(ev.rawDateForSort, ev.eventYear)),
                         details: ev.locText,
-                        tag: getTag(ev.title),
+                        tag: getTag(finalTitle),
                         ambito: ambitoVal,
                         escaloes: JSON.stringify(['Todos (Aberto)']),
                         licenca: 'CPT / Lazer',
-                        regiao: getRegiao(ev.title, ev.locText),
-                        distrito: getDistrito(ev.title, ev.locText),
+                        regiao: getRegiao(finalTitle, ev.locText),
+                        distrito: getDistrito(finalTitle, ev.locText),
                         source: 'Cabreira',
                         link: ev.href || 'https://cabreirasolutions.com/eventos/',
                         extraLinks: JSON.stringify(links),

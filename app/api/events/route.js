@@ -9,7 +9,7 @@ export async function GET(request) {
         const isAllYears = yearsParam === 'all';
         const years = isAllYears ? [] : yearsParam.split(',').filter(Boolean).map(y => y.trim());
         
-        const sourcesParam = searchParams.get('sources') || 'FPC,Cabreira,Stop and Go';
+        const sourcesParam = searchParams.get('sources') || 'FPC,Cabreira,Stop and Go,Classificações.net';
         const activeSources = sourcesParam.split(',').map(s => s.trim()).filter(Boolean);
 
         const andConditions = [];
