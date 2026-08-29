@@ -270,8 +270,10 @@ export async function GET() {
                                sources.cabreira.status === 'done' && 
                                sources.stopandgo.status === 'done';
 
-        // If no log emitted for > 75 seconds, serverless instance was terminated
-        if (timeSinceLatestLog > 75000) {
+        // If no log emitted for > 180 seconds, serverless instance was terminated.
+        // Use 180s (not 75s) to accommodate the translation step which can run silently
+        // for up to ~60s before the first heartbeat log at every 10 events.
+        if (timeSinceLatestLog > 180000) {
             return Response.json({
                 success: true,
                 isRunning: false,

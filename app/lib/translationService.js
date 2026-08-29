@@ -118,12 +118,17 @@ export async function translateAllPendingEvents(targetLang = 'en', batchSize = 1
         for (const event of pendingEvents) {
             await translateAndStoreEvent(event, targetLang);
             translatedCount++;
+            // Emit a heartbeat log every 10 events so the scraper-status route
+            // does not mark the run as "interrupted" during long translation batches.
+            if (translatedCount % 10 === 0) {
+                await logInfo('SCRAPER', `Tradução: ${translatedCount}/${pendingEvents.length} eventos traduzidos...`);
+            }
             // Small pause between events to be respectful
             await new Promise(r => setTimeout(r, 40));
         }
 
         logInfo('TRANSLATION_SERVICE', `Successfully translated ${translatedCount} events to ${targetLang}`);
-        return { success: true, count: translatedCount, totalPending: pendingEvents.length };
+        return { success: true, count: translatedCount, totalPending: pendingEvents.length, translatedCount };
     } catch (err) {
         logError('TRANSLATION_SERVICE', `Batch translation error for ${targetLang}`, { error: err.message });
         return { success: false, error: err.message };
