@@ -192,11 +192,58 @@ export default function Navigation() {
         </button>
     );
 
+    const FlagIcon = ({ code, className = "w-4 h-2.5 rounded-[2px] shadow-[0_0_0_1px_rgba(0,0,0,0.15)] shrink-0 overflow-hidden" }) => {
+        switch (code) {
+            case 'pt':
+                return (
+                    <svg viewBox="0 0 600 400" className={className} xmlns="http://www.w3.org/2000/svg">
+                        <rect width="600" height="400" fill="#dc2626" />
+                        <rect width="240" height="400" fill="#15803d" />
+                        <circle cx="240" cy="200" r="70" fill="#eab308" stroke="#000" strokeWidth="4" />
+                        <path d="M210 160 h60 v50 a30 30 0 0 1 -60 0 z" fill="#ffffff" stroke="#dc2626" strokeWidth="6" />
+                        <path d="M225 175 h30 v25 a15 15 0 0 1 -30 0 z" fill="#1d4ed8" />
+                    </svg>
+                );
+            case 'en':
+                return (
+                    <svg viewBox="0 0 60 30" className={className} xmlns="http://www.w3.org/2000/svg">
+                        <clipPath id="uk-clip"><path d="M0,0 v30 h60 v-30 z"/></clipPath>
+                        <clipPath id="uk-diag"><path d="M30,15 h30 v15 z v15 h-30 z h-30 v-15 z v-15 h30 z"/></clipPath>
+                        <g clipPath="url(#uk-clip)">
+                            <path d="M0,0 v30 h60 v-30 z" fill="#1e3a8a"/>
+                            <path d="M0,0 L60,30 M60,0 L0,30" stroke="#ffffff" strokeWidth="6"/>
+                            <path d="M0,0 L60,30 M60,0 L0,30" clipPath="url(#uk-diag)" stroke="#dc2626" strokeWidth="4"/>
+                            <path d="M30,0 v30 M0,15 h60" stroke="#ffffff" strokeWidth="10"/>
+                            <path d="M30,0 v30 M0,15 h60" stroke="#dc2626" strokeWidth="6"/>
+                        </g>
+                    </svg>
+                );
+            case 'es':
+                return (
+                    <svg viewBox="0 0 750 500" className={className} xmlns="http://www.w3.org/2000/svg">
+                        <rect width="750" height="500" fill="#dc2626" />
+                        <rect width="750" height="250" y="125" fill="#facc15" />
+                        <circle cx="180" cy="250" r="40" fill="#dc2626" opacity="0.85" />
+                    </svg>
+                );
+            case 'fr':
+                return (
+                    <svg viewBox="0 0 900 600" className={className} xmlns="http://www.w3.org/2000/svg">
+                        <rect width="900" height="600" fill="#dc2626" />
+                        <rect width="600" height="600" fill="#ffffff" />
+                        <rect width="300" height="600" fill="#1d4ed8" />
+                    </svg>
+                );
+            default:
+                return null;
+        }
+    };
+
     const languages = [
-        { code: 'pt', label: 'Português', flag: '🇵🇹' },
-        { code: 'en', label: 'English', flag: '🇬🇧' },
-        { code: 'es', label: 'Español', flag: '🇪🇸' },
-        { code: 'fr', label: 'Français', flag: '🇫🇷' },
+        { code: 'pt', label: 'Português' },
+        { code: 'en', label: 'English' },
+        { code: 'es', label: 'Español' },
+        { code: 'fr', label: 'Français' },
     ];
 
     const currentLangObj = languages.find(l => l.code === language) || languages[0];
@@ -206,12 +253,12 @@ export default function Navigation() {
             <button 
                 type="button"
                 onClick={() => setIsLangDropdownOpen(!isLangDropdownOpen)}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 transition-all cursor-pointer shadow-xs"
+                className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-100/90 hover:bg-slate-200/90 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700/80 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-all cursor-pointer shadow-xs"
                 title="Escolher Idioma / Choose Language"
             >
-                <span className="text-sm leading-none">{currentLangObj.flag}</span>
-                <span>{currentLangObj.code.toUpperCase()}</span>
-                <ChevronDown size={12} className={`text-slate-400 transition-transform ${isLangDropdownOpen ? 'rotate-180' : ''}`} />
+                <FlagIcon code={currentLangObj.code} />
+                <span className="text-[11px] font-bold tracking-wide">{currentLangObj.code.toUpperCase()}</span>
+                <ChevronDown size={11} className={`text-slate-400 transition-transform ${isLangDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {isLangDropdownOpen && (
@@ -237,8 +284,8 @@ export default function Navigation() {
                                             : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                                     }`}
                                 >
-                                    <span className="flex items-center gap-2">
-                                        <span className="text-sm">{item.flag}</span>
+                                    <span className="flex items-center gap-2.5">
+                                        <FlagIcon code={item.code} className="w-4 h-2.5 rounded-[2px] shadow-[0_0_0_1px_rgba(0,0,0,0.15)] shrink-0 overflow-hidden" />
                                         <span>{item.label}</span>
                                     </span>
                                     {isSelected && <span className="text-blue-500 font-bold text-xs">✓</span>}
@@ -547,7 +594,7 @@ export default function Navigation() {
                                                     : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700/60 text-slate-700 dark:text-slate-300'
                                             }`}
                                         >
-                                            <span className="text-sm">{item.flag}</span>
+                                            <FlagIcon code={item.code} className="w-4 h-2.5 rounded-[2px] shadow-[0_0_0_1px_rgba(0,0,0,0.15)] shrink-0" />
                                             <span className="truncate">{item.label}</span>
                                         </button>
                                     );
