@@ -405,8 +405,27 @@ export default function AdminDashboardPage() {
                         setRunningOp(null);
                         await loadStats(null, true);
                         await loadLogs();
-                    }
-                }
+                    } else if (data.interrupted) {
+                        // Serverless timeout — show the resume option (handled elsewhere)
+                        setRunningOp(null);
+                        setOpOutput({
+                            label: 'Sincronização & Scraping Completo',
+                            status: 'interrupted',
+                            message: data.message || 'A sincronização foi interrompida. Podes retomar de onde ficou.'
+                        });
+                    } else {
+                        // "Orphan" state: start log not found (beyond log window) but we
+                        // know a run was active because runningOp is set. Treat as finished
+                        // to avoid the infinite spinner. The user can do F5 to see details.
+                        setRunningOp(null);
+                        setOpOutput({
+                            label: 'Sincronização & Scraping Completo',
+                            status: 'success',
+                            message: 'Operação concluída. Faz F5 para ver o resumo detalhado do último scrape.'
+                        });
+                        await loadStats(null, true);
+                        await loadLogs();
+                    }                }
             } catch (err) {
                 // Silent poll error
             }

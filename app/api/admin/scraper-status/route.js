@@ -10,15 +10,16 @@ export async function GET() {
     }
 
     try {
-        // Query recent SCRAPER logs from the last 30 minutes
-        const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000);
+        // Query recent SCRAPER logs — use a generous window and limit so the start log
+        // is always within the set even for runs that generate many log entries.
+        const ninetyMinAgo = new Date(Date.now() - 90 * 60 * 1000);
         const logs = await prisma.systemLog.findMany({
             where: {
                 source: 'SCRAPER',
-                createdAt: { gte: thirtyMinAgo }
+                createdAt: { gte: ninetyMinAgo }
             },
             orderBy: { createdAt: 'desc' },
-            take: 50
+            take: 300
         });
 
         // Find the latest start log
