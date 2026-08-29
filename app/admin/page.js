@@ -226,13 +226,20 @@ export default function AdminDashboardPage() {
         }
     }, []);
 
-    // Check if a scraping pipeline is currently running on the server (e.g. on mount or after F5)
+    // Stable ref to the poll function so checkScraperRunningStatus can trigger
+    // an immediate refresh without waiting for the runningOp useEffect cycle.
+    const pollStatusRef = useRef(null);
+
+    // Check if a scraping pipeline is currently running on the server (e.g. on mount or after F5).
+    // When it detects an active scrape, it sets state immediately from the same response —
+    // no extra round-trip needed, no React cycle delay.
     const checkScraperRunningStatus = useCallback(async () => {
         try {
             const res = await authFetch('/api/admin/scraper-status');
             if (!res.ok) return;
             const data = await res.json();
             if (data.success && data.isRunning) {
+                // Populate all scraper UI state immediately from this response
                 setRunningOp('unified_scrape');
                 setScraperActiveStep(data.activeStep || 1);
                 setScraperElapsedSecs(data.elapsedSeconds || 0);
@@ -247,6 +254,9 @@ export default function AdminDashboardPage() {
                 });
                 stepStartTimesRef.current = { 1: data.startTime || Date.now() };
                 lastStepRef.current = data.activeStep || 1;
+                // Kick off an extra immediate poll via ref if the polling loop already set it up
+                // (covers the case where this check fires while polling is already active)
+                if (pollStatusRef.current) pollStatusRef.current();
             }
         } catch (e) {
             console.error('Error checking scraper running status:', e);
@@ -380,10 +390,15 @@ export default function AdminDashboardPage() {
             }
         };
 
+        // Expose to pollStatusRef so checkScraperRunningStatus can fire an immediate
+        // first poll when it detects an active scrape on mount (no React cycle delay).
+        pollStatusRef.current = pollStatus;
+
         pollStatus();
         const pollInterval = setInterval(pollStatus, 1500);
 
         return () => {
+            pollStatusRef.current = null;
             clearInterval(timerInterval);
             clearInterval(pollInterval);
         };
