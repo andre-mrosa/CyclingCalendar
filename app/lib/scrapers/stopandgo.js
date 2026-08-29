@@ -14,7 +14,17 @@ const CYCLING_KEYWORDS = [
     'trofeu', 'trofeo', 'desafio', 'subida', 'circuito', 'raid', 
     'resistencia', 'volta', 'taca', 'taça', 'campeonato', 'classic', 
     'passeio', 'estrela', 'geres', 'gerês', 'xisto', 'bairrada', 
-    'maia-urban', 'ceireiro', 'racenature', 'giao-bike', 'pedalar'
+    'maia-urban', 'ceireiro', 'racenature', 'giao-bike', 'pedalar',
+    'trail-btt', 'trail/btt', 'mtb'
+];
+
+const CYCLING_MODALITY_IDS = [
+    { id: 2, name: 'BTT' },
+    { id: 3, name: 'Ciclismo' },
+    { id: 7, name: 'Trail/BTT' },
+    { id: 11, name: 'Cycling' },
+    { id: 17, name: 'Downhill MTB' },
+    { id: 18, name: 'Gravel' }
 ];
 
 const NON_CYCLING = [
@@ -156,22 +166,25 @@ async function scrapeEventPage(url, retries = 2) {
 
         // Modalidade no cabeçalho ou badge
         let modality = '';
-        $('span, div, p').each((_, el) => {
+        $('span, div, p, a, [class*="badge"], [class*="modality"]').each((_, el) => {
             const t = $(el).text().trim().toLowerCase();
-            if (['btt', 'ciclismo', 'gravel', 'granfondo', 'triatlo', 'triathlon', 'trail', 'atletismo', 'caminhada'].includes(t)) {
+            if (['btt', 'ciclismo', 'cycling', 'gravel', 'downhill mtb', 'downhill', 'dhi', 'dhu', 'trail/btt', 'trail / btt', 'granfondo', 'triatlo', 'triathlon', 'trail', 'atletismo', 'caminhada'].includes(t)) {
                 if (!modality) modality = t;
             }
         });
 
         // Verificar se é ciclismo
-        const isDefiniteCycling = modality === 'btt' || modality === 'ciclismo' || modality === 'gravel' || modality === 'granfondo' ||
-            lower.includes('btt') || lower.includes('ciclismo') || lower.includes('bicicleta') || lower.includes('gravel') ||
+        const isDefiniteCycling = modality === 'btt' || modality === 'ciclismo' || modality === 'cycling' || 
+            modality === 'gravel' || modality === 'downhill mtb' || modality === 'downhill' || modality.includes('btt') ||
+            modality === 'granfondo' || lower.includes('btt') || lower.includes('ciclismo') || lower.includes('bicicleta') || 
+            lower.includes('gravel') || lower.includes('downhill') || lower.includes('dhi') || lower.includes('dhu') ||
             lower.includes('granfondo') || lower.includes('mediofondo') || lower.includes('xco') || lower.includes('xcm') ||
-            lower.includes('dhi') || lower.includes('enduro') || lower.includes('ngps') || lower.includes('passeio cicloturismo') ||
-            title.toLowerCase().includes('bike') || title.toLowerCase().includes('btt') || title.toLowerCase().includes('granfondo');
+            lower.includes('enduro') || lower.includes('ngps') || lower.includes('passeio cicloturismo') ||
+            title.toLowerCase().includes('bike') || title.toLowerCase().includes('btt') || title.toLowerCase().includes('granfondo') ||
+            title.toLowerCase().includes('gravel') || title.toLowerCase().includes('downhill');
 
         const isPureRunning = (modality === 'trail' || modality === 'atletismo' || modality === 'caminhada') &&
-            !lower.includes('btt') && !lower.includes('ciclismo') && !lower.includes('bike') && !lower.includes('gravel') && !lower.includes('granfondo');
+            !modality.includes('btt') && !lower.includes('btt') && !lower.includes('ciclismo') && !lower.includes('bike') && !lower.includes('gravel') && !lower.includes('downhill');
 
         if (!isDefiniteCycling || isPureRunning) {
             return null;
@@ -287,11 +300,11 @@ async function scrapeEventPage(url, retries = 2) {
 
 /**
  * Scraper Universal Stop and Go
- * Consulta o sitemap e as páginas de eventos para extrair todas as provas de ciclismo
+ * Consulta o sitemap e as páginas de eventos para extrair todas as provas de ciclismo (BTT, Estrada, Gravel, Downhill, Trail/BTT)
  */
 export async function scrapeStopAndGo(options = {}) {
     try {
-        logInfo('SCRAPER', 'Início da sincronização Stop and Go (sitemap.xml + listagem oficial)');
+        logInfo('SCRAPER', 'Início da sincronização Stop and Go (sitemap.xml + abas Downhill, Gravel, BTT, Estrada)');
 
         const res = await fetch('https://stopandgo.net/sitemap.xml', {
             headers: { 'User-Agent': 'Mozilla/5.0' },
@@ -304,9 +317,11 @@ export async function scrapeStopAndGo(options = {}) {
             sitemapUrls = Array.from(new Set(xml.match(/https:\/\/stopandgo\.net\/events\/[a-zA-Z0-9_-]+/g) || []));
         }
 
-        // Também recolher os URLs das páginas de eventos ativas (páginas 1 a 5)
+        // Recolher URLs de sitemap e das páginas de eventos gerais e por modalidades específicas de ciclismo (Downhill, Gravel, BTT, Trail/BTT, Ciclismo, Cycling)
         const eventPageUrls = new Set(sitemapUrls);
-        for (let page = 1; page <= 5; page++) {
+        
+        // 1. Páginas gerais
+        for (let page = 1; page <= 4; page++) {
             try {
                 const pRes = await fetch(`https://stopandgo.net/events?page=${page}`, { 
                     headers: { 'User-Agent': 'Mozilla/5.0' },
@@ -317,11 +332,38 @@ export async function scrapeStopAndGo(options = {}) {
                     const $p = cheerio.load(pHtml);
                     $p('a[href*="/events/"]').each((_, a) => {
                         const href = $p(a).attr('href');
-                        if (href) {
+                        if (href && !href.endsWith('/events') && !href.includes('?')) {
                             const full = href.startsWith('http') ? href : 'https://stopandgo.net' + href;
                             eventPageUrls.add(full);
                         }
                     });
+                }
+            } catch (err) {}
+        }
+
+        // 2. Abas dedicadas de modalidades de ciclismo (Downhill MTB, Gravel, Trail/BTT, BTT, Ciclismo, Cycling)
+        for (const mod of CYCLING_MODALITY_IDS) {
+            try {
+                for (let page = 1; page <= 3; page++) {
+                    const modUrl = `https://stopandgo.net/events?modality=${mod.id}&page=${page}`;
+                    const mRes = await fetch(modUrl, {
+                        headers: { 'User-Agent': 'Mozilla/5.0' },
+                        signal: AbortSignal.timeout(5000)
+                    });
+                    if (mRes.ok) {
+                        const mHtml = await mRes.text();
+                        const $m = cheerio.load(mHtml);
+                        let foundInPage = 0;
+                        $m('a[href*="/events/"]').each((_, a) => {
+                            const href = $m(a).attr('href');
+                            if (href && !href.endsWith('/events') && !href.includes('?')) {
+                                const full = href.startsWith('http') ? href : 'https://stopandgo.net' + href;
+                                eventPageUrls.add(full);
+                                foundInPage++;
+                            }
+                        });
+                        if (foundInPage === 0) break; // Sem mais páginas para esta modalidade
+                    }
                 }
             } catch (err) {}
         }
@@ -339,7 +381,7 @@ export async function scrapeStopAndGo(options = {}) {
             const matchesYear = hasExplicitYear || hasNoYearInSlug || options.fullHistorical;
 
             const isCycling = CYCLING_KEYWORDS.some(kw => lower.includes(kw));
-            const isExcluded = NON_CYCLING.some(kw => lower.includes(kw) && !lower.includes('cycling') && !lower.includes('bike') && !lower.includes('btt'));
+            const isExcluded = NON_CYCLING.some(kw => lower.includes(kw) && !lower.includes('cycling') && !lower.includes('bike') && !lower.includes('btt') && !lower.includes('gravel') && !lower.includes('downhill'));
             return matchesYear && (isCycling || hasNoYearInSlug) && !isExcluded;
         });
 
