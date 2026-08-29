@@ -2,7 +2,7 @@ export default {
     // Navigation & Tabs
     nav_general: "General",
     nav_agenda: "Mi Agenda",
-    nav_nationals: "Nacionales",
+    nav_nationals: "Camp. Nacionales",
     nav_internationals: "Internacionales",
     nav_cups: "Copas",
     nav_regionals: "Regionales",
@@ -35,7 +35,7 @@ export default {
     page_favorites_empty_desc: "Navega por el calendario y haz clic en la Estrella ⭐ junto a cualquier prueba para guardarla aquí.",
     page_favorites_explore_btn: "Explorar Calendario",
     page_nationals_title: "Campeonatos Nacionales",
-    page_nationals_subtitle: "Solo pruebas de élite y campeonatos nacionales",
+    page_nationals_subtitle: "Calendario oficial de todos los Campeonatos Nacionales en Portugal",
     page_cups_title: "Copas de Portugal",
     page_cups_subtitle: "Competiciones puntuables para la Copa de Portugal",
     page_regionals_title: "Pruebas Regionales",

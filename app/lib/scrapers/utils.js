@@ -63,7 +63,16 @@ export const getAmbito = (name = '', det = '', tag = '') => {
         .replace(/\s+/g, ' ')
         .trim();
 
-    // 1. TAÇAS DE PORTUGAL (Taça de Portugal / Taça Portugal / Taças Nacionais)
+    // 1. CAMPEONATOS NACIONAIS (Campeonatos de Portugal, Campeonatos Nacionais oficiais)
+    const isCampeonatoNacional = 
+        /\b(campeonatos?\s*(naciona(l|is)|de\s*portugal)|camp\.\s*naciona(l|is))\b/.test(clean) ||
+        /\b(cn\s+(estrada|btt|xco|xcm|xcc|dhi|dhu|pista|ciclocrosse|gravel|bmx|enduro|maratona|masters|paraciclismo|juventude))\b/.test(clean);
+
+    if (isCampeonatoNacional && !/\b(regional|inter\s*regional)\b/.test(titleClean)) {
+        return 'Campeonato Nacional';
+    }
+
+    // 2. TAÇAS DE PORTUGAL (Taça de Portugal / Taça Portugal / Taças Nacionais)
     if (/\btacas?\b/.test(titleClean) || /\btacas?\s+de\s+portugal\b/.test(clean) || /\btacas?\s+portugal\b/.test(clean)) {
         const isRegionalCup = /\b(regional|minho|porto|lisboa|algarve|aveiro|setubal|santarem|beira|madeira|acores|inter\s*regional|concelhio|distrital)\b/.test(titleClean);
         const isNationalCup = /\b(portugal|nacional|feminina|femininas|masters?|veteranos?|juniores?|cadetes?|sub\s*23|sub\s*19|sub\s*17|sub\s*15|paraciclismo|esperancas?|shiman|dhi|xco|xcm|xce|enduro|ciclocrosse|pista|estrada|gravel|bmx)\b/.test(clean);
@@ -74,7 +83,7 @@ export const getAmbito = (name = '', det = '', tag = '') => {
         return 'Taça de Portugal';
     }
 
-    // 2. INTERNACIONAL (UCI WorldTour, ProSeries, 1.Pro, 2.Pro, 1.1, 2.1, 1.2, 2.2, C1, C2, HC, etc.)
+    // 3. INTERNACIONAL (UCI WorldTour, ProSeries, 1.Pro, 2.Pro, 1.1, 2.1, 1.2, 2.2, C1, C2, HC, etc.)
     const isInternacional = 
         /\b(uci|worldtour|world\s*tour|proseries|pro\s*series|1\.pro|2\.pro|1\.1|2\.1|1\.2|2\.2|1\.hc|2\.hc|\.c1|\.c2|\.hc)\b/.test(clean) ||
         /\b(figueira\s*champions\s*classic|volta\s*ao\s*algarve|volta\s*ao\s*alentejo|o\s*gran\s*camino|gran\s*camino)\b/.test(clean) ||
@@ -87,20 +96,19 @@ export const getAmbito = (name = '', det = '', tag = '') => {
         return 'Internacional';
     }
 
-    // 3. CAMPEONATO NACIONAL & EVENTOS NACIONAIS DE ELITE (Volta a Portugal, GPs, Clássicas Nacionais, Troféus)
-    const isCampeonatoNacional = /\b(campeonatos?\s*(naciona(l|is)|de\s*portugal)|camp\.\s*naciona(l|is))\b/.test(clean);
+    // 4. NACIONAL (Volta a Portugal, GPs Nacionais, Clássicas Nacionais, Troféus)
     const isVoltaNacional = /\b(volta\s*a\s*portugal|volta\s*a\s*albergaria|volta\s*as?\s*terras\s*de\s*santa\s*maria|volta\s*a\s*tras\s*os\s*montes|volta\s*ao\s*nordeste)\b/.test(clean);
     const isGPNacional = /\b(grande\s*premio|gp\s+abimota|gp\s+anicolor|gp\s+jornal\s*de\s*noticias|gp\s+mortagua|gp\s+o\s*jogo|gp\s+portugal|gp\s+ciclismo|gp\s+[a-z]+)\b/.test(clean);
     const isClassicaNacional = /\b(classica\s*(de|da|dos)?\s+[a-z]+|prova\s*(de\s*)?abertura|memorial\s+[a-z]+|trofeu\s*(ribeiro\s*da\s*silva|fernando\s*mendes|cidade\s*fafe|hm\s*motor|rui\s*costa))\b/.test(clean);
     const isOutroNacional = /\b(circuito\s*nacional|encontro\s*nacional|torneio\s*nacional|taca\s*nacional)\b/.test(clean);
 
-    if (isCampeonatoNacional || isVoltaNacional || isGPNacional || isClassicaNacional || isOutroNacional) {
+    if (isVoltaNacional || isGPNacional || isClassicaNacional || isOutroNacional) {
         if (!/\b(regional|inter\s*regional|passeio|cpt|lazer|granfondo|maratona)\b/.test(titleClean)) {
             return 'Nacional';
         }
     }
 
-    // 4. REGIONAL & INTER-REGIONAL (Campeonatos Regionais, Troféus Regionais, Circuitos Regionais)
+    // 5. REGIONAL & INTER-REGIONAL (Campeonatos Regionais, Troféus Regionais, Circuitos Regionais)
     const isRegional = 
         /\b(regional|regionais|inter\s*regional|inter\s*regionais)\b/.test(titleClean) ||
         /\bcampeonatos?\s*(do\s*minho|do\s*porto|de\s*lisboa|de\s*aveiro|de\s*setubal|de\s*santarem|da\s*beira|do\s*algarve|da\s*madeira|dos\s*acores|concelhio|distrital)\b/.test(titleClean) ||
@@ -108,11 +116,11 @@ export const getAmbito = (name = '', det = '', tag = '') => {
         /\b(circuito\s*regional|trofeu\s*regional|pista\s*regional|escolas\s*regional)\b/.test(titleClean) ||
         /\b(associacao\s*de\s*ciclismo|ac\s*minho|ac\s*porto|ac\s*beira|ac\s*lisboa|ac\s*setubal|ac\s*santarem|ac\s*algarve|ac\s*vila\s*real)\b/.test(clean);
 
-    if (isRegional && !isCampeonatoNacional && !isVoltaNacional && !/\b(granfondo|passeio|maratona)\b/.test(titleClean)) {
+    if (isRegional && !isVoltaNacional && !/\b(granfondo|passeio|maratona)\b/.test(titleClean)) {
         return 'Regional';
     }
 
-    // 5. PROVAS ABERTAS / LAZER (Granfondos, Passeios, Maratonas, Raids, 24h, CPT)
+    // 6. PROVAS ABERTAS / LAZER (Granfondos, Passeios, Maratonas, Raids, 24h, CPT)
     const isAberta = 
         /\b(granfondo|mediofondo|minifondo|passeio|maratona|meia\s*maratona|raid|resistencia|24h|3h|4h|6h|12h|rota|desafio|audace|urban\s*race|cpt|lazer|aberta|open)\b/.test(clean);
 

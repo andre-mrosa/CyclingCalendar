@@ -2,7 +2,7 @@ export default {
     // Navigation & Tabs
     nav_general: "General",
     nav_agenda: "My Schedule",
-    nav_nationals: "Nationals",
+    nav_nationals: "National Champs",
     nav_internationals: "Internationals",
     nav_cups: "Cups",
     nav_regionals: "Regionals",
@@ -35,7 +35,7 @@ export default {
     page_favorites_empty_desc: "Browse the calendar and click the Star ⭐ next to any event to save it here.",
     page_favorites_explore_btn: "Explore Calendar",
     page_nationals_title: "National Championships",
-    page_nationals_subtitle: "Elite races and national championships only",
+    page_nationals_subtitle: "Official calendar of all Portuguese National Championships",
     page_cups_title: "Portuguese Cups",
     page_cups_subtitle: "Competitions scoring for the Portuguese Cup",
     page_regionals_title: "Regional Races",

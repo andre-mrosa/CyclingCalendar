@@ -2,7 +2,7 @@ export default {
     // Navigation & Tabs
     nav_general: "Geral",
     nav_agenda: "Minha Agenda",
-    nav_nationals: "Nacionais",
+    nav_nationals: "Camp. Nacionais",
     nav_internationals: "Internacionais",
     nav_cups: "Taças",
     nav_regionals: "Regionais",
@@ -35,7 +35,7 @@ export default {
     page_favorites_empty_desc: "Navega pelo calendário e clica na Estrela ⭐ ao lado do nome de qualquer prova para a guardares aqui.",
     page_favorites_explore_btn: "Explorar Calendário",
     page_nationals_title: "Campeonatos Nacionais",
-    page_nationals_subtitle: "Apenas a elite e campeonatos nacionais",
+    page_nationals_subtitle: "Calendário oficial de todos os Campeonatos Nacionais em Portugal",
     page_cups_title: "Taças de Portugal",
     page_cups_subtitle: "Competições a pontuar para a Taça de Portugal",
     page_regionals_title: "Provas Regionais",

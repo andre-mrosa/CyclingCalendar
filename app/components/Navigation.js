@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
 import { SignInButton, Show, UserButton, useUser, useAuth } from '@clerk/nextjs';
-import { Home, Trophy, MapPin, Bike, HelpCircle, Settings, Menu, X, Moon, Sun, Flag, Star, Globe, LogIn, CalendarCheck, Shield, Trash2, RotateCcw, ChevronDown } from 'lucide-react';
+import { Home, Trophy, MapPin, Bike, HelpCircle, Settings, Menu, X, Moon, Sun, Flag, Star, Globe, LogIn, CalendarCheck, Shield, Trash2, RotateCcw, ChevronDown, Award } from 'lucide-react';
 import SettingsPage from '../definicoes/page';
 import HelpPage from '../ajuda/page';
 import { useSettingsStore } from '../store/useSettingsStore';
@@ -138,7 +138,7 @@ export default function Navigation() {
     const allLinks = [
         { href: "/", label: t('nav_general'), keyName: "Geral", icon: <Home size={18} />, exact: true },
         { href: "/agenda", label: t('nav_agenda'), keyName: "Minha Agenda", icon: <CalendarCheck size={18} /> },
-        { href: "/nacionais", label: t('nav_nationals'), keyName: "Nacionais", icon: <Flag size={18} /> },
+        { href: "/nacionais", label: t('nav_nationals'), keyName: "Nacionais", icon: <Award size={18} /> },
         { href: "/internacionais", label: t('nav_internationals'), keyName: "Internacionais", icon: <Globe size={18} /> },
         { href: "/tacas", label: t('nav_cups'), keyName: "Taças", icon: <Trophy size={18} /> },
         { href: "/regionais", label: t('nav_regionals'), keyName: "Regionais", icon: <MapPin size={18} /> },
@@ -254,7 +254,7 @@ export default function Navigation() {
     const getPageInfo = (path) => {
         if (path === '/') return { label: t('nav_general'), icon: <Home size={17} className="text-blue-500 dark:text-blue-400" /> };
         if (path.startsWith('/agenda')) return { label: t('nav_agenda'), icon: <CalendarCheck size={17} className="text-blue-500 dark:text-blue-400" /> };
-        if (path.startsWith('/nacionais')) return { label: t('nav_nationals'), icon: <Flag size={17} className="text-blue-500 dark:text-blue-400" /> };
+        if (path.startsWith('/nacionais')) return { label: t('nav_nationals'), icon: <Award size={17} className="text-blue-500 dark:text-blue-400" /> };
         if (path.startsWith('/internacionais')) return { label: t('nav_internationals'), icon: <Globe size={17} className="text-blue-500 dark:text-blue-400" /> };
         if (path.startsWith('/tacas')) return { label: t('nav_cups'), icon: <Trophy size={17} className="text-blue-500 dark:text-blue-400" /> };
         if (path.startsWith('/regionais')) return { label: t('nav_regionals'), icon: <MapPin size={17} className="text-blue-500 dark:text-blue-400" /> };

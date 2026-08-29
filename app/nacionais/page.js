@@ -9,8 +9,8 @@ export default function Nacionais() {
         <CalendarView 
             pageTitle={t('page_nationals_title')} 
             pageSubtitle={t('page_nationals_subtitle')}
-            forceAmbito="Nacional"
-            activeFilters={['search', 'year', 'month', 'escalao', 'distrito']}
+            forceAmbito="Campeonato Nacional"
+            activeFilters={['search', 'year', 'month', 'escalao', 'distrito', 'modalidade']}
         />
     );
 }

@@ -2,7 +2,7 @@ export default {
     // Navigation & Tabs
     nav_general: "Général",
     nav_agenda: "Mon Agenda",
-    nav_nationals: "Nationaux",
+    nav_nationals: "Champ. Nationaux",
     nav_internationals: "Internationaux",
     nav_cups: "Coupes",
     nav_regionals: "Régionaux",
@@ -35,7 +35,7 @@ export default {
     page_favorites_empty_desc: "Parcourez le calendrier et cliquez sur l'Étoile ⭐ à côté d'une course pour l'enregistrer ici.",
     page_favorites_explore_btn: "Explorer le Calendrier",
     page_nationals_title: "Championnats Nationaux",
-    page_nationals_subtitle: "Courses d'élite et championnats nationaux uniquement",
+    page_nationals_subtitle: "Calendrier officiel de tous les Championnats Nationaux au Portugal",
     page_cups_title: "Coupes du Portugal",
     page_cups_subtitle: "Compétitions comptant pour la Coupe du Portugal",
     page_regionals_title: "Courses Régionales",
