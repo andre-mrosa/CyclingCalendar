@@ -1,5 +1,6 @@
 import { isSameEvent } from './eventMatcher.js';
 import { getEventDiscipline } from '../../utils/eventClassifier.js';
+import { getAmbito } from '../scrapers/utils.js';
 
 /**
  * Combina duas listas de links extras sem duplicar URLs
@@ -155,13 +156,17 @@ export function mergeEventRecords(existing, incoming) {
         }
     }
 
+    const finalTitle = existing.title || incoming.title;
+    const finalTag = getEventDiscipline(finalTitle, (details || '') + ' ' + (existing.description || incoming.description || '')) || existing.tag || incoming.tag;
+    const finalAmbito = getAmbito(finalTitle, (details || '') + ' ' + (existing.description || incoming.description || ''), finalTag);
+
     return {
-        title: existing.title || incoming.title,
+        title: finalTitle,
         date: date,
         sortDate: sortDate,
         details: details,
-        tag: getEventDiscipline(existing.title || incoming.title, (details || '') + ' ' + (existing.description || incoming.description || '')) || existing.tag || incoming.tag,
-        ambito: existing.ambito && existing.ambito !== 'Nacional' ? existing.ambito : (incoming.ambito || existing.ambito),
+        tag: finalTag,
+        ambito: finalAmbito,
         escaloes: escaloes,
         licenca: existing.licenca && existing.licenca !== 'Todas' ? existing.licenca : (incoming.licenca || existing.licenca),
         regiao: existing.regiao && existing.regiao !== 'Todas' ? existing.regiao : (incoming.regiao || existing.regiao),

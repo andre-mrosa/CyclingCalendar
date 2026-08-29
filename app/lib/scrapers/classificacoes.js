@@ -156,7 +156,7 @@ async function scrapeClassificacoesPage(url, retries = 2) {
             programaHtml += '</ul></div>';
         }
 
-        const cleanTitle = toTitleCase(title.replace(/^(BTT|Ciclismo|Gravel|Estrada)\s+/i, '').trim());
+        const cleanTitle = toTitleCase(title.replace(/^(BTT|Ciclismo|Gravel|Estrada|Modalidades|Início)\s*/i, '').trim());
         const tag = getTag(cleanTitle, location + ' ' + pageText);
         const regiao = getRegiao(cleanTitle, location);
         const distrito = getDistrito(cleanTitle, location);

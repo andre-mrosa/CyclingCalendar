@@ -9,8 +9,8 @@ export default function Internacionais() {
         <CalendarView 
             pageTitle={t('page_internationals_title')} 
             pageSubtitle={t('page_internationals_subtitle')}
-            forceEscalao="Profissional (UCI)"
-            activeFilters={['search', 'year', 'month', 'distrito']}
+            forceAmbito="Internacional"
+            activeFilters={['search', 'year', 'month', 'distrito', 'modalidade']}
         />
     );
 }
