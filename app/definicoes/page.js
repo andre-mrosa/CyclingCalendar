@@ -10,6 +10,7 @@ import { translateEscalao } from '../i18n/formatters';
 import { HelpCircle, Settings, ChevronUp, ChevronDown, RotateCcw, Shield, Trash2, AlertTriangle, CheckCircle2, Clock, Globe, Moon } from 'lucide-react';
 import RegionAssistant from '../components/RegionAssistant';
 import EscalaoAssistant from '../components/EscalaoAssistant';
+import FlagIcon from '../components/FlagIcon';
 
 export default function Conta() {
     const { theme, setTheme } = useTheme();
@@ -147,7 +148,7 @@ export default function Conta() {
                 )}
                 <section className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/5 rounded-2xl p-6 sm:p-8 shadow-sm dark:shadow-xl">
                     {/* Idioma da Aplicação */}
-                    <div className="flex flex-col md:flex-row md:items-center justify-between py-6 border-b border-slate-100 dark:border-slate-800/60 gap-4">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between py-6 border-b border-slate-100 dark:border-slate-800/60 gap-4">
                         <div>
                             <h3 className="font-semibold text-slate-900 dark:text-slate-200 flex items-center mb-1 text-base gap-2">
                                 <Globe size={16} className="text-blue-500" />
@@ -155,16 +156,32 @@ export default function Conta() {
                             </h3>
                             <p className="text-sm text-slate-500 dark:text-slate-400">{t('settings_lang_desc')}</p>
                         </div>
-                        <select 
-                            className="h-10 px-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors w-full md:w-auto font-medium cursor-pointer" 
-                            value={language || 'pt'} 
-                            onChange={(e) => setLanguage(e.target.value)}
-                        >
-                            <option value="pt">🇵🇹 {t('settings_lang_pt')}</option>
-                            <option value="en">🇬🇧 {t('settings_lang_en')}</option>
-                            <option value="es">🇪🇸 {t('settings_lang_es')}</option>
-                            <option value="fr">🇫🇷 {t('settings_lang_fr')}</option>
-                        </select>
+                        <div className="flex flex-wrap items-center gap-2">
+                            {[
+                                { code: 'pt', label: t('settings_lang_pt') || 'Português' },
+                                { code: 'en', label: t('settings_lang_en') || 'English' },
+                                { code: 'es', label: t('settings_lang_es') || 'Español' },
+                                { code: 'fr', label: t('settings_lang_fr') || 'Français' },
+                            ].map((item) => {
+                                const isActive = (language || 'pt') === item.code;
+                                return (
+                                    <button
+                                        key={item.code}
+                                        type="button"
+                                        onClick={() => setLanguage(item.code)}
+                                        className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer border ${
+                                            isActive
+                                                ? 'bg-blue-600/15 border-blue-500 text-blue-600 dark:text-blue-400 ring-1 ring-blue-500/30 shadow-sm'
+                                                : 'bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700'
+                                        }`}
+                                    >
+                                        <FlagIcon code={item.code} className="w-4 h-2.5 rounded-[2px] shadow-[0_0_0_1px_rgba(0,0,0,0.15)] shrink-0" />
+                                        <span>{item.label}</span>
+                                        {isActive && <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0"></div>}
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
 
                     {/* Tema Visual */}

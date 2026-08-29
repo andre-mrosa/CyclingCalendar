@@ -21,7 +21,9 @@ const NON_CYCLING = [
     'caminhada', 'atletismo', 'triathlon', 'triatlo', 
     'obstaculos', 'ocr', 'kayak', 'sunset-trail', 'corrida', 
     'maratona-da-europa', 'meia-maratona', 'trail-run', 'trail-noturno',
-    'skyrace', 'trail', 'ultra-trail', 'crosstrail', 'night-race'
+    'skyrace', 'trail', 'ultra-trail', 'crosstrail', 'night-race',
+    'passeio-tt', 'passeio tt', 'todo-terreno', 'todo terreno', '4x4',
+    'motocross', 'karting', 'quad', 'buggy', 'motorizado', 'aquatlo', 'duatlo'
 ];
 
 const MONTH_MAP = {
