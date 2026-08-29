@@ -151,12 +151,19 @@ export default function CalendarView({
     const [mounted, setMounted] = useState(false);
     const [localCachedEvents, setLocalCachedEvents] = useState([]);
 
-    // Load offline cache on mount to prevent SSR hydration mismatch
+    // On mount: if online, check /api/sync-version to invalidate stale cache.
+    // If the server has a newer scrape than what we have locally, wipe the
+    // events cache so fresh data is fetched from the API instead of localStorage.
     useEffect(() => {
         setMounted(true);
-        if (typeof window !== 'undefined') {
+        if (typeof window === 'undefined') return;
+
+        const EVENTS_KEY = 'cycling_calendar_cached_events';
+        const VERSION_KEY = 'cycling_calendar_sync_version';
+
+        const loadCache = () => {
             try {
-                const cached = localStorage.getItem('cycling_calendar_cached_events');
+                const cached = localStorage.getItem(EVENTS_KEY);
                 if (cached) {
                     const parsed = JSON.parse(cached);
                     if (Array.isArray(parsed) && parsed.length > 0) {
@@ -164,6 +171,30 @@ export default function CalendarView({
                     }
                 }
             } catch (e) {}
+        };
+
+        if (navigator.onLine) {
+            // Check if server has a newer scrape version
+            fetch('/api/sync-version')
+                .then(r => r.json())
+                .then(({ version }) => {
+                    if (!version) { loadCache(); return; }
+                    const localVersion = localStorage.getItem(VERSION_KEY);
+                    if (localVersion !== version) {
+                        // New scrape detected — clear stale cache
+                        try {
+                            localStorage.removeItem(EVENTS_KEY);
+                            localStorage.setItem(VERSION_KEY, version);
+                        } catch (e) {}
+                        // Don't load stale cache; SWR will fetch fresh data
+                    } else {
+                        loadCache();
+                    }
+                })
+                .catch(() => loadCache()); // If check fails, fall back to cache
+        } else {
+            // Offline — use whatever we have cached
+            loadCache();
         }
     }, []);
 
