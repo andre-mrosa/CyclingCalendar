@@ -54,7 +54,7 @@ export async function runUnifiedScrapingPipeline(triggeredBy = 'CRON', options =
         errors: []
     };
 
-    // 1, 2, 3 & 4. Execução Paralela Concorrente (FPCiclismo + Cabreira Solutions + Stop and Go + Classificações.net)
+    // 1, 2 & 3. Execução Paralela Concorrente (FPCiclismo + Cabreira Solutions + Stop and Go)
     await Promise.allSettled([
         // FPCiclismo
         (async () => {
@@ -98,24 +98,22 @@ export async function runUnifiedScrapingPipeline(triggeredBy = 'CRON', options =
                 stats.errors.push(`Stop and Go error: ${e.message}`);
                 await logError('SCRAPER', `Erro na sincronização Stop and Go: ${e.message}`, e);
             }
-        })(),
-
-        // Classificações.net
-        (async () => {
-            const cnStart = Date.now();
-            try {
-                await logInfo('SCRAPER', `Classificações.net: a consultar resultados e provas oficiais...`);
-                const classCount = await scrapeClassificacoes({ years: yearsToScrape });
-                const cnDuration = ((Date.now() - cnStart) / 1000).toFixed(1);
-                await logInfo('SCRAPER', `Classificações.net: sincronização concluída (${classCount || 0} provas) em ${cnDuration}s.`);
-            } catch (e) {
-                stats.errors.push(`Classificações.net error: ${e.message}`);
-                await logError('SCRAPER', `Erro na sincronização Classificações.net: ${e.message}`, e);
-            }
         })()
     ]);
 
-    // 4. Deep Scraping FPC (programas, regulamentos e anexos de forma rápida)
+    // 4. Classificações.net: Enriquecimento de Classificações e PDFs das provas já na BD
+    const cnStart = Date.now();
+    try {
+        await logInfo('SCRAPER', `Classificações.net: a cruzar resultados e PDFs com provas oficiais...`);
+        const classCount = await scrapeClassificacoes({ years: yearsToScrape });
+        const cnDuration = ((Date.now() - cnStart) / 1000).toFixed(1);
+        await logInfo('SCRAPER', `Classificações.net: sincronização concluída (${classCount || 0} provas enriquecidas) em ${cnDuration}s.`);
+    } catch (e) {
+        stats.errors.push(`Classificações.net error: ${e.message}`);
+        await logError('SCRAPER', `Erro na sincronização Classificações.net: ${e.message}`, e);
+    }
+
+    // 5. Deep Scraping FPC (programas, regulamentos e anexos de forma rápida)
     const deepStart = Date.now();
     try {
         let totalDeep = 0;

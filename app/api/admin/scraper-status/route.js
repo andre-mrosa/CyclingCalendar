@@ -74,11 +74,11 @@ export async function GET() {
         const sources = {
             fpc: { id: 'fpc', name: 'FPCiclismo', desc: 'Calendários FPC 26/27', status: 'running', duration: null, count: 0, message: 'A recolher provas...' },
             cabreira: { id: 'cabreira', name: 'Cabreira Solutions', desc: 'Granfondos & Provas', status: 'running', duration: null, count: 0, message: 'A recolher provas...' },
-            stopandgo: { id: 'stopandgo', name: 'Stop & Go', desc: 'Sitemap Ciclismo/BTT', status: 'running', duration: null, count: 0, message: 'A recolher provas...' },
-            classificacoes: { id: 'classificacoes', name: 'Classificações.net', desc: 'Rankings & PDFs', status: 'running', duration: null, count: 0, message: 'A recolher provas...' }
+            stopandgo: { id: 'stopandgo', name: 'Stop & Go', desc: 'Sitemap Ciclismo/BTT', status: 'running', duration: null, count: 0, message: 'A recolher provas...' }
         };
 
         const steps = {
+            classificacoes: { id: 'classificacoes', name: 'Resultados & PDFs', desc: 'Classificações.net', status: 'idle', duration: null, count: 0, message: 'Pendente' },
             deepScrape: { id: 'deepScrape', name: 'Deep Scraping FPC', desc: 'Programas & Cartazes', status: 'idle', duration: null, count: 0, message: 'Pendente' },
             unification: { id: 'unification', name: 'Unificação & Fusão', desc: 'Deduplicação Multi-Fonte', status: 'idle', duration: null, count: 0, message: 'Pendente' },
             translation: { id: 'translation', name: 'Tradução Multilíngue', desc: 'EN / ES / FR', status: 'idle', duration: null, count: 0, message: 'Pendente' }
@@ -125,19 +125,27 @@ export async function GET() {
                 sources.stopandgo.message = sources.stopandgo.count > 0 ? `${sources.stopandgo.count} provas BTT/Estrada` : 'Concluído';
             }
 
-            // Classificações.net
-            const cnCountMatch = msg.match(/concluída\s*\((\d+)\s*provas\)/i) || msg.match(/(\d+)\s*já\s*sincronizadas/i);
-            if (cnCountMatch) {
-                sources.classificacoes.count = parseInt(cnCountMatch[1], 10);
+            // Classificações.net (Enriquecimento Fase 2)
+            if (lowerMsg.includes('classificações.net: a cruzar')) {
+                if (sources.fpc.status !== 'done') sources.fpc.status = 'done';
+                if (sources.cabreira.status !== 'done') sources.cabreira.status = 'done';
+                if (sources.stopandgo.status !== 'done') sources.stopandgo.status = 'done';
+                steps.classificacoes.status = 'running';
+                steps.classificacoes.message = 'A enriquecer...';
             }
             if (lowerMsg.includes('classificações.net: sincronização')) {
-                sources.classificacoes.status = 'done';
-                sources.classificacoes.duration = durMatch ? `${durMatch[1]}s` : (sources.classificacoes.duration || 'Concluído');
-                sources.classificacoes.message = sources.classificacoes.count > 0 ? `${sources.classificacoes.count} provas/PDFs` : 'Concluído';
+                const cnCountMatch = msg.match(/concluída\s*\((\d+)\s*provas/i) || msg.match(/(\d+)\s*já\s*sincronizadas/i);
+                if (cnCountMatch) {
+                    steps.classificacoes.count = parseInt(cnCountMatch[1], 10);
+                }
+                steps.classificacoes.status = 'done';
+                steps.classificacoes.duration = durMatch ? `${durMatch[1]}s` : (steps.classificacoes.duration || 'Concluído');
+                steps.classificacoes.message = steps.classificacoes.count > 0 ? `${steps.classificacoes.count} enriquecidas` : 'Concluído';
             }
 
             // Deep Scraping FPC
             if (lowerMsg.includes('deep scraping fpc')) {
+                if (steps.classificacoes.status !== 'done') steps.classificacoes.status = 'done';
                 const deepCountMatch = msg.match(/(\d+)\s*programas/i);
                 if (deepCountMatch) steps.deepScrape.count = parseInt(deepCountMatch[1], 10);
                 steps.deepScrape.status = 'done';
@@ -178,15 +186,14 @@ export async function GET() {
             1: sources.fpc.duration,
             2: sources.cabreira.duration,
             3: sources.stopandgo.duration,
-            4: sources.classificacoes.duration,
+            4: steps.classificacoes.duration,
             5: steps.deepScrape.duration,
             6: steps.unification.duration
         };
 
         const allSourcesDone = sources.fpc.status === 'done' && 
                                sources.cabreira.status === 'done' && 
-                               sources.stopandgo.status === 'done' && 
-                               sources.classificacoes.status === 'done';
+                               sources.stopandgo.status === 'done';
 
         // If no log emitted for > 75 seconds, serverless instance was terminated
         if (timeSinceLatestLog > 75000) {

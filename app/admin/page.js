@@ -399,10 +399,10 @@ export default function AdminDashboardPage() {
         setScraperSources({
             fpc: { id: 'fpc', name: 'FPCiclismo', desc: 'Calendários FPC 26/27', status: 'running', duration: null, count: 0, message: 'A recolher...' },
             cabreira: { id: 'cabreira', name: 'Cabreira Solutions', desc: 'Granfondos & Provas', status: 'running', duration: null, count: 0, message: 'A recolher...' },
-            stopandgo: { id: 'stopandgo', name: 'Stop & Go', desc: 'Sitemap Ciclismo/BTT', status: 'running', duration: null, count: 0, message: 'A recolher...' },
-            classificacoes: { id: 'classificacoes', name: 'Classificações.net', desc: 'Rankings & PDFs', status: 'running', duration: null, count: 0, message: 'A recolher...' }
+            stopandgo: { id: 'stopandgo', name: 'Stop & Go', desc: 'Sitemap Ciclismo/BTT', status: 'running', duration: null, count: 0, message: 'A recolher...' }
         });
         setScraperSteps({
+            classificacoes: { id: 'classificacoes', name: 'Resultados & PDFs', desc: 'Classificações.net', status: 'idle', duration: null, count: 0, message: 'Pendente' },
             deepScrape: { id: 'deepScrape', name: 'Deep Scraping FPC', desc: 'Programas & Cartazes', status: 'idle', duration: null, count: 0, message: 'Pendente' },
             unification: { id: 'unification', name: 'Unificação & Fusão', desc: 'Deduplicação Multi-Fonte', status: 'idle', duration: null, count: 0, message: 'Pendente' },
             translation: { id: 'translation', name: 'Tradução Multilíngue', desc: 'EN / ES / FR', status: 'idle', duration: null, count: 0, message: 'Pendente' }
@@ -2047,19 +2047,19 @@ export default function AdminDashboardPage() {
 
                             {/* 2-Phase Visual Execution Dashboard */}
                             <div className="space-y-3.5 pt-1">
-                                {/* Phase 1: Extração Paralela Multi-Fonte (4 Fontes Concorrentes) */}
+                                {/* Phase 1: Extração Paralela Multi-Fonte (3 Fontes Concorrentes) */}
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
-                                            <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Fase 1: Extração Paralela (Simultâneo)</span>
+                                            <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Fase 1: Extração de Fontes Oficiais (Simultâneo)</span>
                                             <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold flex items-center gap-1">
                                                 <span className={`w-1.5 h-1.5 rounded-full ${runningOp ? 'bg-blue-400 animate-pulse' : 'bg-slate-500'}`}></span>
-                                                4 Fontes Concorrentes
+                                                3 Fontes Concorrentes
                                             </span>
                                         </div>
                                     </div>
                                     
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                                         {[
                                             { 
                                                 key: 'fpc', 
@@ -2081,13 +2081,6 @@ export default function AdminDashboardPage() {
                                                 icon: '⏱️',
                                                 desc: 'Sitemap BTT & Estrada', 
                                                 data: scraperSources?.stopandgo || { status: scraperStepDurations[3] ? 'done' : runningOp ? 'running' : 'idle', duration: scraperStepDurations[3], count: null }
-                                            },
-                                            { 
-                                                key: 'classificacoes', 
-                                                label: 'Classificações.net', 
-                                                icon: '🏆',
-                                                desc: 'Rankings & PDFs', 
-                                                data: scraperSources?.classificacoes || { status: scraperStepDurations[4] ? 'done' : runningOp ? 'running' : 'idle', duration: scraperStepDurations[4], count: null }
                                             },
                                         ].map(src => {
                                             const isDone = src.data.status === 'done' || (!runningOp && opOutput?.status === 'success');
@@ -2148,31 +2141,38 @@ export default function AdminDashboardPage() {
                                     </div>
                                 </div>
 
-                                {/* Phase 2: Processamento e Unificação Global (Sequencial) */}
+                                {/* Phase 2: Processamento, Enriquecimento e Unificação Global (Sequencial) */}
                                 <div className="space-y-2 pt-1">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Fase 2: Processamento e Fusão Global</span>
+                                        <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Fase 2: Processamento, Enriquecimento & Fusão Global</span>
                                     </div>
 
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
                                         {[
                                             {
-                                                key: 'deepScrape',
+                                                key: 'classificacoes',
                                                 stepNum: 1,
+                                                label: 'Classificações.net',
+                                                desc: 'Resultados & PDFs Oficiais',
+                                                data: scraperSteps?.classificacoes || { status: scraperStepDurations[4] ? 'done' : 'idle', duration: scraperStepDurations[4] }
+                                            },
+                                            {
+                                                key: 'deepScrape',
+                                                stepNum: 2,
                                                 label: 'Deep Scraping FPC',
-                                                desc: 'Programas, Regulamentos e Cartazes',
+                                                desc: 'Programas & Cartazes',
                                                 data: scraperSteps?.deepScrape || { status: scraperStepDurations[5] ? 'done' : 'idle', duration: scraperStepDurations[5] }
                                             },
                                             {
                                                 key: 'unification',
-                                                stepNum: 2,
+                                                stepNum: 3,
                                                 label: 'Unificação & Fusão',
-                                                desc: 'Cruzamento Multi-Fonte e Desduplicação',
+                                                desc: 'Cruzamento Multi-Fonte',
                                                 data: scraperSteps?.unification || { status: scraperStepDurations[6] ? 'done' : 'idle', duration: scraperStepDurations[6] }
                                             },
                                             {
                                                 key: 'translation',
-                                                stepNum: 3,
+                                                stepNum: 4,
                                                 label: 'Tradução Multilíngue',
                                                 desc: 'EN / ES / FR Automático',
                                                 data: scraperSteps?.translation || { status: (!runningOp && opOutput?.status === 'success') ? 'done' : 'idle', duration: null }
