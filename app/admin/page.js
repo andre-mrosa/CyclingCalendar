@@ -118,8 +118,10 @@ export default function AdminDashboardPage() {
     const [scraperStepDurations, setScraperStepDurations] = useState({}); // { 1: '9.2s', 2: '11.4s', ... }
     const [scraperSources, setScraperSources] = useState(null);
     const [scraperSteps, setScraperSteps] = useState(null);
+    const [lastScrapeResult, setLastScrapeResult] = useState(null); // Summary of the last completed scrape
     const stepStartTimesRef = useRef({});
     const lastStepRef = useRef(0);
+
 
     // 1. Fetch Stats & Analytics (with smart background silent refresh)
     const loadStats = useCallback(async (timeframeParam, silent = false) => {
@@ -233,6 +235,7 @@ export default function AdminDashboardPage() {
     // Check if a scraping pipeline is currently running on the server (e.g. on mount or after F5).
     // When it detects an active scrape, it sets state immediately from the same response —
     // no extra round-trip needed, no React cycle delay.
+    // When it detects a completed scrape, it stores the summary in lastScrapeResult.
     const checkScraperRunningStatus = useCallback(async () => {
         try {
             const res = await authFetch('/api/admin/scraper-status');
@@ -257,6 +260,16 @@ export default function AdminDashboardPage() {
                 // Kick off an extra immediate poll via ref if the polling loop already set it up
                 // (covers the case where this check fires while polling is already active)
                 if (pollStatusRef.current) pollStatusRef.current();
+            } else if (data.success && data.completed) {
+                // Scrape finished before/during this page load — show the "Último Scrape" summary
+                setLastScrapeResult({
+                    startTime: data.startTime,
+                    completionTime: data.completionTime,
+                    durationSeconds: data.durationSeconds,
+                    status: data.status,
+                    sources: data.sources || null,
+                    steps: data.steps || null,
+                });
             }
         } catch (e) {
             console.error('Error checking scraper running status:', e);
@@ -374,6 +387,15 @@ export default function AdminDashboardPage() {
                         if (data.sources) setScraperSources(data.sources);
                         if (data.steps) setScraperSteps(data.steps);
                         if (data.stepDurations) setScraperStepDurations(data.stepDurations);
+                        // Store the summary for the "Último Scrape" panel
+                        setLastScrapeResult({
+                            startTime: data.startTime,
+                            completionTime: data.completionTime,
+                            durationSeconds: data.durationSeconds,
+                            status: data.status,
+                            sources: data.sources || null,
+                            steps: data.steps || null,
+                        });
                         setOpOutput({
                             label: 'Sincronização & Scraping Completo',
                             status: data.status || 'success',
@@ -2001,6 +2023,79 @@ export default function AdminDashboardPage() {
                             </button>
                         </div>
                     </div>
+
+                    {/* Último Scrape — Summary panel visible after refresh when no scrape is active */}
+                    {!runningOp && lastScrapeResult && (
+                        <div className="bg-slate-900/60 rounded-2xl border border-emerald-500/20 p-5 space-y-4 shadow-lg">
+                            {/* Header */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="p-2 rounded-lg bg-emerald-500/15 text-emerald-400">
+                                        <CheckCircle2 size={18} />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-sm font-bold text-white">Último Scrape</h4>
+                                        <p className="text-xs text-slate-400 m-0">
+                                            {lastScrapeResult.completionTime
+                                                ? new Date(lastScrapeResult.completionTime).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                                                : 'Data desconhecida'}
+                                            {' · '}
+                                            <span className="text-emerald-400 font-semibold">{lastScrapeResult.durationSeconds}s total</span>
+                                        </p>
+                                    </div>
+                                </div>
+                                <span className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 ${
+                                    lastScrapeResult.status === 'success'
+                                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                        : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                                }`}>
+                                    {lastScrapeResult.status === 'success' ? <><CheckCircle2 size={12} /> CONCLUÍDO</> : <><AlertTriangle size={12} /> ERRO</>}
+                                </span>
+                            </div>
+
+                            {/* Phase 1 — Sources */}
+                            {lastScrapeResult.sources && (
+                                <div className="space-y-2">
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Fase 1 — Fontes Oficiais</p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                        {Object.values(lastScrapeResult.sources).map(src => (
+                                            <div key={src.id} className="bg-slate-800/60 rounded-xl border border-slate-700/50 p-3 flex flex-col gap-0.5">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-xs font-semibold text-slate-200">{src.name}</span>
+                                                    {src.duration && <span className="text-[10px] text-emerald-400 font-mono">{src.duration}</span>}
+                                                </div>
+                                                <span className="text-[11px] text-slate-400">{src.message || src.desc}</span>
+                                                {src.count > 0 && (
+                                                    <span className="text-[10px] text-blue-400 font-semibold mt-0.5">{src.count} provas</span>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Phase 2 — Steps */}
+                            {lastScrapeResult.steps && (
+                                <div className="space-y-2">
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Fase 2 — Enriquecimento & Pós-Processamento</p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        {Object.values(lastScrapeResult.steps).map(step => (
+                                            <div key={step.id} className="bg-slate-800/60 rounded-xl border border-slate-700/50 p-3 flex flex-col gap-0.5">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-xs font-semibold text-slate-200">{step.name}</span>
+                                                    {step.duration && <span className="text-[10px] text-emerald-400 font-mono">{step.duration}</span>}
+                                                </div>
+                                                <span className="text-[11px] text-slate-400">{step.message || step.desc}</span>
+                                                {step.count > 0 && (
+                                                    <span className="text-[10px] text-purple-400 font-semibold mt-0.5">{step.count} registos</span>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {/* Live Pipeline Execution Dashboard & Stepper */}
                     {(runningOp || opOutput) && (

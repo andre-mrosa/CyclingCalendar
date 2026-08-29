@@ -50,6 +50,78 @@ export async function GET() {
             const compTime = new Date(completionLog.createdAt).getTime();
             const totalDurationSecs = Math.max(0, (compTime - startTime) / 1000).toFixed(1);
 
+            // Parse logs from this run to reconstruct per-source and per-step stats
+            const runLogs = logs.filter(l => new Date(l.createdAt).getTime() >= (startTime - 2000));
+            const srcDone = { status: 'done', duration: null, count: 0, message: 'Concluído' };
+            const completedSources = {
+                fpc:       { id: 'fpc',       name: 'FPCiclismo',         desc: 'Calendários FPC 26/27',      ...srcDone },
+                cabreira:  { id: 'cabreira',  name: 'Cabreira Solutions', desc: 'Granfondos & Provas',        ...srcDone },
+                stopandgo: { id: 'stopandgo', name: 'Stop & Go',          desc: 'Sitemap Ciclismo/BTT',       ...srcDone }
+            };
+            const completedSteps = {
+                classificacoes: { id: 'classificacoes', name: 'Resultados & PDFs',     desc: 'Classificações.net',       status: 'done', duration: null, count: 0, message: 'Concluído' },
+                deepScrape:     { id: 'deepScrape',     name: 'Deep Scraping FPC',     desc: 'Programas & Cartazes',     status: 'done', duration: null, count: 0, message: 'Concluído' },
+                unification:    { id: 'unification',    name: 'Unificação & Fusão',    desc: 'Deduplicação Multi-Fonte', status: 'done', duration: null, count: 0, message: 'Concluído' },
+                translation:    { id: 'translation',    name: 'Tradução Multilíngue',  desc: 'EN / ES / FR',            status: 'done', duration: null, count: 0, message: 'Concluído' }
+            };
+
+            let fpcEvents = 0;
+            for (const l of runLogs) {
+                const msg = l.message || '';
+                const lowerMsg = msg.toLowerCase();
+                const durMatch = msg.match(/em\s*([0-9\.]+)s/i);
+
+                // FPC count & duration
+                const fpcCountMatch = msg.match(/concluída\s*\((\d+)\s*eventos\s*processados\)/i);
+                if (fpcCountMatch) { fpcEvents += parseInt(fpcCountMatch[1], 10); completedSources.fpc.count = fpcEvents; }
+                if (lowerMsg.includes('fpc: sincronização de calendários concluída')) {
+                    completedSources.fpc.duration = durMatch ? `${durMatch[1]}s` : null;
+                    completedSources.fpc.message = completedSources.fpc.count > 0 ? `${completedSources.fpc.count} provas` : 'Concluído';
+                }
+                // Cabreira count & duration
+                const cabMatch = msg.match(/(\d+)\s*provas\s*atualizadas/i);
+                if (cabMatch) completedSources.cabreira.count = parseInt(cabMatch[1], 10);
+                if (lowerMsg.includes('cabreira: sincronização concluída')) {
+                    completedSources.cabreira.duration = durMatch ? `${durMatch[1]}s` : null;
+                    completedSources.cabreira.message = completedSources.cabreira.count > 0 ? `${completedSources.cabreira.count} granfondos` : 'Concluído';
+                }
+                // Stop & Go count & duration
+                const sgMatch = msg.match(/(\d+)\s*provas\s*de\s*ciclismo/i) || msg.match(/concluída\s*\((\d+)\s*provas\)/i);
+                if (sgMatch) completedSources.stopandgo.count = parseInt(sgMatch[1], 10);
+                if (lowerMsg.includes('stop and go: sincronização')) {
+                    completedSources.stopandgo.duration = durMatch ? `${durMatch[1]}s` : null;
+                    completedSources.stopandgo.message = completedSources.stopandgo.count > 0 ? `${completedSources.stopandgo.count} provas BTT/Estrada` : 'Concluído';
+                }
+                // Classificações.net
+                if (lowerMsg.includes('classificações.net: sincronização')) {
+                    const cnMatch = msg.match(/concluída\s*\((\d+)\s*provas/i) || msg.match(/(\d+)\s*já\s*sincronizadas/i);
+                    if (cnMatch) completedSteps.classificacoes.count = parseInt(cnMatch[1], 10);
+                    completedSteps.classificacoes.duration = durMatch ? `${durMatch[1]}s` : null;
+                    completedSteps.classificacoes.message = completedSteps.classificacoes.count > 0 ? `${completedSteps.classificacoes.count} enriquecidas` : 'Concluído';
+                }
+                // Deep Scraping
+                if (lowerMsg.includes('deep scraping fpc')) {
+                    const deepMatch = msg.match(/(\d+)\s*programas/i);
+                    if (deepMatch) completedSteps.deepScrape.count = parseInt(deepMatch[1], 10);
+                    completedSteps.deepScrape.duration = durMatch ? `${durMatch[1]}s` : null;
+                    completedSteps.deepScrape.message = completedSteps.deepScrape.count > 0 ? `${completedSteps.deepScrape.count} atualizados` : 'Concluído';
+                }
+                // Unificação
+                if (lowerMsg.includes('unificação concluída')) {
+                    const unMatch = msg.match(/(\d+)\s*provas\s*fundidas/i);
+                    if (unMatch) completedSteps.unification.count = parseInt(unMatch[1], 10);
+                    completedSteps.unification.duration = durMatch ? `${durMatch[1]}s` : null;
+                    completedSteps.unification.message = completedSteps.unification.count > 0 ? `${completedSteps.unification.count} provas fundidas` : 'Sem duplicados';
+                }
+                // Tradução
+                if (lowerMsg.includes('tradução concluída')) {
+                    const trMatch = msg.match(/(\d+)\s*eventos\s*traduzidos/i);
+                    if (trMatch) completedSteps.translation.count = parseInt(trMatch[1], 10);
+                    completedSteps.translation.duration = durMatch ? `${durMatch[1]}s` : null;
+                    completedSteps.translation.message = completedSteps.translation.count > 0 ? `${completedSteps.translation.count} traduzidos` : 'Concluído';
+                }
+            }
+
             return Response.json({
                 success: true,
                 isRunning: false,
@@ -59,6 +131,8 @@ export async function GET() {
                 durationSeconds: totalDurationSecs,
                 startTime,
                 completionTime: compTime,
+                sources: completedSources,
+                steps: completedSteps,
                 logs: logs.slice(0, 25)
             });
         }
