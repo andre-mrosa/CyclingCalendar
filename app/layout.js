@@ -61,7 +61,7 @@ export const metadata = {
 };
 
 export const viewport = {
-  themeColor: "#153e35",
+  themeColor: "#0b1422",
 };
 
 import { Analytics } from "@vercel/analytics/next";

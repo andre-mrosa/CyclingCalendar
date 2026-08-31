@@ -22,8 +22,8 @@ export default function ColorPalettePicker() {
                             checked={normalizePalette(colorPalette) === p.id}
                             onChange={() => setColorPalette(p.id)} />
                         <span className={styles.paletteCard}>
-                            <span className={styles.paletteSwatch} aria-hidden="true" style={{ background: p.hero }}>
-                                <span style={{ background: p.accent }} /><span style={{ background: p.highlight }} />
+                            <span className={styles.paletteSwatch} aria-hidden="true">
+                                <span style={{ background: p.accent }} /><span style={{ background: p.nightAccent }} />
                             </span>
                             <span className={styles.paletteName}>{t(`settings_palette_${p.id}`)}<Check size={15} aria-hidden="true" /></span>
                         </span>

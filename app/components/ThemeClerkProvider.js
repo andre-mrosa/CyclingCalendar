@@ -29,9 +29,9 @@ export default function ThemeClerkProvider({ children }) {
         baseTheme: resolvedTheme === 'dark' ? dark : undefined,
         variables: {
           colorPrimary: resolvedTheme === 'dark' ? palette.nightAccent : palette.accent,
-          colorBackground: resolvedTheme === 'dark' ? '#182623' : '#ffffff',
-          colorText: resolvedTheme === 'dark' ? '#edf3ec' : '#182c2a',
-          borderRadius: '0.85rem',
+          colorBackground: resolvedTheme === 'dark' ? '#111d2a' : '#ffffff',
+          colorText: resolvedTheme === 'dark' ? '#e7eef4' : '#182a36',
+          borderRadius: '0.65rem',
           fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
         },
         elements: {

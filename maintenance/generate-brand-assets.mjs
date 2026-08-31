@@ -12,11 +12,11 @@ for (const [path, size] of [
     ['public/logo.jpg', 512], ['public/icon.jpg', 192],
     ['public/icon-192x192.jpg', 192], ['public/icon-512x512.jpg', 512],
 ]) {
-    await sharp(svg, { density: 600 }).resize(size, size).flatten({ background: '#153e35' })
+    await sharp(svg, { density: 600 }).resize(size, size).flatten({ background: '#152a3e' })
         .jpeg({ quality: 95 }).toFile(target(path));
 }
 // Maskable: all identity details fit inside the safe central circle.
-await sharp({ create: { width: 512, height: 512, channels: 3, background: '#153e35' } })
+await sharp({ create: { width: 512, height: 512, channels: 3, background: '#152a3e' } })
     .composite([{ input: await sharp(svg, { density: 600 }).resize(400, 400).png().toBuffer(), gravity: 'centre' }])
     .png().toFile(target('public/brand-maskable.png'));
 const png = await sharp(svg, { density: 600 }).resize(32, 32).png().toBuffer();

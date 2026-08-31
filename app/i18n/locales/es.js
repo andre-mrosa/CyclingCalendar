@@ -1,6 +1,6 @@
 export default {
     settings_palette_title: "Color de la aplicación",
-    settings_palette_desc: "Elige tu paleta. Funciona en modo claro y oscuro y se guarda en este dispositivo. Los colores de avisos y estados no cambian.",
+    settings_palette_desc: "El color se aplica solo a los detalles destacados. Los fondos permanecen neutros en modo claro y oscuro. Tu elección se guarda en este dispositivo.",
     settings_palette_forest: "Bosque",
     settings_palette_atlantic: "Atlántico",
     settings_palette_violet: "Violeta",

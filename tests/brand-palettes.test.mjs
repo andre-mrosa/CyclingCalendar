@@ -17,9 +17,9 @@ function contrast(a, b) {
 test('Every palette meets 4.5:1 for accent text, filled buttons and hero copy in both themes', () => {
     for (const p of COLOR_PALETTES) {
         for (const [fg, bg] of [
-            [p.accent, '#ffffff'], [p.accent, '#f5f6f2'], [p.accent, '#eef2ed'], [p.accent, p.soft],
-            [p.nightAccent, '#182623'], [p.nightAccent, '#101a19'], [p.nightAccent, '#20322d'], [p.nightAccent, p.nightSoft],
-            [p.highlight, p.hero], [p.heroMuted, p.hero], ['#f6f9ed', p.hero],
+            [p.accent, '#ffffff'], [p.accent, '#f5f7f9'], [p.accent, '#edf1f5'], [p.accent, p.soft],
+            [p.nightAccent, '#111d2a'], [p.nightAccent, '#020617'], [p.nightAccent, '#172534'], [p.nightAccent, p.nightSoft],
+            [p.nightAccent, '#152a3e'], ['#e7eef4', '#152a3e'],
         ]) assert.ok(contrast(fg, bg) >= 4.5, `${p.id}: ${fg} on ${bg} = ${contrast(fg, bg)}`);
     }
 });
@@ -30,7 +30,7 @@ test('Only curated identifiers are accepted and CSS leaves semantic colors alone
         assert.equal(normalizePalette(p.id), p.id);
         assert.ok(css.includes(`:root.dark[data-palette="${p.id}"]`));
     }
-    assert.doesNotMatch(css, /--(?:success|warning|error)/);
+    assert.doesNotMatch(css, /--(?:success|warning|error|background|foreground|site-surface|site-soft|site-nav|site-line|site-logo-bg)/);
 });
 function bootstrap(raw, blocked = false) {
     const document = { documentElement: { dataset: {} } };
@@ -40,6 +40,16 @@ function bootstrap(raw, blocked = false) {
     });
     return document.documentElement.dataset.palette;
 }
+test('Neutral surfaces retain readable text in both modes, independently of the accent', async () => {
+    const css = await readFile(new URL('../app/globals.css', import.meta.url), 'utf8');
+    for (const selector of [/:root\s*\{([^}]+)\}/, /\.dark\s*\{([^}]+)\}/]) {
+        const block = css.match(selector)[1];
+        const tokens = Object.fromEntries([...block.matchAll(/--([\w-]+):\s*(#[\da-f]{6})/gi)].map(m => [m[1], m[2]]));
+        for (const bg of ['background', 'site-surface', 'site-soft', 'site-nav']) {
+            for (const fg of ['foreground', 'site-muted']) assert.ok(contrast(tokens[fg], tokens[bg]) >= 4.5, fg + ' on ' + bg);
+        }
+    }
+});
 test('First paint restores all palettes and handles old, corrupt or unavailable storage', () => {
     for (const p of COLOR_PALETTES) assert.equal(bootstrap(JSON.stringify({ state: { colorPalette: p.id } })), p.id);
     for (const raw of [null, 'not json', '{}', 'null', '{"state":{"language":"pt"}}', '{"state":{"colorPalette":"invalid"}}']) {
@@ -83,7 +93,7 @@ test('All four languages include readable palette labels and icon-free UI copy',
 test('Published vector and install metadata use the same new identity', async () => {
     assert.equal(await readFile(new URL('../public/brand.svg', import.meta.url), 'utf8'), brandSVG());
     const manifest = JSON.parse(await readFile(new URL('../public/manifest.json', import.meta.url), 'utf8'));
-    assert.equal(manifest.theme_color, '#153e35');
+    assert.equal(manifest.theme_color, '#0b1422');
     assert.equal(manifest.icons.find(i => i.purpose === 'maskable').src, '/brand-maskable.png');
     for (const icon of manifest.icons) assert.ok((await readFile(new URL('../public' + icon.src, import.meta.url))).length > 0);
 });

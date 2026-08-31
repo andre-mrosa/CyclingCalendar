@@ -1,6 +1,6 @@
 export default {
     settings_palette_title: "App color",
-    settings_palette_desc: "Choose your palette. It works in light and dark modes and is saved on this device. Warning and status colors stay the same.",
+    settings_palette_desc: "Color applies only to accents. Backgrounds stay neutral in light and dark modes. Your choice is saved on this device.",
     settings_palette_forest: "Forest",
     settings_palette_atlantic: "Atlantic",
     settings_palette_violet: "Violet",

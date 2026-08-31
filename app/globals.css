@@ -4,28 +4,29 @@
 
 @layer base {
   :root {
-    --background: #f5f6f2;
-    --foreground: #182c2a;
+    --background: #f5f7f9;
+    --foreground: #182a36;
     --site-surface: #ffffff;
-    --site-soft: #eef2ed;
-    --site-line: #dde4de;
-    --site-muted: #667873;
-    --site-accent: #176b57;
-    --site-accent-soft: #e5f1e9;
-    --site-lime: #d5f478;
-    --site-hero: #153e35;
-    --site-hero-muted: #c6d8cb;
+    --site-soft: #edf1f5;
+    --site-line: #e1e7eb;
+    --site-muted: #596b79;
+    --site-accent: #126879;
+    --site-accent-soft: #e8f2f5;
+    --site-mark: #8ac9d4;
+    --site-logo-bg: #152a3e;
+    --site-nav: #ffffff;
   }
 
   .dark {
-    --background: #101a19;
-    --foreground: #edf3ec;
-    --site-surface: #182623;
-    --site-soft: #20322d;
-    --site-line: #30443c;
-    --site-muted: #a0b5ab;
-    --site-accent: #bce881;
-    --site-accent-soft: #293d2e;
+    --background: #020617;
+    --site-nav: #0b1422;
+    --foreground: #e7eef4;
+    --site-surface: #111d2a;
+    --site-soft: #172534;
+    --site-line: #2a3a49;
+    --site-muted: #a1b1bf;
+    --site-accent: #8ac9d4;
+    --site-accent-soft: #142c37;
   }
 
   body {
@@ -34,8 +35,8 @@
     font-family: var(--font-geist-sans), system-ui, sans-serif;
   }
 
-  :focus-visible { outline: 3px solid var(--site-accent); outline-offset: 4px; }
-  ::selection { background: var(--site-lime); color: var(--site-hero); }
+  :focus-visible { outline: 2px solid var(--site-accent); outline-offset: 4px; }
+  ::selection { background: var(--site-mark); color: var(--site-logo-bg); }
   html { scroll-padding-top: 140px; }
   button, input, select, textarea { font: inherit; }
 }
@@ -55,7 +56,7 @@
   animation: slide-up 0.4s ease-out;
 }
 
-.skip-link { position: fixed; top: 12px; left: 12px; transform: translateY(-160%); z-index: 10001; padding: 12px 20px; background: var(--site-lime); color: var(--site-hero); border-radius: 12px; font-weight: 700; }
+.skip-link { position: fixed; top: 12px; left: 12px; transform: translateY(-160%); z-index: 10001; padding: 12px 20px; background: var(--site-mark); color: var(--site-logo-bg); border-radius: 12px; font-weight: 700; }
 .skip-link:focus { transform: translateY(0); }
 
 @media (prefers-reduced-motion: reduce) {

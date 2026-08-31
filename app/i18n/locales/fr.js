@@ -1,6 +1,6 @@
 export default {
     settings_palette_title: "Couleur de l’application",
-    settings_palette_desc: "Choisissez votre palette. Elle fonctionne en mode clair et sombre et reste enregistrée sur cet appareil. Les couleurs des alertes et des statuts ne changent pas.",
+    settings_palette_desc: "La couleur s’applique uniquement aux accents. Les fonds restent neutres en mode clair et sombre. Votre choix est enregistré sur cet appareil.",
     settings_palette_forest: "Forêt",
     settings_palette_atlantic: "Atlantique",
     settings_palette_violet: "Violet",
