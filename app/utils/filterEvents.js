@@ -1,4 +1,4 @@
-import { isStageRace, getEventDiscipline } from './eventClassifier';
+import { isStageRace, getEventDiscipline, isOfficialNationalChampionship } from './eventClassifier.js';
 
 export function normalizeSearchString(str) {
     if (!str) return '';
@@ -120,7 +120,9 @@ export function filterEvents(events, filters) {
     }
 
     if (selectedAmbito && selectedAmbito !== 'Todos') {
-        filtered = filtered.filter(event => event.ambito === selectedAmbito);
+        filtered = filtered.filter(event => selectedAmbito === 'Campeonato Nacional'
+            ? isOfficialNationalChampionship(event)
+            : event.ambito === selectedAmbito);
     }
 
     if (selectedLicenca && selectedLicenca !== 'Todas') {

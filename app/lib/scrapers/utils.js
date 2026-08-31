@@ -39,13 +39,13 @@ export const fetchImageAsBase64 = async (url) => {
     }
 };
 
-import { getEventDiscipline } from '../../utils/eventClassifier.js';
+import { getEventDiscipline, isOfficialNationalChampionship } from '../../utils/eventClassifier.js';
 
 export const getTag = (name, det = '') => {
     return getEventDiscipline(name, det);
 };
 
-export const getAmbito = (name = '', det = '', tag = '') => {
+export const getAmbito = (name = '', det = '', tag = '', source = '') => {
     const raw = `${name} ${det} ${tag}`;
     const clean = raw
         .toLowerCase()
@@ -64,9 +64,7 @@ export const getAmbito = (name = '', det = '', tag = '') => {
         .trim();
 
     // 1. CAMPEONATOS NACIONAIS (Campeonatos de Portugal, Campeonatos Nacionais oficiais)
-    const isCampeonatoNacional = 
-        /\b(campeonatos?\s*(naciona(l|is)|de\s*portugal)|camp\.\s*naciona(l|is))\b/.test(clean) ||
-        /\b(cn\s+(estrada|btt|xco|xcm|xcc|dhi|dhu|pista|ciclocrosse|gravel|bmx|enduro|maratona|masters|paraciclismo|juventude))\b/.test(clean);
+    const isCampeonatoNacional = isOfficialNationalChampionship({ title: name, details: det, source });
 
     if (isCampeonatoNacional && !/\b(regional|inter\s*regional)\b/.test(titleClean)) {
         return 'Campeonato Nacional';

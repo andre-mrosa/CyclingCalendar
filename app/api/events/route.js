@@ -12,7 +12,7 @@ export async function GET(request) {
         const sourcesParam = searchParams.get('sources') || 'FPC,Cabreira,Stop and Go,Classificações.net';
         const activeSources = sourcesParam.split(',').map(s => s.trim()).filter(Boolean);
 
-        const andConditions = [];
+        const andConditions = [{ NOT: { source: { contains: 'Quarentena' } } }];
 
         if (activeSources.length > 0) {
             andConditions.push({
@@ -92,7 +92,7 @@ export async function GET(request) {
             { success: true, events: formattedEvents },
             {
                 headers: {
-                    'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=86400'
+                    'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60'
                 }
             }
         );

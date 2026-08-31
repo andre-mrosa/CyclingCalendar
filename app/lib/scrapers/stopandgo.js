@@ -2,10 +2,11 @@ import * as cheerio from 'cheerio';
 import { prisma } from '../db.js';
 import { 
     getAmbito, getTag, getRegiao, getDistrito, 
-    toTitleCase, sanitizeHtml, fetchImageAsBase64 
+    toTitleCase, sanitizeHtml
 } from './utils.js';
 import { logInfo, logError } from '../logger.js';
 import { saveOrMergeEvent } from '../merging/eventMerger.js';
+import { readStopAndGoHeader, stopAndGoEventUrl } from './stopandgoParser.js';
 
 const CYCLING_KEYWORDS = [
     'btt', 'bike', 'ciclismo', 'cycling', 'gravel', 'granfondo', 
@@ -30,109 +31,28 @@ const CYCLING_MODALITY_IDS = [
 const NON_CYCLING = [
     'caminhada', 'atletismo', 'triathlon', 'triatlo', 
     'obstaculos', 'ocr', 'kayak', 'sunset-trail', 'corrida', 
-    'maratona-da-europa', 'meia-maratona', 'trail-run', 'trail-noturno',
-    'skyrace', 'trail', 'ultra-trail', 'crosstrail', 'night-race',
+    'maratona-da-europa', 'meia-maratona', 'meia maratona', 'trail-run', 'trail-noturno',
+    'skyrace', 'skyrunning', 'sky-running', 'sky-race',
+    'trail', 'ultra-trail', 'ultra trail', 'crosstrail', 'cross-trail', 'night-race',
+    'vertical-race', 'vertical race', 'vertical-km', 'vertical km',
+    'trilhos', 'corta-mato', 'corta mato', 'cross-country-run',
+    'fun-race', 'fun race', 'up-run',
     'passeio-tt', 'passeio tt', 'todo-terreno', 'todo terreno', '4x4',
-    'motocross', 'karting', 'quad', 'buggy', 'motorizado', 'aquatlo', 'duatlo'
+    'motocross', 'karting', 'quad', 'buggy', 'motorizado', 'aquatlo', 'duatlo',
+    'running', 'mm-dao', 'mm-dão', 'mmaratona', 'edp-meia', 'edp-mm',
+    'night-urban-trail', 'arada-vertical', 'lamecum-trail', 'lamecum-vertical',
+    'louzanskyrace', 'marão-sky', 'marao-sky', 'abutres', 'ultra-skyrunning',
+    'inter-escolas', 'concelhio'
 ];
 
-const MONTH_MAP = {
-    'janeiro': '01', 'jan': '01',
-    'fevereiro': '02', 'fev': '02',
-    'março': '03', 'marco': '03', 'mar': '03',
-    'abril': '04', 'abr': '04',
-    'maio': '05', 'mai': '05',
-    'junho': '06', 'jun': '06',
-    'julho': '07', 'jul': '07',
-    'agosto': '08', 'ago': '08',
-    'setembro': '09', 'set': '09',
-    'outubro': '10', 'out': '10',
-    'novembro': '11', 'nov': '11',
-    'dezembro': '12', 'dez': '12'
-};
-
-const MONTH_ABBR = {
-    '01': 'JAN', '02': 'FEV', '03': 'MAR', '04': 'ABR',
-    '05': 'MAI', '06': 'JUN', '07': 'JUL', '08': 'AGO',
-    '09': 'SET', '10': 'OUT', '11': 'NOV', '12': 'DEZ'
-};
-
-/**
- * Normaliza datas do Stop and Go para formato padrão e sortDate
- */
-function parseStopAndGoDate(rawDateStr, fallbackYear = new Date().getFullYear().toString()) {
-    if (!rawDateStr) return { dateText: 'DATA A DEFINIR', sortDate: new Date(), year: fallbackYear };
-    const clean = rawDateStr.replace(/\s+/g, ' ').trim().toLowerCase();
-    const yearMatch = clean.match(/202\d/);
-    const year = yearMatch ? yearMatch[0] : fallbackYear;
-
-    // Pattern 1: Multi-month range like "27 fev - 1 mar" or "27 fev a 1 mar"
-    const multiMonthMatch = clean.match(/(\d{1,2})\s+([a-zçã]+)\s*(?:-|a)\s*(\d{1,2})\s+([a-zçã]+)/i);
-    if (multiMonthMatch) {
-        const startDay = multiMonthMatch[1].padStart(2, '0');
-        const startMonthName = multiMonthMatch[2];
-        const endDay = multiMonthMatch[3].padStart(2, '0');
-        const endMonthName = multiMonthMatch[4];
-
-        let startMonthNum = '01';
-        for (const [mName, mCode] of Object.entries(MONTH_MAP)) {
-            if (startMonthName.startsWith(mName) || mName.startsWith(startMonthName)) {
-                startMonthNum = mCode;
-                break;
-            }
-        }
-
-        let endMonthNum = '01';
-        for (const [mName, mCode] of Object.entries(MONTH_MAP)) {
-            if (endMonthName.startsWith(mName) || mName.startsWith(endMonthName)) {
-                endMonthNum = mCode;
-                break;
-            }
-        }
-
-        const startAbbr = MONTH_ABBR[startMonthNum] || 'JAN';
-        const endAbbr = MONTH_ABBR[endMonthNum] || 'MAR';
-        const sortDate = new Date(`${year}-${startMonthNum}-${startDay}T08:00:00Z`);
-        const dateText = `${startDay} ${startAbbr} a ${endDay} ${endAbbr} ${year}`;
-        return { dateText, sortDate, year };
-    }
-
-    // Single month for the rest
-    let monthNum = '01';
-    for (const [mName, mCode] of Object.entries(MONTH_MAP)) {
-        if (clean.includes(mName)) {
-            monthNum = mCode;
-            break;
-        }
-    }
-    const monthAbbr = MONTH_ABBR[monthNum] || 'JAN';
-
-    // Pattern 2: Same-month range like "18 abr - 19 abr" or "05 - 07 set" or "5 set - 7 set"
-    const rangeMatch = clean.match(/(\d{1,2})\s*(?:[a-zçã]+)?\s*(?:-|a)\s*(\d{1,2})/i);
-    if (rangeMatch && !clean.match(/^\d{1,2}\s+[a-zçã]+\s+202\d$/)) {
-        const startDay = rangeMatch[1].padStart(2, '0');
-        const endDay = rangeMatch[2].padStart(2, '0');
-        const sortDate = new Date(`${year}-${monthNum}-${startDay}T08:00:00Z`);
-        const dateText = `${startDay} ${monthAbbr} a ${endDay} ${monthAbbr} ${year}`;
-        return { dateText, sortDate, year };
-    }
-
-    // Pattern 3: Single day like "18 out 2026" or "7 jun 2026"
-    const singleDayMatch = clean.match(/(\d{1,2})/);
-    if (singleDayMatch) {
-        const day = singleDayMatch[1].padStart(2, '0');
-        const sortDate = new Date(`${year}-${monthNum}-${day}T08:00:00Z`);
-        const dateText = `${day} ${monthAbbr} ${year}`;
-        return { dateText, sortDate, year };
-    }
-
-    return { dateText: rawDateStr.toUpperCase(), sortDate: new Date(), year };
+function checkRateLimit(response) {
+    if (response.status === 429) throw Object.assign(new Error('Stop and Go limitou os pedidos (HTTP 429); retomar na próxima sincronização'), { rateLimited: true });
 }
 
 /**
  * Scrape detalhado de uma prova específica da Stop and Go com verificação de modalidade
  */
-async function scrapeEventPage(url, retries = 2) {
+export async function scrapeEventPage(url, retries = 2, options = {}) {
     try {
         let res = null;
         for (let attempt = 0; attempt <= retries; attempt++) {
@@ -142,113 +62,69 @@ async function scrapeEventPage(url, retries = 2) {
                     signal: AbortSignal.timeout(6000) 
                 });
                 if (res.ok) break;
+                // Stop the source on rate limiting instead of discarding pages
+                // and reporting a successful synchronization with missing events.
+                checkRateLimit(res);
             } catch (err) {
+                if (err.rateLimited) throw err;
                 if (attempt === retries) return null;
                 await new Promise(r => setTimeout(r, 400 * (attempt + 1)));
             }
         }
         if (!res || !res.ok) return null;
         const html = await res.text();
+        return parseStopAndGoEvent(html, url, options);
+    } catch (error) {
+        if (error.rateLimited) throw error;
+        return null;
+    }
+}
+
+export function parseStopAndGoEvent(html, url, options = {}) {
+    try {
+        url = stopAndGoEventUrl(url);
+        if (!url) return null;
         const $ = cheerio.load(html);
-
-        const pageText = $('body').text().replace(/\s+/g, ' ').trim();
-        const lower = pageText.toLowerCase();
-
-        const h1 = $('h1').first().text().replace(/\s+/g, ' ').trim();
-        let title = h1;
+        const header = readStopAndGoHeader(html);
+        let title = header.title;
         if (title.length > 10) {
             const half = Math.floor(title.length / 2);
             const firstHalf = title.slice(0, half).trim();
             const secondHalf = title.slice(half).trim();
             if (firstHalf === secondHalf) title = firstHalf;
         }
-        if (!title) return null;
-
-        // Modalidade no cabeçalho ou badge
-        let modality = '';
-        $('span, div, p, a, [class*="badge"], [class*="modality"]').each((_, el) => {
-            const t = $(el).text().trim().toLowerCase();
-            if (['btt', 'ciclismo', 'cycling', 'gravel', 'downhill mtb', 'downhill', 'dhi', 'dhu', 'trail/btt', 'trail / btt', 'granfondo', 'triatlo', 'triathlon', 'trail', 'atletismo', 'caminhada'].includes(t)) {
-                if (!modality) modality = t;
-            }
-        });
-
-        // Verificar se é ciclismo
-        const isDefiniteCycling = modality === 'btt' || modality === 'ciclismo' || modality === 'cycling' || 
-            modality === 'gravel' || modality === 'downhill mtb' || modality === 'downhill' || modality.includes('btt') ||
-            modality === 'granfondo' || lower.includes('btt') || lower.includes('ciclismo') || lower.includes('bicicleta') || 
-            lower.includes('gravel') || lower.includes('downhill') || lower.includes('dhi') || lower.includes('dhu') ||
-            lower.includes('granfondo') || lower.includes('mediofondo') || lower.includes('xco') || lower.includes('xcm') ||
-            lower.includes('enduro') || lower.includes('ngps') || lower.includes('passeio cicloturismo') ||
-            title.toLowerCase().includes('bike') || title.toLowerCase().includes('btt') || title.toLowerCase().includes('granfondo') ||
-            title.toLowerCase().includes('gravel') || title.toLowerCase().includes('downhill');
-
-        const isPureRunning = (modality === 'trail' || modality === 'atletismo' || modality === 'caminhada') &&
-            !modality.includes('btt') && !lower.includes('btt') && !lower.includes('ciclismo') && !lower.includes('bike') && !lower.includes('gravel') && !lower.includes('downhill');
-
-        if (!isDefiniteCycling || isPureRunning) {
-            return null;
-        }
+        if (!title || !header.cycling || !header.sortDate) return null;
+        const currentYear = new Date().getFullYear();
+        const years = (options.years || [currentYear - 1, currentYear, currentYear + 1]).map(String);
+        if (!years.includes(header.year)) return null;
 
         // Cartaz oficial
-        let posterUrl = $('img[src*="storage/events"]').first().attr('src') || null;
+        let posterUrl = $('h1').first().parent().find('img[src*="storage/events"]').first().attr('src') || null;
         if (posterUrl && !posterUrl.startsWith('http')) posterUrl = 'https://stopandgo.net' + posterUrl;
 
         // Data precisa do cabeçalho da prova
         const slug = url.split('/').filter(Boolean).pop();
-        const oldYearMatch = slug.match(/\b(201\d|202[0-3])\b/);
-        if (oldYearMatch) {
-            return null; // Provas históricas antigas fora do horizonte ativo
-        }
-
-        const slugYearMatch = slug.match(/202[4-9]/);
-        const fallbackYear = slugYearMatch ? slugYearMatch[0] : new Date().getFullYear().toString();
-
-        let rawDate = null;
-        $('[data-icon*="calendar"]').each((_, icon) => {
-            const text = $(icon).parent().text().replace(/\s+/g, ' ').trim();
-            if (/\d{1,2}/.test(text) && !rawDate) {
-                rawDate = text;
-            }
-        });
-
-        if (!rawDate) {
-            $('span.truncate').each((_, span) => {
-                const text = $(span).text().replace(/\s+/g, ' ').trim();
-                if (/\d{1,2}\s+[a-zçã]+\s+202\d/i.test(text) || /\d{1,2}\s+[a-zçã]+/i.test(text)) {
-                    if (!rawDate) rawDate = text;
-                }
-            });
-        }
-
-        const parsedDate = parseStopAndGoDate(rawDate, fallbackYear);
-        if (parsedDate.year < 2024) {
-            return null;
-        }
-        const dateText = parsedDate.dateText;
-        const sortDate = parsedDate.sortDate;
+        const dateText = header.date;
+        const sortDate = header.sortDate;
 
         // Localização
-        let location = 'Portugal';
-        const locMatch = pageText.match(/([A-ZÀ-Úa-zà-ú\s]+),\s*Portugal/);
-        if (locMatch) location = toTitleCase(locMatch[1].trim());
+        const location = toTitleCase(header.location.replace(/,\s*Portugal$/i, '').trim() || 'Portugal');
 
         // Links de Inscrição, Regulamento e Inscritos
         const extraLinks = [{ label: 'Página Stop and Go', link: url }];
         let registrationLink = null;
-        let rulesLink = null;
 
         $('a').each((_, el) => {
             const href = $(el).attr('href') || '';
             const text = $(el).text().replace(/\s+/g, ' ').trim();
             if (!href || href === '#' || href.startsWith('javascript:')) return;
             const fullUrl = href.startsWith('http') ? href : 'https://stopandgo.net' + href;
+            if (stopAndGoEventUrl(fullUrl) !== url) return;
 
             if (href.includes('/registrations/create') || text.toLowerCase() === 'inscrição' || text.toLowerCase() === 'inscrever') {
                 registrationLink = fullUrl;
                 if (!extraLinks.some(l => l.link === fullUrl)) extraLinks.push({ label: 'Inscrição (Stop and Go)', link: fullUrl });
             } else if (href.includes('/rules') || text.toLowerCase().includes('regulamento')) {
-                rulesLink = fullUrl;
                 if (!extraLinks.some(l => l.link === fullUrl)) extraLinks.push({ label: 'Regulamento Oficial', link: fullUrl });
             } else if (href.includes('/registrations') && !href.includes('/create')) {
                 if (!extraLinks.some(l => l.link === fullUrl)) extraLinks.push({ label: 'Lista de Inscritos', link: fullUrl });
@@ -266,16 +142,16 @@ async function scrapeEventPage(url, retries = 2) {
             programaHtml += '</ul></div>';
         }
 
-        const tag = getTag(title, location + ' ' + pageText);
+        const tag = getTag(title, header.modality);
         const regiao = getRegiao(location);
         const distrito = getDistrito(location);
-        const ambito = getAmbito(title, pageText);
+        const ambito = getAmbito(title, header.modality);
 
         const id = 'sg_' + slug.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 32);
 
         return {
             id,
-            title: toTitleCase(title.replace(/^(BTT|Ciclismo|Gravel|Estrada)\s+/i, '').trim()),
+            title: toTitleCase(title),
             date: dateText,
             sortDate,
             details: location,
@@ -310,6 +186,7 @@ export async function scrapeStopAndGo(options = {}) {
             headers: { 'User-Agent': 'Mozilla/5.0' },
             signal: AbortSignal.timeout(8000)
         });
+        checkRateLimit(res);
 
         let sitemapUrls = [];
         if (res.ok) {
@@ -319,6 +196,7 @@ export async function scrapeStopAndGo(options = {}) {
 
         // Recolher URLs de sitemap e das páginas de eventos gerais e por modalidades específicas de ciclismo (Downhill, Gravel, BTT, Trail/BTT, Ciclismo, Cycling)
         const eventPageUrls = new Set(sitemapUrls);
+        const cyclingListingUrls = new Set();
         
         // 1. Páginas gerais
         for (let page = 1; page <= 4; page++) {
@@ -327,6 +205,7 @@ export async function scrapeStopAndGo(options = {}) {
                     headers: { 'User-Agent': 'Mozilla/5.0' },
                     signal: AbortSignal.timeout(5000)
                 });
+                checkRateLimit(pRes);
                 if (pRes.ok) {
                     const pHtml = await pRes.text();
                     const $p = cheerio.load(pHtml);
@@ -338,7 +217,7 @@ export async function scrapeStopAndGo(options = {}) {
                         }
                     });
                 }
-            } catch (err) {}
+            } catch (err) { if (err.rateLimited) throw err; }
         }
 
         // 2. Abas dedicadas de modalidades de ciclismo (Downhill MTB, Gravel, Trail/BTT, BTT, Ciclismo, Cycling)
@@ -350,6 +229,7 @@ export async function scrapeStopAndGo(options = {}) {
                         headers: { 'User-Agent': 'Mozilla/5.0' },
                         signal: AbortSignal.timeout(5000)
                     });
+                    checkRateLimit(mRes);
                     if (mRes.ok) {
                         const mHtml = await mRes.text();
                         const $m = cheerio.load(mHtml);
@@ -357,18 +237,20 @@ export async function scrapeStopAndGo(options = {}) {
                         $m('a[href*="/events/"]').each((_, a) => {
                             const href = $m(a).attr('href');
                             if (href && !href.endsWith('/events') && !href.includes('?')) {
-                                const full = href.startsWith('http') ? href : 'https://stopandgo.net' + href;
+                                const full = stopAndGoEventUrl(href);
+                                if (!full) return;
                                 eventPageUrls.add(full);
+                                cyclingListingUrls.add(full);
                                 foundInPage++;
                             }
                         });
                         if (foundInPage === 0) break; // Sem mais páginas para esta modalidade
                     }
                 }
-            } catch (err) {}
+            } catch (err) { if (err.rateLimited) throw err; }
         }
 
-        const allUrls = Array.from(eventPageUrls);
+        const allUrls = [...new Set([...eventPageUrls].map(stopAndGoEventUrl).filter(Boolean))];
 
         // Filtrar provas potenciais de ciclismo
         const currentYear = new Date().getFullYear();
@@ -377,57 +259,39 @@ export async function scrapeStopAndGo(options = {}) {
         const targetUrls = allUrls.filter(u => {
             const lower = u.toLowerCase();
             const hasExplicitYear = years.some(yr => lower.includes(yr));
-            const hasNoYearInSlug = !lower.match(/202\d/); // URLs sem ano no slug
+            const hasNoYearInSlug = !lower.match(/\b20\d{2}\b/); // URLs sem ano no slug
             const matchesYear = hasExplicitYear || hasNoYearInSlug || options.fullHistorical;
 
             const isCycling = CYCLING_KEYWORDS.some(kw => lower.includes(kw));
             const isExcluded = NON_CYCLING.some(kw => lower.includes(kw) && !lower.includes('cycling') && !lower.includes('bike') && !lower.includes('btt') && !lower.includes('gravel') && !lower.includes('downhill'));
-            return matchesYear && (isCycling || hasNoYearInSlug) && !isExcluded;
+            // Yearless sitemap entries can be decades old. Accept them only
+            // when also found on a current cycling listing; validate the header next.
+            return matchesYear && (cyclingListingUrls.has(u) || (hasExplicitYear && isCycling && !isExcluded));
         });
 
-        // Consultar provas Stop and Go já existentes na base de dados para retoma incremental instantânea
-        const existingEvents = await prisma.event.findMany({
-            where: { source: { contains: 'Stop' } },
-            select: { id: true, date: true, image: true, details: true }
-        });
-        const existingMap = new Map(existingEvents.map(e => [e.id, e]));
+        // A populated image/date does not prove this is a cycling event.
+        const urlsToScrape = targetUrls;
+        logInfo('SCRAPER', `Stop and Go: ${urlsToScrape.length} cabeçalhos de provas a validar...`);
 
-        // Identificar quais os URLs que realmente precisam de download completo
-        const urlsToScrape = [];
-        let alreadySyncedCount = 0;
-
-        for (const u of targetUrls) {
-            const slug = u.split('/').filter(Boolean).pop() || '';
-            const id = 'sg_' + slug.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 32);
-            const existing = existingMap.get(id);
-
-            if (existing && existing.date && !existing.date.includes('DEFINIR') && existing.image && existing.details && !options.forceAll) {
-                alreadySyncedCount++;
-            } else {
-                urlsToScrape.push(u);
-            }
-        }
-
-        logInfo('SCRAPER', `Stop and Go: ${targetUrls.length} provas candidatas (${alreadySyncedCount} já sincronizadas, ${urlsToScrape.length} a processar/atualizar)...`);
-
-        let savedOrMergedCount = alreadySyncedCount;
-        const BATCH_SIZE = 8;
+        let savedOrMergedCount = 0;
+        const BATCH_SIZE = 2;
         for (let i = 0; i < urlsToScrape.length; i += BATCH_SIZE) {
             const chunk = urlsToScrape.slice(i, i + BATCH_SIZE);
-            const events = await Promise.all(chunk.map(url => scrapeEventPage(url)));
+            const events = await Promise.all(chunk.map(url => scrapeEventPage(url, 2, { years })));
             for (const ev of events) {
                 if (ev) {
                     await saveOrMergeEvent(prisma, ev);
                     savedOrMergedCount++;
                 }
             }
+            if (i + BATCH_SIZE < urlsToScrape.length) await new Promise(resolve => setTimeout(resolve, 1200));
         }
 
         logInfo('SCRAPER', `Stop and Go: ${savedOrMergedCount} provas de ciclismo processadas e fundidas com sucesso.`);
         return savedOrMergedCount;
 
     } catch (e) {
-        logError('SCRAPER', `Erro global no scraper Stop and Go: ${e.message}`, e);
-        return 0;
+        await logError('SCRAPER', `Erro global no scraper Stop and Go: ${e.message}`, e);
+        throw e;
     }
 }

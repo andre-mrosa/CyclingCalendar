@@ -1,5 +1,5 @@
 import { isSameEvent } from './eventMatcher.js';
-import { getEventDiscipline } from '../../utils/eventClassifier.js';
+import { getEventDiscipline, isOfficialNationalChampionship } from '../../utils/eventClassifier.js';
 import { getAmbito } from '../scrapers/utils.js';
 
 /**
@@ -148,6 +148,13 @@ export function mergeEventRecords(existing, incoming) {
         details = incoming.details;
     }
 
+    // Fresh official rows/header data repair previously guessed dates/locations.
+    if (incoming.source === 'FPC' || (incoming.source === 'Stop and Go' && existing.source === 'Stop and Go')) {
+        date = incoming.date;
+        sortDate = incoming.sortDate;
+        details = incoming.details || details;
+    }
+
     // Programa e Documentos: se ambos tiverem conteúdo útil, combina sem perda
     let programa = existing.programa || incoming.programa;
     if (existing.programa && incoming.programa && existing.programa !== incoming.programa) {
@@ -156,9 +163,10 @@ export function mergeEventRecords(existing, incoming) {
         }
     }
 
-    const finalTitle = existing.title || incoming.title;
-    const finalTag = getEventDiscipline(finalTitle, (details || '') + ' ' + (existing.description || incoming.description || '')) || existing.tag || incoming.tag;
-    const finalAmbito = getAmbito(finalTitle, (details || '') + ' ' + (existing.description || incoming.description || ''), finalTag);
+    const official = incoming.source === 'FPC' ? incoming : existing.source?.includes('FPC') ? existing : null;
+    const finalTitle = official && isOfficialNationalChampionship(official) ? official.title : existing.title || incoming.title;
+    const finalTag = getEventDiscipline({ title: finalTitle, details: official?.details || details, tag: official?.tag || incoming.tag || existing.tag });
+    const finalAmbito = getAmbito(finalTitle, official?.details || details || '', finalTag, sources);
 
     return {
         title: finalTitle,
@@ -199,6 +207,7 @@ export async function saveOrMergeEvent(prisma, eventData) {
     });
 
     if (existingById) {
+        if (existingById.source?.includes('Quarentena')) return { action: 'quarantined', event: existingById };
         const mergedData = mergeEventRecords(existingById, eventData);
         const updated = await prisma.event.update({
             where: { id: existingById.id },

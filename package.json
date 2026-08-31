@@ -1,12 +1,13 @@
 {
   "name": "cycling-calendar-app",
-  "version": "0.9.32",
+  "version": "0.9.33",
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
     "lint": "next lint",
+    "test": "node --test tests/*.test.mjs",
     "postinstall": "prisma generate"
   },
   "dependencies": {

@@ -98,7 +98,8 @@ export default function CalendarView({
     const [selectedTags, setSelectedTags] = useState([]);
     const [showFilters, setShowFilters] = useState(false);
     const [selectedType, setSelectedType] = useState('Todos');
-    const [pastEventsFilter, setPastEventsFilter] = useState('futuros');
+    const defaultPastEventsFilter = forceAmbito === 'Campeonato Nacional' ? 'todos' : 'futuros';
+    const [pastEventsFilter, setPastEventsFilter] = useState(defaultPastEventsFilter);
     const [visibleCount, setVisibleCount] = useState(15);
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [isOffline, setIsOffline] = useState(false);
@@ -386,7 +387,7 @@ export default function CalendarView({
         setMonthTo(12);
         setSelectedTags([]);
         setSelectedType('Todos');
-        setPastEventsFilter('futuros');
+        setPastEventsFilter(defaultPastEventsFilter);
         setSearchTerm('');
     };
 
@@ -436,31 +437,18 @@ export default function CalendarView({
                             <span className="truncate">{showFilters ? t('filter_button_close') : t('filter_button_open')}</span>
                         </button>
 
-                        {/* Toggle Switch para Ver Provas Passadas (Default: Futuros) */}
-                        <button 
-                            type="button"
-                            onClick={() => setPastEventsFilter(prev => prev === 'passados' ? 'futuros' : 'passados')}
-                            className={`inline-flex items-center justify-between sm:justify-center gap-1.5 sm:gap-2.5 h-10 px-2.5 sm:px-3.5 rounded-xl border text-[11.5px] min-[380px]:text-xs sm:text-sm font-semibold transition-all cursor-pointer select-none whitespace-nowrap ${
-                                pastEventsFilter === 'passados' 
-                                ? 'bg-blue-600/10 text-blue-600 dark:text-blue-400 border-blue-500/30 shadow-sm' 
-                                : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 shadow-sm hover:border-slate-300 dark:hover:border-slate-700'
-                            }`}
-                            title={pastEventsFilter === 'passados' ? t('filter_past_title_past') : t('filter_past_title_upcoming')}
+                        <select
+                            aria-label={t('filter_past_upcoming')}
+                            value={pastEventsFilter}
+                            onChange={e => setPastEventsFilter(e.target.value)}
+                            className="h-10 px-2.5 sm:px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-xs sm:text-sm font-semibold shadow-sm cursor-pointer"
                         >
-                            <div className="flex items-center gap-1.5 sm:gap-2 truncate">
-                                <History size={14} className={`shrink-0 ${pastEventsFilter === 'passados' ? 'text-blue-500 dark:text-blue-400' : 'text-slate-400'}`} />
-                                <span className="truncate">{t('filter_past_events')}</span>
-                            </div>
-                            
-                            {/* Smooth Pill Switch */}
-                            <div className={`w-7 sm:w-8 h-4 sm:h-4.5 rounded-full p-0.5 transition-colors duration-200 ease-in-out flex items-center shrink-0 ${
-                                pastEventsFilter === 'passados' ? 'bg-blue-600 justify-end' : 'bg-slate-200 dark:bg-slate-700 justify-start'
-                            }`}>
-                                <div className="w-3 sm:w-3.5 h-3 sm:h-3.5 rounded-full bg-white shadow-sm"></div>
-                            </div>
-                        </button>
+                            <option value="todos">{t('filter_all_events')}</option>
+                            <option value="futuros">{t('filter_upcoming_only')}</option>
+                            <option value="passados">{t('filter_past_only')}</option>
+                        </select>
                         
-                        {(selectedEscaloes.length > 0 || selectedDistrito !== 'Todos' || selectedRegiao !== 'Todas' || selectedTags.length > 0 || selectedType !== 'Todos' || monthFrom !== 1 || monthTo !== 12 || searchTerm !== '' || pastEventsFilter !== 'futuros') && (
+                        {(selectedEscaloes.length > 0 || selectedDistrito !== 'Todos' || selectedRegiao !== 'Todas' || selectedTags.length > 0 || selectedType !== 'Todos' || monthFrom !== 1 || monthTo !== 12 || searchTerm !== '' || pastEventsFilter !== defaultPastEventsFilter) && (
                             <button 
                                 onClick={clearAllFilters}
                                 title={t('filter_clear_all')}

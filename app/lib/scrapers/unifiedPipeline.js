@@ -27,10 +27,10 @@ export async function runUnifiedScrapingPipeline(triggeredBy = 'CRON', options =
     let yearsToScrape;
     if (shouldScrapePastYears) {
         yearsToScrape = [
-            (currentYear - 2).toString(), // 2024 (passado)
-            (currentYear - 1).toString(), // 2025 (passado recente)
             currentYear.toString(),       // 2026 (presente)
-            (currentYear + 1).toString()  // 2027 (futuro)
+            (currentYear + 1).toString(), // 2027 (futuro)
+            (currentYear - 1).toString(), // 2025 (passado recente)
+            (currentYear - 2).toString()  // 2024 (passado)
         ];
     } else {
         yearsToScrape = [
@@ -49,6 +49,7 @@ export async function runUnifiedScrapingPipeline(triggeredBy = 'CRON', options =
         mode: shouldScrapePastYears ? 'FULL_HISTORICAL' : 'DAILY_ACTIVE',
         sourcesScraped: ['FPC', 'Cabreira', 'Stop and Go', 'Classificações.net'],
         yearsScraped: yearsToScrape,
+        fpcEvents: {},
         deepScrapedFpc: 0,
         mergedEvents: 0,
         errors: []
@@ -62,10 +63,14 @@ export async function runUnifiedScrapingPipeline(triggeredBy = 'CRON', options =
             try {
                 await logInfo('SCRAPER', `FPC: a consultar calendários oficiais (${yearsToScrape.join(', ')})...`);
                 for (const yr of yearsToScrape) {
-                    await scrapeFPC(yr);
+                    try {
+                        stats.fpcEvents[yr] = await scrapeFPC(yr);
+                    } catch (error) {
+                        stats.errors.push(`FPC ${yr}: ${error.message}`);
+                    }
                 }
                 const fpcDuration = ((Date.now() - fpcStart) / 1000).toFixed(1);
-                await logInfo('SCRAPER', `FPC: sincronização de calendários concluída com sucesso em ${fpcDuration}s.`);
+                await logInfo('SCRAPER', `FPC: ${Object.keys(stats.fpcEvents).length}/${yearsToScrape.length} épocas sincronizadas em ${fpcDuration}s.`);
             } catch (e) {
                 stats.errors.push(`FPC error: ${e.message}`);
                 await logError('SCRAPER', `Erro na sincronização FPC: ${e.message}`, e);

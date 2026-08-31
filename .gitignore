@@ -73,5 +73,9 @@ banner.jpg
 *.mjs
 public/out.css
 
+!tests/*.mjs
+!maintenance/*.mjs
+/maintenance/backups/
+
 
 dev.db

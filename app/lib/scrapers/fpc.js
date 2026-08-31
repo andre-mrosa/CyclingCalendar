@@ -1,7 +1,7 @@
 import * as cheerio from 'cheerio';
 import { prisma } from '../db.js';
 import { 
-    parseSortDate, getAmbito, getTag, getRegiao, 
+    getAmbito, getTag, getRegiao,
     getDistrito, toTitleCase, getLicenca, sanitizeHtml, fetchImageAsBase64 
 } from './utils.js';
 import { logInfo, logError } from '../logger.js';
@@ -167,34 +167,57 @@ export const deepScrapeFPC = async (link) => {
     return null;
 };
 
-export const scrapeFPC = async (year) => {
-    try {
-        logInfo('SCRAPER', `Início da sincronização FPCiclismo para o ano ${year}`);
-        const formData = new URLSearchParams();
-        formData.append('epoca_site', year);
-        formData.append('mes_de_new', '01');
-        formData.append('mes_ate_new', '12');
-
-        const response = await fetch(`https://www.fpciclismo.pt/calendario`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'User-Agent': 'Mozilla/5.0'
-            },
-            body: formData.toString()
+export const fetchFPCCalendar = async (year) => {
+        year = String(year);
+        if (!/^\d{4}$/.test(year)) throw new Error('Época FPC inválida');
+        // epoca_site2 is the form's hidden submit marker. Without it the server
+        // silently ignores the requested months and returns the current month.
+        const formData = new URLSearchParams({
+            epoca_site: year, epoca_site2: year,
+            mes_de_new: '01', mes_ate_new: '12',
+            id_ambito_new: '', id_ambito2_new: '', classeprova_prova_new: '',
+            associacao_site_new: '', organizador_site_new: '', vertente_new: ''
         });
 
-        if (!response.ok) {
-            logError('SCRAPER', `Falha ao aceder ao calendário FPCiclismo (HTTP ${response.status})`);
-            return;
+        let html;
+        for (let attempt = 0; attempt < 3; attempt++) {
+            try {
+                const response = await fetch('https://www.fpciclismo.pt/calendario', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'Mozilla/5.0' },
+                    body: formData.toString(),
+                    cache: 'no-store',
+                    signal: AbortSignal.timeout(20000)
+                });
+                if (!response.ok) throw new Error(`Falha ao aceder ao calendário FPC (HTTP ${response.status})`);
+                html = new TextDecoder('iso-8859-1').decode(await response.arrayBuffer());
+                break;
+            } catch (error) {
+                if (attempt === 2) throw error;
+                await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
+            }
         }
+        return parseFPCCalendar(html, year);
+};
 
-        const buffer = await response.arrayBuffer();
-        const html = new TextDecoder('iso-8859-1').decode(buffer);
+export const parseFPCCalendar = (html, year) => {
         const $ = cheerio.load(html);
+        for (const [field, expected] of Object.entries({ epoca_site: String(year), mes_de_new: '01', mes_ate_new: '12' })) {
+            if ($(`select[name="${field}"]`).val() !== expected) {
+                throw new Error(`A FPC não confirmou ${field}=${expected}; calendário parcial rejeitado`);
+            }
+        }
+        if (!$('table.dc_table_s12').length) {
+            // Unpublished future seasons have the confirmed form, no race classes
+            // and no table. This is different from a partial/error response.
+            const classes = $('select[name="classeprova_prova_new"]');
+            const hasRaceClasses = classes.find('option').toArray().some(option => $(option).attr('value'));
+            if (Number(year) > new Date().getFullYear() && classes.length && !hasRaceClasses && /<\/html>/i.test(html)) return [];
+            throw new Error('Tabela do calendário FPC não encontrada');
+        }
         
-        const rows = $('tr').toArray();
-        let addedCount = 0;
+        const rows = $('table.dc_table_s12 tbody tr').toArray();
+        const events = new Map();
         for (const element of rows) {
             const ths = $(element).find('th');
             const cols = $(element).find('td');
@@ -207,8 +230,11 @@ export const scrapeFPC = async (year) => {
                 const extraText = $(cols[2]).text().trim();
                 const organizadorText = cols.length > 3 ? $(cols[3]).text().trim() : null;
                 
-                if (nameText && dateText && dateText.length > 2 && !nameText.toLowerCase().includes('evento')) {
+                if (nameText && /^\d{2}-\d{2}-\d{4}$/.test(dateText)) {
                     const parts = dateText.split('-');
+                    if (parts[2] !== String(year)) throw new Error(`Época incorreta na linha FPC: ${dateText}`);
+                    const sortDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00Z`);
+                    if (Number.isNaN(sortDate.getTime())) throw new Error(`Data FPC inválida: ${dateText}`);
                     const months = {'01':'JAN', '02':'FEV', '03':'MAR', '04':'ABR', '05':'MAI', '06':'JUN', '07':'JUL', '08':'AGO', '09':'SET', '10':'OUT', '11':'NOV', '12':'DEZ'};
                     if (parts.length === 3) dateText = `${parts[0]} ${months[parts[1]] || parts[1]} ${parts[2]}`;
                     
@@ -244,7 +270,7 @@ export const scrapeFPC = async (year) => {
                     if (escaloes.length === 0) escaloes.push('Geral / Vários');
                     escaloes = [...new Set(escaloes)];
 
-                    const ambitoVal = getAmbito(nameText, det);
+                    const ambitoVal = getAmbito(nameText, det, '', 'FPC');
                     
                     let fpcLinks = [];
                     let mainLink = 'https://www.fpciclismo.pt/';
@@ -276,7 +302,7 @@ export const scrapeFPC = async (year) => {
                     const eventData = {
                         title: nameText,
                         date: dateText,
-                        sortDate: new Date(parseSortDate(dateText, year)),
+                        sortDate,
                         details: `${locText} | ${extraText}`,
                         tag: getTag(nameText, det),
                         ambito: ambitoVal,
@@ -290,15 +316,24 @@ export const scrapeFPC = async (year) => {
                         organizador: organizadorText || null
                     };
 
-                    await saveOrMergeEvent(prisma, { id: id, ...eventData });
-                    addedCount++;
+                    events.set(id, { id, ...eventData });
                 }
             }
         }
 
-        logInfo('SCRAPER', `Sincronização FPC ${year} concluída (${addedCount} eventos processados)`);
+        return [...events.values()];
+};
+
+export const scrapeFPC = async (year) => {
+    try {
+        await logInfo('SCRAPER', `FPC ${year}: a recolher janeiro a dezembro (incluindo provas passadas)`);
+        const events = await fetchFPCCalendar(year);
+        for (const event of events) await saveOrMergeEvent(prisma, event);
+        await logInfo('SCRAPER', `Sincronização FPC ${year} concluída (${events.length} eventos processados)`);
+        return events.length;
     } catch (e) {
-        logError('SCRAPER', `Erro no scraping FPC ${year}: ${e.message}`, e);
+        await logError('SCRAPER', `Erro no scraping FPC ${year}: ${e.message}`, e);
+        throw e;
     }
 }
 

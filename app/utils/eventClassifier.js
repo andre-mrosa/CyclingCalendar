@@ -1,6 +1,22 @@
+export function hasNationalChampionshipTitle(title = '') {
+    const text = title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return !/\b(?:inter[ -]?)?regiona(?:l|is)\b/.test(text) &&
+        /\b(?:campeonatos?\s+(?:naciona(?:l|is)|de\s+portugal)|camp\.\s*naciona(?:l|is)|cn\b)/.test(text);
+}
+
+export function isOfficialNationalChampionship(event) {
+    const isFPC = (event.source || '').split(',').some(source => source.trim() === 'FPC');
+    // Only titles and the FPC class column establish championship status.
+    // Descriptions often advertise a separate championship on the same weekend.
+    const eventClass = (event.details || '').split('|').pop().trim();
+    return isFPC && (hasNationalChampionshipTitle(event.title) || /^(?:Pista\s+)?CN$/i.test(eventClass));
+}
+
 export function isStageRace(event) {
     if (!event) return false;
     const title = (event.title || '').toLowerCase();
+    // Championship weekends span categories/disciplines, not race stages.
+    if (hasNationalChampionshipTitle(title)) return false;
     const details = (event.details || '').toLowerCase();
     const rawDate = (event.date || '').toLowerCase();
     const programa = (event.programa || '').toLowerCase();
@@ -74,19 +90,25 @@ export function getEventDiscipline(eventOrTitle, details = '') {
     }
 
     // 3. Specific BTT Sub-disciplines
+    if (/\bxce\b/i.test(lower)) return 'BTT XCE';
+    if (/\bxcc\b/i.test(lower)) return 'BTT XCC';
+    if (/\bxcr\b/i.test(lower)) return 'BTT XCR';
     if (titleLower.includes('xco') || /\bxco\b/i.test(lower)) return 'BTT XCO';
     if (titleLower.includes('xcm') || titleLower.includes('maratona btt') || titleLower.includes('meia-maratona btt') || titleLower.includes('raid btt') || /\bxcm\b/i.test(lower)) return 'BTT XCM';
-    if (titleLower.includes('enduro') || /\benduro\b/i.test(titleLower)) return 'BTT Enduro';
-    if (titleLower.includes('dhi') || titleLower.includes('dhu') || titleLower.includes('downhill')) return 'BTT DHI';
+    if (/\benduro\b/i.test(lower)) return 'BTT Enduro';
+    if (/\b(dhi|dhu|downhill)\b/i.test(lower)) return 'BTT DHI';
+
+    if (/paraciclismo/i.test(lower)) return 'Paraciclismo';
+    if (/ciclismo virtual|e-sports/i.test(lower)) return 'E-Sports';
 
     // 4. Pista
-    if (titleLower.includes('pista') || titleLower.includes('velódromo') || titleLower.includes('velodromo')) return 'Pista';
+    if (/\bpista\b|vel[oó]dromo/i.test(lower)) return 'Pista';
 
     // 5. Ciclocrosse
-    if (titleLower.includes('ciclocross') || titleLower.includes('ciclocrosse') || /\bcx\b/i.test(titleLower)) return 'Ciclocrosse';
+    if (/ciclocross|\bcx\b/i.test(lower)) return 'Ciclocrosse';
 
     // 6. BMX
-    if (titleLower.includes('bmx') || titleLower.includes('pump track')) return 'BMX';
+    if (/\bbmx\b|pump track/i.test(lower)) return 'BMX';
 
     // 7. General BTT
     if (titleLower.includes('btt') || titleLower.includes('btt xcm') || titleLower.includes('btt xco') || titleLower.includes('btt dhi')) {

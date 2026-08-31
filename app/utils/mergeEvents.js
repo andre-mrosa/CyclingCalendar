@@ -1,4 +1,5 @@
-import { getEventDiscipline } from './eventClassifier';
+import { getEventDiscipline } from './eventClassifier.js';
+import { isSameEvent } from '../lib/merging/eventMatcher.js';
 
 export function mergeEvents(events) {
     const merged = [];
@@ -15,19 +16,6 @@ export function mergeEvents(events) {
         return score;
     };
 
-    const normalizeTitle = (t) => t.toLowerCase().replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
-
-    const isSimilar = (t1, t2) => {
-        const n1 = normalizeTitle(t1);
-        const n2 = normalizeTitle(t2);
-        if (n1.includes(n2) || n2.includes(n1)) return true;
-        const w1 = new Set(n1.split(' '));
-        const w2 = new Set(n2.split(' '));
-        const intersection = new Set([...w1].filter(x => w2.has(x)));
-        const union = new Set([...w1, ...w2]);
-        return (intersection.size / union.size) > 0.4;
-    };
-
     const processed = new Set();
 
     for (let i = 0; i < events.length; i++) {
@@ -40,7 +28,7 @@ export function mergeEvents(events) {
         for (let j = i + 1; j < events.length; j++) {
             if (processed.has(j)) continue;
             const candidate = events[j];
-            if (current.date === candidate.date && isSimilar(current.title, candidate.title)) {
+            if (current.date === candidate.date && isSameEvent(current, candidate)) {
                 duplicates.push(candidate);
                 processed.add(j);
                 const score = getInfoScore(candidate);

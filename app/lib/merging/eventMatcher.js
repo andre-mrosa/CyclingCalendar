@@ -1,3 +1,5 @@
+import { hasNationalChampionshipTitle, isOfficialNationalChampionship } from '../../utils/eventClassifier.js';
+
 /**
  * Utilitários de normalização e comparação de eventos desportivos entre fontes (FPC, Cabreira, StopAndGo, etc.)
  */
@@ -57,6 +59,7 @@ export function calculateTokenSimilarity(str1, str2) {
  */
 export function isSameEvent(existingEvent, candidateEvent) {
     if (!existingEvent || !candidateEvent) return false;
+    if ([existingEvent, candidateEvent].some(event => event.source?.includes('Quarentena'))) return false;
 
     // 1. Verificação de ID direto
     if (existingEvent.id === candidateEvent.id) return true;
@@ -64,6 +67,20 @@ export function isSameEvent(existingEvent, candidateEvent) {
     // 2. Se ambos os eventos vêm da FPC (IDs começam por fpc-), são linhas oficiais distintas
     if (existingEvent.id?.startsWith('fpc-') && candidateEvent.id?.startsWith('fpc-')) {
         return false;
+    }
+    if (existingEvent.source?.includes('FPC') && candidateEvent.source?.includes('FPC')) {
+        const officialTitle = title => (title || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+        if (officialTitle(existingEvent.title) !== officialTitle(candidateEvent.title)) return false;
+    }
+
+    const championship1 = isOfficialNationalChampionship(existingEvent) || hasNationalChampionshipTitle(existingEvent.title);
+    const championship2 = isOfficialNationalChampionship(candidateEvent) || hasNationalChampionshipTitle(candidateEvent.title);
+    if (championship1 !== championship2) return false;
+    if (championship1 && championship2) {
+        const format = title => (title || '').toLowerCase().match(/\b(xco|xce|xcc|xcm|xcr|fundo|cri|itt|circuito)\b/)?.[1]?.replace('itt', 'cri');
+        const format1 = format(existingEvent.title);
+        const format2 = format(candidateEvent.title);
+        if (format1 && format2 && format1 !== format2) return false;
     }
 
     // 3. Campeonatos vs Taças: NUNCA fundir um Campeonato Nacional com uma Taça de Portugal
