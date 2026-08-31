@@ -1,4 +1,10 @@
 export default {
+    settings_palette_title: "App color",
+    settings_palette_desc: "Choose your palette. It works in light and dark modes and is saved on this device. Warning and status colors stay the same.",
+    settings_palette_forest: "Forest",
+    settings_palette_atlantic: "Atlantic",
+    settings_palette_violet: "Violet",
+    settings_palette_terracotta: "Terracotta",
     // Navigation & Tabs
     nav_general: "General",
     nav_agenda: "My Schedule",
@@ -136,7 +142,7 @@ export default {
     summary_license: "License",
     summary_organizer: "Organizer",
     summary_no_description: "Additional description not available.",
-    summary_routes_distances: "🚴 Routes & Distances",
+    summary_routes_distances: "Routes & Distances",
     summary_to_be_defined: "To be defined",
     summary_cycling: "Cycling",
     summary_insurance: "Insurance",
@@ -238,7 +244,7 @@ export default {
     settings_sources_desc: "Choose the active platforms in the calendar. The system automatically unifies and displays the most complete information for each event.",
     settings_gdpr_title: "Data & Favorites Deletion (GDPR)",
     settings_gdpr_desc: "You can request the deletion of your favorites, history, and platform preferences while keeping your account active. (To close your account permanently, use the Delete Account option in your profile Security menu).",
-    settings_gdpr_pending_title: "🧹 Data Deletion Request Pending",
+    settings_gdpr_pending_title: "Data Deletion Request Pending",
     settings_gdpr_pending_desc: "Submitted on {date}. Administration will process your data cleanup shortly.",
     settings_gdpr_cancel_btn: "Cancel Request",
     settings_gdpr_request_btn: "Request Data Deletion",

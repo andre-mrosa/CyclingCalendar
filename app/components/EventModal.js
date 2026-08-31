@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Calendar, Star, X, CalendarPlus, Check, Bike, FileText, CreditCard, Trophy, Shield, Users, Globe, Clock, MapPin, ExternalLink, ChevronDown, Bell, Sparkles, Trash2, Info, Tag, Share2 } from 'lucide-react';
+import { Calendar, Star, X, CalendarPlus, Check, Bike, FileText, CreditCard, Trophy, Shield, Users, Globe, Clock, MapPin, ExternalLink, ChevronDown, Bell, Sparkles, Trash2, Info, Tag, Share2, Flag } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import SmartLogo from './SmartLogo';
 import { parsePrograma } from '../utils/parsePrograma';
@@ -528,9 +528,9 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
         setCalendarStatus(eventMarked ? 'exists' : null);
         setCalendarMsg(eventMarked ? 'Já no calendário' : '');
         setRegOpenCalStatus(regOpenMarked ? 'exists' : null);
-        setRegOpenCalMsg(regOpenMarked ? 'Marcado ✓' : '');
+        setRegOpenCalMsg(regOpenMarked ? 'Marcado' : '');
         setRegCloseCalStatus(regCloseMarked ? 'exists' : null);
-        setRegCloseCalMsg(regCloseMarked ? 'Marcado ✓' : '');
+        setRegCloseCalMsg(regCloseMarked ? 'Marcado' : '');
         setShowCalMenu(false);
 
         if (activeEvent.programa && activeEvent.programa.trim().length > 0 && activeEvent.programa !== 'Não disponível') {
@@ -1061,7 +1061,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                                 <span className="text-[10px] text-muted block font-semibold uppercase leading-tight">{t('summary_date')}</span>
                                                 <span className="font-semibold text-ink truncate block">{translateDateString(activeEvent.date, language)}</span>
                                                 {raceInfo && raceInfo.raceDayOnly && raceInfo.label !== activeEvent.date && (
-                                                    <span className="text-[11px] text-brand font-bold block mt-0.5">🏁 {translateDateString(raceInfo.label, language)}</span>
+                                                    <span className="text-[11px] text-brand font-bold block mt-0.5"><Flag size={12} className="inline-block align-middle shrink-0 mr-1" aria-hidden="true" />{translateDateString(raceInfo.label, language)}</span>
                                                 )}
                                             </div>
                                         </div>
@@ -1103,7 +1103,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                     {percursosSummary && percursosSummary.length > 0 && (
                                         <div className="mt-2.5 pt-2 border-t border-slate-200/80 dark:border-slate-800/80">
                                             <span className="text-[10px] text-muted font-semibold uppercase block mb-1.5">
-                                                {t('summary_routes_distances')}
+                                                <Bike size={16} className="inline-block align-middle shrink-0 mr-1" aria-hidden="true" />{t('summary_routes_distances')}
                                             </span>
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                                                 {percursosSummary.map((p, idx) => {
@@ -1385,7 +1385,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                                     <>
                                                         <span className="flex items-center gap-1.5 group-hover:hidden">
                                                             <Check size={13} />
-                                                            <span>{t('action_marked')} ✓</span>
+                                                            <span>{t('action_marked')}</span>
                                                         </span>
                                                         <span className="hidden group-hover:flex items-center gap-1.5">
                                                             <Trash2 size={13} />
@@ -1447,7 +1447,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                                     <>
                                                         <span className="flex items-center gap-1.5 group-hover:hidden">
                                                             <Check size={13} />
-                                                            <span>{t('action_marked')} ✓</span>
+                                                            <span>{t('action_marked')}</span>
                                                         </span>
                                                         <span className="hidden group-hover:flex items-center gap-1.5">
                                                             <Trash2 size={13} />
@@ -1642,7 +1642,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                         <>
                                             <span className="flex items-center gap-1.5 group-hover:hidden">
                                                 <Check size={15} />
-                                                <span>{calendarMsg || `${t('action_marked')} ✓`}</span>
+                                                <span>{calendarMsg || `${t('action_marked')}`}</span>
                                             </span>
                                             <span className="hidden group-hover:flex items-center gap-1.5">
                                                 <Trash2 size={15} />

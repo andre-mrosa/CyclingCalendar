@@ -93,7 +93,7 @@ export default function AdminLayout({ children }) {
                 {isSignedIn ? (
                     <div className="mb-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300 font-mono text-left w-full space-y-1.5 shadow-sm">
                         <div className="font-bold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-1 mb-2">
-                            🔍 Diagnóstico de Conta (Dispositivo Atual):
+                            <Activity size={15} className="inline-block align-middle shrink-0 mr-1" aria-hidden="true" />Diagnóstico de Conta (Dispositivo Atual):
                         </div>
                         <div>Email: <strong className="text-blue-600 dark:text-blue-400">{primaryEmail || user?.primaryEmailAddress?.emailAddress || 'Sem email'}</strong></div>
                         <div className="text-[11px] truncate">ID: {user?.id || 'Sem ID'}</div>
@@ -102,12 +102,12 @@ export default function AdminLayout({ children }) {
                         <div className="text-[11px] break-all text-slate-500">Emails detetados: {JSON.stringify(userEmails)}</div>
                         
                         <div className="mt-3 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300 font-sans font-semibold text-xs">
-                            ⚠️ Se esta é a tua conta Master Admin, confirma se o email acima corresponde exatamente a <code>andre.rosa1603@gmail.com</code> ou <code>andremrosa@gmail.com</code>.
+                            <AlertTriangle size={15} className="inline-block align-middle shrink-0 mr-1" aria-hidden="true" />Se esta é a tua conta Master Admin, confirma se o email acima corresponde exatamente a <code>andre.rosa1603@gmail.com</code> ou <code>andremrosa@gmail.com</code>.
                         </div>
                     </div>
                 ) : (
                     <div className="mb-6 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-400 font-bold">
-                        ⚠️ Sessão não iniciada neste dispositivo. Inicia sessão primeiro.
+                        <AlertTriangle size={15} className="inline-block align-middle shrink-0 mr-1" aria-hidden="true" />Sessão não iniciada neste dispositivo. Inicia sessão primeiro.
                     </div>
                 )}
 

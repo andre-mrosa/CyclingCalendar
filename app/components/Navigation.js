@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
 import { SignInButton, Show, UserButton, useUser, useAuth } from '@clerk/nextjs';
-import { Home, Trophy, MapPin, Bike, HelpCircle, Settings, Menu, X, Moon, Sun, Flag, Star, Globe, LogIn, CalendarCheck, Shield, Trash2, RotateCcw, ChevronDown, Award } from 'lucide-react';
+import { Home, Trophy, MapPin, Bike, HelpCircle, Settings, Menu, X, Moon, Sun, Flag, Star, Globe, LogIn, CalendarCheck, Shield, Trash2, RotateCcw, ChevronDown, Award, Check } from 'lucide-react';
 import SettingsPage from '../definicoes/page';
 import HelpPage from '../ajuda/page';
 import { useSettingsStore } from '../store/useSettingsStore';
@@ -256,7 +256,7 @@ export default function Navigation() {
                                         <FlagIcon code={item.code} className="w-4 h-2.5 rounded-[2px] shadow-[0_0_0_1px_rgba(0,0,0,0.15)] shrink-0 overflow-hidden" />
                                         <span>{item.label}</span>
                                     </span>
-                                    {isSelected && <span className="text-blue-500 font-bold text-xs">✓</span>}
+                                    {isSelected && <Check size={14} className="text-brand" aria-hidden="true" />}
                                 </button>
                             );
                         })}
@@ -330,7 +330,7 @@ export default function Navigation() {
                         <Menu size={24} />
                     </button>
 
-                    <Link href="/" className={styles.brand}><span><strong>Cycling Calendar.</strong><small>{currentPage.label}</small></span></Link>
+                    <Link href="/" className={styles.brand}><DynamicLogo className="w-8 h-8" /><span><strong>Cycling Calendar.</strong><small>{currentPage.label}</small></span></Link>
                 </div>
 
                 <Link href="/" className={styles.brand} title="Cycling Calendar">

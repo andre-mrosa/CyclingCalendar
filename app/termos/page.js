@@ -1,4 +1,4 @@
-import { FileText, Shield, AlertTriangle, Scale, RefreshCw, Mail, Calendar } from 'lucide-react';
+import { FileText, Shield, AlertTriangle, Scale, RefreshCw, Mail, Calendar, Check, X } from 'lucide-react';
 import PageHeading from '../components/PageHeading';
 import styles from '../components/site.module.css';
 
@@ -37,9 +37,9 @@ export default function TermsOfService() {
         <>
           <p className="mb-3">Ao optar por ligar a sua conta Google e utilizar a funcionalidade de agenda:</p>
           <ul className="space-y-2 text-muted">
-            <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1">✓</span><span>Concede-nos permissão explícita para <strong className="text-ink">criar novos eventos</strong> no seu calendário principal.</span></li>
-            <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1">✓</span><span>O Cycling Calendar <strong className="text-ink">não lê, não apaga, nem modifica</strong> quaisquer eventos pré-existentes ou pessoais no seu calendário.</span></li>
-            <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1">✓</span><span>Pode revogar esta permissão a qualquer momento através das <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer" className="text-brand hover:text-blue-700 dark:hover:text-blue-300 underline underline-offset-2">configurações de segurança da sua conta Google</a>.</span></li>
+            <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1"><Check size={15} aria-hidden="true" /></span><span>Concede-nos permissão explícita para <strong className="text-ink">criar novos eventos</strong> no seu calendário principal.</span></li>
+            <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1"><Check size={15} aria-hidden="true" /></span><span>O Cycling Calendar <strong className="text-ink">não lê, não apaga, nem modifica</strong> quaisquer eventos pré-existentes ou pessoais no seu calendário.</span></li>
+            <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1"><Check size={15} aria-hidden="true" /></span><span>Pode revogar esta permissão a qualquer momento através das <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer" className="text-brand hover:text-blue-700 dark:hover:text-blue-300 underline underline-offset-2">configurações de segurança da sua conta Google</a>.</span></li>
           </ul>
         </>
       ),
@@ -57,7 +57,7 @@ export default function TermsOfService() {
             <li className="flex gap-2"><span className="text-amber-500 dark:text-amber-400 mt-1">!</span><span><strong className="text-ink">Cartazes e documentos</strong> — São extraídos automaticamente e podem estar incompletos ou desatualizados.</span></li>
           </ul>
           <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl">
-            <p className="text-amber-800 dark:text-amber-300 text-sm font-medium">⚠ Recomendamos sempre a verificação dos detalhes no site oficial do evento antes de realizar inscrições, deslocações ou quaisquer compromissos.</p>
+            <p className="text-amber-800 dark:text-amber-300 text-sm font-medium"><AlertTriangle size={15} className="inline-block align-middle shrink-0 mr-1" aria-hidden="true" />Recomendamos sempre a verificação dos detalhes no site oficial do evento antes de realizar inscrições, deslocações ou quaisquer compromissos.</p>
           </div>
         </>
       ),
@@ -96,11 +96,11 @@ export default function TermsOfService() {
         <>
           <p className="mb-3">Ao utilizar a Plataforma, o utilizador compromete-se a:</p>
           <ul className="space-y-2 text-muted">
-            <li className="flex gap-2"><span className="text-rose-500 dark:text-red-400 mt-1">✕</span><span>Não utilizar a Plataforma para qualquer finalidade ilegal ou não autorizada.</span></li>
-            <li className="flex gap-2"><span className="text-rose-500 dark:text-red-400 mt-1">✕</span><span>Não tentar aceder de forma não autorizada aos sistemas, servidores ou bases de dados da Plataforma.</span></li>
-            <li className="flex gap-2"><span className="text-rose-500 dark:text-red-400 mt-1">✕</span><span>Não sobrecarregar intencionalmente os servidores com pedidos excessivos ou automatizados que comprometam a disponibilidade do serviço.</span></li>
-            <li className="flex gap-2"><span className="text-rose-500 dark:text-red-400 mt-1">✕</span><span>Não redistribuir comercialmente ou revender os dados agregados pela Plataforma sem autorização prévia.</span></li>
-            <li className="flex gap-2"><span className="text-rose-500 dark:text-red-400 mt-1">✕</span><span>Não fornecer informações falsas durante o registo ou utilização do serviço.</span></li>
+            <li className="flex gap-2"><span className="text-rose-500 dark:text-red-400 mt-1"><X size={15} aria-hidden="true" /></span><span>Não utilizar a Plataforma para qualquer finalidade ilegal ou não autorizada.</span></li>
+            <li className="flex gap-2"><span className="text-rose-500 dark:text-red-400 mt-1"><X size={15} aria-hidden="true" /></span><span>Não tentar aceder de forma não autorizada aos sistemas, servidores ou bases de dados da Plataforma.</span></li>
+            <li className="flex gap-2"><span className="text-rose-500 dark:text-red-400 mt-1"><X size={15} aria-hidden="true" /></span><span>Não sobrecarregar intencionalmente os servidores com pedidos excessivos ou automatizados que comprometam a disponibilidade do serviço.</span></li>
+            <li className="flex gap-2"><span className="text-rose-500 dark:text-red-400 mt-1"><X size={15} aria-hidden="true" /></span><span>Não redistribuir comercialmente ou revender os dados agregados pela Plataforma sem autorização prévia.</span></li>
+            <li className="flex gap-2"><span className="text-rose-500 dark:text-red-400 mt-1"><X size={15} aria-hidden="true" /></span><span>Não fornecer informações falsas durante o registo ou utilização do serviço.</span></li>
           </ul>
           <p className="mt-3">Reservamo-nos o direito de suspender ou encerrar o acesso de qualquer utilizador que viole estes termos.</p>
         </>

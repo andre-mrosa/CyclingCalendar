@@ -12,6 +12,7 @@ import RegionAssistant from '../components/RegionAssistant';
 import EscalaoAssistant from '../components/EscalaoAssistant';
 import FlagIcon from '../components/FlagIcon';
 import PageHeading from '../components/PageHeading';
+import ColorPalettePicker from '../components/ColorPalettePicker';
 import styles from '../components/site.module.css';
 
 export default function Conta() {
@@ -145,7 +146,7 @@ export default function Conta() {
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between py-6 border-b border-slate-100 dark:border-slate-800/60 gap-4">
                         <div>
                             <h3 className="font-semibold text-ink flex items-center mb-1 text-base gap-2">
-                                <Globe size={16} className="text-blue-500" />
+                                <Globe size={16} className="text-brand" />
                                 {t('settings_lang_title')}
                             </h3>
                             <p className="text-sm text-muted">{t('settings_lang_desc')}</p>
@@ -165,7 +166,7 @@ export default function Conta() {
                                         onClick={() => setLanguage(item.code)}
                                         className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer border ${
                                             isActive
-                                                ? 'bg-blue-600/15 border-blue-500 text-brand ring-1 ring-blue-500/30 shadow-sm'
+                                                ? 'bg-brand-soft border-brand text-brand ring-1 ring-brand shadow-sm'
                                                 : 'bg-soft border-line text-ink hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700'
                                         }`}
                                     >
@@ -196,6 +197,7 @@ export default function Conta() {
                             <option value="light">{t('settings_theme_light')}</option>
                         </select>
                     </div>
+                    <ColorPalettePicker />
 
                     <div className="flex flex-col md:flex-row md:items-center justify-between py-6 border-b border-slate-100 dark:border-slate-800/60 gap-4">
                         <div>
@@ -224,11 +226,11 @@ export default function Conta() {
                         <div>
                             <h3 className="font-semibold text-ink flex items-center mb-1 text-base">
                                 {t('settings_default_region_title')}
-                                <button onClick={() => setActiveModal('regiao')} className="ml-2 text-brand hover:text-blue-600 dark:hover:text-blue-300 transition-colors" title={t('region_modal_title')}><HelpCircle size={16} /></button>
+                                <button onClick={() => setActiveModal('regiao')} className="ml-2 text-brand hover:text-brand transition-colors" title={t('region_modal_title')}><HelpCircle size={16} /></button>
                             </h3>
                             <p className="text-sm text-muted">{t('settings_default_region_desc')}</p>
                         </div>
-                        <select className="h-10 px-3.5 text-sm rounded-xl border border-line bg-soft text-ink outline-none focus:border-blue-500 transition-colors w-full md:w-auto font-medium cursor-pointer" value={defaultRegiao} onChange={(e) => setDefaultRegiao(e.target.value)}>
+                        <select className="h-10 px-3.5 text-sm rounded-xl border border-line bg-soft text-ink outline-none focus:border-brand transition-colors w-full md:w-auto font-medium cursor-pointer" value={defaultRegiao} onChange={(e) => setDefaultRegiao(e.target.value)}>
                             <option value="Todas">{t('filter_all_regions')}</option>
                             <option value="AC Minho">AC Minho</option>
                             <option value="AC Porto">AC Porto</option>
@@ -248,11 +250,11 @@ export default function Conta() {
                         <div>
                             <h3 className="font-semibold text-ink flex items-center mb-1 text-base">
                                 {t('settings_default_category_title')}
-                                <button onClick={() => setActiveModal('escalao')} className="ml-2 text-brand hover:text-blue-600 dark:hover:text-blue-300 transition-colors" title={t('escalao_modal_title')}><HelpCircle size={16} /></button>
+                                <button onClick={() => setActiveModal('escalao')} className="ml-2 text-brand hover:text-brand transition-colors" title={t('escalao_modal_title')}><HelpCircle size={16} /></button>
                             </h3>
                             <p className="text-sm text-muted">{t('settings_default_category_desc')}</p>
                         </div>
-                        <select className="h-10 px-3.5 text-sm rounded-xl border border-line bg-soft text-ink outline-none focus:border-blue-500 transition-colors w-full md:w-auto font-medium cursor-pointer" value={defaultEscalao} onChange={(e) => setDefaultEscalao(e.target.value)}>
+                        <select className="h-10 px-3.5 text-sm rounded-xl border border-line bg-soft text-ink outline-none focus:border-brand transition-colors w-full md:w-auto font-medium cursor-pointer" value={defaultEscalao} onChange={(e) => setDefaultEscalao(e.target.value)}>
                             <option value="Todos">{t('filter_all_categories')}</option>
                             <option value="Elite Amador / Individual">{translateEscalao('Elite Amador', language)} / {t('escalao_team_indiv')}</option>
                             <option value="Elite / Sub-23">{translateEscalao('Elite', language)} / {translateEscalao('Sub-23', language)}</option>
@@ -276,7 +278,7 @@ export default function Conta() {
                         </div>
                         <button 
                             onClick={resetTabsOrder}
-                            className="inline-flex items-center gap-1.5 text-xs text-muted hover:text-blue-600 dark:hover:text-blue-400 transition-colors py-1 px-2.5 rounded-lg border border-line hover:border-blue-500/40 shrink-0 self-start sm:self-auto cursor-pointer font-medium"
+                            className="inline-flex items-center gap-1.5 text-xs text-muted hover:text-brand transition-colors py-1 px-2.5 rounded-lg border border-line hover:border-blue-500/40 shrink-0 self-start sm:self-auto cursor-pointer font-medium"
                             title={t('settings_reset_tabs')}
                         >
                             <RotateCcw size={13} />
@@ -309,7 +311,7 @@ export default function Conta() {
                                             <button 
                                                 onClick={() => moveTab(idx, -1)}
                                                 disabled={isFirst}
-                                                className={`p-1 rounded transition-colors ${isFirst ? 'opacity-25 cursor-not-allowed' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer'}`}
+                                                className={`p-1 rounded transition-colors ${isFirst ? 'opacity-25 cursor-not-allowed' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-brand cursor-pointer'}`}
                                                 title="Mover para cima"
                                             >
                                                 <ChevronUp size={15} />
@@ -317,7 +319,7 @@ export default function Conta() {
                                             <button 
                                                 onClick={() => moveTab(idx, 1)}
                                                 disabled={isLast}
-                                                className={`p-1 rounded transition-colors ${isLast ? 'opacity-25 cursor-not-allowed' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer'}`}
+                                                className={`p-1 rounded transition-colors ${isLast ? 'opacity-25 cursor-not-allowed' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-brand cursor-pointer'}`}
                                                 title="Mover para baixo"
                                             >
                                                 <ChevronDown size={15} />
@@ -333,11 +335,11 @@ export default function Conta() {
                                     <div className="flex items-center gap-2.5 shrink-0">
                                         <span className="text-xs text-slate-400 hidden sm:inline">{isVisible ? t('settings_tab_active') : t('settings_tab_hidden')}</span>
                                         <div 
-                                            className={`w-11 h-6 shrink-0 rounded-full transition-all flex items-center px-1 cursor-pointer border ${isVisible ? 'bg-blue-500/20 border-blue-500/50 shadow-[0_0_8px_rgba(59,130,246,0.3)]' : 'bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-700'}`} 
+                                            className={`w-11 h-6 shrink-0 rounded-full transition-all flex items-center px-1 cursor-pointer border ${isVisible ? 'bg-brand-soft border-brand' : 'bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-700'}`}
                                             onClick={() => toggleHiddenTab(tab)}
                                             title={isVisible ? t('settings_tab_hidden') : t('settings_tab_active')}
                                         >
-                                            <div className={`w-4 h-4 rounded-full transition-all ${isVisible ? 'translate-x-5 bg-blue-500 dark:bg-blue-400 shadow-[0_0_8px_rgba(59,130,246,0.8)]' : 'translate-x-0 bg-slate-400 dark:bg-slate-500'}`}/>
+                                            <div className={`w-4 h-4 rounded-full transition-all ${isVisible ? 'translate-x-5 bg-brand' : 'translate-x-0 bg-slate-400 dark:bg-slate-500'}`}/>
                                         </div>
                                     </div>
                                 </div>
@@ -371,10 +373,10 @@ export default function Conta() {
                                         </span>
                                     </div>
                                     <div 
-                                        className={`w-11 h-6 shrink-0 rounded-full transition-all flex items-center px-1 cursor-pointer border ${isSelected ? 'bg-blue-500/20 border-blue-500/50 shadow-[0_0_8px_rgba(59,130,246,0.3)]' : 'bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-700'}`} 
+                                        className={`w-11 h-6 shrink-0 rounded-full transition-all flex items-center px-1 cursor-pointer border ${isSelected ? 'bg-brand-soft border-brand' : 'bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-700'}`}
                                         onClick={() => toggleSource(source.id)}
                                     >
-                                        <div className={`w-4 h-4 rounded-full transition-all ${isSelected ? 'translate-x-5 bg-blue-500 dark:bg-blue-400 shadow-[0_0_8px_rgba(59,130,246,0.8)]' : 'translate-x-0 bg-slate-400 dark:bg-slate-500'}`}/>
+                                        <div className={`w-4 h-4 rounded-full transition-all ${isSelected ? 'translate-x-5 bg-brand' : 'translate-x-0 bg-slate-400 dark:bg-slate-500'}`}/>
                                     </div>
                                 </div>
                             );
@@ -510,7 +512,7 @@ export default function Conta() {
                                             onChange={(e) => setDeleteReason(e.target.value)}
                                             placeholder={deleteModalType === 'DELETE_DATA' ? "Ex: Pretendo reiniciar a minha lista de favoritos do zero..." : "Ex: Não pretendo continuar a utilizar o calendário..."}
                                             rows={3}
-                                            className="w-full p-3 rounded-xl bg-canvas border border-line text-xs sm:text-sm text-ink focus:outline-none focus:border-blue-500 transition-colors"
+                                            className="w-full p-3 rounded-xl bg-canvas border border-line text-xs sm:text-sm text-ink focus:outline-none focus:border-brand transition-colors"
                                         />
                                     </div>
 

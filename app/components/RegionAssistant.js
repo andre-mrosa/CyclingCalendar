@@ -45,7 +45,7 @@ export default function RegionAssistant({ onApply }) {
                 const region = mapDistrictToRegion(district);
                 
                 setSuggestedRegiao(region);
-                setLocationMessage(`📍 ${district || 'OK'} ➔ ${region !== 'Todas' ? region : 'Múltiplas'}`);
+                setLocationMessage(`${district || 'OK'} ➔ ${region !== 'Todas' ? region : 'Múltiplas'}`);
             } catch (err) {
                 setLocationMessage("Erro ao comunicar com o servidor de mapas.");
                 setSuggestedRegiao(null);
@@ -70,7 +70,7 @@ export default function RegionAssistant({ onApply }) {
                 const result = data[0];
                 const region = mapDistrictToRegion(result.display_name);
                 setSuggestedRegiao(region);
-                setLocationMessage(`📍 ${result.display_name.split(',')[0]} ➔ ${region !== 'Todas' ? region : 'Nenhuma Região'}`);
+                setLocationMessage(`${result.display_name.split(',')[0]} ➔ ${region !== 'Todas' ? region : 'Nenhuma Região'}`);
             } else {
                 setLocationMessage("Localização não encontrada em Portugal.");
                 setSuggestedRegiao(null);
@@ -142,7 +142,7 @@ export default function RegionAssistant({ onApply }) {
 
                 {locationMessage && (
                     <div className={`p-4 bg-soft border rounded-xl mt-2 text-sm text-ink flex flex-col gap-3 shadow-lg ${suggestedRegiao ? 'border-blue-500/40' : 'border-amber-500/40'}`}>
-                        <span className="font-medium text-ink">{locationMessage}</span>
+                        <span className="font-medium text-ink"><MapPin size={14} className="inline-block align-middle shrink-0 mr-1" aria-hidden="true" />{locationMessage}</span>
                         {suggestedRegiao && (
                             <button 
                                 onClick={applyRegiao}

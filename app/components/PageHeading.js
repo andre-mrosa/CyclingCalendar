@@ -33,7 +33,7 @@ export default function PageHeading({ title, subtitle, icon: Icon = Flag, hero =
             <svg className={styles.heroArt} viewBox="0 0 370 330" aria-hidden="true">
                 {[0, 18, 36, 54, 72, 90].map(offset => <path key={offset} transform={`translate(${offset / 3} ${offset / 2})`} d="M35 -20 C240 -25 330 55 235 115 S40 170 135 210 S320 230 290 350" />)}
                 <path className={styles.route} d="M120 -20 C310 10 325 72 232 122 S78 173 164 207 S335 244 292 350" />
-                <circle cx="164" cy="207" r="8" fill="#d5f478" stroke="#153e35" strokeWidth="4" />
+                <circle cx="164" cy="207" r="8" fill="var(--site-lime)" stroke="var(--site-hero)" strokeWidth="4" />
             </svg>
         </header>
     );

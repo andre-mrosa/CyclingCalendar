@@ -4,6 +4,8 @@ import Navigation from "./components/Navigation";
 import { ThemeProvider } from "./components/ThemeProvider";
 import ThemeClerkProvider from "./components/ThemeClerkProvider";
 import Footer from "./components/Footer";
+import ColorPaletteManager from './components/ColorPaletteManager';
+import { paletteCSS, paletteBootstrap } from './lib/colorPalettes';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,14 +43,14 @@ export const metadata = {
   },
   icons: {
     icon: [
-      { url: '/logo.jpg' },
+      { url: '/brand.svg', type: 'image/svg+xml', sizes: 'any' },
       { url: '/icon-192x192.jpg', sizes: '192x192', type: 'image/jpeg' },
       { url: '/icon-512x512.jpg', sizes: '512x512', type: 'image/jpeg' },
     ],
     apple: [
-      { url: '/apple-icon.jpg', sizes: '192x192', type: 'image/jpeg' },
+      { url: '/apple-icon.jpg', sizes: '180x180', type: 'image/jpeg' },
     ],
-    shortcut: '/logo.jpg',
+    shortcut: '/brand.svg',
   },
   manifest: "/manifest.json",
   appleWebApp: {
@@ -59,14 +61,13 @@ export const metadata = {
 };
 
 export const viewport = {
-  themeColor: "#121212",
+  themeColor: "#153e35",
 };
 
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import WelcomeModal from "./components/WelcomeModal";
 import CookieBanner from "./components/CookieBanner";
-import FaviconManager from "./components/FaviconManager";
 import PWAUpdateHandler from "./components/PWAUpdateHandler";
 import ClientErrorLogger from "./components/ClientErrorLogger";
 import AnalyticsTracker from "./components/AnalyticsTracker";
@@ -74,11 +75,15 @@ import AnalyticsTracker from "./components/AnalyticsTracker";
 export default function RootLayout({ children }) {
   return (
     <html lang="pt" suppressHydrationWarning>
+      <head>
+        <style id="color-palettes">{paletteCSS()}</style>
+        <script dangerouslySetInnerHTML={{ __html: paletteBootstrap }} />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased transition-colors duration-200`} suppressHydrationWarning>
         <a href="#conteudo" className="skip-link">Saltar para o conteúdo</a>
         <ClientErrorLogger />
         <PWAUpdateHandler />
-        <FaviconManager />
+        <ColorPaletteManager />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem={true}>
           <ThemeClerkProvider>
             <AnalyticsTracker />

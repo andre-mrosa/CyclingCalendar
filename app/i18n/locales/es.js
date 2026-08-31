@@ -1,4 +1,10 @@
 export default {
+    settings_palette_title: "Color de la aplicación",
+    settings_palette_desc: "Elige tu paleta. Funciona en modo claro y oscuro y se guarda en este dispositivo. Los colores de avisos y estados no cambian.",
+    settings_palette_forest: "Bosque",
+    settings_palette_atlantic: "Atlántico",
+    settings_palette_violet: "Violeta",
+    settings_palette_terracotta: "Terracota",
     // Navigation & Tabs
     nav_general: "General",
     nav_agenda: "Mi Agenda",
@@ -136,7 +142,7 @@ export default {
     summary_license: "Licencia",
     summary_organizer: "Organización",
     summary_no_description: "Descripción adicional no disponible.",
-    summary_routes_distances: "🚴 Recorridos y Distancias",
+    summary_routes_distances: "Recorridos y Distancias",
     summary_to_be_defined: "Por definir",
     summary_cycling: "Ciclismo",
     summary_insurance: "Seguro",
@@ -238,7 +244,7 @@ export default {
     settings_sources_desc: "Elige las plataformas activas en el calendario. El sistema unifica y presenta automáticamente la información más completa de cada prueba.",
     settings_gdpr_title: "Eliminación de Datos y Favoritos (RGPD)",
     settings_gdpr_desc: "Puedes solicitar la eliminación de tus favoritos, historial y preferencias de la plataforma manteniendo tu cuenta activa. (Para cerrar tu cuenta definitivamente, usa la opción Eliminar cuenta en el menú de Seguridad de tu perfil).",
-    settings_gdpr_pending_title: "🧹 Solicitud de Eliminación de Datos Pendiente",
+    settings_gdpr_pending_title: "Solicitud de Eliminación de Datos Pendiente",
     settings_gdpr_pending_desc: "Enviado el {date}. La administración procesará la limpieza de tus datos en breve.",
     settings_gdpr_cancel_btn: "Cancelar Solicitud",
     settings_gdpr_request_btn: "Solicitar Eliminación de Datos",

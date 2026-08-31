@@ -13,6 +13,8 @@
     --site-accent: #176b57;
     --site-accent-soft: #e5f1e9;
     --site-lime: #d5f478;
+    --site-hero: #153e35;
+    --site-hero-muted: #c6d8cb;
   }
 
   .dark {
@@ -33,7 +35,7 @@
   }
 
   :focus-visible { outline: 3px solid var(--site-accent); outline-offset: 4px; }
-  ::selection { background: #d5f478; color: #183c31; }
+  ::selection { background: var(--site-lime); color: var(--site-hero); }
   html { scroll-padding-top: 140px; }
   button, input, select, textarea { font: inherit; }
 }
@@ -53,7 +55,7 @@
   animation: slide-up 0.4s ease-out;
 }
 
-.skip-link { position: fixed; top: 12px; left: 12px; transform: translateY(-160%); z-index: 10001; padding: 12px 20px; background: var(--site-lime); color: #183c31; border-radius: 12px; font-weight: 700; }
+.skip-link { position: fixed; top: 12px; left: 12px; transform: translateY(-160%); z-index: 10001; padding: 12px 20px; background: var(--site-lime); color: var(--site-hero); border-radius: 12px; font-weight: 700; }
 .skip-link:focus { transform: translateY(0); }
 
 @media (prefers-reduced-motion: reduce) {

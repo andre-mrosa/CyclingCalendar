@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useUser, useAuth } from '@clerk/nextjs';
-import { Trash2, RotateCcw, AlertTriangle, Clock, CheckCircle2 } from 'lucide-react';
+import { Trash2, RotateCcw, AlertTriangle, Clock, CheckCircle2, Lightbulb } from 'lucide-react';
 
 export default function ClerkPrivacyProfilePage() {
     const { isLoaded, isSignedIn, user } = useUser();
@@ -159,7 +159,7 @@ export default function ClerkPrivacyProfilePage() {
                         <Clock size={18} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                         <div>
                             <span className="font-bold text-xs text-amber-800 dark:text-amber-300 block">
-                                {deletionRequest.type === 'DELETE_DATA' ? '🧹 Pedido de Eliminação de Dados Pendente' : '🗑️ Pedido de Eliminação de Conta Pendente'}
+                                {deletionRequest.type === 'DELETE_DATA' ? 'Pedido de Eliminação de Dados Pendente' : 'Pedido de Eliminação de Conta Pendente'}
                             </span>
                             <span className="text-[11px] text-amber-700/80 dark:text-amber-400/80 block mt-0.5">
                                 Submetido em {new Date(deletionRequest.createdAt).toLocaleDateString('pt-PT')}. A administração foi notificada e processará o teu pedido.
@@ -241,7 +241,7 @@ export default function ClerkPrivacyProfilePage() {
 
                     {/* Nota explicativa sobre Eliminar Conta */}
                     <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40 text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                        💡 <strong className="text-slate-700 dark:text-slate-300">Pretendes encerrar a conta por completo?</strong> Podes fazê-lo diretamente na secção <strong className="text-slate-700 dark:text-slate-300">Segurança ➔ Eliminar conta</strong> à esquerda.
+                        <Lightbulb size={16} className="inline-block align-middle shrink-0 mr-1" aria-hidden="true" /><strong className="text-slate-700 dark:text-slate-300">Pretendes encerrar a conta por completo?</strong> Podes fazê-lo diretamente na secção <strong className="text-slate-700 dark:text-slate-300">Segurança ➔ Eliminar conta</strong> à esquerda.
                     </div>
                 </div>
             )}

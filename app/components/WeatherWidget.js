@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Cloud, Sun, CloudRain, CloudSun, CloudLightning, CloudDrizzle, CloudFog, Wind, Droplets, Thermometer, Sparkles, Calendar, Info, RefreshCw } from 'lucide-react';
+import { Cloud, Sun, CloudRain, CloudSun, CloudLightning, CloudDrizzle, CloudFog, Wind, Droplets, Thermometer, Sparkles, Calendar, Info, RefreshCw, MapPin } from 'lucide-react';
 import { useTranslation } from '../i18n/useTranslation';
+import WeatherAdvice from './WeatherAdvice';
 
 function getWeatherIcon(iconType, className = "w-6 h-6") {
     switch (iconType) {
@@ -186,7 +187,7 @@ export default function WeatherWidget({ location, distrito, date, variant = 'def
                     </div>
 
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-700 dark:text-sky-300 border border-sky-500/20 shrink-0 max-w-[130px] truncate" title={d.locationName}>
-                        📍 {d.locationName || location || 'Portugal'}
+                        <MapPin size={11} className="inline-block align-middle shrink-0 mr-1" aria-hidden="true" />{d.locationName || location || 'Portugal'}
                     </span>
                 </div>
 
@@ -239,7 +240,7 @@ export default function WeatherWidget({ location, distrito, date, variant = 'def
                     <div className="mt-2.5 pt-2 border-t border-slate-200/60 dark:border-slate-800/60 space-y-1">
                         {d.advice.map((tip, i) => (
                             <p key={i} className="text-[11px] font-medium text-ink leading-tight m-0">
-                                {tip}
+                                <WeatherAdvice text={tip} />
                             </p>
                         ))}
                     </div>

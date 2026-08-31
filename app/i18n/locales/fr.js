@@ -1,4 +1,10 @@
 export default {
+    settings_palette_title: "Couleur de l’application",
+    settings_palette_desc: "Choisissez votre palette. Elle fonctionne en mode clair et sombre et reste enregistrée sur cet appareil. Les couleurs des alertes et des statuts ne changent pas.",
+    settings_palette_forest: "Forêt",
+    settings_palette_atlantic: "Atlantique",
+    settings_palette_violet: "Violet",
+    settings_palette_terracotta: "Terre cuite",
     // Navigation & Tabs
     nav_general: "Général",
     nav_agenda: "Mon Agenda",
@@ -136,7 +142,7 @@ export default {
     summary_license: "Licence",
     summary_organizer: "Organisation",
     summary_no_description: "Description supplémentaire non disponible.",
-    summary_routes_distances: "🚴 Parcours et Distances",
+    summary_routes_distances: "Parcours et Distances",
     summary_to_be_defined: "À définir",
     summary_cycling: "Cyclisme",
     summary_insurance: "Assurance",
@@ -238,7 +244,7 @@ export default {
     settings_sources_desc: "Choisissez les plateformes actives sur le calendrier. Le système unifie et affiche automatiquement les informations les plus complètes.",
     settings_gdpr_title: "Suppression des Données et Favoris (RGPD)",
     settings_gdpr_desc: "Vous pouvez demander la suppression de vos favoris, historique et préférences tout en conservant votre compte actif. (Pour supprimer définitivement votre compte, utilisez l'option Supprimer le compte dans le menu Sécurité de votre profil).",
-    settings_gdpr_pending_title: "🧹 Demande de Suppression des Données en Attente",
+    settings_gdpr_pending_title: "Demande de Suppression des Données en Attente",
     settings_gdpr_pending_desc: "Soumise le {date}. L'administration procédera au nettoyage de vos données sous peu.",
     settings_gdpr_cancel_btn: "Annuler la Demande",
     settings_gdpr_request_btn: "Demander la Suppression des Données",

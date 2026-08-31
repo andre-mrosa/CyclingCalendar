@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { DEFAULT_PALETTE, SETTINGS_STORAGE_KEY, normalizePalette } from '../lib/colorPalettes.js';
 
 export const DEFAULT_TABS = ['Geral', 'Minha Agenda', 'Nacionais', 'Internacionais', 'Taças', 'Regionais', 'Lazer', 'Favoritos'];
 
@@ -8,6 +9,8 @@ export const DEFAULT_SOURCES = ['FPC', 'Cabreira', 'Stop and Go', 'Classificaç�
 export const useSettingsStore = create(
     persist(
         (set) => ({
+            colorPalette: DEFAULT_PALETTE,
+            setColorPalette: (value) => set({ colorPalette: normalizePalette(value) }),
             defaultPage: '/',
             defaultEscalao: 'Todos',
             defaultRegiao: 'Todas',
@@ -54,7 +57,7 @@ export const useSettingsStore = create(
             resetTabsOrder: () => set({ tabsOrder: [...DEFAULT_TABS] })
         }),
         {
-            name: 'cycling-calendar-settings', // unique name in localStorage
+            name: SETTINGS_STORAGE_KEY,
             onRehydrateStorage: () => (state) => {
                 if (state && Array.isArray(state.selectedSources)) {
                     if (!state.selectedSources.includes('Stop and Go')) {

@@ -6,8 +6,8 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#020617",
-  "theme_color": "#020617",
+  "background_color": "#153e35",
+  "theme_color": "#153e35",
   "orientation": "portrait",
   "icons": [
     {
@@ -23,9 +23,9 @@
       "purpose": "any"
     },
     {
-      "src": "/icon-512x512.jpg",
+      "src": "/brand-maskable.png",
       "sizes": "512x512",
-      "type": "image/jpeg",
+      "type": "image/png",
       "purpose": "maskable"
     }
   ]

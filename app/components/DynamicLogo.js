@@ -1,19 +1,16 @@
-'use client';
+import { CALENDAR_PATH, BICYCLE_PATH } from '../lib/brand';
 
-import React from 'react';
-import Image from 'next/image';
-
-export default function DynamicLogo({ className = "w-8 h-8" }) {
+export default function DynamicLogo({ className = 'w-8 h-8' }) {
     return (
-        <div className={`relative overflow-hidden rounded-lg shadow-sm shrink-0 ${className}`}>
-            <Image 
-                src="/logo.jpg" 
-                alt="Cycling Calendar" 
-                width={128} 
-                height={128} 
-                className="w-full h-full object-cover"
-                priority
-            />
-        </div>
+        <svg viewBox="0 0 64 64" className={`shrink-0 ${className}`} aria-hidden="true" focusable="false">
+            <rect width="64" height="64" rx="16" fill="var(--site-hero)" />
+            <g fill="none" strokeLinecap="round" strokeLinejoin="round">
+                <path d={CALENDAR_PATH} stroke="#f6f9ed" strokeWidth="3" />
+                <g stroke="var(--site-lime)" strokeWidth="2.8">
+                    <circle cx="22" cy="44" r="8" /><circle cx="47" cy="44" r="8" />
+                    <path d={BICYCLE_PATH} />
+                </g>
+            </g>
+        </svg>
     );
 }

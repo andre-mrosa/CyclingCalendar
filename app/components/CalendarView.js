@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useMemo, Fragment } from 'react';
 import { useSettingsStore } from '../store/useSettingsStore';
 import useSWR from 'swr';
 
-import { Calendar, MapPin, Search, X, ChevronLeft, ChevronRight, Users, Heart, Star, LayoutGrid, List, HelpCircle, Filter, Bike, AlertTriangle, Check, CalendarCheck, History, WifiOff, Download, Clock } from 'lucide-react';
+import { Calendar, MapPin, Search, X, ChevronLeft, ChevronRight, Users, Heart, Star, LayoutGrid, List, HelpCircle, Filter, Bike, AlertTriangle, Check, CalendarCheck, History, WifiOff, Download, Clock, Globe } from 'lucide-react';
 import { useFavorites } from '../hooks/useFavorites';
 import { useCalendarEvents } from '../hooks/useCalendarEvents';
 import { filterEvents } from '../utils/filterEvents';
@@ -765,7 +765,7 @@ export default function CalendarView({
                             
                             {selectedRegiao !== 'Todas' && (
                                 <div className="bg-slate-800 border border-slate-700 p-8 rounded-xl max-w-lg mx-auto">
-                                    <span className="text-4xl block mb-4">🌐</span>
+                                    <Globe size={40} className="mx-auto mb-4 text-brand" aria-hidden="true" />
                                     <h3 className="text-slate-50 mb-3 text-xl font-medium">
                                          {t('regional_not_found_title')}
                                     </h3>
@@ -1000,7 +1000,7 @@ export default function CalendarView({
             {showEscalaoHelp && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1100] flex items-center justify-center p-4" onClick={() => setShowEscalaoHelp(false)}>
                     <div className="relative w-full max-w-[500px] bg-surface rounded-xl shadow-2xl border border-line flex flex-col max-h-[90vh] text-ink transition-colors duration-200" onClick={(e) => e.stopPropagation()}>
-                        <button className="absolute top-4 right-4 text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 z-10 p-1 cursor-pointer" onClick={() => setShowEscalaoHelp(false)}>✕</button>
+                        <button className="absolute top-4 right-4 text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 z-10 p-1 cursor-pointer" onClick={() => setShowEscalaoHelp(false)} aria-label={t('action_close')}><X size={20} aria-hidden="true" /></button>
                         <div className="overflow-y-auto flex-1 p-0 rounded-xl">
                             <EscalaoAssistant onApply={(esc) => {
                                 if (!selectedEscaloes.includes(esc)) {

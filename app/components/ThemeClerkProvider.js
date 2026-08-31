@@ -5,6 +5,8 @@ import { useTheme } from 'next-themes';
 import { ptPT, enUS, esES, frFR } from "@clerk/localizations";
 import { dark } from "@clerk/themes";
 import { useTranslation } from '../i18n/useTranslation';
+import { useSettingsStore } from '../store/useSettingsStore';
+import { getPalette } from '../lib/colorPalettes';
 
 const clerkLocalizations = {
   pt: ptPT,
@@ -16,6 +18,7 @@ const clerkLocalizations = {
 export default function ThemeClerkProvider({ children }) {
   const { resolvedTheme } = useTheme();
   const { language } = useTranslation();
+  const palette = getPalette(useSettingsStore(state => state.colorPalette));
 
   const currentLocalization = clerkLocalizations[language] || ptPT;
 
@@ -25,7 +28,7 @@ export default function ThemeClerkProvider({ children }) {
       appearance={{
         baseTheme: resolvedTheme === 'dark' ? dark : undefined,
         variables: {
-          colorPrimary: resolvedTheme === 'dark' ? '#bce881' : '#176b57',
+          colorPrimary: resolvedTheme === 'dark' ? palette.nightAccent : palette.accent,
           colorBackground: resolvedTheme === 'dark' ? '#182623' : '#ffffff',
           colorText: resolvedTheme === 'dark' ? '#edf3ec' : '#182c2a',
           borderRadius: '0.85rem',

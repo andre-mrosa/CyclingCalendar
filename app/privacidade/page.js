@@ -1,4 +1,4 @@
-import { Shield, Eye, Lock, UserCheck, Database, Globe, Cookie, RefreshCw, Mail, Trash2 } from 'lucide-react';
+import { Shield, Eye, Lock, UserCheck, Database, Globe, Cookie, RefreshCw, Mail, Trash2, KeyRound, Calendar, Ban, Check } from 'lucide-react';
 import PageHeading from '../components/PageHeading';
 import styles from '../components/site.module.css';
 
@@ -17,7 +17,7 @@ export default function PrivacyPolicy() {
           <p className="mb-3">Quando utiliza o Cycling Calendar, podemos recolher os seguintes dados:</p>
           <div className="space-y-3">
             <div className="p-4 bg-soft rounded-xl border border-line">
-              <h4 className="text-ink font-medium text-sm mb-2">🔑 Através do Login com Google (via Clerk)</h4>
+              <h4 className="text-ink font-medium text-sm mb-2"><KeyRound size={15} className="inline-block align-middle shrink-0 mr-1" aria-hidden="true" />Através do Login com Google (via Clerk)</h4>
               <ul className="space-y-1 text-sm text-muted">
                 <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400">•</span>Nome completo e endereço de e-mail</li>
                 <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400">•</span>Foto de perfil (URL público do Google)</li>
@@ -25,7 +25,7 @@ export default function PrivacyPolicy() {
               </ul>
             </div>
             <div className="p-4 bg-soft rounded-xl border border-line">
-              <h4 className="text-ink font-medium text-sm mb-2">📅 Integração com Google Calendar</h4>
+              <h4 className="text-ink font-medium text-sm mb-2"><Calendar size={15} className="inline-block align-middle shrink-0 mr-1" aria-hidden="true" />Integração com Google Calendar</h4>
               <ul className="space-y-1 text-sm text-muted">
                 <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400">•</span>Token de acesso OAuth 2.0 (para criar eventos no seu calendário)</li>
                 <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400">•</span><strong className="text-ink">Não acedemos a eventos existentes</strong> — apenas criamos novos eventos que o utilizador solicite</li>
@@ -49,13 +49,13 @@ export default function PrivacyPolicy() {
         <>
           <p className="mb-3">A informação recolhida é utilizada <strong className="text-ink">exclusivamente</strong> para:</p>
           <ul className="space-y-2 text-muted">
-            <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1">✓</span><span>Permitir a autenticação segura no nosso serviço</span></li>
-            <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1">✓</span><span>Guardar e sincronizar as suas provas favoritas</span></li>
-            <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1">✓</span><span>Adicionar eventos de ciclismo ao seu Google Calendar quando solicitado</span></li>
-            <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1">✓</span><span>Enviar comunicações relacionadas com o serviço (se aplicável)</span></li>
+            <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1"><Check size={15} aria-hidden="true" /></span><span>Permitir a autenticação segura no nosso serviço</span></li>
+            <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1"><Check size={15} aria-hidden="true" /></span><span>Guardar e sincronizar as suas provas favoritas</span></li>
+            <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1"><Check size={15} aria-hidden="true" /></span><span>Adicionar eventos de ciclismo ao seu Google Calendar quando solicitado</span></li>
+            <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1"><Check size={15} aria-hidden="true" /></span><span>Enviar comunicações relacionadas com o serviço (se aplicável)</span></li>
           </ul>
           <div className="mt-4 p-4 bg-rose-50 dark:bg-red-500/10 border border-rose-200 dark:border-red-500/20 rounded-xl">
-            <p className="text-rose-700 dark:text-red-300 text-sm font-medium">🚫 Nunca partilhamos, vendemos, alugamos ou cedemos a sua informação pessoal a terceiros para fins comerciais ou de marketing.</p>
+            <p className="text-rose-700 dark:text-red-300 text-sm font-medium"><Ban size={15} className="inline-block align-middle shrink-0 mr-1" aria-hidden="true" />Nunca partilhamos, vendemos, alugamos ou cedemos a sua informação pessoal a terceiros para fins comerciais ou de marketing.</p>
           </div>
         </>
       ),
@@ -95,10 +95,10 @@ export default function PrivacyPolicy() {
       title: '5. Segurança dos Dados',
       content: (
         <ul className="space-y-2 text-muted">
-          <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1">🔒</span><span>Todas as comunicações são encriptadas via <strong className="text-ink">HTTPS/TLS</strong>.</span></li>
-          <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1">🔒</span><span>A autenticação é gerida pelo <strong className="text-ink">Clerk</strong>, um serviço certificado que segue as melhores práticas de segurança (bcrypt, tokens com validade limitada).</span></li>
-          <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1">🔒</span><span>Os tokens de acesso ao Google Calendar são armazenados de forma segura e utilizados apenas para a finalidade declarada.</span></li>
-          <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1">🔒</span><span>Não armazenamos palavras-passe — a autenticação é feita integralmente via OAuth 2.0 do Google.</span></li>
+          <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1"><Lock size={15} aria-hidden="true" /></span><span>Todas as comunicações são encriptadas via <strong className="text-ink">HTTPS/TLS</strong>.</span></li>
+          <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1"><Lock size={15} aria-hidden="true" /></span><span>A autenticação é gerida pelo <strong className="text-ink">Clerk</strong>, um serviço certificado que segue as melhores práticas de segurança (bcrypt, tokens com validade limitada).</span></li>
+          <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1"><Lock size={15} aria-hidden="true" /></span><span>Os tokens de acesso ao Google Calendar são armazenados de forma segura e utilizados apenas para a finalidade declarada.</span></li>
+          <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1"><Lock size={15} aria-hidden="true" /></span><span>Não armazenamos palavras-passe — a autenticação é feita integralmente via OAuth 2.0 do Google.</span></li>
         </ul>
       ),
     },
