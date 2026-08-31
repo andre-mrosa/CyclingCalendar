@@ -19,7 +19,7 @@ export async function GET(request) {
         const page = Math.max(parseInt(searchParams.get('page') || '1', 10), 1);
         const skip = (page - 1) * limit;
 
-        const where = {};
+        const where = { id: { not: 'operational-scraper-lease' } };
 
         if (level !== 'ALL') {
             where.level = level.toUpperCase();
@@ -49,7 +49,7 @@ export async function GET(request) {
                 prisma.systemLog.count({ where }).catch(() => 0),
                 prisma.systemLog.count({ where: { level: 'ERROR' } }).catch(() => 0),
                 prisma.systemLog.count({ where: { level: 'WARN' } }).catch(() => 0),
-                prisma.systemLog.count({ where: { level: 'INFO' } }).catch(() => 0)
+                prisma.systemLog.count({ where: { level: 'INFO', id: { not: 'operational-scraper-lease' } } }).catch(() => 0)
             ]);
             logs = l || [];
             total = t || 0;
@@ -96,7 +96,7 @@ export async function DELETE(request) {
 
         let count = 0;
         if (clearAll) {
-            const res = await prisma.systemLog.deleteMany({});
+            const res = await prisma.systemLog.deleteMany({ where: { id: { not: 'operational-scraper-lease' } } });
             count = res.count;
             await logSystem({
                 level: 'WARN',

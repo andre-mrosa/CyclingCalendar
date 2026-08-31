@@ -198,8 +198,14 @@ export function mergeEventRecords(existing, incoming) {
 /**
  * Salva um novo evento ou faz merge inteligente se a prova já existir na base de dados
  */
-export async function saveOrMergeEvent(prisma, eventData) {
+export async function saveOrMergeEvent(prisma, eventData, options = {}) {
     if (!eventData || !eventData.id) return null;
+    // Report only settled database outcomes; telemetry must never turn a saved
+    // event into a failed save or trigger a retry of that write.
+    const report = async (result) => {
+        try { await options.onResult?.(result); } catch { /* best-effort telemetry */ }
+        return result;
+    };
 
     // 1. Procurar por ID exato
     const existingById = await prisma.event.findUnique({
@@ -207,13 +213,13 @@ export async function saveOrMergeEvent(prisma, eventData) {
     });
 
     if (existingById) {
-        if (existingById.source?.includes('Quarentena')) return { action: 'quarantined', event: existingById };
+        if (existingById.source?.includes('Quarentena')) return report({ action: 'quarantined', event: existingById });
         const mergedData = mergeEventRecords(existingById, eventData);
         const updated = await prisma.event.update({
             where: { id: existingById.id },
             data: mergedData
         });
-        return { action: 'updated', event: updated };
+        return report({ action: 'updated', event: updated });
     }
 
     // 2. Procurar por Prova Equivalente no mesmo intervalo de datas (±3 dias)
@@ -239,7 +245,7 @@ export async function saveOrMergeEvent(prisma, eventData) {
                     where: { id: candidate.id },
                     data: mergedData
                 });
-                return { action: 'merged', matchedWith: candidate.id, event: updated };
+                return report({ action: 'merged', matchedWith: candidate.id, event: updated });
             }
         }
     }
@@ -248,5 +254,5 @@ export async function saveOrMergeEvent(prisma, eventData) {
     const created = await prisma.event.create({
         data: eventData
     });
-    return { action: 'created', event: created };
+    return report({ action: 'created', event: created });
 }

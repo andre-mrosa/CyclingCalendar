@@ -1,4 +1,12 @@
 import { prisma } from './db.js';
+import { AsyncLocalStorage } from 'node:async_hooks';
+
+const scraperLogContext = new AsyncLocalStorage();
+
+// Context follows concurrent async work without leaking across runs or sources.
+export function withScraperLogContext(context, work) {
+    return scraperLogContext.run({ ...scraperLogContext.getStore(), ...context }, work);
+}
 
 // Origens estritamente operacionais do programa permitidas na base de dados
 const ALLOWED_SYSTEM_SOURCES = new Set(['SCRAPER', 'CRON', 'SYSTEM', 'API', 'WEATHER']);
@@ -22,10 +30,27 @@ export async function logSystem({
         if (!message) return;
 
         const upperSource = (source || 'SYSTEM').toUpperCase();
+        const context = scraperLogContext.getStore();
+        if (context && level.toUpperCase() === 'ERROR') {
+            context.onError?.({ sourceId: context.sourceId, stepId: context.stepId, year: context.year, message });
+        }
         
         // Ignorar logs de utilizadores individuais ou ações de navegação para evitar spam
         if (!ALLOWED_SYSTEM_SOURCES.has(upperSource) && level !== 'ERROR') {
             return;
+        }
+
+        if (context?.runId) {
+            const payload = details instanceof Error
+                ? { error: details.message, stack: details.stack }
+                : details && typeof details === 'object' ? details : { detail: details };
+            details = {
+                ...payload,
+                runId: context.runId,
+                ...(context.sourceId ? { sourceId: context.sourceId } : {}),
+                ...(context.stepId ? { stepId: context.stepId } : {}),
+                ...(context.year != null ? { year: String(context.year) } : {})
+            };
         }
 
         let detailsString = null;
@@ -41,6 +66,15 @@ export async function logSystem({
                     detailsString = String(details);
                 }
             }
+        }
+        // Slicing a JSON string can remove its runId or make it unparsable.
+        // Oversized diagnostic payloads retain a valid scoped envelope.
+        if (context?.runId && detailsString?.length > 50000) {
+            detailsString = JSON.stringify({
+                runId: context.runId, sourceId: context.sourceId, stepId: context.stepId, year: context.year,
+                event: details.event, status: details.status, detailsTruncated: true,
+                detail: detailsString.slice(0, 8000)
+            });
         }
 
         // Output no console do servidor para dev/debugging
@@ -98,6 +132,7 @@ export async function cleanOldLogs(daysToKeep = 30) {
         cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
         const result = await prisma.systemLog.deleteMany({
             where: {
+                id: { not: 'operational-scraper-lease' },
                 createdAt: {
                     lt: cutoffDate
                 }

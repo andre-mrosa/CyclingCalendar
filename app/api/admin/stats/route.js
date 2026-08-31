@@ -2,6 +2,7 @@ import { prisma } from '@/app/lib/db';
 import { clerkClient } from '@clerk/nextjs/server';
 import { requireAdmin } from '@/app/lib/auth-helpers';
 import { formatDuration } from '@/app/lib/analytics';
+import { buildEventInventory, PUBLISHED_EVENTS_WHERE } from '@/app/lib/admin/eventInventory';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,8 +33,7 @@ export async function GET(request) {
 
         const [
             // Database entity stats
-            totalEvents, fpcEvents, cabreiraEvents, stopAndGoEvents, multiSourceEvents,
-            eventsWithRegCloses, eventsWithPrices, eventsWithProgramme, eventsWithImage,
+            eventInventory,
             totalLogs, errorLogs, recentLogs,
             totalUsers,
 
@@ -54,18 +54,18 @@ export async function GET(request) {
             recentSessions
         ] = await Promise.all([
             // DB Entities
-            prisma.event.count().catch(() => 0),
-            prisma.event.count({ where: { source: { contains: 'FPC' } } }).catch(() => 0),
-            prisma.event.count({ where: { source: { contains: 'Cabreira' } } }).catch(() => 0),
-            prisma.event.count({ where: { source: { contains: 'Stop' } } }).catch(() => 0),
-            prisma.event.count({ where: { source: { contains: ',' } } }).catch(() => 0),
-            prisma.event.count({ where: { registrationClosesAt: { not: null } } }).catch(() => 0),
-            prisma.event.count({ where: { prices: { not: null } } }).catch(() => 0),
-            prisma.event.count({ where: { programa: { not: null } } }).catch(() => 0),
-            prisma.event.count({ where: { image: { not: null } } }).catch(() => 0),
-            prisma.systemLog.count().catch(() => 0),
+            prisma.$transaction(async tx => {
+                const groups = await tx.event.groupBy({ by: ['source', 'sortDate'], _count: { _all: true } });
+                const inventory = buildEventInventory(groups);
+                for (const [key, field] of [['withRegistration', 'registrationClosesAt'], ['withPrices', 'prices'], ['withProgramme', 'programa'], ['withImage', 'image']]) {
+                    inventory[key] = await tx.event.count({ where: { ...PUBLISHED_EVENTS_WHERE, [field]: { not: null }, ...(field !== 'registrationClosesAt' ? { NOT: [{ source: { contains: 'Quarentena' } }, { [field]: '' }] } : {}) } });
+                }
+                return inventory;
+            }, { isolationLevel: 'RepeatableRead' }),
+            prisma.systemLog.count({ where: { id: { not: 'operational-scraper-lease' } } }).catch(() => 0),
             prisma.systemLog.count({ where: { level: 'ERROR' } }).catch(() => 0),
             prisma.systemLog.findMany({
+                where: { id: { not: 'operational-scraper-lease' } },
                 take: 5,
                 orderBy: { createdAt: 'desc' },
                 select: { id: true, level: true, source: true, message: true, createdAt: true }
@@ -232,17 +232,7 @@ export async function GET(request) {
         return Response.json({
             success: true,
             stats: {
-                events: {
-                    total: totalEvents,
-                    fpc: fpcEvents,
-                    cabreira: cabreiraEvents,
-                    stopAndGo: stopAndGoEvents,
-                    multiSource: multiSourceEvents,
-                    withRegistration: eventsWithRegCloses,
-                    withPrices: eventsWithPrices,
-                    withProgramme: eventsWithProgramme,
-                    withImage: eventsWithImage
-                },
+                events: eventInventory,
                 users: {
                     total: totalUsers
                 },

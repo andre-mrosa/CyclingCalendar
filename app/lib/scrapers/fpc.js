@@ -324,11 +324,11 @@ export const parseFPCCalendar = (html, year) => {
         return [...events.values()];
 };
 
-export const scrapeFPC = async (year) => {
+export const scrapeFPC = async (year, options = {}) => {
     try {
         await logInfo('SCRAPER', `FPC ${year}: a recolher janeiro a dezembro (incluindo provas passadas)`);
         const events = await fetchFPCCalendar(year);
-        for (const event of events) await saveOrMergeEvent(prisma, event);
+        for (const event of events) await saveOrMergeEvent(prisma, event, options);
         await logInfo('SCRAPER', `Sincronização FPC ${year} concluída (${events.length} eventos processados)`);
         return events.length;
     } catch (e) {
@@ -367,6 +367,7 @@ export const incrementalDeepScrapeFPC = async (limit = 25) => {
                         });
                         processedCount++;
                     } catch (err) {
+                        await logError('SCRAPER', `Erro ao atualizar programa FPC: ${err.message}`, err);
                         await prisma.event.update({ 
                             where: { id: ev.id }, 
                             data: { programa: '<p>Erro ao extrair detalhes na página da FPC.</p>' } 
@@ -380,7 +381,7 @@ export const incrementalDeepScrapeFPC = async (limit = 25) => {
             logInfo('SCRAPER', `Deep scraping incremental FPC atualizou ${processedCount} programas de provas`);
         }
 
-        return fpcEventsToUpdate.length;
+        return processedCount;
     } catch(e) {
         logError('SCRAPER', `Erro no deep scraping incremental FPC: ${e.message}`, e);
         return 0;

@@ -67,15 +67,22 @@ export async function scrapeEventPage(url, retries = 2, options = {}) {
                 checkRateLimit(res);
             } catch (err) {
                 if (err.rateLimited) throw err;
-                if (attempt === retries) return null;
+                if (attempt === retries) {
+                    await logError('SCRAPER', `Stop and Go: falha ao consultar ${url}: ${err.message}`, err);
+                    return null;
+                }
                 await new Promise(r => setTimeout(r, 400 * (attempt + 1)));
             }
         }
-        if (!res || !res.ok) return null;
+        if (!res || !res.ok) {
+            await logError('SCRAPER', `Stop and Go: falha ao consultar ${url} (HTTP ${res?.status || 'indisponível'})`);
+            return null;
+        }
         const html = await res.text();
         return parseStopAndGoEvent(html, url, options);
     } catch (error) {
         if (error.rateLimited) throw error;
+        await logError('SCRAPER', `Stop and Go: erro ao ler ${url}: ${error.message}`, error);
         return null;
     }
 }
@@ -192,6 +199,8 @@ export async function scrapeStopAndGo(options = {}) {
         if (res.ok) {
             const xml = await res.text();
             sitemapUrls = Array.from(new Set(xml.match(/https:\/\/stopandgo\.net\/events\/[a-zA-Z0-9_-]+/g) || []));
+        } else {
+            await logError('SCRAPER', `Stop and Go: sitemap indisponível (HTTP ${res.status})`);
         }
 
         // Recolher URLs de sitemap e das páginas de eventos gerais e por modalidades específicas de ciclismo (Downhill, Gravel, BTT, Trail/BTT, Ciclismo, Cycling)
@@ -217,7 +226,11 @@ export async function scrapeStopAndGo(options = {}) {
                         }
                     });
                 }
-            } catch (err) { if (err.rateLimited) throw err; }
+                if (!pRes.ok) await logError('SCRAPER', `Stop and Go: página ${page} indisponível (HTTP ${pRes.status})`);
+            } catch (err) {
+                if (err.rateLimited) throw err;
+                await logError('SCRAPER', `Stop and Go: falha na página ${page}: ${err.message}`, err);
+            }
         }
 
         // 2. Abas dedicadas de modalidades de ciclismo (Downhill MTB, Gravel, Trail/BTT, BTT, Ciclismo, Cycling)
@@ -245,9 +258,14 @@ export async function scrapeStopAndGo(options = {}) {
                             }
                         });
                         if (foundInPage === 0) break; // Sem mais páginas para esta modalidade
+                    } else {
+                        await logError('SCRAPER', `Stop and Go: modalidade ${mod.id} indisponível (HTTP ${mRes.status})`);
                     }
                 }
-            } catch (err) { if (err.rateLimited) throw err; }
+            } catch (err) {
+                if (err.rateLimited) throw err;
+                await logError('SCRAPER', `Stop and Go: falha na modalidade ${mod.id}: ${err.message}`, err);
+            }
         }
 
         const allUrls = [...new Set([...eventPageUrls].map(stopAndGoEventUrl).filter(Boolean))];
@@ -280,7 +298,7 @@ export async function scrapeStopAndGo(options = {}) {
             const events = await Promise.all(chunk.map(url => scrapeEventPage(url, 2, { years })));
             for (const ev of events) {
                 if (ev) {
-                    await saveOrMergeEvent(prisma, ev);
+                    await saveOrMergeEvent(prisma, ev, options);
                     savedOrMergedCount++;
                 }
             }

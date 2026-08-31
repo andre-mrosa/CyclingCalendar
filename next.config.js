@@ -17,6 +17,12 @@ const withPWA = withPWAInit({
     clientsClaim: true,
     runtimeCaching: [
       {
+        // Operational state and mutating endpoints must never fall back to an
+        // old successful response from the offline cache.
+        urlPattern: ({ url }) => /^\/(?:admin(?:\/|$)|api\/(?:admin(?:\/|$)|force-scrape(?:-all)?(?:\/|$)|cron(?:\/|$)))/.test(url.pathname),
+        handler: "NetworkOnly",
+      },
+      {
         urlPattern: ({ request }) => request.mode === 'navigate',
         handler: "NetworkFirst",
         options: {

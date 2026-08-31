@@ -13,7 +13,24 @@ Campeonatos nacionais exigem confirmação FPC no nome ou na classe da prova;
 referências em descrições não contam. A Stop and Go usa a modalidade e as datas
 do cabeçalho da própria prova, com pedidos espaçados e erro explícito em HTTP 429.
 
-Testes: `npm test` (ou `node --test tests/calendar-scrapers.test.mjs`).
+Testes: `npm test` (ou `node --test tests/*.test.mjs`).
+
+### Painel de administração e contagens
+
+O inventário distingue provas únicas publicadas, todos os registos guardados
+e quarentena. O detalhe por ano soma provas únicas; as fontes sobrepõem-se,
+e “várias fontes” é um subconjunto, não uma parcela a somar ao total.
+Uma sincronização apresenta operações processadas/criadas/atualizadas/fundidas,
+não o inventário acumulado. Métricas ausentes em logs antigos aparecem como
+indisponíveis, nunca como zero. Os novos logs identificam cada execução com
+`runId`; resumos antigos repetidos da mesma época não são somados duas vezes.
+
+Uma reserva atómica na BD impede execuções simultâneas entre instâncias.
+É guardada temporariamente no registo operacional `operational-scraper-lease`
+da tabela `SystemLog`, excluído das contagens e das limpezas de logs. Renova-se
+a cada 30 segundos e expira após 15 minutos sem renovação, permitindo recuperar
+de um processo terminado. A chamada manual devolve HTTP 409 se já existir uma
+execução; o cron ignora essa corrida. Não é necessária uma migração da BD.
 
 Para auditar dados antigos, executar
 `node --env-file=.env --env-file=.env.local maintenance/repair-calendar.mjs`.
