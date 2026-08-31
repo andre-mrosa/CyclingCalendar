@@ -11,6 +11,8 @@ import { HelpCircle, Settings, ChevronUp, ChevronDown, RotateCcw, Shield, Trash2
 import RegionAssistant from '../components/RegionAssistant';
 import EscalaoAssistant from '../components/EscalaoAssistant';
 import FlagIcon from '../components/FlagIcon';
+import PageHeading from '../components/PageHeading';
+import styles from '../components/site.module.css';
 
 export default function Conta() {
     const { theme, setTheme } = useTheme();
@@ -114,16 +116,8 @@ export default function Conta() {
     };
 
     return (
-        <div className="max-w-3xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
-            <header className="mb-12 text-center">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-500/10 border border-blue-500/20 mb-4">
-                    <Settings size={28} className="text-blue-500 dark:text-blue-400" />
-                </div>
-                <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-2">{t('settings_title')}</h1>
-                <p className="text-slate-600 dark:text-slate-400 text-base sm:text-lg">
-                    {t('settings_subtitle')}
-                </p>
-            </header>
+        <div className={`${styles.page} ${styles.secondary}`}>
+            <PageHeading title={t('settings_title')} subtitle={t('settings_subtitle')} icon={Settings} />
 
             <main className="flex flex-col gap-6">
                 {isAdmin && (
@@ -133,28 +127,28 @@ export default function Conta() {
                                 <Shield size={22} />
                             </div>
                             <div>
-                                <h3 className="font-bold text-slate-900 dark:text-white text-base">Painel de Gestão & Backoffice</h3>
-                                <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">Gere utilizadores, consulta os logs do sistema e executa scrapers.</p>
+                                <h3 className="font-bold text-ink text-base">Painel de Gestão & Backoffice</h3>
+                                <p className="text-xs text-muted mt-0.5">Gere utilizadores, consulta os logs do sistema e executa scrapers.</p>
                             </div>
                         </div>
                         <Link
                             href="/admin"
-                            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-bold shadow-md transition-all !no-underline shrink-0"
+                            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-brand hover:brightness-110 text-surface text-xs sm:text-sm font-bold shadow-md transition-all !no-underline shrink-0"
                         >
                             <Shield size={16} />
                             Abrir Gestão
                         </Link>
                     </section>
                 )}
-                <section className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/5 rounded-2xl p-6 sm:p-8 shadow-sm dark:shadow-xl">
+                <section className="bg-surface border border-line rounded-2xl p-6 sm:p-8 shadow-sm">
                     {/* Idioma da Aplicação */}
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between py-6 border-b border-slate-100 dark:border-slate-800/60 gap-4">
                         <div>
-                            <h3 className="font-semibold text-slate-900 dark:text-slate-200 flex items-center mb-1 text-base gap-2">
+                            <h3 className="font-semibold text-ink flex items-center mb-1 text-base gap-2">
                                 <Globe size={16} className="text-blue-500" />
                                 {t('settings_lang_title')}
                             </h3>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">{t('settings_lang_desc')}</p>
+                            <p className="text-sm text-muted">{t('settings_lang_desc')}</p>
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
                             {[
@@ -171,8 +165,8 @@ export default function Conta() {
                                         onClick={() => setLanguage(item.code)}
                                         className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer border ${
                                             isActive
-                                                ? 'bg-blue-600/15 border-blue-500 text-blue-600 dark:text-blue-400 ring-1 ring-blue-500/30 shadow-sm'
-                                                : 'bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700'
+                                                ? 'bg-blue-600/15 border-blue-500 text-brand ring-1 ring-blue-500/30 shadow-sm'
+                                                : 'bg-soft border-line text-ink hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700'
                                         }`}
                                     >
                                         <FlagIcon code={item.code} className="w-4 h-2.5 rounded-[2px] shadow-[0_0_0_1px_rgba(0,0,0,0.15)] shrink-0" />
@@ -187,13 +181,13 @@ export default function Conta() {
                     {/* Tema Visual */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between py-6 border-b border-slate-100 dark:border-slate-800/60 gap-4">
                         <div>
-                            <h3 className="font-semibold text-slate-900 dark:text-slate-200 flex items-center mb-1 text-base">
+                            <h3 className="font-semibold text-ink flex items-center mb-1 text-base">
                                 {t('settings_theme_title')}
                             </h3>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">{t('settings_theme_desc')}</p>
+                            <p className="text-sm text-muted">{t('settings_theme_desc')}</p>
                         </div>
                         <select 
-                            className="h-10 px-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors w-full md:w-auto font-medium cursor-pointer" 
+                            className="h-10 px-3.5 text-sm rounded-xl border border-line bg-soft text-ink outline-none focus:border-brand transition-colors w-full md:w-auto font-medium cursor-pointer"
                             value={theme || 'system'} 
                             onChange={(e) => setTheme(e.target.value)}
                         >
@@ -205,13 +199,13 @@ export default function Conta() {
 
                     <div className="flex flex-col md:flex-row md:items-center justify-between py-6 border-b border-slate-100 dark:border-slate-800/60 gap-4">
                         <div>
-                            <h3 className="font-semibold text-slate-900 dark:text-slate-200 flex items-center mb-1 text-base">
+                            <h3 className="font-semibold text-ink flex items-center mb-1 text-base">
                                 {t('settings_default_page_title')}
                             </h3>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">{t('settings_default_page_desc')}</p>
+                            <p className="text-sm text-muted">{t('settings_default_page_desc')}</p>
                         </div>
                         <select 
-                            className="h-10 px-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors w-full md:w-auto font-medium cursor-pointer" 
+                            className="h-10 px-3.5 text-sm rounded-xl border border-line bg-soft text-ink outline-none focus:border-brand transition-colors w-full md:w-auto font-medium cursor-pointer"
                             value={defaultPage || '/'} 
                             onChange={(e) => setDefaultPage(e.target.value)}
                         >
@@ -228,13 +222,13 @@ export default function Conta() {
 
                     <div className="flex flex-col md:flex-row md:items-center justify-between py-6 border-b border-slate-100 dark:border-slate-800/60 gap-4">
                         <div>
-                            <h3 className="font-semibold text-slate-900 dark:text-slate-200 flex items-center mb-1 text-base">
+                            <h3 className="font-semibold text-ink flex items-center mb-1 text-base">
                                 {t('settings_default_region_title')}
-                                <button onClick={() => setActiveModal('regiao')} className="ml-2 text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 transition-colors" title={t('region_modal_title')}><HelpCircle size={16} /></button>
+                                <button onClick={() => setActiveModal('regiao')} className="ml-2 text-brand hover:text-blue-600 dark:hover:text-blue-300 transition-colors" title={t('region_modal_title')}><HelpCircle size={16} /></button>
                             </h3>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">{t('settings_default_region_desc')}</p>
+                            <p className="text-sm text-muted">{t('settings_default_region_desc')}</p>
                         </div>
-                        <select className="h-10 px-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors w-full md:w-auto font-medium cursor-pointer" value={defaultRegiao} onChange={(e) => setDefaultRegiao(e.target.value)}>
+                        <select className="h-10 px-3.5 text-sm rounded-xl border border-line bg-soft text-ink outline-none focus:border-blue-500 transition-colors w-full md:w-auto font-medium cursor-pointer" value={defaultRegiao} onChange={(e) => setDefaultRegiao(e.target.value)}>
                             <option value="Todas">{t('filter_all_regions')}</option>
                             <option value="AC Minho">AC Minho</option>
                             <option value="AC Porto">AC Porto</option>
@@ -252,13 +246,13 @@ export default function Conta() {
 
                     <div className="flex flex-col md:flex-row md:items-center justify-between pt-6 gap-4">
                         <div>
-                            <h3 className="font-semibold text-slate-900 dark:text-slate-200 flex items-center mb-1 text-base">
+                            <h3 className="font-semibold text-ink flex items-center mb-1 text-base">
                                 {t('settings_default_category_title')}
-                                <button onClick={() => setActiveModal('escalao')} className="ml-2 text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 transition-colors" title={t('escalao_modal_title')}><HelpCircle size={16} /></button>
+                                <button onClick={() => setActiveModal('escalao')} className="ml-2 text-brand hover:text-blue-600 dark:hover:text-blue-300 transition-colors" title={t('escalao_modal_title')}><HelpCircle size={16} /></button>
                             </h3>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">{t('settings_default_category_desc')}</p>
+                            <p className="text-sm text-muted">{t('settings_default_category_desc')}</p>
                         </div>
-                        <select className="h-10 px-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors w-full md:w-auto font-medium cursor-pointer" value={defaultEscalao} onChange={(e) => setDefaultEscalao(e.target.value)}>
+                        <select className="h-10 px-3.5 text-sm rounded-xl border border-line bg-soft text-ink outline-none focus:border-blue-500 transition-colors w-full md:w-auto font-medium cursor-pointer" value={defaultEscalao} onChange={(e) => setDefaultEscalao(e.target.value)}>
                             <option value="Todos">{t('filter_all_categories')}</option>
                             <option value="Elite Amador / Individual">{translateEscalao('Elite Amador', language)} / {t('escalao_team_indiv')}</option>
                             <option value="Elite / Sub-23">{translateEscalao('Elite', language)} / {translateEscalao('Sub-23', language)}</option>
@@ -274,15 +268,15 @@ export default function Conta() {
 
                 </section>
 
-                <section className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/5 rounded-2xl p-6 sm:p-8 shadow-sm dark:shadow-xl">
+                <section className="bg-surface border border-line rounded-2xl p-6 sm:p-8 shadow-sm">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800/60 gap-2">
                         <div>
-                            <h3 className="font-semibold text-slate-900 dark:text-slate-200 mb-1 text-base">{t('settings_reorder_tabs')}</h3>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">{t('settings_reorder_tabs_desc')}</p>
+                            <h3 className="font-semibold text-ink mb-1 text-base">{t('settings_reorder_tabs')}</h3>
+                            <p className="text-sm text-muted">{t('settings_reorder_tabs_desc')}</p>
                         </div>
                         <button 
                             onClick={resetTabsOrder}
-                            className="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors py-1 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-blue-500/40 shrink-0 self-start sm:self-auto cursor-pointer font-medium"
+                            className="inline-flex items-center gap-1.5 text-xs text-muted hover:text-blue-600 dark:hover:text-blue-400 transition-colors py-1 px-2.5 rounded-lg border border-line hover:border-blue-500/40 shrink-0 self-start sm:self-auto cursor-pointer font-medium"
                             title={t('settings_reset_tabs')}
                         >
                             <RotateCcw size={13} />
@@ -308,10 +302,10 @@ export default function Conta() {
                             else if (tab === 'Favoritos') localizedTab = t('nav_favorites');
 
                             return (
-                                <div key={tab} className="flex items-center justify-between py-2.5 px-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60 gap-3">
+                                <div key={tab} className="flex items-center justify-between py-2.5 px-3.5 rounded-xl bg-soft border border-line gap-3">
                                     <div className="flex items-center gap-3 min-w-0">
                                         {/* Reorder Arrows */}
-                                        <div className="flex items-center gap-0.5 shrink-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-0.5">
+                                        <div className="flex items-center gap-0.5 shrink-0 bg-surface border border-line rounded-lg p-0.5">
                                             <button 
                                                 onClick={() => moveTab(idx, -1)}
                                                 disabled={isFirst}
@@ -330,7 +324,7 @@ export default function Conta() {
                                             </button>
                                         </div>
 
-                                        <span className={`text-sm font-semibold truncate ${isVisible ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 dark:text-slate-500 line-through'}`}>
+                                        <span className={`text-sm font-semibold truncate ${isVisible ? 'text-ink' : 'text-slate-400 dark:text-slate-500 line-through'}`}>
                                             {localizedTab}
                                         </span>
                                     </div>
@@ -352,10 +346,10 @@ export default function Conta() {
                     </div>
                 </section>
 
-                <section className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/5 rounded-2xl p-6 sm:p-8 shadow-sm dark:shadow-xl">
+                <section className="bg-surface border border-line rounded-2xl p-6 sm:p-8 shadow-sm">
                     <div className="pb-4">
-                        <h3 className="font-semibold text-slate-900 dark:text-slate-200 mb-1 text-base">{t('settings_sources_title')}</h3>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">{t('settings_sources_desc')}</p>
+                        <h3 className="font-semibold text-ink mb-1 text-base">{t('settings_sources_title')}</h3>
+                        <p className="text-sm text-muted">{t('settings_sources_desc')}</p>
                     </div>
 
                     <div className="pt-2 flex flex-col gap-3">
@@ -367,12 +361,12 @@ export default function Conta() {
                         ].map(source => {
                             const isSelected = selectedSources.includes(source.id);
                             return (
-                                <div key={source.id} className="flex flex-col sm:flex-row sm:items-center justify-between bg-slate-50 dark:bg-slate-800/40 px-4 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700/60 gap-3">
+                                <div key={source.id} className="flex flex-col sm:flex-row sm:items-center justify-between bg-soft px-4 py-3.5 rounded-xl border border-line gap-3">
                                     <div>
-                                        <span className="font-semibold text-sm text-slate-900 dark:text-slate-200 block">
+                                        <span className="font-semibold text-sm text-ink block">
                                             {source.name}
                                         </span>
-                                        <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">
+                                        <span className="text-xs text-muted block mt-0.5">
                                             {source.desc}
                                         </span>
                                     </div>
@@ -397,10 +391,10 @@ export default function Conta() {
                                     <RotateCcw size={20} />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-slate-900 dark:text-slate-100 text-base">
+                                    <h3 className="font-bold text-ink text-base">
                                         {t('settings_gdpr_title')}
                                     </h3>
-                                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                                    <p className="text-xs sm:text-sm text-muted mt-1 leading-relaxed">
                                         {t('settings_gdpr_desc')}
                                     </p>
                                 </div>
@@ -425,7 +419,7 @@ export default function Conta() {
                                     <button
                                         onClick={handleCancelDeletionRequest}
                                         disabled={isLoadingDeletion}
-                                        className="px-4 py-2 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 transition-all cursor-pointer shrink-0 shadow-sm"
+                                        className="px-4 py-2 rounded-xl text-xs font-bold bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 transition-all cursor-pointer shrink-0 shadow-sm"
                                     >
                                         {isLoadingDeletion ? t('action_loading') : t('settings_gdpr_cancel_btn')}
                                     </button>
@@ -460,7 +454,7 @@ export default function Conta() {
                         if (e.target === e.currentTarget && !isDeletingAccount) setActiveModal(null);
                     }}
                 >
-                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl relative max-w-[480px] w-full shadow-2xl overflow-hidden text-slate-900 dark:text-slate-100 transition-colors duration-200">
+                    <div className="bg-surface border border-line rounded-2xl relative max-w-[480px] w-full shadow-2xl overflow-hidden text-ink transition-colors duration-200">
                         <button 
                             onClick={() => !isDeletingAccount && setActiveModal(null)}
                             className="absolute top-3.5 right-3.5 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors text-2xl leading-none z-10 cursor-pointer"
@@ -481,7 +475,7 @@ export default function Conta() {
                                             {deleteModalType === 'DELETE_DATA' ? <RotateCcw size={20} /> : <Trash2 size={20} />}
                                         </div>
                                         <div>
-                                            <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                                            <h3 className="text-base font-bold text-ink">
                                                 {deleteModalType === 'DELETE_DATA' ? 'Requisitar Eliminação de Dados' : 'Requisitar Eliminação de Conta'}
                                             </h3>
                                             <p className="text-xs text-slate-500">
@@ -508,7 +502,7 @@ export default function Conta() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                                        <label className="block text-xs font-semibold text-ink mb-1.5">
                                             Justificação / Motivo (opcional):
                                         </label>
                                         <textarea
@@ -516,7 +510,7 @@ export default function Conta() {
                                             onChange={(e) => setDeleteReason(e.target.value)}
                                             placeholder={deleteModalType === 'DELETE_DATA' ? "Ex: Pretendo reiniciar a minha lista de favoritos do zero..." : "Ex: Não pretendo continuar a utilizar o calendário..."}
                                             rows={3}
-                                            className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 transition-colors"
+                                            className="w-full p-3 rounded-xl bg-canvas border border-line text-xs sm:text-sm text-ink focus:outline-none focus:border-blue-500 transition-colors"
                                         />
                                     </div>
 

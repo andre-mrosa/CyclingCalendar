@@ -12,10 +12,12 @@ import { useTranslation } from '../i18n/useTranslation';
 import DynamicLogo from './DynamicLogo';
 import ClerkPrivacyProfilePage from './ClerkPrivacyProfilePage';
 import FlagIcon from './FlagIcon';
+import styles from './site.module.css';
+import { useModalFocus } from '../hooks/useModalFocus';
 
 export default function Navigation() {
     const pathname = usePathname();
-    const { theme, setTheme } = useTheme();
+    const { resolvedTheme, setTheme } = useTheme();
     const { t, language, setLanguage } = useTranslation();
     const { isLoaded, isSignedIn, user } = useUser();
     const { getToken } = useAuth();
@@ -27,6 +29,18 @@ export default function Navigation() {
     const [adminPendingCount, setAdminPendingCount] = useState(0);
     const [dismissedAdminBanner, setDismissedAdminBanner] = useState(false);
     const [mounted, setMounted] = useState(false);
+    const drawerRef = useModalFocus(isMobileMenuOpen, () => setIsMobileMenuOpen(false));
+    const pageDialogRef = useModalFocus(isSettingsModalOpen || isHelpModalOpen, () => {
+        setIsSettingsModalOpen(false);
+        setIsHelpModalOpen(false);
+    });
+
+    useEffect(() => {
+        const desktop = window.matchMedia('(min-width: 1101px)');
+        const closeOnDesktop = () => { if (desktop.matches) setIsMobileMenuOpen(false); };
+        desktop.addEventListener('change', closeOnDesktop);
+        return () => desktop.removeEventListener('change', closeOnDesktop);
+    }, []);
 
     useEffect(() => {
         setMounted(true);
@@ -118,7 +132,7 @@ export default function Navigation() {
         };
     }, [isLoaded, isSignedIn, user, pathname]);
 
-    const isDarkMode = mounted ? theme === 'dark' : true; // Default to dark for SSR to match defaultTheme
+    const isDarkMode = mounted ? resolvedTheme === 'dark' : true;
 
     useEffect(() => {
         setIsMobileMenuOpen(false);
@@ -173,7 +187,9 @@ export default function Navigation() {
             <Link 
                 key={link.href}
                 href={link.href} 
-                className={`flex items-center gap-1.5 font-bold py-1 border-y-2 border-t-transparent transition-all duration-300 ${isActive ? 'text-blue-600 dark:text-blue-400 border-b-blue-600 dark:border-b-blue-400' : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-50 border-b-transparent'}`}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`${styles.navLink} ${isActive ? styles.activeLink : ''}`}
+                aria-current={isActive ? 'page' : undefined}
             >
                 {link.icon}
                 {link.label}
@@ -181,15 +197,13 @@ export default function Navigation() {
         );
     };
 
-    const ThemeToggle = () => (
+    const renderThemeToggle = () => (
         <button 
             onClick={() => setTheme(isDarkMode ? 'light' : 'dark')}
-            className="relative w-9 h-5 rounded-full bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 flex items-center transition-colors shadow-inner cursor-pointer p-0"
+            className={styles.iconButton}
             title={isDarkMode ? (t('settings_theme_light') || "Mudar para Modo Diurno") : (t('settings_theme_dark') || "Mudar para Modo Noturno")}
         >
-            <div className={`absolute w-4 h-4 rounded-full flex items-center justify-center transition-all duration-300 shadow-[0_1px_2px_rgba(0,0,0,0.2)] ${isDarkMode ? 'bg-slate-900 left-[2px]' : 'bg-white left-[18px]'}`}>
-                {mounted && (isDarkMode ? <Moon size={10} className="text-slate-300" /> : <Sun size={10} className="text-amber-500" />)}
-            </div>
+            {mounted && (isDarkMode ? <Moon size={17} /> : <Sun size={17} />)}
         </button>
     );
 
@@ -202,12 +216,12 @@ export default function Navigation() {
 
     const currentLangObj = languages.find(l => l.code === language) || languages[0];
 
-    const LanguageDropdown = () => (
+    const renderLanguageDropdown = () => (
         <div className="relative">
             <button 
                 type="button"
                 onClick={() => setIsLangDropdownOpen(!isLangDropdownOpen)}
-                className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-100/90 hover:bg-slate-200/90 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700/80 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-all cursor-pointer shadow-xs"
+                className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-100/90 hover:bg-slate-200/90 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 border border-line text-xs font-semibold text-slate-700 dark:text-slate-200 transition-all cursor-pointer shadow-xs"
                 title="Escolher Idioma / Choose Language"
             >
                 <FlagIcon code={currentLangObj.code} />
@@ -221,7 +235,7 @@ export default function Navigation() {
                         className="fixed inset-0 z-40" 
                         onClick={() => setIsLangDropdownOpen(false)} 
                     />
-                    <div className="absolute right-0 mt-1.5 w-40 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 py-1 z-50 animate-fade-in overflow-hidden">
+                    <div className="absolute right-0 mt-1.5 w-40 bg-surface rounded-xl shadow-xl border border-line py-1 z-50 animate-fade-in overflow-hidden">
                         {languages.map((item) => {
                             const isSelected = (language || 'pt') === item.code;
                             return (
@@ -234,8 +248,8 @@ export default function Navigation() {
                                     }}
                                     className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold transition-colors cursor-pointer text-left ${
                                         isSelected 
-                                            ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold' 
-                                            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                            ? 'bg-brand-soft text-brand font-bold'
+                                            : 'text-ink hover:bg-slate-100 dark:hover:bg-slate-800'
                                     }`}
                                 >
                                     <span className="flex items-center gap-2.5">
@@ -253,17 +267,20 @@ export default function Navigation() {
     );
 
     const getPageInfo = (path) => {
-        if (path === '/') return { label: t('nav_general'), icon: <Home size={17} className="text-blue-500 dark:text-blue-400" /> };
-        if (path.startsWith('/agenda')) return { label: t('nav_agenda'), icon: <CalendarCheck size={17} className="text-blue-500 dark:text-blue-400" /> };
-        if (path.startsWith('/nacionais')) return { label: t('nav_nationals'), icon: <Award size={17} className="text-blue-500 dark:text-blue-400" /> };
-        if (path.startsWith('/internacionais')) return { label: t('nav_internationals'), icon: <Globe size={17} className="text-blue-500 dark:text-blue-400" /> };
-        if (path.startsWith('/tacas')) return { label: t('nav_cups'), icon: <Trophy size={17} className="text-blue-500 dark:text-blue-400" /> };
-        if (path.startsWith('/regionais')) return { label: t('nav_regionals'), icon: <MapPin size={17} className="text-blue-500 dark:text-blue-400" /> };
-        if (path.startsWith('/lazer')) return { label: t('nav_leisure'), icon: <Bike size={17} className="text-blue-500 dark:text-blue-400" /> };
-        if (path.startsWith('/favoritos')) return { label: t('nav_favorites'), icon: <Star size={17} className="text-blue-500 dark:text-blue-400" /> };
-        if (path.startsWith('/definicoes')) return { label: t('nav_settings'), icon: <Settings size={17} className="text-blue-500 dark:text-blue-400" /> };
-        if (path.startsWith('/ajuda')) return { label: t('nav_help'), icon: <HelpCircle size={17} className="text-blue-500 dark:text-blue-400" /> };
-        if (path.startsWith('/admin')) return { label: t('nav_admin'), icon: <Shield size={17} className="text-blue-500 dark:text-blue-400" /> };
+        if (path === '/') return { label: t('nav_general'), icon: <Home size={17} className="text-brand" /> };
+        if (path.startsWith('/agenda')) return { label: t('nav_agenda'), icon: <CalendarCheck size={17} className="text-brand" /> };
+        if (path.startsWith('/nacionais')) return { label: t('nav_nationals'), icon: <Award size={17} className="text-brand" /> };
+        if (path.startsWith('/internacionais')) return { label: t('nav_internationals'), icon: <Globe size={17} className="text-brand" /> };
+        if (path.startsWith('/tacas')) return { label: t('nav_cups'), icon: <Trophy size={17} className="text-brand" /> };
+        if (path.startsWith('/regionais')) return { label: t('nav_regionals'), icon: <MapPin size={17} className="text-brand" /> };
+        if (path.startsWith('/lazer')) return { label: t('nav_leisure'), icon: <Bike size={17} className="text-brand" /> };
+        if (path.startsWith('/favoritos')) return { label: t('nav_favorites'), icon: <Star size={17} className="text-brand" /> };
+        if (path.startsWith('/definicoes')) return { label: t('nav_settings'), icon: <Settings size={17} className="text-brand" /> };
+        if (path.startsWith('/ajuda')) return { label: t('nav_help'), icon: <HelpCircle size={17} className="text-brand" /> };
+        if (path.startsWith('/admin')) return { label: t('nav_admin'), icon: <Shield size={17} className="text-brand" /> };
+        if (path.startsWith('/contacto')) return { label: t('contact_title') };
+        if (path.startsWith('/privacidade') || path.startsWith('/privacy-policy')) return { label: t('footer_privacy') };
+        if (path.startsWith('/termos') || path.startsWith('/terms-of-service')) return { label: t('footer_terms') };
         return { label: t('nav_calendar'), icon: <DynamicLogo className="w-5 h-5 rounded" /> };
     };
 
@@ -300,41 +317,40 @@ export default function Navigation() {
                 </div>
             )}
 
-            <nav className="no-scrollbar flex items-center justify-between px-4 sm:px-8 py-3.5 sm:py-4 bg-white/85 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50 text-slate-800 dark:text-slate-50 transition-colors duration-200">
-                <div className="flex items-center gap-2.5 md:hidden">
+            <nav className={styles.nav} aria-label={t('nav_calendar')}>
+              <div className={styles.navInner}>
+                <div className={styles.mobileNav}>
                     <button 
-                        className="text-slate-700 dark:text-slate-50 hover:text-blue-600 dark:hover:text-blue-400 transition-colors p-1 -ml-1 rounded-lg focus:outline-none" 
+                        className={styles.iconButton}
                         onClick={() => setIsMobileMenuOpen(true)}
                         title="Menu"
+                        aria-expanded={isMobileMenuOpen}
+                        aria-controls="site-mobile-menu"
                     >
                         <Menu size={24} />
                     </button>
 
-                    <div className="flex items-center gap-2">
-                        {currentPage.icon}
-                        <span className="font-bold text-base text-slate-900 dark:text-white tracking-tight">
-                            {currentPage.label}
-                        </span>
-                    </div>
+                    <Link href="/" className={styles.brand}><span><strong>Cycling Calendar.</strong><small>{currentPage.label}</small></span></Link>
                 </div>
 
-                <Link href="/" className="hidden md:flex items-center mr-6 no-underline group shrink-0" title="Cycling Calendar">
-                    <DynamicLogo className="w-8 h-8 rounded-lg shadow-[0_0_12px_rgba(59,130,246,0.25)] transition-transform group-hover:scale-105" />
+                <Link href="/" className={styles.brand} title="Cycling Calendar">
+                    <DynamicLogo className="w-9 h-9 rounded-xl" />
+                    <span><strong>Cycling Calendar.</strong><small>Portugal · Ride your season</small></span>
                 </Link>
 
-                <div className="hidden md:flex flex-1 items-center">
-                    <div className="flex gap-6 items-center">
+                <div className={styles.desktopNav}>
+                    <div className={styles.navLinks}>
                         {links.map(renderLink)}
                     </div>
                     
-                    <div className="ml-auto flex gap-3 items-center">
-                        <LanguageDropdown />
-                        <ThemeToggle />
+                    <div className={styles.navActions}>
+                        {renderLanguageDropdown()}
+                        {renderThemeToggle()}
                         
                         <Show when="signed-out">
                             {rightLinks.map(renderLink)}
                             <SignInButton mode="modal">
-                                <button className="flex items-center gap-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 px-4 py-1.5 rounded-lg transition-colors font-bold shadow-[0_0_10px_rgba(59,130,246,0.1)] hover:shadow-[0_0_15px_rgba(59,130,246,0.2)] cursor-pointer">
+                                <button className={styles.primaryButton}>
                                     <LogIn size={16} />
                                     {t('nav_signin')}
                                 </button>
@@ -344,7 +360,7 @@ export default function Navigation() {
                             {isAdmin && (
                                 <Link 
                                     href="/admin"
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30 text-xs font-bold transition-all shadow-sm !no-underline"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-brand border border-blue-500/30 text-xs font-bold transition-all shadow-sm !no-underline"
                                     title={t('nav_admin')}
                                 >
                                     <Shield size={14} />
@@ -402,11 +418,11 @@ export default function Navigation() {
                 </div>
                 
                 {/* Mobile specific actions that show only when menu is closed */}
-                <div className="ml-auto md:hidden flex items-center gap-2">
+                <div className={styles.mobileActions}>
                     {isAdmin && (
                         <Link 
                             href="/admin" 
-                            className="relative p-1.5 rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30 flex items-center justify-center transition-colors !no-underline"
+                            className="relative p-1.5 rounded-lg bg-blue-500/15 text-brand border border-blue-500/30 flex items-center justify-center transition-colors !no-underline"
                             title={t('nav_admin')}
                         >
                             <Shield size={16} />
@@ -417,26 +433,27 @@ export default function Navigation() {
                             )}
                         </Link>
                     )}
-                    <ThemeToggle />
+                    {renderThemeToggle()}
                 </div>
+              </div>
             </nav>
 
             {/* Mobile Navigation Drawer */}
             <div 
-                className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[45] transition-opacity duration-300 md:hidden ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                className={`${styles.drawerBackdrop} ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
                 onClick={() => setIsMobileMenuOpen(false)}
             />
 
-            <div className={`fixed top-0 left-0 bottom-0 w-72 max-w-[85vw] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 z-50 transform transition-transform duration-300 ease-in-out md:hidden text-slate-900 dark:text-slate-50 flex flex-col shadow-2xl ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+            <div id="site-mobile-menu" ref={drawerRef} tabIndex={-1} role="dialog" aria-modal={isMobileMenuOpen || undefined} aria-hidden={!isMobileMenuOpen} aria-label="Menu" inert={!isMobileMenuOpen} className={`${styles.drawer} ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                 <div className="flex justify-between items-center px-5 py-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
                     <div className="flex items-center gap-2.5">
                         <DynamicLogo className="w-7 h-7 rounded-lg" />
-                        <h2 className="text-base text-slate-900 dark:text-slate-50 m-0 font-bold">Cycling Calendar</h2>
+                        <h2 className="text-base text-ink m-0 font-bold">Cycling Calendar</h2>
                     </div>
                     <button 
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className="bg-transparent border-none text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer flex items-center justify-center transition-colors p-1"
-                        title={t('filter_button_close')}
+                        className="bg-transparent border-none text-muted hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer flex items-center justify-center transition-colors p-1"
+                        title={t('action_close')}
                     >
                         <X size={22} />
                     </button>
@@ -444,12 +461,12 @@ export default function Navigation() {
                 
                 <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-4 flex flex-col gap-3.5 pb-10 scrollbar-thin">
                     {links.map(renderLink)}
-                    <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-800 flex flex-col gap-3.5">
+                    <div className="mt-3 pt-3 border-t border-line flex flex-col gap-3.5">
                         <Show when="signed-out">
                             {rightLinks.map(renderLink)}
                             <div className="mt-2">
                                 <SignInButton mode="modal">
-                                    <button className="flex items-center justify-center gap-2 w-full bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 px-4 py-2 rounded-lg transition-colors font-bold shadow-[0_0_10px_rgba(59,130,246,0.1)] cursor-pointer">
+                                    <button className={`${styles.primaryButton} w-full`}>
                                         <LogIn size={18} />
                                         {t('nav_signin')}
                                     </button>
@@ -458,7 +475,7 @@ export default function Navigation() {
                         </Show>
                         <Show when="signed-in">
                             <div 
-                                className="flex items-center gap-3 py-2 px-1 rounded-xl text-slate-900 dark:text-slate-50 font-medium cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors"
+                                className="flex items-center gap-3 py-2 px-1 rounded-xl text-ink font-medium cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors"
                                 onClick={(e) => {
                                     const trigger = e.currentTarget.querySelector('button');
                                     if (trigger && !e.target.closest('button')) {
@@ -520,7 +537,7 @@ export default function Navigation() {
                                 <Link 
                                     href="/admin" 
                                     onClick={() => setIsMobileMenuOpen(false)}
-                                    className="flex items-center gap-2.5 py-2.5 px-3 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/25 text-sm font-bold transition-colors !no-underline"
+                                    className="flex items-center gap-2.5 py-2.5 px-3 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-brand border border-blue-500/25 text-sm font-bold transition-colors !no-underline"
                                 >
                                     <Shield size={16} />
                                     <span>{t('nav_admin')}</span>
@@ -529,10 +546,10 @@ export default function Navigation() {
                         </Show>
 
                         {/* Mobile Drawer Language & Theme Settings */}
-                        <div className="mt-2 pt-3 border-t border-slate-200 dark:border-slate-800 flex flex-col gap-3">
+                        <div className="mt-2 pt-3 border-t border-line flex flex-col gap-3">
                             <div className="flex items-center justify-between">
                                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('settings_lang_title')}</span>
-                                <ThemeToggle />
+                                {renderThemeToggle()}
                             </div>
                             <div className="grid grid-cols-2 gap-1.5">
                                 {languages.map(item => {
@@ -544,8 +561,8 @@ export default function Navigation() {
                                             onClick={() => setLanguage(item.code)}
                                             className={`flex items-center gap-2 py-1.5 px-2.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
                                                 isSelected 
-                                                    ? 'bg-blue-600/10 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30 font-bold' 
-                                                    : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700/60 text-slate-700 dark:text-slate-300'
+                                                    ? 'bg-brand-soft text-brand border-brand font-bold'
+                                                    : 'bg-soft border-line text-ink'
                                             }`}
                                         >
                                             <FlagIcon code={item.code} className="w-4 h-2.5 rounded-[2px] shadow-[0_0_0_1px_rgba(0,0,0,0.15)] shrink-0" />
@@ -569,7 +586,8 @@ export default function Navigation() {
                     }}
                 >
                     <div 
-                        className="bg-slate-50 dark:bg-slate-900 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl relative border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 transition-colors duration-200"
+                        className="bg-soft rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl relative border border-line text-ink transition-colors duration-200"
+                        ref={pageDialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label={isSettingsModalOpen ? t('nav_settings') : t('nav_help')}
                         onClick={e => e.stopPropagation()}
                     >
                         <button 

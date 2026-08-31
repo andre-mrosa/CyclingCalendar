@@ -1,4 +1,6 @@
 import { FileText, Shield, AlertTriangle, Scale, RefreshCw, Mail, Calendar } from 'lucide-react';
+import PageHeading from '../components/PageHeading';
+import styles from '../components/site.module.css';
 
 export const metadata = {
   title: 'Termos de Serviço | Cycling Calendar',
@@ -21,10 +23,10 @@ export default function TermsOfService() {
       icon: Shield,
       title: '2. Descrição do Serviço',
       content: (
-        <ul className="space-y-2 text-slate-600 dark:text-slate-400">
-          <li className="flex gap-2"><span className="text-blue-500 dark:text-blue-400 mt-1">•</span><span>O Cycling Calendar é um <strong className="text-slate-900 dark:text-slate-200">agregador gratuito de eventos de ciclismo em Portugal</strong>, que recolhe e organiza informação de fontes públicas (Federação Portuguesa de Ciclismo, Cabreira Solutions, entre outras).</span></li>
-          <li className="flex gap-2"><span className="text-blue-500 dark:text-blue-400 mt-1">•</span><span>A Plataforma permite pesquisar, filtrar, guardar favoritos e adicionar provas ao Google Calendar do utilizador.</span></li>
-          <li className="flex gap-2"><span className="text-blue-500 dark:text-blue-400 mt-1">•</span><span>O Cycling Calendar <strong className="text-slate-900 dark:text-slate-200">não é organizador de eventos</strong> e não tem qualquer responsabilidade sobre a realização, inscrições, regulamentos ou logística das provas listadas.</span></li>
+        <ul className="space-y-2 text-muted">
+          <li className="flex gap-2"><span className="text-brand mt-1">•</span><span>O Cycling Calendar é um <strong className="text-ink">agregador gratuito de eventos de ciclismo em Portugal</strong>, que recolhe e organiza informação de fontes públicas (Federação Portuguesa de Ciclismo, Cabreira Solutions, entre outras).</span></li>
+          <li className="flex gap-2"><span className="text-brand mt-1">•</span><span>A Plataforma permite pesquisar, filtrar, guardar favoritos e adicionar provas ao Google Calendar do utilizador.</span></li>
+          <li className="flex gap-2"><span className="text-brand mt-1">•</span><span>O Cycling Calendar <strong className="text-ink">não é organizador de eventos</strong> e não tem qualquer responsabilidade sobre a realização, inscrições, regulamentos ou logística das provas listadas.</span></li>
         </ul>
       ),
     },
@@ -34,10 +36,10 @@ export default function TermsOfService() {
       content: (
         <>
           <p className="mb-3">Ao optar por ligar a sua conta Google e utilizar a funcionalidade de agenda:</p>
-          <ul className="space-y-2 text-slate-600 dark:text-slate-400">
-            <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1">✓</span><span>Concede-nos permissão explícita para <strong className="text-slate-900 dark:text-slate-200">criar novos eventos</strong> no seu calendário principal.</span></li>
-            <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1">✓</span><span>O Cycling Calendar <strong className="text-slate-900 dark:text-slate-200">não lê, não apaga, nem modifica</strong> quaisquer eventos pré-existentes ou pessoais no seu calendário.</span></li>
-            <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1">✓</span><span>Pode revogar esta permissão a qualquer momento através das <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline underline-offset-2">configurações de segurança da sua conta Google</a>.</span></li>
+          <ul className="space-y-2 text-muted">
+            <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1">✓</span><span>Concede-nos permissão explícita para <strong className="text-ink">criar novos eventos</strong> no seu calendário principal.</span></li>
+            <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1">✓</span><span>O Cycling Calendar <strong className="text-ink">não lê, não apaga, nem modifica</strong> quaisquer eventos pré-existentes ou pessoais no seu calendário.</span></li>
+            <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1">✓</span><span>Pode revogar esta permissão a qualquer momento através das <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer" className="text-brand hover:text-blue-700 dark:hover:text-blue-300 underline underline-offset-2">configurações de segurança da sua conta Google</a>.</span></li>
           </ul>
         </>
       ),
@@ -47,12 +49,12 @@ export default function TermsOfService() {
       title: '4. Precisão da Informação',
       content: (
         <>
-          <p className="mb-3">Os dados apresentados na Plataforma são extraídos automaticamente de fontes públicas. Embora envidemos esforços razoáveis para manter a informação atualizada, <strong className="text-slate-900 dark:text-slate-200">não garantimos</strong> a exatidão, completude ou atualidade de:</p>
-          <ul className="space-y-2 text-slate-600 dark:text-slate-400">
-            <li className="flex gap-2"><span className="text-amber-500 dark:text-amber-400 mt-1">!</span><span><strong className="text-slate-900 dark:text-slate-200">Datas e horários</strong> — Podem ser alterados pelas entidades organizadoras sem aviso prévio.</span></li>
-            <li className="flex gap-2"><span className="text-amber-500 dark:text-amber-400 mt-1">!</span><span><strong className="text-slate-900 dark:text-slate-200">Localizações e mapas</strong> — As coordenadas e pré-visualizações servem como referência aproximada. A localização exata pode diferir.</span></li>
-            <li className="flex gap-2"><span className="text-amber-500 dark:text-amber-400 mt-1">!</span><span><strong className="text-slate-900 dark:text-slate-200">Preços, escalões e regulamentos</strong> — Podem sofrer atualizações que não sejam imediatamente refletidas na Plataforma.</span></li>
-            <li className="flex gap-2"><span className="text-amber-500 dark:text-amber-400 mt-1">!</span><span><strong className="text-slate-900 dark:text-slate-200">Cartazes e documentos</strong> — São extraídos automaticamente e podem estar incompletos ou desatualizados.</span></li>
+          <p className="mb-3">Os dados apresentados na Plataforma são extraídos automaticamente de fontes públicas. Embora envidemos esforços razoáveis para manter a informação atualizada, <strong className="text-ink">não garantimos</strong> a exatidão, completude ou atualidade de:</p>
+          <ul className="space-y-2 text-muted">
+            <li className="flex gap-2"><span className="text-amber-500 dark:text-amber-400 mt-1">!</span><span><strong className="text-ink">Datas e horários</strong> — Podem ser alterados pelas entidades organizadoras sem aviso prévio.</span></li>
+            <li className="flex gap-2"><span className="text-amber-500 dark:text-amber-400 mt-1">!</span><span><strong className="text-ink">Localizações e mapas</strong> — As coordenadas e pré-visualizações servem como referência aproximada. A localização exata pode diferir.</span></li>
+            <li className="flex gap-2"><span className="text-amber-500 dark:text-amber-400 mt-1">!</span><span><strong className="text-ink">Preços, escalões e regulamentos</strong> — Podem sofrer atualizações que não sejam imediatamente refletidas na Plataforma.</span></li>
+            <li className="flex gap-2"><span className="text-amber-500 dark:text-amber-400 mt-1">!</span><span><strong className="text-ink">Cartazes e documentos</strong> — São extraídos automaticamente e podem estar incompletos ou desatualizados.</span></li>
           </ul>
           <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl">
             <p className="text-amber-800 dark:text-amber-300 text-sm font-medium">⚠ Recomendamos sempre a verificação dos detalhes no site oficial do evento antes de realizar inscrições, deslocações ou quaisquer compromissos.</p>
@@ -64,11 +66,11 @@ export default function TermsOfService() {
       icon: Scale,
       title: '5. Propriedade Intelectual',
       content: (
-        <ul className="space-y-2 text-slate-600 dark:text-slate-400">
-          <li className="flex gap-2"><span className="text-blue-500 dark:text-blue-400 mt-1">•</span><span>O código-fonte, design e interface do Cycling Calendar são da autoria do seu criador e estão protegidos por direitos de autor ao abrigo da legislação portuguesa e europeia.</span></li>
-          <li className="flex gap-2"><span className="text-blue-500 dark:text-blue-400 mt-1">•</span><span>O nome "Cycling Calendar" e o domínio <strong className="text-slate-900 dark:text-slate-200">cyclingcalendar.pt</strong> são utilizados pelo projeto, embora não constituam uma marca registada.</span></li>
-          <li className="flex gap-2"><span className="text-blue-500 dark:text-blue-400 mt-1">•</span><span>Os dados dos eventos são de origem pública (FPC, Cabreira Solutions, etc.) e pertencem às respetivas entidades organizadoras. O Cycling Calendar limita-se a agregá-los para consulta.</span></li>
-          <li className="flex gap-2"><span className="text-blue-500 dark:text-blue-400 mt-1">•</span><span>Os nomes, logótipos e conteúdo original dos organizadores pertencem aos respetivos titulares.</span></li>
+        <ul className="space-y-2 text-muted">
+          <li className="flex gap-2"><span className="text-brand mt-1">•</span><span>O código-fonte, design e interface do Cycling Calendar são da autoria do seu criador e estão protegidos por direitos de autor ao abrigo da legislação portuguesa e europeia.</span></li>
+          <li className="flex gap-2"><span className="text-brand mt-1">•</span><span>O nome "Cycling Calendar" e o domínio <strong className="text-ink">cyclingcalendar.pt</strong> são utilizados pelo projeto, embora não constituam uma marca registada.</span></li>
+          <li className="flex gap-2"><span className="text-brand mt-1">•</span><span>Os dados dos eventos são de origem pública (FPC, Cabreira Solutions, etc.) e pertencem às respetivas entidades organizadoras. O Cycling Calendar limita-se a agregá-los para consulta.</span></li>
+          <li className="flex gap-2"><span className="text-brand mt-1">•</span><span>Os nomes, logótipos e conteúdo original dos organizadores pertencem aos respetivos titulares.</span></li>
         </ul>
       ),
     },
@@ -77,8 +79,8 @@ export default function TermsOfService() {
       title: '6. Limitação de Responsabilidade',
       content: (
         <>
-          <p>O Cycling Calendar é fornecido <strong className="text-slate-900 dark:text-slate-200">{'"tal como está" e "conforme disponível"'}</strong>, sem garantias de qualquer espécie, expressas ou implícitas. Na máxima extensão permitida pela lei aplicável:</p>
-          <ul className="space-y-2 mt-3 text-slate-600 dark:text-slate-400">
+          <p>O Cycling Calendar é fornecido <strong className="text-ink">{'"tal como está" e "conforme disponível"'}</strong>, sem garantias de qualquer espécie, expressas ou implícitas. Na máxima extensão permitida pela lei aplicável:</p>
+          <ul className="space-y-2 mt-3 text-muted">
             <li className="flex gap-2"><span className="text-slate-400 dark:text-slate-500 mt-1">—</span><span>Não garantimos que a Plataforma estará sempre disponível, livre de erros, vírus ou interrupções.</span></li>
             <li className="flex gap-2"><span className="text-slate-400 dark:text-slate-500 mt-1">—</span><span>Não nos responsabilizamos por danos diretos, indiretos, incidentais ou consequenciais resultantes do uso da Plataforma.</span></li>
             <li className="flex gap-2"><span className="text-slate-400 dark:text-slate-500 mt-1">—</span><span>Não nos responsabilizamos por quaisquer prejuízos decorrentes da participação em eventos listados, incluindo cancelamentos, alterações de percurso ou acidentes.</span></li>
@@ -93,7 +95,7 @@ export default function TermsOfService() {
       content: (
         <>
           <p className="mb-3">Ao utilizar a Plataforma, o utilizador compromete-se a:</p>
-          <ul className="space-y-2 text-slate-600 dark:text-slate-400">
+          <ul className="space-y-2 text-muted">
             <li className="flex gap-2"><span className="text-rose-500 dark:text-red-400 mt-1">✕</span><span>Não utilizar a Plataforma para qualquer finalidade ilegal ou não autorizada.</span></li>
             <li className="flex gap-2"><span className="text-rose-500 dark:text-red-400 mt-1">✕</span><span>Não tentar aceder de forma não autorizada aos sistemas, servidores ou bases de dados da Plataforma.</span></li>
             <li className="flex gap-2"><span className="text-rose-500 dark:text-red-400 mt-1">✕</span><span>Não sobrecarregar intencionalmente os servidores com pedidos excessivos ou automatizados que comprometam a disponibilidade do serviço.</span></li>
@@ -108,10 +110,10 @@ export default function TermsOfService() {
       icon: RefreshCw,
       title: '8. Modificações e Cessação',
       content: (
-        <ul className="space-y-2 text-slate-600 dark:text-slate-400">
-          <li className="flex gap-2"><span className="text-blue-500 dark:text-blue-400 mt-1">•</span><span>Reservamo-nos o direito de modificar, suspender ou descontinuar qualquer parte do serviço, temporária ou permanentemente, com ou sem aviso prévio.</span></li>
-          <li className="flex gap-2"><span className="text-blue-500 dark:text-blue-400 mt-1">•</span><span>Estes Termos podem ser atualizados periodicamente. A data da última atualização será sempre indicada no fundo desta página.</span></li>
-          <li className="flex gap-2"><span className="text-blue-500 dark:text-blue-400 mt-1">•</span><span>Em caso de alterações substanciais, poderemos notificar os utilizadores registados por e-mail ou através de aviso visível na Plataforma.</span></li>
+        <ul className="space-y-2 text-muted">
+          <li className="flex gap-2"><span className="text-brand mt-1">•</span><span>Reservamo-nos o direito de modificar, suspender ou descontinuar qualquer parte do serviço, temporária ou permanentemente, com ou sem aviso prévio.</span></li>
+          <li className="flex gap-2"><span className="text-brand mt-1">•</span><span>Estes Termos podem ser atualizados periodicamente. A data da última atualização será sempre indicada no fundo desta página.</span></li>
+          <li className="flex gap-2"><span className="text-brand mt-1">•</span><span>Em caso de alterações substanciais, poderemos notificar os utilizadores registados por e-mail ou através de aviso visível na Plataforma.</span></li>
         </ul>
       ),
     },
@@ -125,21 +127,15 @@ export default function TermsOfService() {
   ];
 
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-slate-950 py-16 px-4 sm:px-6 lg:px-8 transition-colors duration-200">
+    <div className={`${styles.page} ${styles.secondary}`}>
       <div className="max-w-3xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-500/10 border border-blue-500/20 mb-6">
-            <FileText size={28} className="text-blue-500 dark:text-blue-400" />
-          </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-3">Termos de Serviço</h1>
-          <p className="text-slate-600 dark:text-slate-400 text-lg">Condições de utilização do Cycling Calendar</p>
-        </div>
+        <PageHeading title="Termos de Serviço" subtitle="Condições de utilização do Cycling Calendar" />
 
         {/* Intro */}
-        <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/5 rounded-2xl p-6 sm:p-8 mb-6 shadow-sm dark:shadow-xl">
-          <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
-            Bem-vindo ao <strong className="text-slate-900 dark:text-white">Cycling Calendar</strong>. Ao aceder e utilizar o nosso website e serviços, 
+        <div className={styles.legalIntro}>
+          <p className="text-ink leading-relaxed">
+            Bem-vindo ao <strong className="text-ink">Cycling Calendar</strong>. Ao aceder e utilizar o nosso website e serviços,
             concorda em cumprir e ficar vinculado aos seguintes Termos de Serviço. Se não concordar com alguma 
             parte destes termos, não deverá utilizar a nossa plataforma.
           </p>
@@ -150,17 +146,17 @@ export default function TermsOfService() {
           {sections.map((section, index) => {
             const Icon = section.icon;
             return (
-              <div key={index} className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/5 rounded-2xl p-6 sm:p-8 shadow-sm dark:shadow-xl">
+              <section key={index} className={`${styles.panel} ${styles.legalSection}`}>
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10">
-                    <Icon size={18} className="text-slate-600 dark:text-slate-400" />
+                  <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-soft border border-slate-200 dark:border-white/10">
+                    <Icon size={18} className="text-muted" />
                   </div>
-                  <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{section.title}</h2>
+                  <h2 className="text-lg font-semibold text-ink">{section.title}</h2>
                 </div>
-                <div className="text-slate-600 dark:text-slate-400 leading-relaxed text-[15px]">
+                <div className="text-muted leading-relaxed text-[15px]">
                   {section.content}
                 </div>
-              </div>
+              </section>
             );
           })}
         </div>
@@ -173,6 +169,6 @@ export default function TermsOfService() {
           </a>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

@@ -15,6 +15,9 @@ import { trackEvent } from './AnalyticsTracker';
 import { useTranslation } from '../i18n/useTranslation';
 import { formatMonthAbbr, translateDateString, translateEscalao, translateAmbito, translateLicenca, translateTag, MONTH_FULL } from '../i18n/formatters';
 import { isStageRace, getEventDiscipline } from '../utils/eventClassifier';
+import { usePathname } from 'next/navigation';
+import PageHeading from './PageHeading';
+import styles from './site.module.css';
 
 const fetcher = (url) => fetch(url).then((res) => res.json()).then((data) => {
     if (!data.success) throw new Error(data.error || 'Failed to load events');
@@ -72,6 +75,7 @@ export default function CalendarView({
     applyDefaultRegiao = false
 }) {
     const { t, language } = useTranslation();
+    const pathname = usePathname();
     const { 
         defaultEscalao, 
         defaultRegiao,
@@ -414,8 +418,9 @@ export default function CalendarView({
     }, [filteredEvents.length, visibleCount]);
 
     return (
-        <div className="bg-slate-50 dark:bg-slate-950 min-h-screen text-slate-900 dark:text-slate-100 pt-4 sm:pt-8 pb-24 sm:pb-16 px-3 sm:px-8 transition-colors duration-200">
-            <div className="w-full max-w-6xl mx-auto">
+        <div className={styles.page}>
+            <PageHeading title={pageTitle} subtitle={pageSubtitle} hero={pathname === '/'} icon={filterByAgenda ? CalendarCheck : filterByFavorites ? Star : Calendar} />
+            <div className="w-full mx-auto">
             <header className="mb-6 sm:mb-8">
                 {isOffline && (
                     <div className="mb-3.5 py-2 px-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs sm:text-sm font-medium flex items-center justify-center gap-2 animate-fade-in shadow-sm">
@@ -423,15 +428,13 @@ export default function CalendarView({
                         <span>{t('offline_mode_banner')}</span>
                     </div>
                 )}
-                <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center w-full gap-3 sm:gap-4">
-                    <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
+                <div className={styles.toolbar}>
+                    <div className={styles.toolbarActions}>
                         <button 
                             onClick={() => setShowFilters(!showFilters)}
-                            className={`inline-flex items-center justify-center gap-2 h-10 px-2.5 sm:px-3.5 rounded-xl border font-semibold text-xs sm:text-sm transition-all cursor-pointer whitespace-nowrap ${
-                                showFilters 
-                                    ? 'bg-blue-600/10 text-blue-600 dark:text-blue-400 border-blue-500/30' 
-                                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 shadow-sm hover:border-slate-300 dark:hover:border-slate-700'
-                            }`}
+                            className={styles.filterButton}
+                            aria-expanded={showFilters}
+                            aria-controls="calendar-filters"
                         >
                             <Filter size={15} className="shrink-0" />
                             <span className="truncate">{showFilters ? t('filter_button_close') : t('filter_button_open')}</span>
@@ -441,7 +444,6 @@ export default function CalendarView({
                             aria-label={t('filter_past_upcoming')}
                             value={pastEventsFilter}
                             onChange={e => setPastEventsFilter(e.target.value)}
-                            className="h-10 px-2.5 sm:px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-xs sm:text-sm font-semibold shadow-sm cursor-pointer"
                         >
                             <option value="todos">{t('filter_all_events')}</option>
                             <option value="futuros">{t('filter_upcoming_only')}</option>
@@ -452,25 +454,25 @@ export default function CalendarView({
                             <button 
                                 onClick={clearAllFilters}
                                 title={t('filter_clear_all')}
-                                className="col-span-2 sm:col-auto inline-flex items-center justify-center gap-1 font-medium text-xs sm:text-sm text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-300 transition-colors h-8 sm:h-10 px-2 cursor-pointer"
+                                className="col-span-2 sm:col-auto inline-flex items-center justify-center gap-1 font-medium text-xs sm:text-sm text-muted hover:text-slate-800 dark:hover:text-slate-300 transition-colors h-8 sm:h-10 px-2 cursor-pointer"
                             >
                                 <X size={14} /> {t('filter_clear_all')}
                             </button>
                         )}
                     </div>
                     
-                    <div className="relative w-full sm:w-auto sm:flex-[0_1_320px]">
+                    <div className={styles.search}>
+                        <Search size={17} className="shrink-0" aria-hidden="true" />
                         <input 
                             type="text" 
                             placeholder={t('search_placeholder')} 
+                            aria-label={t('search_placeholder')}
                             value={searchTerm} 
                             onChange={onSearchChange} 
-                            className="w-full py-2 sm:py-2.5 pl-4 sm:pl-5 pr-10 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs sm:text-sm outline-none transition-colors focus:border-blue-500 text-slate-900 dark:text-slate-50 placeholder-slate-400 dark:placeholder-slate-500 shadow-sm"
                         />
                         {searchTerm && (
                             <button
                                 onClick={() => setSearchTerm('')}
-                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 flex items-center justify-center rounded-full"
                                 title="Limpar pesquisa"
                             >
                                 <X size={14} />
@@ -480,9 +482,9 @@ export default function CalendarView({
                 </div>
 
                 {/* Sub-header info: Counter & Bulk Export */}
-                <div className="flex flex-wrap items-center justify-between gap-3 mt-3 px-1">
-                    <div className="text-xs text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1.5">
-                        <span>{t('filter_counter_showing')} <strong className="text-slate-800 dark:text-slate-200 font-semibold">{Math.min(visibleCount, filteredEvents.length)}</strong> {t('filter_counter_of')} <strong className="text-slate-800 dark:text-slate-200 font-semibold">{filteredEvents.length}</strong> {filteredEvents.length === 1 ? t('filter_counter_event') : t('filter_counter_events')}</span>
+                <div className={styles.results}>
+                    <div className="text-xs text-muted font-medium flex items-center gap-1.5">
+                        <span>{t('filter_counter_showing')} <strong className="text-ink font-semibold">{Math.min(visibleCount, filteredEvents.length)}</strong> {t('filter_counter_of')} <strong className="text-ink font-semibold">{filteredEvents.length}</strong> {filteredEvents.length === 1 ? t('filter_counter_event') : t('filter_counter_events')}</span>
                         {events.length > 0 && filteredEvents.length !== events.length && (
                             <span className="text-slate-400 dark:text-slate-500 font-normal">({events.length} {t('filter_counter_total')})</span>
                         )}
@@ -497,7 +499,7 @@ export default function CalendarView({
                                     metadata: { page: pageTitle, count: filteredEvents.length }
                                 });
                             }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 text-xs font-semibold transition-all cursor-pointer shadow-xs ml-auto"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-blue-500/30 bg-blue-500/10 text-brand hover:bg-blue-500/20 text-xs font-semibold transition-all cursor-pointer shadow-xs ml-auto"
                             title={t('filter_export_ics')}
                         >
                             <Download size={13} />
@@ -507,7 +509,7 @@ export default function CalendarView({
                 </div>
                 
                 {showFilters && (
-                    <div className="mt-4 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 w-full shadow-sm">
+                    <div id="calendar-filters" className={styles.filters}>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 w-full">
                             {activeFilters.includes('year') && (
                                 <div className="flex flex-col gap-2 col-span-full">
@@ -517,7 +519,8 @@ export default function CalendarView({
                                             <button 
                                                 key={y} 
                                                 onClick={() => onYearToggle(y)} 
-                                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors focus:outline-none cursor-pointer ${selectedYears.includes(y) ? 'bg-blue-600/10 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30 font-bold' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-300'}`}
+                                                aria-pressed={selectedYears.includes(y)}
+                                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors focus:outline-none cursor-pointer ${selectedYears.includes(y) ? 'bg-brand-soft text-brand border-brand font-bold' : 'bg-soft border-line text-muted hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-300'}`}
                                             >
                                                 {y}
                                             </button>
@@ -529,10 +532,11 @@ export default function CalendarView({
                             {activeFilters.includes('month') && (
                                 <>
                                     <div className="flex flex-col gap-2">
-                                        <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">{t('filter_start_month')}</label>
+                                        <label className="text-xs text-muted uppercase tracking-wider font-bold ml-1">{t('filter_start_month')}</label>
                                         <select 
-                                            className="w-full h-9 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors"
+                                            className="w-full h-9 px-3 text-sm rounded-lg border border-line bg-soft text-ink outline-none focus:border-blue-500 transition-colors"
                                             value={monthFrom} 
+                                            aria-label={t('filter_start_month')}
                                             onChange={(e) => onMonthFromChange({target:{value: parseInt(e.target.value, 10)}})} 
                                         >
                                             {monthNames.map((name, idx) => <option key={idx + 1} value={idx + 1}>{name}</option>)}
@@ -540,10 +544,11 @@ export default function CalendarView({
                                     </div>
                                     
                                     <div className="flex flex-col gap-2">
-                                        <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">{t('filter_end_month')}</label>
+                                        <label className="text-xs text-muted uppercase tracking-wider font-bold ml-1">{t('filter_end_month')}</label>
                                         <select 
-                                            className="w-full h-9 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors"
+                                            className="w-full h-9 px-3 text-sm rounded-lg border border-line bg-soft text-ink outline-none focus:border-blue-500 transition-colors"
                                             value={monthTo} 
+                                            aria-label={t('filter_end_month')}
                                             onChange={(e) => onMonthToChange({target:{value: parseInt(e.target.value, 10)}})} 
                                         >
                                             {monthNames.map((name, idx) => <option key={idx + 1} value={idx + 1}>{name}</option>)}
@@ -555,7 +560,7 @@ export default function CalendarView({
                             {activeFilters.includes('escalao') && !forceEscalao && (
                                 <div className="flex flex-col gap-2 col-span-full">
                                     <div className="flex items-center gap-1 mb-0.5">
-                                        <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1 flex items-center">{t('filter_categories')}</label>
+                                        <label className="text-xs text-muted uppercase tracking-wider font-bold ml-1 flex items-center">{t('filter_categories')}</label>
                                         <button 
                                             onClick={() => setShowEscalaoHelp(true)}
                                             title={t('escalao_modal_desc')}
@@ -571,7 +576,8 @@ export default function CalendarView({
                                             <button 
                                                 key={esc} 
                                                 onClick={() => onEscalaoToggle(esc)} 
-                                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors focus:outline-none ${selectedEscaloes.includes(esc) ? 'bg-blue-600/10 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-300'}`}
+                                                aria-pressed={selectedEscaloes.includes(esc)}
+                                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors focus:outline-none ${selectedEscaloes.includes(esc) ? 'bg-brand-soft text-brand border-brand' : 'bg-soft border-line text-muted hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-300'}`}
                                             >
                                                 {translateEscalao(esc, language)}
                                             </button>
@@ -582,10 +588,11 @@ export default function CalendarView({
                             
                             {activeFilters.includes('ambito') && !forceAmbito && (
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">{t('filter_scope')}</label>
+                                    <label className="text-xs text-muted uppercase tracking-wider font-bold ml-1">{t('filter_scope')}</label>
                                     <select 
-                                        className="w-full h-9 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors"
+                                        className="w-full h-9 px-3 text-sm rounded-lg border border-line bg-soft text-ink outline-none focus:border-blue-500 transition-colors"
                                         value={selectedAmbito} 
+                                        aria-label={t('filter_scope')}
                                         onChange={(e) => setSelectedAmbito(e.target.value)} 
                                     >
                                         {uniqueAmbitos.map(opt => (
@@ -599,10 +606,11 @@ export default function CalendarView({
                             
                             {activeFilters.includes('licenca') && !forceLicenca && (
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">{t('filter_license')}</label>
+                                    <label className="text-xs text-muted uppercase tracking-wider font-bold ml-1">{t('filter_license')}</label>
                                     <select 
-                                        className="w-full h-9 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors"
+                                        className="w-full h-9 px-3 text-sm rounded-lg border border-line bg-soft text-ink outline-none focus:border-blue-500 transition-colors"
                                         value={selectedLicenca} 
+                                        aria-label={t('filter_license')}
                                         onChange={(e) => setSelectedLicenca(e.target.value)} 
                                     >
                                         {uniqueLicencas.map(opt => (
@@ -615,10 +623,11 @@ export default function CalendarView({
                             )}
                             
                             <div className="flex flex-col gap-2">
-                                <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">{t('filter_event_type')}</label>
+                                <label className="text-xs text-muted uppercase tracking-wider font-bold ml-1">{t('filter_event_type')}</label>
                                 <select 
-                                    className="w-full h-9 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors"
+                                    className="w-full h-9 px-3 text-sm rounded-lg border border-line bg-soft text-ink outline-none focus:border-blue-500 transition-colors"
                                     value={selectedType} 
+                                    aria-label={t('filter_event_type')}
                                     onChange={(e) => setSelectedType(e.target.value)} 
                                 >
                                     <option value="Todos">{t('filter_all_types')}</option>
@@ -628,9 +637,9 @@ export default function CalendarView({
                             </div>
 
                             <div className="flex flex-col gap-2">
-                                <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">{t('filter_past_upcoming')}</label>
+                                <label className="text-xs text-muted uppercase tracking-wider font-bold ml-1">{t('filter_past_upcoming')}</label>
                                 <select 
-                                    className="w-full h-9 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors"
+                                    className="w-full h-9 px-3 text-sm rounded-lg border border-line bg-soft text-ink outline-none focus:border-blue-500 transition-colors"
                                     value={pastEventsFilter} 
                                     onChange={(e) => setPastEventsFilter(e.target.value)} 
                                 >
@@ -642,10 +651,11 @@ export default function CalendarView({
                             
                             {activeFilters.includes('regiao') && (
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1">{t('filter_region')}</label>
+                                    <label className="text-xs text-muted uppercase tracking-wider font-bold ml-1">{t('filter_region')}</label>
                                     <select 
-                                        className="w-full h-9 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors"
+                                        className="w-full h-9 px-3 text-sm rounded-lg border border-line bg-soft text-ink outline-none focus:border-blue-500 transition-colors"
                                         value={selectedRegiao} 
+                                        aria-label={t('filter_region')}
                                         onChange={(e) => setSelectedRegiao(e.target.value)} 
                                     >
                                         {uniqueRegioes.map(opt => (
@@ -660,7 +670,7 @@ export default function CalendarView({
                             {activeFilters.includes('distrito') && (
                                 <div className="flex flex-col gap-2">
                                     <div className="flex items-center gap-1 mb-0.5">
-                                        <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1 flex items-center">{t('filter_district')}</label>
+                                        <label className="text-xs text-muted uppercase tracking-wider font-bold ml-1 flex items-center">{t('filter_district')}</label>
                                         {selectedDistrito !== 'Todos' && (
                                             <button 
                                                 onClick={() => setSelectedDistrito('Todos')}
@@ -672,8 +682,9 @@ export default function CalendarView({
                                         )}
                                     </div>
                                     <select 
-                                        className="w-full h-9 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors"
+                                        className="w-full h-9 px-3 text-sm rounded-lg border border-line bg-soft text-ink outline-none focus:border-blue-500 transition-colors"
                                         value={selectedDistrito} 
+                                        aria-label={t('filter_district')}
                                         onChange={(e) => setSelectedDistrito(e.target.value)} 
                                     >
                                         {uniqueDistritos.map(opt => (
@@ -687,8 +698,8 @@ export default function CalendarView({
                         </div>
                         
                         {activeFilters.includes('modalidade') && (
-                            <div className="mt-6 pt-5 border-t border-slate-200 dark:border-slate-700">
-                                <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold ml-1 block mb-3">
+                            <div className="mt-6 pt-5 border-t border-line">
+                                <span className="text-xs text-muted uppercase tracking-wider font-bold ml-1 block mb-3">
                                     {t('filter_modalities')}
                                 </span>
                                 <div className="flex gap-2 flex-wrap">
@@ -696,7 +707,8 @@ export default function CalendarView({
                                     <button 
                                         key={tag} 
                                         onClick={() => onTagToggle(tag)} 
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors focus:outline-none ${selectedTags.includes(tag) ? 'bg-blue-600/10 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-300'}`}
+                                        aria-pressed={selectedTags.includes(tag)}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors focus:outline-none ${selectedTags.includes(tag) ? 'bg-brand-soft text-brand border-brand' : 'bg-soft border-line text-muted hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-300'}`}
                                     >
                                         {translateTag(tag, language)}
                                     </button>
@@ -708,7 +720,7 @@ export default function CalendarView({
                 )}
             </header>
 
-            <main>
+            <section aria-label={pageTitle}>
                 {isInitialLoading && (
                     <div className="flex flex-col items-center justify-center py-16 text-slate-400">
                         <div className="w-8 h-8 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin mb-4"></div>
@@ -721,7 +733,7 @@ export default function CalendarView({
                         <p className="text-red-400">{t('error_occurred')}: {error.message || error}</p>
                         <button 
                             onClick={() => mutate()}
-                            className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors border-none cursor-pointer font-medium"
+                            className="mt-4 px-4 py-2 bg-brand hover:brightness-110 text-surface rounded-lg transition-colors border-none cursor-pointer font-medium"
                         >
                             {t('btn_try_again')}
                         </button>
@@ -744,10 +756,12 @@ export default function CalendarView({
                     };
 
                     return (
-                        <div className="text-center py-16 px-4">
-                            <p className="text-slate-400 mb-8 text-lg">
+                        <div className={styles.empty}>
+                            <Search size={30} className="text-brand mx-auto mb-5" aria-hidden="true" />
+                            <p className="text-muted mb-6 text-base">
                                 {t('filter_no_events')}
                             </p>
+                            <button type="button" onClick={clearAllFilters} className={styles.filterButton}><X size={14} />{t('filter_clear_all')}</button>
                             
                             {selectedRegiao !== 'Todas' && (
                                 <div className="bg-slate-800 border border-slate-700 p-8 rounded-xl max-w-lg mx-auto">
@@ -809,15 +823,6 @@ export default function CalendarView({
                                 const dateConflict = getDateConflict(event);
                                 const isEventFavorited = favorites.includes(event.id) || (event._allIds && event._allIds.some(id => favorites.includes(id)));
 
-                                let cardBorderAndBg = 'border-slate-200 dark:border-slate-800';
-                                if (isEventMarked) {
-                                    cardBorderAndBg = 'border-emerald-500/70 dark:border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.12)] bg-emerald-500/[0.02] dark:bg-emerald-500/[0.04]';
-                                } else if (dateConflict.hasConflict) {
-                                    cardBorderAndBg = 'border-orange-500/80 dark:border-orange-500/70 shadow-[0_0_15px_rgba(249,115,22,0.16)] bg-orange-500/[0.03] dark:bg-orange-500/[0.05]';
-                                } else if (isEventFavorited) {
-                                    cardBorderAndBg = 'border-yellow-400/70 dark:border-yellow-400/60 shadow-[0_0_15px_rgba(250,204,21,0.12)] bg-yellow-400/[0.02] dark:bg-yellow-400/[0.03]';
-                                }
-
                                 const translation = event.translations?.find(t => t.language === language) 
                                     || (language !== 'pt' ? event.translations?.find(t => t.language === 'en') : null);
                                 const displayTitle = (language === 'pt' ? event.title : (translation?.title || event.title));
@@ -827,43 +832,31 @@ export default function CalendarView({
                                 return (
                                 <Fragment key={event.id}>
                                     {isNewMonth && (
-                                        <div className={`flex items-center gap-3 ${idx === 0 ? 'pt-1 pb-1.5' : 'pt-5 pb-1.5'} select-none`}>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
-                                                    {monthHeading}
-                                                </span>
-                                                <span className="text-xs sm:text-sm font-semibold text-slate-400 dark:text-slate-500">
-                                                    {currentMY.year}
-                                                </span>
-                                            </div>
-                                            <div className="h-px flex-1 bg-gradient-to-r from-slate-200 dark:from-slate-800 via-slate-200/50 dark:via-slate-800/50 to-transparent" />
+                                        <div className={styles.monthHeading}>
+                                            <h2>{monthHeading}{' '}<span>{currentMY.year}</span></h2>
                                         </div>
                                     )}
                                     <div 
-                                        onClick={() => {
-                                            setSelectedEvent(event);
-                                            trackEvent('EVENT_CLICK', {
-                                                targetId: event.id,
-                                                targetTitle: event.title,
-                                                path: typeof window !== 'undefined' ? window.location.pathname : '/'
-                                            });
-                                        }} 
-                                        className={`group flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-4 bg-white dark:bg-slate-900 border ${cardBorderAndBg} rounded-xl p-3 sm:py-3 sm:px-4 cursor-pointer hover:border-blue-400 dark:hover:border-slate-600 shadow-sm transition-all overflow-hidden`}
+                                        className={styles.eventCard}
+                                        data-state={isEventMarked ? 'marked' : dateConflict.hasConflict ? 'conflict' : isEventFavorited ? 'favorite' : undefined}
                                     >
-                                    <div className="flex gap-3 sm:gap-4 flex-1 min-w-0 w-full">
-                                        <div className="flex flex-col shrink-0 w-[50px] h-[50px] sm:w-[56px] sm:h-[56px] bg-slate-100 dark:bg-slate-950 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800">
-                                            <div className="bg-rose-500 text-white text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-center py-0.5">
+                                    <div className={styles.eventMain}>
+                                        <div className={styles.date}>
+                                            <div className={styles.dateMonth}>
                                                 {formatMonthAbbr(month, language)}
                                             </div>
-                                            <div className={`flex-1 flex items-center justify-center text-slate-900 dark:text-white font-bold ${day.length > 2 ? 'text-xs sm:text-sm tracking-tight' : 'text-base sm:text-lg'}`}>
+                                            <div className={`${styles.dateDay} ${day.length > 2 ? styles.dateRange : ''}`}>
                                                 {day}
                                             </div>
                                         </div>
 
                                         <div className="flex flex-col justify-center min-w-0 flex-1">
                                             <div className="flex items-center justify-between md:justify-start gap-2 mb-1 min-w-0">
-                                                <h3 className="text-sm sm:text-[0.95rem] font-bold text-slate-900 dark:text-slate-100 truncate leading-snug">
-                                                    {displayTitle}
+                                                <h3>
+                                                    <button type="button" className={styles.eventTitle} onClick={() => {
+                                                        setSelectedEvent(event);
+                                                        trackEvent('EVENT_CLICK', { targetId: event.id, targetTitle: event.title, path: pathname });
+                                                    }}>{displayTitle}</button>
                                                 </h3>
                                                 <button 
                                                     onClick={(e) => {
@@ -874,28 +867,27 @@ export default function CalendarView({
                                                             targetTitle: event.title
                                                         });
                                                     }}
-                                                    className={`p-1 rounded-full transition-all flex items-center justify-center shrink-0 cursor-pointer ${isEventFavorited ? 'text-yellow-500 dark:text-yellow-400 bg-yellow-400/15 hover:bg-yellow-400/25' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                                                    className={`${styles.eventFavorite} p-1 rounded-full transition-all flex items-center justify-center shrink-0 cursor-pointer ${isEventFavorited ? 'text-yellow-500 dark:text-yellow-400 bg-yellow-400/15 hover:bg-yellow-400/25' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                                                    aria-pressed={!!isEventFavorited}
                                                     title={isEventFavorited ? t('card_remove_favorite') : t('card_add_favorite')}
                                                 >
                                                     <Star size={14} fill={isEventFavorited ? "#facc15" : "none"} stroke={isEventFavorited ? "#eab308" : "currentColor"} />
                                                 </button>
                                             </div>
-                                            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2.5 text-[11px] text-slate-500 dark:text-slate-400 font-medium min-w-0">
-                                                <span className="flex items-center gap-1 min-w-0 max-w-[130px] sm:max-w-none truncate">
-                                                    <MapPin size={12} className="text-rose-500 shrink-0" />
-                                                    <span className="truncate">{location}</span>
+                                            <div className={styles.eventMeta}>
+                                                <span>
+                                                    <MapPin size={12} className="shrink-0" />
+                                                    <span>{location}</span>
                                                 </span>
-                                                <span className="text-slate-300 dark:text-slate-700">•</span>
-                                                <span className="flex items-center gap-1 min-w-0 flex-1 truncate">
+                                                <span>
                                                     <Bike size={12} className="text-slate-400 dark:text-slate-500 shrink-0" />
-                                                    <span className="truncate">{(event.escaloes || []).map(esc => translateEscalao(esc, language)).join(' | ')} {discipline ? `(${translateTag(discipline, language)})` : ''}</span>
+                                                    <span>{(event.escaloes || []).map(esc => translateEscalao(esc, language)).join(' · ')} {discipline ? `(${translateTag(discipline, language)})` : ''}</span>
                                                 </span>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center justify-between gap-2 w-full md:w-auto md:justify-end border-t border-slate-100 dark:border-slate-800/60 md:border-0 pt-2 md:pt-0 pl-[62px] sm:pl-[70px] md:pl-0">
-                                        <div className="flex flex-wrap items-center gap-1.5 flex-1 min-w-0 md:justify-end">
+                                    <div className={styles.eventBadges}>
                                             {isEventMarked && (
                                                 <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1 shrink-0">
                                                     <Check size={11} className="stroke-[3]" /> {t('card_on_agenda')}
@@ -939,7 +931,8 @@ export default function CalendarView({
                                                 if (!isGenericAmbito) {
                                                     let displayAmbito = rawAmbito;
                                                     if (rawAmbito === 'Taça de Portugal') displayAmbito = t('badge_cup');
-                                                    else if (rawAmbito === 'Nacional' || rawAmbito.includes('Nacional')) displayAmbito = t('badge_national');
+                                                    else if (/^campeonatos? naciona/i.test(rawAmbito)) displayAmbito = t('badge_national');
+                                                    else if (rawAmbito === 'Nacional') displayAmbito = translateAmbito(rawAmbito, language);
                                                     else if (rawAmbito === 'Prova Aberta') displayAmbito = t('card_open_race');
                                                     else if (rawAmbito === 'Internacional') displayAmbito = t('badge_uci');
                                                     else if (rawAmbito === 'Regional') displayAmbito = t('nav_regionals');
@@ -947,14 +940,14 @@ export default function CalendarView({
                                                     return (
                                                         <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider shrink-0 ${
                                                             rawAmbito === 'Taça de Portugal'
-                                                                ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30'
+                                                                ? 'bg-blue-500/15 text-brand border border-blue-500/30'
                                                                 : rawAmbito === 'Nacional' || rawAmbito.includes('Nacional')
                                                                 ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30'
                                                                 : rawAmbito === 'Prova Aberta'
                                                                 ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
                                                                 : rawAmbito === 'Internacional' || rawAmbito.includes('UCI')
                                                                 ? 'bg-sky-500/15 text-sky-600 dark:text-sky-400 border border-sky-500/30'
-                                                                : 'bg-slate-500/15 text-slate-700 dark:text-slate-300 border border-slate-500/30'
+                                                                : 'bg-slate-500/15 text-ink border border-slate-500/30'
                                                         }`}>
                                                             {displayAmbito}
                                                         </span>
@@ -980,8 +973,8 @@ export default function CalendarView({
                                                     {t('card_stages')}
                                                 </span>
                                             )}
-                                        </div>
                                     </div>
+                                    <ChevronRight size={17} className={styles.eventArrow} aria-hidden="true" />
                                 </div>
                                 </Fragment>
                                 );
@@ -1003,10 +996,10 @@ export default function CalendarView({
                     toggleFavorite={toggleFavorite} 
                     isSignedIn={isSignedIn} 
                 />
-            </main>
+            </section>
             {showEscalaoHelp && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1100] flex items-center justify-center p-4" onClick={() => setShowEscalaoHelp(false)}>
-                    <div className="relative w-full max-w-[500px] bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col max-h-[90vh] text-slate-900 dark:text-slate-100 transition-colors duration-200" onClick={(e) => e.stopPropagation()}>
+                    <div className="relative w-full max-w-[500px] bg-surface rounded-xl shadow-2xl border border-line flex flex-col max-h-[90vh] text-ink transition-colors duration-200" onClick={(e) => e.stopPropagation()}>
                         <button className="absolute top-4 right-4 text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 z-10 p-1 cursor-pointer" onClick={() => setShowEscalaoHelp(false)}>✕</button>
                         <div className="overflow-y-auto flex-1 p-0 rounded-xl">
                             <EscalaoAssistant onApply={(esc) => {

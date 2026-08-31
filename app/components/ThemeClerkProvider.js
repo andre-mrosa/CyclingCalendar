@@ -25,7 +25,11 @@ export default function ThemeClerkProvider({ children }) {
       appearance={{
         baseTheme: resolvedTheme === 'dark' ? dark : undefined,
         variables: {
-          colorPrimary: '#3b82f6',
+          colorPrimary: resolvedTheme === 'dark' ? '#bce881' : '#176b57',
+          colorBackground: resolvedTheme === 'dark' ? '#182623' : '#ffffff',
+          colorText: resolvedTheme === 'dark' ? '#edf3ec' : '#182c2a',
+          borderRadius: '0.85rem',
+          fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
         },
         elements: {
           userPreviewAvatarContainer: { display: 'none' },

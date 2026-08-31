@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { AlertTriangle, RotateCcw } from 'lucide-react';
+import styles from './components/site.module.css';
 
 export default function GlobalErrorBoundary({ error, reset }) {
     useEffect(() => {
@@ -25,7 +26,7 @@ export default function GlobalErrorBoundary({ error, reset }) {
     }, [error]);
 
     return (
-        <div className="min-h-[60vh] flex flex-col items-center justify-center p-6 text-center">
+        <div className={`${styles.empty} flex flex-col items-center`}>
             <div className="w-14 h-14 rounded-2xl bg-rose-500/10 text-rose-500 flex items-center justify-center mb-4">
                 <AlertTriangle size={28} />
             </div>
@@ -37,7 +38,7 @@ export default function GlobalErrorBoundary({ error, reset }) {
             </p>
             <button
                 onClick={() => reset()}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold shadow-md transition-all cursor-pointer"
+                className={styles.primaryButton}
             >
                 <RotateCcw size={16} />
                 Tentar novamente

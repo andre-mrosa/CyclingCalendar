@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import { Mail } from 'lucide-react';
 import { useTranslation } from '../i18n/useTranslation';
+import PageHeading from '../components/PageHeading';
+import styles from '../components/site.module.css';
 
 export default function ContactoPage() {
     const { t } = useTranslation();
@@ -35,18 +37,10 @@ export default function ContactoPage() {
     };
 
     return (
-        <div className="max-w-2xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-10">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-500/10 border border-blue-500/20 mb-4">
-                    <Mail size={28} className="text-blue-500 dark:text-blue-400" />
-                </div>
-                <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-2">{t('contact_title')}</h1>
-                <p className="text-slate-600 dark:text-slate-400 text-base sm:text-lg">
-                    {t('contact_subtitle')}
-                </p>
-            </div>
+        <div className={`${styles.page} ${styles.secondaryWide} ${styles.contactGrid}`}>
+            <PageHeading title={t('contact_title')} subtitle={t('contact_subtitle')} icon={Mail} />
 
-            <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/5 rounded-2xl p-6 sm:p-8 shadow-sm dark:shadow-xl">
+            <div className={styles.panel}>
                 <form onSubmit={handleContactSubmit} className="flex flex-col gap-5">
                     {submitStatus === 'success' ? (
                         <div className="p-6 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl text-center border border-emerald-500/20 text-base font-medium">
@@ -56,38 +50,41 @@ export default function ContactoPage() {
                         <>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-xs uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">{t('contact_form_name')}</label>
+                                    <label htmlFor="contact-name" className="text-xs uppercase tracking-wider font-bold text-muted">{t('contact_form_name')}</label>
                                     <input 
+                                        id="contact-name" autoComplete="name"
                                         type="text" 
                                         placeholder={t('contact_placeholder_name')} 
                                         value={formData.name}
                                         onChange={(e) => setFormData({...formData, name: e.target.value})}
                                         disabled={isSubmitting}
-                                        className="bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-700/80 rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-3.5 outline-none text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 text-sm transition-colors disabled:opacity-50"
+                                        className="bg-soft border border-line rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-3.5 outline-none text-ink placeholder-slate-400 dark:placeholder-slate-500 text-sm transition-colors disabled:opacity-50"
                                     />
                                 </div>
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-xs uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">{t('contact_form_email')}</label>
+                                    <label htmlFor="contact-email" className="text-xs uppercase tracking-wider font-bold text-muted">{t('contact_form_email')}</label>
                                     <input 
+                                        id="contact-email" autoComplete="email"
                                         type="email" 
                                         placeholder={t('contact_placeholder_email')} 
                                         value={formData.email}
                                         onChange={(e) => setFormData({...formData, email: e.target.value})}
                                         disabled={isSubmitting}
-                                        className="bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-700/80 rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-3.5 outline-none text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 text-sm transition-colors disabled:opacity-50"
+                                        className="bg-soft border border-line rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-3.5 outline-none text-ink placeholder-slate-400 dark:placeholder-slate-500 text-sm transition-colors disabled:opacity-50"
                                     />
                                 </div>
                             </div>
                             <div className="flex flex-col gap-2">
-                                <label className="text-xs uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">{t('contact_form_msg')}</label>
+                                <label htmlFor="contact-message" className="text-xs uppercase tracking-wider font-bold text-muted">{t('contact_form_msg')}</label>
                                 <textarea 
+                                    id="contact-message"
                                     placeholder={t('contact_placeholder_msg')} 
                                     required
                                     value={formData.message}
                                     onChange={(e) => setFormData({...formData, message: e.target.value})}
                                     disabled={isSubmitting}
                                     rows={5}
-                                    className="bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-700/80 rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-3.5 outline-none text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 text-sm resize-y transition-colors disabled:opacity-50"
+                                    className="bg-soft border border-line rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-3.5 outline-none text-ink placeholder-slate-400 dark:placeholder-slate-500 text-sm resize-y transition-colors disabled:opacity-50"
                                 />
                             </div>
                             
@@ -100,7 +97,7 @@ export default function ContactoPage() {
                             <button 
                                 type="submit" 
                                 disabled={isSubmitting}
-                                className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-500/20 p-4 font-semibold transition-colors text-base mt-2 disabled:opacity-70 cursor-pointer flex items-center justify-center gap-2"
+                                className={styles.primaryButton}
                             >
                                 {isSubmitting ? (
                                     <>

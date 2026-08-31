@@ -74,7 +74,8 @@ import AnalyticsTracker from "./components/AnalyticsTracker";
 export default function RootLayout({ children }) {
   return (
     <html lang="pt" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-200 selection:bg-blue-600 selection:text-white transition-colors duration-200`} suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased transition-colors duration-200`} suppressHydrationWarning>
+        <a href="#conteudo" className="skip-link">Saltar para o conteúdo</a>
         <ClientErrorLogger />
         <PWAUpdateHandler />
         <FaviconManager />
@@ -82,7 +83,7 @@ export default function RootLayout({ children }) {
           <ThemeClerkProvider>
             <AnalyticsTracker />
             <Navigation />
-            <main className="min-h-[calc(100vh-120px)] w-full overflow-x-hidden">
+            <main id="conteudo" tabIndex={-1} className="min-h-[calc(100vh-240px)] w-full">
               {children}
             </main>
             <Footer />
