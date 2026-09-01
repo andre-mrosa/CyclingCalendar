@@ -28,9 +28,9 @@ export function runUnifiedScrapingPipeline(triggeredBy = 'CRON', options = {}) {
 
 /**
  * Trigger the next pipeline stage via an internal HTTP request.
- * The fetch fires a new serverless invocation; we wait briefly to ensure
- * the HTTP request reaches the network stack, then return without waiting
- * for the new invocation to finish (it runs independently).
+ * The caller must keep this promise alive (normally from Next.js `after`).
+ * An unawaited serverless fetch can be discarded as soon as the current
+ * invocation finishes, leaving the persisted run permanently between stages.
  */
 export async function triggerNextStage(result) {
     if (!result?.nextStage) return;
@@ -48,13 +48,14 @@ export async function triggerNextStage(result) {
         ...(result.fullHistorical != null ? { historical: String(result.fullHistorical) } : {})
     });
     const continueUrl = `${baseUrl}/api/cron/scrape?${params}`;
-    // Fire and don't wait for completion — the new invocation runs independently.
-    // The 500ms pause ensures the HTTP request reaches Vercel's routing layer.
     const headers = process.env.CRON_SECRET
         ? { Authorization: `Bearer ${process.env.CRON_SECRET}` }
         : undefined;
-    fetch(continueUrl, { headers }).catch(err => console.error('Erro ao continuar pipeline:', err));
-    await new Promise(resolve => setTimeout(resolve, 500));
+    const response = await fetch(continueUrl, { headers });
+    if (!response.ok) {
+        const body = await response.text().catch(() => '');
+        throw new Error(`A continuação para ${result.nextStage} falhou (HTTP ${response.status})${body ? `: ${body.slice(0, 300)}` : ''}`);
+    }
 }
 
 async function runPipeline(triggeredBy, options) {

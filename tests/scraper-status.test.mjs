@@ -249,6 +249,29 @@ test('manual trigger responds immediately and schedules the scraper after the re
     assert.equal(pipelineCalls, 1);
 });
 
+test('cron stage responds before scheduling its serverless continuation', async () => {
+    let backgroundWork;
+    let continuationCalls = 0;
+    const stageResult = {
+        success: true, nextStage: 'fpc-2027', runId: 'cron-run', years: ['2026', '2027'],
+        scope: 'weekly', nextAttempt: 1, hadErrors: false, triggeredBy: 'TEST',
+        stats: { pipelineStage: 'fpc-2026' }
+    };
+    const route = await isolatedModule('../app/api/cron/scrape/route.js', {
+        runUnifiedScrapingPipeline: async () => stageResult,
+        triggerNextStage: async result => { assert.equal(result, stageResult); continuationCalls++; },
+        logError: async () => {}, withScraperLogContext: (_context, work) => work(),
+        after: work => { backgroundWork = work; }
+    });
+    const headers = process.env.CRON_SECRET ? { Authorization: `Bearer ${process.env.CRON_SECRET}` } : undefined;
+    const response = await route.GET(new Request('https://calendar.test/api/cron/scrape?scope=weekly', { headers }));
+    assert.equal(response.status, 200);
+    assert.equal(continuationCalls, 0);
+    assert.equal(typeof backgroundWork, 'function');
+    await backgroundWork();
+    assert.equal(continuationCalls, 1);
+});
+
 function captureLogs(t) {
     const logs = [];
     t.mock.method(loggerDb.systemLog, 'create', async ({ data }) => { const log = { ...data, id: `captured-${sequence++}`, createdAt: new Date() }; logs.push(log); return log; });
@@ -353,6 +376,34 @@ test('daily and weekly plans isolate FPC into one bounded stage per season', asy
     const pipeline = await pipelineFixture();
     assert.deepEqual(pipeline.getPipelineStages('daily', ['2026', '2027']), ['cabreira', 'stopandgo', 'classificacoes', 'finalize']);
     assert.deepEqual(pipeline.getPipelineStages('weekly', ['2026', '2027']), ['fpc-2026', 'fpc-2027', 'deepScrape', 'finalize']);
+});
+
+test('stage handoff keeps the internal request alive and rejects HTTP failures', async t => {
+    const pipeline = await pipelineFixture();
+    let releaseFetch;
+    let requestedUrl;
+    const gate = new Promise(resolve => { releaseFetch = resolve; });
+    t.mock.method(globalThis, 'fetch', async url => {
+        requestedUrl = String(url);
+        await gate;
+        return new Response('{}', { status: 200 });
+    });
+    let settled = false;
+    const handoff = pipeline.triggerNextStage({
+        nextStage: 'fpc-2027', runId: 'fixture-run', years: ['2026', '2027'],
+        scope: 'manual', nextAttempt: 1, hadErrors: false, triggeredBy: 'TEST', fullHistorical: false
+    }).then(() => { settled = true; });
+    await Promise.resolve();
+    assert.equal(settled, false);
+    assert.match(requestedUrl, /stage=fpc-2027/);
+    releaseFetch();
+    await handoff;
+    assert.equal(settled, true);
+
+    t.mock.method(globalThis, 'fetch', async () => new Response('upstream unavailable', { status: 503 }));
+    await assert.rejects(pipeline.triggerNextStage({
+        nextStage: 'finalize', runId: 'fixture-run', years: ['2026'], scope: 'weekly'
+    }), /HTTP 503.*upstream unavailable/);
 });
 
 test('pipeline leases every bounded stage and publishes complete metrics', async t => {
