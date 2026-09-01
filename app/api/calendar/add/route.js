@@ -300,7 +300,7 @@ export async function POST(req) {
             }
 
             const gEvent = {
-                summary: `📝 Abertura Inscrições: ${fullEvent.title}`,
+                summary: `Abertura de inscrições — ${fullEvent.title}`,
                 description: `Abertura oficial das inscrições para ${fullEvent.title}.\n\nInscrições e regulamento: ${fullEvent.link || 'https://cyclingcalendar.pt'}\nOrganização: ${fullEvent.organizador || fullEvent.source || '-'}`,
                 location: location,
                 ...datePayload,
@@ -337,7 +337,7 @@ export async function POST(req) {
             }
 
             const gEvent = {
-                summary: `⏳ Fecho Inscrições: ${fullEvent.title}`,
+                summary: `Fecho de inscrições — ${fullEvent.title}`,
                 description: `Último dia para inscrições no evento: ${fullEvent.title}.\n\nInscrever agora: ${fullEvent.link || 'https://cyclingcalendar.pt'}\nOrganização: ${fullEvent.organizador || fullEvent.source || '-'}`,
                 location: location,
                 ...datePayload,
@@ -375,8 +375,8 @@ export async function POST(req) {
         endDateStr = endDt.toISOString().split('T')[0];
 
         const gEvent = {
-            summary: `🚴 ${fullEvent.title}`,
-            description: `🏁 Data da Prova: ${raceInfo?.label || fullEvent.date || startDateStr}\nMais informações: ${fullEvent.link || 'App Cycling Calendar'}\n\nEscalão: ${fullEvent.escalao || '-'}\nÂmbito: ${fullEvent.ambito || '-'}\nOrganização: ${fullEvent.organizador || fullEvent.source || '-'}`,
+            summary: fullEvent.title,
+            description: `Data da prova: ${raceInfo?.label || fullEvent.date || startDateStr}\nMais informações: ${fullEvent.link || 'Cycling Calendar'}\n\nEscalão: ${fullEvent.escalao || '-'}\nÂmbito: ${fullEvent.ambito || '-'}\nOrganização: ${fullEvent.organizador || fullEvent.source || '-'}`,
             location: location,
             start: { date: startDateStr },
             end: { date: endDateStr },

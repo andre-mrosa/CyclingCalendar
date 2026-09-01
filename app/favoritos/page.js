@@ -14,7 +14,7 @@ export default function Favoritos() {
     if (!isLoaded) {
         return (
             <div className="flex justify-center items-center h-[50vh]">
-                <div className="w-8 h-8 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin"></div>
+                <div className="w-8 h-8 border-4 border-line border-t-brand rounded-full animate-spin"></div>
             </div>
         );
     }

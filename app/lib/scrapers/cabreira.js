@@ -66,7 +66,7 @@ export const deepScrapeCabreira = async (link) => {
                 }
             });
             if (items.length > 0) {
-                summaryHtml = `<div class="event-summary-card" style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(59,130,246,0.06); border: 1px solid rgba(59,130,246,0.2); border-radius: 0.75rem;"><h4 style="margin: 0 0 0.5rem 0; font-weight: bold; color: #3b82f6; font-size: 0.95rem;">📋 Resumo da Prova</h4><ul style="margin: 0; padding-left: 1.25rem; line-height: 1.6; font-size: 0.875rem;">${items.join('')}</ul></div>`;
+                summaryHtml = `<div class="event-summary-card" style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(54,87,214,0.06); border: 1px solid rgba(54,87,214,0.2); border-radius: 0.75rem;"><h4 style="margin: 0 0 0.5rem 0; font-weight: bold; color: #3657d6; font-size: 0.95rem;">Resumo da prova</h4><ul style="margin: 0; padding-left: 1.25rem; line-height: 1.6; font-size: 0.875rem;">${items.join('')}</ul></div>`;
             }
         }
 
@@ -157,7 +157,7 @@ export const deepScrapeCabreira = async (link) => {
                     }
                 });
                 if (percItems.length > 0 && !summaryHtml) {
-                    const percBox = `<div class="event-summary-card" style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(59,130,246,0.06); border: 1px solid rgba(59,130,246,0.2); border-radius: 0.75rem;"><h4 style="margin: 0 0 0.5rem 0; font-weight: bold; color: #3b82f6; font-size: 0.95rem;">🚴 Percursos da Prova</h4><ul style="margin: 0; padding-left: 1.25rem; line-height: 1.6; font-size: 0.875rem;">${percItems.join('')}</ul></div>`;
+                    const percBox = `<div class="event-summary-card" style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(54,87,214,0.06); border: 1px solid rgba(54,87,214,0.2); border-radius: 0.75rem;"><h4 style="margin: 0 0 0.5rem 0; font-weight: bold; color: #3657d6; font-size: 0.95rem;">Percursos da prova</h4><ul style="margin: 0; padding-left: 1.25rem; line-height: 1.6; font-size: 0.875rem;">${percItems.join('')}</ul></div>`;
                     description = percBox + '<br/>' + description;
                 }
             }

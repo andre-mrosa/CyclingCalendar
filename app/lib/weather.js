@@ -125,28 +125,28 @@ export function getCyclingAdvice({ tempMax, tempMin, rainProb, windSpeed }) {
 
     // Vento
     if (windSpeed >= 35) {
-        tips.push('⚠️ Vento muito forte (> 35 km/h). Cuidado com rodas de perfil alto e rajadas laterais.');
+        tips.push('Vento muito forte (> 35 km/h). Cuidado com rodas de perfil alto e rajadas laterais.');
     } else if (windSpeed >= 22) {
-        tips.push('💨 Vento moderado a forte. Poupa energia em grupo / no pelotão.');
+        tips.push('Vento moderado a forte. Poupa energia em grupo ou no pelotão.');
     }
 
     // Chuva
     if (rainProb >= 65) {
-        tips.push('🌧️ Elevada probabilidade de chuva. Leva capa impermeável, corta-vento e cuidado com pisos escorregadios.');
+        tips.push('Elevada probabilidade de chuva. Leva capa impermeável, corta-vento e cuidado com pisos escorregadios.');
     } else if (rainProb >= 35) {
-        tips.push('⛅ Possibilidade de aguaceiros dispersos. Recomendado levar corta-vento no bolso.');
+        tips.push('Possibilidade de aguaceiros dispersos. Recomendado levar corta-vento no bolso.');
     }
 
     // Temperatura
     if (tempMax >= 32) {
-        tips.push('🔥 Temperatura muito elevada (> 32°C). Hidratação reforçada e proteção solar indispensável.');
+        tips.push('Temperatura muito elevada (> 32°C). Hidratação reforçada e proteção solar indispensável.');
     } else if (tempMin <= 5) {
-        tips.push('❄️ Início de prova frio (≤ 5°C). Roupa térmica, luvas longas e manguitos recomendados.');
+        tips.push('Início de prova frio (≤ 5°C). Roupa térmica, luvas longas e manguitos recomendados.');
     } else if (tempMax >= 18 && tempMax <= 25 && windSpeed < 20 && rainProb < 20) {
-        tips.push('🚴‍♂️ Condições perfeitas para pedalar e bater recordes!');
+        tips.push('Condições perfeitas para pedalar e bater recordes.');
     }
 
-    return tips.length > 0 ? tips : ['☀️ Condições favoráveis para a prova. Boa viagem e boas pedaladas!'];
+    return tips.length > 0 ? tips : ['Condições favoráveis para a prova. Boa viagem e boas pedaladas.'];
 }
 
 /**

@@ -136,7 +136,9 @@ export async function GET(req) {
                 // Obter a data no formato YYYY-MM-DD
                 const startDateStr = item.start?.date || (item.start?.dateTime ? item.start.dateTime.split('T')[0] : null);
                 if (startDateStr) {
-                    const cleanTitle = (item.summary || '').replace(/^[🚴\s]+/, '').trim();
+                    // Keep calendars created by previous versions readable without
+                    // adding decorative symbols to new entries.
+                    const cleanTitle = (item.summary || '').replace(/^\u{1F6B4}(?:\u200D\u2642\uFE0F)?\s*/u, '').trim();
                     markedDates[startDateStr] = {
                         eventId: cyclingId,
                         title: cleanTitle || 'Prova Agendada',

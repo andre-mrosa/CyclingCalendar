@@ -2,10 +2,10 @@
 export const DEFAULT_PALETTE = 'atlantic';
 export const SETTINGS_STORAGE_KEY = 'cycling-calendar-settings';
 export const COLOR_PALETTES = [
-    { id: 'forest', accent: '#26705d', soft: '#edf5f1', nightAccent: '#81baa5', nightSoft: '#192e2b' },
-    { id: 'atlantic', accent: '#126879', soft: '#e8f2f5', nightAccent: '#8ac9d4', nightSoft: '#142c37' },
-    { id: 'violet', accent: '#7144a5', soft: '#f2eef7', nightAccent: '#bfacd8', nightSoft: '#28253a' },
-    { id: 'terracotta', accent: '#a3472d', soft: '#f7eeea', nightAccent: '#d7ac94', nightSoft: '#302724' },
+    { id: 'forest', accent: '#24715f', soft: '#edf6f2', nightAccent: '#78c4aa', nightSoft: '#17322c' },
+    { id: 'atlantic', accent: '#3657d6', soft: '#edf0ff', nightAccent: '#8fa8ff', nightSoft: '#1c2748' },
+    { id: 'violet', accent: '#7350c7', soft: '#f2effb', nightAccent: '#bca8f2', nightSoft: '#2a2444' },
+    { id: 'terracotta', accent: '#ad512f', soft: '#f9efeb', nightAccent: '#e1a48b', nightSoft: '#38251f' },
 ];
 export function normalizePalette(value) {
     return COLOR_PALETTES.some(p => p.id === value) ? value : DEFAULT_PALETTE;
@@ -17,10 +17,12 @@ export function paletteCSS() {
     return COLOR_PALETTES.map(p => `
         :root[data-palette="${p.id}"] {
             --site-accent: ${p.accent}; --site-accent-soft: ${p.soft};
+            --site-accent-strong: color-mix(in srgb, ${p.accent} 88%, #091426);
             --site-mark: ${p.nightAccent};
         }
         :root.dark[data-palette="${p.id}"] {
             --site-accent: ${p.nightAccent}; --site-accent-soft: ${p.nightSoft};
+            --site-accent-strong: ${p.accent};
         }
     `).join('');
 }

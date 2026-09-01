@@ -4,40 +4,54 @@
 
 @layer base {
   :root {
-    --background: #f5f7f9;
-    --foreground: #182a36;
+    --background: #f3f5f8;
+    --foreground: #101b2c;
     --site-surface: #ffffff;
-    --site-soft: #edf1f5;
-    --site-line: #e1e7eb;
-    --site-muted: #596b79;
-    --site-accent: #126879;
-    --site-accent-soft: #e8f2f5;
-    --site-mark: #8ac9d4;
-    --site-logo-bg: #152a3e;
-    --site-nav: #ffffff;
+    --site-soft: #f0f2f6;
+    --site-line: #dfe4ec;
+    --site-line-strong: #c7cfdb;
+    --site-muted: #607086;
+    --site-accent: #3657d6;
+    --site-accent-strong: #2848c2;
+    --site-accent-soft: #edf0ff;
+    --site-mark: #8fa8ff;
+    --site-logo-bg: #0b1727;
+    --site-nav: #fbfcfe;
+    --site-shadow-xs: 0 1px 2px #15213b0a;
+    --site-shadow-sm: 0 8px 24px #15213b0a;
+    --site-shadow-md: 0 15px 34px #15213b14;
+    --site-shadow-lg: 0 28px 80px #07101f24;
   }
 
   .dark {
-    --background: #020617;
-    --site-nav: #0b1422;
-    --foreground: #e7eef4;
-    --site-surface: #111d2a;
-    --site-soft: #172534;
-    --site-line: #2a3a49;
-    --site-muted: #a1b1bf;
-    --site-accent: #8ac9d4;
-    --site-accent-soft: #142c37;
+    --background: #070d17;
+    --site-nav: #0a111d;
+    --foreground: #edf2fa;
+    --site-surface: #0f1826;
+    --site-soft: #151f2f;
+    --site-line: #243146;
+    --site-line-strong: #34435a;
+    --site-muted: #93a1b6;
+    --site-accent: #8fa8ff;
+    --site-accent-strong: #607df4;
+    --site-accent-soft: #1c2748;
+    --site-shadow-xs: 0 1px 2px #0004;
+    --site-shadow-sm: 0 10px 30px #0003;
+    --site-shadow-md: 0 18px 42px #0005;
+    --site-shadow-lg: 0 32px 90px #0008;
   }
 
   body {
     background-color: var(--background);
     color: var(--foreground);
     font-family: var(--font-geist-sans), system-ui, sans-serif;
+    min-width: 320px;
+    text-rendering: optimizeLegibility;
   }
 
   :focus-visible { outline: 2px solid var(--site-accent); outline-offset: 4px; }
   ::selection { background: var(--site-mark); color: var(--site-logo-bg); }
-  html { scroll-padding-top: 140px; }
+  html { scroll-padding-top: 96px; }
   button, input, select, textarea { font: inherit; }
 }
 

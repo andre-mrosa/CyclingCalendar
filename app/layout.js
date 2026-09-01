@@ -19,23 +19,23 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   metadataBase: new URL("https://cyclingcalendar.pt"),
-  title: "Calendário de Ciclismo Portugal | FPC & Cabreira Solutions",
-  description: "O calendário unificado de ciclismo em Portugal. Descobre todas as provas de Estrada, BTT, XCO, XCM, Enduro e Granfondos. Filtra por escalões, distritos e mais.",
+  title: "Cycling Calendar — Provas de ciclismo em Portugal",
+  description: "O calendário unificado de ciclismo em Portugal. Descobre provas de estrada, BTT, XCO, XCM, enduro e granfondos, reunidas num só lugar.",
   keywords: ["ciclismo", "portugal", "calendário ciclismo", "fpc", "federação portuguesa de ciclismo", "cabreira solutions", "btt", "granfondo", "xco", "xcm", "provas de ciclismo"],
   authors: [{ name: "CyclingCalendar" }],
   creator: "CyclingCalendar",
   openGraph: {
-    title: "Calendário de Ciclismo Portugal",
-    description: "O calendário unificado de ciclismo em Portugal. Descobre todas as provas de Estrada, BTT e Granfondos.",
-    url: "https://cyclingcalendar.vercel.app",
-    siteName: "Calendário de Ciclismo Portugal",
+    title: "Cycling Calendar — A tua próxima linha de partida",
+    description: "Provas de estrada, BTT e granfondos em Portugal, reunidas num calendário simples e atualizado.",
+    url: "https://cyclingcalendar.pt",
+    siteName: "Cycling Calendar",
     locale: "pt_PT",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Calendário de Ciclismo Portugal",
-    description: "O calendário unificado de ciclismo em Portugal. Descobre todas as provas de Estrada, BTT e Granfondos.",
+    title: "Cycling Calendar — A tua próxima linha de partida",
+    description: "Provas de estrada, BTT e granfondos em Portugal, reunidas num calendário simples e atualizado.",
   },
   robots: {
     index: true,
@@ -61,12 +61,11 @@ export const metadata = {
 };
 
 export const viewport = {
-  themeColor: "#0b1422",
+  themeColor: "#0b1727",
 };
 
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import WelcomeModal from "./components/WelcomeModal";
 import CookieBanner from "./components/CookieBanner";
 import PWAUpdateHandler from "./components/PWAUpdateHandler";
 import ClientErrorLogger from "./components/ClientErrorLogger";
@@ -92,7 +91,6 @@ export default function RootLayout({ children }) {
               {children}
             </main>
             <Footer />
-            <WelcomeModal />
             <CookieBanner />
             <Analytics />
             <SpeedInsights />
