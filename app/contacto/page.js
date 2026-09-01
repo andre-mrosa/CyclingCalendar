@@ -58,7 +58,7 @@ export default function ContactoPage() {
                                         value={formData.name}
                                         onChange={(e) => setFormData({...formData, name: e.target.value})}
                                         disabled={isSubmitting}
-                                        className="bg-soft border border-line rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-3.5 outline-none text-ink placeholder-slate-400 dark:placeholder-slate-500 text-sm transition-colors disabled:opacity-50"
+                                        className="bg-soft border border-line rounded-xl focus:border-brand focus:ring-1 focus:ring-brand p-3.5 outline-none text-ink placeholder-slate-400 dark:placeholder-slate-500 text-sm transition-colors disabled:opacity-50"
                                     />
                                 </div>
                                 <div className="flex flex-col gap-2">
@@ -70,7 +70,7 @@ export default function ContactoPage() {
                                         value={formData.email}
                                         onChange={(e) => setFormData({...formData, email: e.target.value})}
                                         disabled={isSubmitting}
-                                        className="bg-soft border border-line rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-3.5 outline-none text-ink placeholder-slate-400 dark:placeholder-slate-500 text-sm transition-colors disabled:opacity-50"
+                                        className="bg-soft border border-line rounded-xl focus:border-brand focus:ring-1 focus:ring-brand p-3.5 outline-none text-ink placeholder-slate-400 dark:placeholder-slate-500 text-sm transition-colors disabled:opacity-50"
                                     />
                                 </div>
                             </div>
@@ -84,7 +84,7 @@ export default function ContactoPage() {
                                     onChange={(e) => setFormData({...formData, message: e.target.value})}
                                     disabled={isSubmitting}
                                     rows={5}
-                                    className="bg-soft border border-line rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-3.5 outline-none text-ink placeholder-slate-400 dark:placeholder-slate-500 text-sm resize-y transition-colors disabled:opacity-50"
+                                    className="bg-soft border border-line rounded-xl focus:border-brand focus:ring-1 focus:ring-brand p-3.5 outline-none text-ink placeholder-slate-400 dark:placeholder-slate-500 text-sm resize-y transition-colors disabled:opacity-50"
                                 />
                             </div>
                             

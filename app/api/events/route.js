@@ -99,6 +99,21 @@ export async function GET(request) {
 
     } catch (error) {
         console.error('Error in API:', error);
-        return Response.json({ success: false, error: error.message }, { status: 500 });
+        const databaseUnavailable =
+            ['P1001', 'P1002', 'P2024'].includes(error?.code) ||
+            ['ECONNREFUSED', 'ENOTFOUND', 'ETIMEDOUT'].includes(error?.cause?.code) ||
+            error?.name === 'PrismaClientInitializationError';
+
+        return Response.json(
+            {
+                success: false,
+                code: 'EVENTS_UNAVAILABLE',
+                error: 'Events temporarily unavailable'
+            },
+            {
+                status: databaseUnavailable ? 503 : 500,
+                headers: { 'Cache-Control': 'no-store' }
+            }
+        );
     }
 }

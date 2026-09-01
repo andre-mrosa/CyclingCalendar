@@ -1,11 +1,11 @@
 .dashboard {
-    --surface: #fff;
-    --subtle: #f3f5f8;
-    --line: #dfe4ec;
-    --ink: #101b2c;
-    --muted: #607086;
-    --accent: #3657d6;
-    --accent-soft: #edf0ff;
+    --surface: #fbfaf7;
+    --subtle: #ebe8e1;
+    --line: #d8d3c9;
+    --ink: #191a18;
+    --muted: #68665f;
+    --accent: #ad351c;
+    --accent-soft: #f7ded5;
     --danger: #b13342;
     --danger-soft: #fff2f3;
     --warning: #926011;
@@ -16,13 +16,13 @@
     min-width: 0;
 }
 :global(.dark) .dashboard {
-    --surface: #0f1826;
-    --subtle: #151f2f;
-    --line: #243146;
-    --ink: #edf2fa;
-    --muted: #93a1b6;
-    --accent: #8fa8ff;
-    --accent-soft: #1c2748;
+    --surface: #1c1d1b;
+    --subtle: #272824;
+    --line: #383934;
+    --ink: #f1eee7;
+    --muted: #aaa79e;
+    --accent: #f07856;
+    --accent-soft: #45261f;
     --danger: #f29ca6;
     --danger-soft: #35232c;
     --warning: #e5bf79;
@@ -55,8 +55,8 @@
 .panelHeading p { max-width: 62ch; }
 .button { display: inline-flex; justify-content: center; align-items: center; gap: 8px; min-height: 38px; padding: 8px 13px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: 12px !important; font-weight: 600 !important; line-height: 1.4; text-decoration: none; transition: background .15s; }
 .button:hover { background: var(--subtle); }
-.primary { background: #3154de; color: #fff; border-color: #3154de; }
-.primary:hover { background: #2646c6; }
+.primary { background: #912814; color: #fff; border-color: #912814; }
+.primary:hover { background: #ad351c; }
 .danger { color: var(--danger); border-color: var(--danger); }
 .danger:hover { background: var(--danger-soft); }
 .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }

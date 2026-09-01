@@ -19,10 +19,19 @@ import { usePathname } from 'next/navigation';
 import PageHeading from './PageHeading';
 import styles from './site.module.css';
 
-const fetcher = (url) => fetch(url).then((res) => res.json()).then((data) => {
-    if (!data.success) throw new Error(data.error || 'Failed to load events');
+const fetcher = async (url) => {
+    const response = await fetch(url);
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok || !data?.success) {
+        const requestError = new Error('EVENTS_UNAVAILABLE');
+        requestError.status = response.status;
+        requestError.code = data?.code || 'EVENTS_UNAVAILABLE';
+        throw requestError;
+    }
+
     return data.events;
-});
+};
 
 const EMPTY_EVENTS = [];
 
@@ -420,8 +429,8 @@ export default function CalendarView({
     return (
         <div className={styles.page}>
             <PageHeading title={pageTitle} subtitle={pageSubtitle} hero={pathname === '/'} icon={filterByAgenda ? CalendarCheck : filterByFavorites ? Star : Calendar} />
-            <div className="w-full mx-auto">
-            <header className="mb-6 sm:mb-8">
+            <div className={styles.calendarWorkspace}>
+            <header className={styles.calendarControls}>
                 {isOffline && (
                     <div className="mb-3.5 py-2 px-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs sm:text-sm font-medium flex items-center justify-center gap-2 animate-fade-in shadow-sm">
                         <WifiOff size={15} className="text-amber-500 shrink-0" />
@@ -499,7 +508,7 @@ export default function CalendarView({
                                     metadata: { page: pageTitle, count: filteredEvents.length }
                                 });
                             }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-blue-500/30 bg-blue-500/10 text-brand hover:bg-blue-500/20 text-xs font-semibold transition-all cursor-pointer shadow-xs ml-auto"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-brand bg-brand-soft text-brand hover:brightness-95 text-xs font-semibold transition-all cursor-pointer ml-auto"
                             title={t('filter_export_ics')}
                         >
                             <Download size={13} />
@@ -720,7 +729,7 @@ export default function CalendarView({
                 )}
             </header>
 
-            <section aria-label={pageTitle}>
+            <section className={styles.calendarFeed} aria-label={pageTitle}>
                 {isInitialLoading && (
                     <div className="flex flex-col items-center justify-center py-16 text-slate-400">
                         <div className="w-8 h-8 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin mb-4"></div>
@@ -729,11 +738,13 @@ export default function CalendarView({
                 )}
 
                 {!isInitialLoading && error && events.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-16 text-slate-400">
-                        <p className="text-red-400">{t('error_occurred')}: {error.message || error}</p>
+                    <div className={styles.empty} role="alert">
+                        <AlertTriangle size={28} aria-hidden="true" />
+                        <h3>{t('error_occurred')}</h3>
+                        <p>{t('events_load_error')}</p>
                         <button 
                             onClick={() => mutate()}
-                            className="mt-4 px-4 py-2 bg-brand hover:brightness-110 text-surface rounded-lg transition-colors border-none cursor-pointer font-medium"
+                            className={styles.primaryButton}
                         >
                             {t('btn_try_again')}
                         </button>
@@ -997,6 +1008,7 @@ export default function CalendarView({
                     isSignedIn={isSignedIn} 
                 />
             </section>
+            </div>
             {showEscalaoHelp && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1100] flex items-center justify-center p-4" onClick={() => setShowEscalaoHelp(false)}>
                     <div className="relative w-full max-w-[500px] bg-surface rounded-xl shadow-2xl border border-line flex flex-col max-h-[90vh] text-ink transition-colors duration-200" onClick={(e) => e.stopPropagation()}>
@@ -1012,7 +1024,6 @@ export default function CalendarView({
                     </div>
                 </div>
             )}
-            </div>
         </div>
     );
 }

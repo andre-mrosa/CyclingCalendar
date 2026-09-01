@@ -122,9 +122,9 @@ export default function Conta() {
 
             <main className="flex flex-col gap-6">
                 {isAdmin && (
-                    <section className="bg-blue-500/10 border border-blue-500/30 rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm animate-fade-in">
+                    <section className="bg-brand-soft border border-brand rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in">
                         <div className="flex items-center gap-3.5">
-                            <div className="w-11 h-11 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                            <div className="w-11 h-11 rounded-xl bg-brand text-white flex items-center justify-center shrink-0">
                                 <Shield size={22} />
                             </div>
                             <div>
@@ -172,7 +172,7 @@ export default function Conta() {
                                     >
                                         <FlagIcon code={item.code} className="w-4 h-2.5 rounded-[2px] shadow-[0_0_0_1px_rgba(0,0,0,0.15)] shrink-0" />
                                         <span>{item.label}</span>
-                                        {isActive && <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0"></div>}
+                                        {isActive && <div className="w-1.5 h-1.5 rounded-full bg-brand shrink-0"></div>}
                                     </button>
                                 );
                             })}
@@ -278,7 +278,7 @@ export default function Conta() {
                         </div>
                         <button 
                             onClick={resetTabsOrder}
-                            className="inline-flex items-center gap-1.5 text-xs text-muted hover:text-brand transition-colors py-1 px-2.5 rounded-lg border border-line hover:border-blue-500/40 shrink-0 self-start sm:self-auto cursor-pointer font-medium"
+                            className="inline-flex items-center gap-1.5 text-xs text-muted hover:text-brand transition-colors py-1 px-2.5 rounded-lg border border-line hover:border-brand shrink-0 self-start sm:self-auto cursor-pointer font-medium"
                             title={t('settings_reset_tabs')}
                         >
                             <RotateCcw size={13} />

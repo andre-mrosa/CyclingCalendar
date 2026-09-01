@@ -4,41 +4,41 @@
 
 @layer base {
   :root {
-    --background: #f3f5f8;
-    --foreground: #101b2c;
-    --site-surface: #ffffff;
-    --site-soft: #f0f2f6;
-    --site-line: #dfe4ec;
-    --site-line-strong: #c7cfdb;
-    --site-muted: #607086;
-    --site-accent: #3657d6;
-    --site-accent-strong: #2848c2;
-    --site-accent-soft: #edf0ff;
-    --site-mark: #8fa8ff;
-    --site-logo-bg: #0b1727;
-    --site-nav: #fbfcfe;
-    --site-shadow-xs: 0 1px 2px #15213b0a;
-    --site-shadow-sm: 0 8px 24px #15213b0a;
-    --site-shadow-md: 0 15px 34px #15213b14;
-    --site-shadow-lg: 0 28px 80px #07101f24;
+    --background: #f4f2ed;
+    --foreground: #191a18;
+    --site-surface: #fbfaf7;
+    --site-soft: #ebe8e1;
+    --site-line: #d8d3c9;
+    --site-line-strong: #aaa397;
+    --site-muted: #68665f;
+    --site-accent: #ad351c;
+    --site-accent-strong: #912814;
+    --site-accent-soft: #f7ded5;
+    --site-mark: #e55d3b;
+    --site-logo-bg: #1a1b19;
+    --site-nav: #f9f7f2;
+    --site-shadow-xs: 0 1px 0 #191a180d;
+    --site-shadow-sm: 0 8px 22px #191a180a;
+    --site-shadow-md: 0 14px 32px #191a1814;
+    --site-shadow-lg: 0 24px 64px #191a1822;
   }
 
   .dark {
-    --background: #070d17;
-    --site-nav: #0a111d;
-    --foreground: #edf2fa;
-    --site-surface: #0f1826;
-    --site-soft: #151f2f;
-    --site-line: #243146;
-    --site-line-strong: #34435a;
-    --site-muted: #93a1b6;
-    --site-accent: #8fa8ff;
-    --site-accent-strong: #607df4;
-    --site-accent-soft: #1c2748;
+    --background: #141513;
+    --site-nav: #191a18;
+    --foreground: #f1eee7;
+    --site-surface: #1c1d1b;
+    --site-soft: #272824;
+    --site-line: #383934;
+    --site-line-strong: #5a5b53;
+    --site-muted: #aaa79e;
+    --site-accent: #f07856;
+    --site-accent-strong: #dc5c3a;
+    --site-accent-soft: #45261f;
     --site-shadow-xs: 0 1px 2px #0004;
-    --site-shadow-sm: 0 10px 30px #0003;
-    --site-shadow-md: 0 18px 42px #0005;
-    --site-shadow-lg: 0 32px 90px #0008;
+    --site-shadow-sm: 0 10px 28px #0003;
+    --site-shadow-md: 0 16px 38px #0005;
+    --site-shadow-lg: 0 26px 72px #0008;
   }
 
   body {
@@ -47,6 +47,7 @@
     font-family: var(--font-geist-sans), system-ui, sans-serif;
     min-width: 320px;
     text-rendering: optimizeLegibility;
+    letter-spacing: -0.01em;
   }
 
   :focus-visible { outline: 2px solid var(--site-accent); outline-offset: 4px; }
@@ -56,6 +57,7 @@
 }
 
 @layer utilities {
+  .rounded-xl, .rounded-2xl, .rounded-3xl { border-radius: 0.375rem; }
   .custom-scrollbar::-webkit-scrollbar { width: 6px; }
   .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 4px; }
   .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
@@ -70,7 +72,7 @@
   animation: slide-up 0.4s ease-out;
 }
 
-.skip-link { position: fixed; top: 12px; left: 12px; transform: translateY(-160%); z-index: 10001; padding: 12px 20px; background: var(--site-mark); color: var(--site-logo-bg); border-radius: 12px; font-weight: 700; }
+.skip-link { position: fixed; top: 12px; left: 12px; transform: translateY(-160%); z-index: 10001; padding: 10px 16px; background: var(--site-accent); color: #fff; border-radius: 4px; font-weight: 700; }
 .skip-link:focus { transform: translateY(0); }
 
 @media (prefers-reduced-motion: reduce) {

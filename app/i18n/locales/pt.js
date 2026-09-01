@@ -2,7 +2,7 @@ export default {
     settings_palette_title: "Cor da aplicação",
     settings_palette_desc: "A cor aplica-se apenas aos destaques. Os fundos mantêm-se neutros, em modo claro e escuro. A escolha fica guardada neste dispositivo.",
     settings_palette_forest: "Floresta",
-    settings_palette_atlantic: "Atlântico",
+    settings_palette_atlantic: "Coral",
     settings_palette_violet: "Violeta",
     settings_palette_terracotta: "Terracota",
     // Navigation & Tabs
@@ -27,7 +27,7 @@ export default {
 
     // Page Titles & Subtitles
     page_home_title: "Geral",
-    page_home_subtitle: "Todos os eventos oficiais em Portugal",
+    page_home_subtitle: "Provas reunidas a partir das fontes disponíveis",
     page_agenda_title: "Minha Agenda",
     page_agenda_subtitle: "As tuas provas marcadas e lembretes da época",
     page_agenda_signin_desc: "Inicia sessão com o Google para sincronizares o teu calendário oficial e veres aqui todas as provas e lembretes da tua época desportiva.",
@@ -41,13 +41,13 @@ export default {
     page_favorites_empty_desc: "Navega pelo calendário e clica na Estrela ⭐ ao lado do nome de qualquer prova para a guardares aqui.",
     page_favorites_explore_btn: "Explorar Calendário",
     page_nationals_title: "Campeonatos Nacionais",
-    page_nationals_subtitle: "Calendário oficial de todos os Campeonatos Nacionais em Portugal",
+    page_nationals_subtitle: "Campeonatos Nacionais identificados no calendário FPC",
     page_cups_title: "Taças de Portugal",
     page_cups_subtitle: "Competições a pontuar para a Taça de Portugal",
     page_regionals_title: "Provas Regionais",
     page_regionals_subtitle: "Competições organizadas pelas Associações Regionais",
     page_internationals_title: "Provas Internacionais",
-    page_internationals_subtitle: "Eventos UCI e Pro (acesso restrito)",
+    page_internationals_subtitle: "Eventos internacionais presentes nas fontes disponíveis",
     page_leisure_title: "Passeios e Lazer",
     page_leisure_subtitle: "Granfondos, Passeios e Provas Abertas (CPT)",
 
@@ -306,6 +306,7 @@ export default {
     offline_mode_banner: "Modo Offline — A mostrar o calendário guardado no teu telemóvel.",
     action_loading_events: "A carregar o calendário unificado...",
     error_occurred: "Ocorreu um erro",
+    events_load_error: "Não foi possível carregar as provas. Tenta novamente dentro de momentos.",
     btn_try_again: "Tentar novamente",
     regional_not_found_title: "Procuras provas regionais?",
     regional_not_found_desc: "Muitas provas da tua região (como Taças Regionais) podem não ser publicadas no calendário central da FPC. Consulta diretamente a fonte oficial:",

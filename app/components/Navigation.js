@@ -36,7 +36,7 @@ export default function Navigation() {
     });
 
     useEffect(() => {
-        const desktop = window.matchMedia('(min-width: 1101px)');
+        const desktop = window.matchMedia('(min-width: 1181px)');
         const closeOnDesktop = () => { if (desktop.matches) setIsMobileMenuOpen(false); };
         desktop.addEventListener('change', closeOnDesktop);
         return () => desktop.removeEventListener('change', closeOnDesktop);
@@ -360,7 +360,7 @@ export default function Navigation() {
                             {isAdmin && (
                                 <Link 
                                     href="/admin"
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-brand border border-blue-500/30 text-xs font-bold transition-all shadow-sm !no-underline"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-soft hover:brightness-95 text-brand border border-brand text-xs font-bold transition-all !no-underline"
                                     title={t('nav_admin')}
                                 >
                                     <Shield size={14} />
@@ -389,7 +389,7 @@ export default function Navigation() {
                                     {isAdmin && (
                                         <UserButton.Link 
                                             label={t('nav_admin')}
-                                            labelIcon={<Shield size={16} className="mr-2 text-blue-500" />}
+                                            labelIcon={<Shield size={16} className="mr-2 text-brand" />}
                                             href="/admin"
                                         />
                                     )}
@@ -422,7 +422,7 @@ export default function Navigation() {
                     {isAdmin && (
                         <Link 
                             href="/admin" 
-                            className="relative p-1.5 rounded-lg bg-blue-500/15 text-brand border border-blue-500/30 flex items-center justify-center transition-colors !no-underline"
+                            className="relative p-1.5 rounded-lg bg-brand-soft text-brand border border-brand flex items-center justify-center transition-colors !no-underline"
                             title={t('nav_admin')}
                         >
                             <Shield size={16} />
@@ -452,7 +452,7 @@ export default function Navigation() {
                     </div>
                     <button 
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className="bg-transparent border-none text-muted hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer flex items-center justify-center transition-colors p-1"
+                        className="bg-transparent border-none text-muted hover:text-brand cursor-pointer flex items-center justify-center transition-colors p-1"
                         title={t('action_close')}
                     >
                         <X size={22} />
@@ -500,7 +500,7 @@ export default function Navigation() {
                                         {isAdmin && (
                                             <UserButton.Link 
                                                 label={t('nav_admin')}
-                                                labelIcon={<Shield size={16} className="mr-2 text-blue-500" />}
+                                                labelIcon={<Shield size={16} className="mr-2 text-brand" />}
                                                 href="/admin"
                                             />
                                         )}
@@ -537,7 +537,7 @@ export default function Navigation() {
                                 <Link 
                                     href="/admin" 
                                     onClick={() => setIsMobileMenuOpen(false)}
-                                    className="flex items-center gap-2.5 py-2.5 px-3 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-brand border border-blue-500/25 text-sm font-bold transition-colors !no-underline"
+                                    className="flex items-center gap-2.5 py-2.5 px-3 rounded-xl bg-brand-soft hover:brightness-95 text-brand border border-brand text-sm font-bold transition-colors !no-underline"
                                 >
                                     <Shield size={16} />
                                     <span>{t('nav_admin')}</span>

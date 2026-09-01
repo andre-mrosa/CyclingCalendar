@@ -2,10 +2,10 @@
 export const DEFAULT_PALETTE = 'atlantic';
 export const SETTINGS_STORAGE_KEY = 'cycling-calendar-settings';
 export const COLOR_PALETTES = [
-    { id: 'forest', accent: '#24715f', soft: '#edf6f2', nightAccent: '#78c4aa', nightSoft: '#17322c' },
-    { id: 'atlantic', accent: '#3657d6', soft: '#edf0ff', nightAccent: '#8fa8ff', nightSoft: '#1c2748' },
-    { id: 'violet', accent: '#7350c7', soft: '#f2effb', nightAccent: '#bca8f2', nightSoft: '#2a2444' },
-    { id: 'terracotta', accent: '#ad512f', soft: '#f9efeb', nightAccent: '#e1a48b', nightSoft: '#38251f' },
+    { id: 'forest', accent: '#28705d', soft: '#e5f1ec', nightAccent: '#79c6aa', nightSoft: '#1d332c' },
+    { id: 'atlantic', accent: '#ad351c', soft: '#f7ded5', nightAccent: '#f07856', nightSoft: '#45261f' },
+    { id: 'violet', accent: '#6552a8', soft: '#ece8f7', nightAccent: '#b5a7e7', nightSoft: '#302a47' },
+    { id: 'terracotta', accent: '#7b5945', soft: '#eee6df', nightAccent: '#caa58f', nightSoft: '#392d27' },
 ];
 export function normalizePalette(value) {
     return COLOR_PALETTES.some(p => p.id === value) ? value : DEFAULT_PALETTE;

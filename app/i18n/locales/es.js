@@ -2,7 +2,7 @@ export default {
     settings_palette_title: "Color de la aplicación",
     settings_palette_desc: "El color se aplica solo a los detalles destacados. Los fondos permanecen neutros en modo claro y oscuro. Tu elección se guarda en este dispositivo.",
     settings_palette_forest: "Bosque",
-    settings_palette_atlantic: "Atlántico",
+    settings_palette_atlantic: "Coral",
     settings_palette_violet: "Violeta",
     settings_palette_terracotta: "Terracota",
     // Navigation & Tabs
@@ -27,7 +27,7 @@ export default {
 
     // Page Titles & Subtitles
     page_home_title: "General",
-    page_home_subtitle: "Todos los eventos oficiales de ciclismo en Portugal",
+    page_home_subtitle: "Pruebas reunidas a partir de las fuentes disponibles",
     page_agenda_title: "Mi Agenda",
     page_agenda_subtitle: "Tus pruebas programadas y recordatorios de la temporada",
     page_agenda_signin_desc: "Inicia sesión con Google para sincronizar tu calendario oficial y ver aquí todas las pruebas y recordatorios de tu temporada deportiva.",
@@ -41,13 +41,13 @@ export default {
     page_favorites_empty_desc: "Navega por el calendario y haz clic en la Estrella ⭐ junto a cualquier prueba para guardarla aquí.",
     page_favorites_explore_btn: "Explorar Calendario",
     page_nationals_title: "Campeonatos Nacionales",
-    page_nationals_subtitle: "Calendario oficial de todos los Campeonatos Nacionales en Portugal",
+    page_nationals_subtitle: "Campeonatos Nacionales identificados en el calendario FPC",
     page_cups_title: "Copas de Portugal",
     page_cups_subtitle: "Competiciones puntuables para la Copa de Portugal",
     page_regionals_title: "Pruebas Regionales",
     page_regionals_subtitle: "Competiciones organizadas por las Asociaciones Regionales",
     page_internationals_title: "Pruebas Internacionales",
-    page_internationals_subtitle: "Eventos UCI y Pro (acceso restringido)",
+    page_internationals_subtitle: "Eventos internacionales presentes en las fuentes disponibles",
     page_leisure_title: "Paseos y Ocio",
     page_leisure_subtitle: "Granfondos, Paseos y Pruebas Abiertas (CPT)",
 
@@ -306,6 +306,7 @@ export default {
     offline_mode_banner: "Modo Offline — Mostrando el calendario guardado en tu dispositivo.",
     action_loading_events: "Cargando el calendario unificado...",
     error_occurred: "Ocurrió un error",
+    events_load_error: "No se pudieron cargar las pruebas. Inténtalo de nuevo en unos instantes.",
     btn_try_again: "Intentar de nuevo",
     regional_not_found_title: "¿Buscas carreras regionales?",
     regional_not_found_desc: "Muchas pruebas de tu región (como Copas Regionales) pueden no estar en el calendario central de la FPC. Consulta directamente la fuente oficial:",

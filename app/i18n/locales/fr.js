@@ -2,7 +2,7 @@ export default {
     settings_palette_title: "Couleur de l’application",
     settings_palette_desc: "La couleur s’applique uniquement aux accents. Les fonds restent neutres en mode clair et sombre. Votre choix est enregistré sur cet appareil.",
     settings_palette_forest: "Forêt",
-    settings_palette_atlantic: "Atlantique",
+    settings_palette_atlantic: "Corail",
     settings_palette_violet: "Violet",
     settings_palette_terracotta: "Terre cuite",
     // Navigation & Tabs
@@ -27,7 +27,7 @@ export default {
 
     // Page Titles & Subtitles
     page_home_title: "Général",
-    page_home_subtitle: "Tous les événements officiels de cyclisme au Portugal",
+    page_home_subtitle: "Épreuves réunies à partir des sources disponibles",
     page_agenda_title: "Mon Agenda",
     page_agenda_subtitle: "Vos courses programmées et rappels de la saison",
     page_agenda_signin_desc: "Connectez-vous avec Google pour synchroniser votre calendrier officiel et retrouver ici toutes les courses et rappels de votre saison.",
@@ -41,13 +41,13 @@ export default {
     page_favorites_empty_desc: "Parcourez le calendrier et cliquez sur l'Étoile ⭐ à côté d'une course pour l'enregistrer ici.",
     page_favorites_explore_btn: "Explorer le Calendrier",
     page_nationals_title: "Championnats Nationaux",
-    page_nationals_subtitle: "Calendrier officiel de tous les Championnats Nationaux au Portugal",
+    page_nationals_subtitle: "Championnats nationaux identifiés dans le calendrier FPC",
     page_cups_title: "Coupes du Portugal",
     page_cups_subtitle: "Compétitions comptant pour la Coupe du Portugal",
     page_regionals_title: "Courses Régionales",
     page_regionals_subtitle: "Compétitions organisées par les Associations Régionales",
     page_internationals_title: "Épreuves Internationales",
-    page_internationals_subtitle: "Épreuves UCI et Pro (accès restreint)",
+    page_internationals_subtitle: "Événements internationaux présents dans les sources disponibles",
     page_leisure_title: "Randonnées et Loisirs",
     page_leisure_subtitle: "Granfondos, Randonnées et Épreuves Ouvertes (CPT)",
 
@@ -306,6 +306,7 @@ export default {
     offline_mode_banner: "Mode Hors Ligne — Affichage du calendrier enregistré sur votre appareil.",
     action_loading_events: "Chargement du calendrier unifié...",
     error_occurred: "Une erreur s'est produite",
+    events_load_error: "Impossible de charger les épreuves. Réessayez dans quelques instants.",
     btn_try_again: "Réessayer",
     regional_not_found_title: "Vous cherchez des courses régionales ?",
     regional_not_found_desc: "De nombreuses épreuves régionales (comme les Coupes Régionales) peuvent ne pas figurer au calendrier central de la FPC. Consultez directement le site officiel :",

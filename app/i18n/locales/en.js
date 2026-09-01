@@ -2,7 +2,7 @@ export default {
     settings_palette_title: "App color",
     settings_palette_desc: "Color applies only to accents. Backgrounds stay neutral in light and dark modes. Your choice is saved on this device.",
     settings_palette_forest: "Forest",
-    settings_palette_atlantic: "Atlantic",
+    settings_palette_atlantic: "Coral",
     settings_palette_violet: "Violet",
     settings_palette_terracotta: "Terracotta",
     // Navigation & Tabs
@@ -27,7 +27,7 @@ export default {
 
     // Page Titles & Subtitles
     page_home_title: "General",
-    page_home_subtitle: "All official cycling events in Portugal",
+    page_home_subtitle: "Events gathered from the available sources",
     page_agenda_title: "My Schedule",
     page_agenda_subtitle: "Your scheduled races and season reminders",
     page_agenda_signin_desc: "Sign in with Google to sync your official calendar and see all your season races and reminders here.",
@@ -41,13 +41,13 @@ export default {
     page_favorites_empty_desc: "Browse the calendar and click the Star ⭐ next to any event to save it here.",
     page_favorites_explore_btn: "Explore Calendar",
     page_nationals_title: "National Championships",
-    page_nationals_subtitle: "Official calendar of all Portuguese National Championships",
+    page_nationals_subtitle: "National Championships identified in the FPC calendar",
     page_cups_title: "Portuguese Cups",
     page_cups_subtitle: "Competitions scoring for the Portuguese Cup",
     page_regionals_title: "Regional Races",
     page_regionals_subtitle: "Competitions organized by Regional Associations",
     page_internationals_title: "International Events",
-    page_internationals_subtitle: "UCI & Pro events (restricted access)",
+    page_internationals_subtitle: "International events present in the available sources",
     page_leisure_title: "Leisure & Granfondos",
     page_leisure_subtitle: "Granfondos, Tours and Open Races (CPT)",
 
@@ -306,6 +306,7 @@ export default {
     offline_mode_banner: "Offline Mode — Showing calendar saved on your device.",
     action_loading_events: "Loading unified calendar...",
     error_occurred: "An error occurred",
+    events_load_error: "The events could not be loaded. Please try again in a moment.",
     btn_try_again: "Try again",
     regional_not_found_title: "Looking for regional races?",
     regional_not_found_desc: "Many events from your region (such as Regional Cups) might not be in the central calendar. Check the official source directly:",
