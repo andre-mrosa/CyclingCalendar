@@ -248,7 +248,16 @@ export default function AdminDashboardPage() {
                 setOpOutput({ status: 'error', message: data.error || 'A sincronização terminou com erros. A consultar o resumo…' });
             } else {
                 confirmedRun = true;
-                setOpOutput({ status: 'running', message: 'Pedido aceite. A consultar o progresso no servidor…' });
+                if (data.runId) {
+                    setScraperState(previous => ({
+                        ...previous,
+                        runId: data.runId,
+                        years: data.years || previous.years,
+                        startedAt: data.startedAt || previous.startedAt,
+                        isRunning: true
+                    }));
+                }
+                setOpOutput({ status: 'running', message: 'Pedido aceite. A sincronização continua no servidor.' });
             }
         } catch {
             confirmedRun = true;

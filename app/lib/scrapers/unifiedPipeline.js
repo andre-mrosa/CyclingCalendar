@@ -99,10 +99,10 @@ async function runPipeline(triggeredBy, options) {
     };
 
     return withScraperLogContext({ onError: observeError }, async () => {
-        if (isFirstStage) {
+        if (isFirstStage && !options.startLogged) {
             await logInfo('SCRAPER', `Iniciada sincronização ${scope} [${historical ? 'Auditoria Histórica' : 'Sincronização Rápida Ativa'} (${years.join(', ')})] via ${triggeredBy}...`,
                 { event: 'run-start', scope, years, startedAt: now.toISOString() });
-        } else {
+        } else if (!isFirstStage) {
             await logInfo('SCRAPER', `Continuação da sincronização: etapa ${pipelineStage}`,
                 { event: 'pipeline-stage-resume', pipelineStage, years });
         }

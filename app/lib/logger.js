@@ -88,7 +88,7 @@ export async function logSystem({
         }
 
         // Gravação assíncrona na base de dados
-        await prisma.systemLog.create({
+        return await prisma.systemLog.create({
             data: {
                 level: level.toUpperCase(),
                 source: upperSource,

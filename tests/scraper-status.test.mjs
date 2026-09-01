@@ -77,6 +77,16 @@ test('foreign completion cannot stop a currently active scoped run', () => {
     assert.equal(result.sources.fpc.count, null);
 });
 
+test('modern manual start remains visible as running after a dashboard reload', () => {
+    const modernStart = row(0, 'Iniciada sincronização manual [Sincronização Rápida Ativa (2026, 2027)]', {
+        runId: 'manual-run', event: 'run-start', status: 'queued', scope: 'manual', years: ['2026', '2027']
+    });
+    const result = parse(modernStart, [], 2);
+    assert.equal(result.isRunning, true);
+    assert.equal(result.runId, 'manual-run');
+    assert.deepEqual(result.years, ['2026', '2027']);
+});
+
 test('source/year snapshots and repeated persisted rows never double-count', () => {
     const year = row(20, 'FPC 2026', { runId: 'a', sourceId: 'fpc', year: '2026', event: 'source-year-complete', processed: 375, status: 'done' });
     const logs = [year, year, row(22, 'FPC 2027', { runId: 'a', sourceId: 'fpc', year: '2027', event: 'source-year-complete', processed: 0, status: 'done' })];
@@ -190,6 +200,7 @@ test('API queries old start separately, scopes logs and fetches completion outsi
     });
     const result = await (await route.GET()).json();
     assert.equal(calls[0].where.createdAt, undefined);
+    assert.ok(calls[0].where.OR.some(condition => condition.message?.contains === 'Iniciada sincronização'));
     assert.equal(calls[1].where.details.contains, 'api-run');
     assert.equal(calls[2].where.source, undefined); // helper errors share the run ID
     assert.equal(calls[2].take, 300);
@@ -202,6 +213,40 @@ test('API authorizes before reading logs', async () => {
         prisma: {}, requireAdmin: async () => ({ authorized: false, status: 403, error: 'Forbidden' }), parseScraperStatus, readLogDetails
     });
     assert.equal((await route.GET()).status, 403);
+});
+
+test('manual trigger responds immediately and schedules the scraper after the response', async () => {
+    let backgroundWork;
+    let pipelineCalls = 0;
+    const queuedLog = { id: 'queued-log' };
+    const route = await isolatedModule('../app/api/force-scrape/route.js', {
+        runUnifiedScrapingPipeline: async (_source, options) => {
+            pipelineCalls++;
+            assert.equal(options.runId, 'manual-run');
+            assert.equal(options.startLogged, true);
+            return { nextStage: null };
+        },
+        triggerNextStage: async () => {},
+        requireAdmin: async () => ({ authorized: true }),
+        logInfo: async () => queuedLog,
+        logError: async () => {},
+        withScraperLogContext: (_context, work) => work(),
+        prisma: { systemLog: {
+            findUnique: async () => null,
+            deleteMany: async () => ({ count: 0 })
+        } },
+        SCRAPER_LEASE_ID: 'lease', SCRAPER_LEASE_MS: 900000,
+        after: work => { backgroundWork = work; },
+        randomUUID: () => 'manual-run'
+    });
+    const response = await route.GET(new Request('https://calendar.test/api/force-scrape'));
+    const body = await response.json();
+    assert.equal(response.status, 202);
+    assert.equal(body.runId, 'manual-run');
+    assert.equal(pipelineCalls, 0);
+    assert.equal(typeof backgroundWork, 'function');
+    await backgroundWork();
+    assert.equal(pipelineCalls, 1);
 });
 
 function captureLogs(t) {

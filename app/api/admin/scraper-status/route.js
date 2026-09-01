@@ -13,7 +13,13 @@ export async function GET() {
     try {
         // Locate the latest start independently of log volume or age.
         const startLog = await prisma.systemLog.findFirst({
-            where: { source: 'SCRAPER', message: { contains: 'Iniciada sincronização global' } },
+            where: {
+                source: 'SCRAPER',
+                OR: [
+                    { message: { contains: 'Iniciada sincronização', mode: 'insensitive' } },
+                    { details: { contains: '"event": "run-start"' } }
+                ]
+            },
             orderBy: [{ createdAt: 'desc' }, { id: 'desc' }]
         });
         const now = Date.now();
