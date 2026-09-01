@@ -10,7 +10,7 @@ import { saveOrMergeEvent } from '../merging/eventMerger.js';
 export const deepScrapeCabreira = async (link) => {
     if (!link) return { pageTitle: null, opensAt: null, closesAt: null, description: null, prices: null, insurance: null, prizes: null, programa: null, additionalLinks: [] };
     try {
-        const response = await fetch(link, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+        const response = await fetch(link, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(15000) });
         if (!response.ok) return { pageTitle: null, opensAt: null, closesAt: null, description: null, prices: null, insurance: null, prizes: null, programa: null, additionalLinks: [] };
         const html = await response.text();
         const $ = cheerio.load(html);

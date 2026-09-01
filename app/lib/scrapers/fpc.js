@@ -9,9 +9,8 @@ import { saveOrMergeEvent } from '../merging/eventMerger.js';
 
 export const deepScrapeFPC = async (link) => {
     if (!link) return null;
-    try {
-        const response = await fetch(link, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-        if (!response.ok) return null;
+    const response = await fetch(link, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(15000) });
+    if (!response.ok) throw new Error(`FPC devolveu HTTP ${response.status}`);
         const arrayBuffer = await response.arrayBuffer();
         const html = Buffer.from(arrayBuffer).toString('latin1');
         const $ = cheerio.load(html);
@@ -161,11 +160,23 @@ export const deepScrapeFPC = async (link) => {
             return extractedHtml;
         }
 
-    } catch(e) {
-        console.error('Error deep scraping FPC link:', link, e);
-    }
     return null;
 };
+
+export async function deepScrapeFPCWithRetry(link, { attempts = 3, delayMs = 750 } = {}) {
+    let lastError;
+    for (let attempt = 1; attempt <= attempts; attempt++) {
+        try {
+            const html = await deepScrapeFPC(link);
+            if (html) return html;
+            throw new Error('A página FPC não continha detalhes válidos');
+        } catch (error) {
+            lastError = error;
+            if (attempt < attempts) await new Promise(resolve => setTimeout(resolve, delayMs * attempt));
+        }
+    }
+    throw lastError;
+}
 
 export const fetchFPCCalendar = async (year) => {
         year = String(year);
@@ -354,36 +365,30 @@ export const incrementalDeepScrapeFPC = async (limit = 25) => {
         });
         
         let processedCount = 0;
-        const BATCH_SIZE = 5;
-        for (let i = 0; i < fpcEventsToUpdate.length; i += BATCH_SIZE) {
-            const chunk = fpcEventsToUpdate.slice(i, i + BATCH_SIZE);
-            await Promise.all(chunk.map(async (ev) => {
-                if (ev.link) {
-                    try {
-                        const programaHtml = await deepScrapeFPC(ev.link);
-                        await prisma.event.update({ 
-                            where: { id: ev.id }, 
-                            data: { programa: programaHtml || '<p>Detalhes de programa indisponíveis na página da FPC.</p>' } 
-                        });
-                        processedCount++;
-                    } catch (err) {
-                        await logError('SCRAPER', `Erro ao atualizar programa FPC: ${err.message}`, err);
-                        await prisma.event.update({ 
-                            where: { id: ev.id }, 
-                            data: { programa: '<p>Erro ao extrair detalhes na página da FPC.</p>' } 
-                        });
-                    }
+        for (const ev of fpcEventsToUpdate) {
+            if (ev.link) {
+                try {
+                    const programaHtml = await deepScrapeFPCWithRetry(ev.link);
+                    await prisma.event.update({
+                        where: { id: ev.id },
+                        data: { programa: programaHtml }
+                    });
+                    processedCount++;
+                } catch (err) {
+                    // Não gravar um placeholder: programa continua pendente e a
+                    // próxima execução retoma exatamente esta prova.
+                    await logError('SCRAPER', `FPC ${ev.id}: detalhes continuam pendentes após 3 tentativas: ${err.message}`, err);
                 }
-            }));
+            }
         }
         
         if (processedCount > 0) {
-            logInfo('SCRAPER', `Deep scraping incremental FPC atualizou ${processedCount} programas de provas`);
+            await logInfo('SCRAPER', `Deep scraping incremental FPC atualizou ${processedCount} programas de provas`);
         }
 
         return processedCount;
     } catch(e) {
-        logError('SCRAPER', `Erro no deep scraping incremental FPC: ${e.message}`, e);
-        return 0;
+        await logError('SCRAPER', `Erro no deep scraping incremental FPC: ${e.message}`, e);
+        throw e;
     }
 };

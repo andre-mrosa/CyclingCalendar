@@ -286,21 +286,45 @@ async function pipelineFixture(overrides = {}) {
     });
 }
 
-test('pipeline acquires only one lease before any run log and publishes complete metrics', async t => {
+async function runPipelinePlan(pipeline, options = {}) {
+    let pipelineStage;
+    let attempt = 1;
+    let hadErrors = false;
+    let result;
+    for (let invocation = 0; invocation < 30; invocation++) {
+        result = await pipeline.runUnifiedScrapingPipeline('TEST', {
+            fullHistorical: false, scope: 'manual', runId: 'fixture-run',
+            ...options, pipelineStage, attempt, hadErrors
+        });
+        if (!result.nextStage) return result;
+        pipelineStage = result.nextStage;
+        attempt = result.nextAttempt;
+        hadErrors = result.hadErrors;
+    }
+    throw new Error('O plano de teste não terminou');
+}
+
+test('daily and weekly plans isolate FPC into one bounded stage per season', async () => {
+    const pipeline = await pipelineFixture();
+    assert.deepEqual(pipeline.getPipelineStages('daily', ['2026', '2027']), ['cabreira', 'stopandgo', 'classificacoes', 'finalize']);
+    assert.deepEqual(pipeline.getPipelineStages('weekly', ['2026', '2027']), ['fpc-2026', 'fpc-2027', 'deepScrape', 'finalize']);
+});
+
+test('pipeline leases every bounded stage and publishes complete metrics', async t => {
     const logs = captureLogs(t);
     let locks = 0;
-    const pipeline = await pipelineFixture({ withScraperLock: async work => { locks++; assert.equal(logs.length, 0); return work(); } });
-    const result = await pipeline.runUnifiedScrapingPipeline('TEST', { fullHistorical: false });
-    assert.equal(locks, 1);
+    const pipeline = await pipelineFixture({ withScraperLock: async work => { locks++; if (locks === 1) assert.equal(logs.length, 0); return work(); } });
+    const result = await runPipelinePlan(pipeline);
+    assert.equal(locks, 7);
     assert.equal(result.success, true);
     const summary = readLogDetails(logs.at(-1));
     assert.equal(summary.status, 'success');
-    assert.equal(summary.sources.fpc.metrics.updated, 2);
-    assert.equal(summary.sources.cabreira.metrics.created, 1);
-    assert.equal(summary.sources.stopandgo.metrics.quarantined, 1);
+    assert.equal(logs.filter(log => readLogDetails(log).sourceId === 'fpc' && readLogDetails(log).event === 'source-year-complete').length, 2);
+    assert.ok(logs.some(log => readLogDetails(log).sources?.cabreira?.metrics?.created === 1));
+    assert.ok(logs.some(log => readLogDetails(log).sources?.stopandgo?.metrics?.quarantined === 1));
     assert.ok(logs.every(log => readLogDetails(log).runId === 'fixture-run'));
     assert.ok(logs.some(log => readLogDetails(log).year));
-    const status = parseScraperStatus({ startLog: logs[0], completionLog: logs.at(-1), now: Date.now(), logs: [] });
+    const status = parseScraperStatus({ startLog: logs[0], completionLog: logs.at(-1), now: Date.now(), logs });
     assert.equal(status.lastRun.status, 'success');
     assert.equal(status.sources.fpc.count, 2);
 });
@@ -312,12 +336,12 @@ test('pipeline cannot label swallowed/logged source and enrichment errors as suc
         scrapeClassificacoes: async () => { await logError('SCRAPER', 'Classificações.net: offline'); return 0; },
         translateAllPendingEvents: async () => ({ success: false, error: 'offline' })
     });
-    const result = await pipeline.runUnifiedScrapingPipeline('TEST', { fullHistorical: false });
+    const result = await runPipelinePlan(pipeline);
     assert.equal(result.success, false);
     const summary = readLogDetails(logs.at(-1));
     assert.equal(summary.status, 'partial');
-    assert.equal(summary.sources.cabreira.status, 'error');
-    assert.equal(summary.steps.classificacoes.status, 'error');
+    assert.ok(logs.some(log => readLogDetails(log).sources?.cabreira?.status === 'error'));
+    assert.ok(logs.some(log => readLogDetails(log).steps?.classificacoes?.status === 'error'));
     assert.equal(summary.steps.translation.status, 'error');
 });
 
@@ -345,7 +369,7 @@ test('unification moves missing translations and fills empty fields before atomi
         prisma: { event: { findMany: async () => [{ id: 'primary' }, { id: 'secondary' }] },
             $transaction: async work => { calls.push('begin'); await work(tx); calls.push('commit'); } }
     });
-    const result = await pipeline.runUnifiedScrapingPipeline('TEST', { fullHistorical: false });
+    const result = await pipeline.runUnifiedScrapingPipeline('TEST', { fullHistorical: false, scope: 'daily', pipelineStage: 'finalize' });
     assert.equal(result.stats.mergedEvents, 1);
     assert.deepEqual(calls, ['begin', 'event-update',
         { where: { id: 'en-old' }, data: { eventId: 'primary' } },
@@ -359,7 +383,7 @@ test('a failed unification transaction reports partial and does not count a merg
         prisma: { event: { findMany: async () => [{ id: 'primary' }, { id: 'secondary' }] },
             $transaction: async () => { throw new Error('transaction rolled back'); } }
     });
-    const result = await pipeline.runUnifiedScrapingPipeline('TEST', { fullHistorical: false });
+    const result = await pipeline.runUnifiedScrapingPipeline('TEST', { fullHistorical: false, scope: 'daily', pipelineStage: 'finalize' });
     assert.equal(result.success, false);
     assert.equal(result.stats.mergedEvents, null);
     assert.equal(readLogDetails(logs.at(-1)).steps.unification.status, 'error');

@@ -1,8 +1,12 @@
 {
   "crons": [
     {
-      "path": "/api/cron/scrape",
+      "path": "/api/cron/scrape?scope=daily",
       "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/scrape?scope=weekly",
+      "schedule": "0 1 * * 0"
     }
   ]
 }

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseFPCCalendar, fetchFPCCalendar } from '../app/lib/scrapers/fpc.js';
+import { deepScrapeFPCWithRetry, parseFPCCalendar, fetchFPCCalendar } from '../app/lib/scrapers/fpc.js';
 import { parseStopAndGoEvent, scrapeEventPage } from '../app/lib/scrapers/stopandgo.js';
 import { readStopAndGoHeader } from '../app/lib/scrapers/stopandgoParser.js';
 import { getAmbito } from '../app/lib/scrapers/utils.js';
@@ -26,6 +26,18 @@ test('FPC submits the hidden marker and all twelve months, including next season
     });
     const events = await fetchFPCCalendar(2027);
     assert.equal(events[0].sortDate.toISOString(), '2027-01-10T00:00:00.000Z');
+});
+
+test('FPC detail requests are sequentially retried before succeeding', async t => {
+    let requests = 0;
+    t.mock.method(globalThis, 'fetch', async () => {
+        requests++;
+        if (requests < 3) return new Response('temporarily unavailable', { status: 503 });
+        return new Response('<html><body><main>Informação detalhada da prova com conteúdo suficiente para ser validado e guardado no calendário.</main></body></html>');
+    });
+    const html = await deepScrapeFPCWithRetry('https://www.fpciclismo.pt/prova', { delayMs: 0 });
+    assert.equal(requests, 3);
+    assert.match(html, /detalhada da prova/);
 });
 
 test('FPC rejects the silent current-month fallback and wrong seasons', () => {

@@ -5,7 +5,7 @@ import sharp from 'sharp';
 export const fetchImageAsBase64 = async (url) => {
     if (!url) return null;
     try {
-        const response = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+        const response = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(10000) });
         if (!response.ok) return null;
         
         const contentType = (response.headers.get('content-type') || '').toLowerCase();
