@@ -1,11 +1,11 @@
 .dashboard {
-    --surface: #ffffff;
-    --subtle: #e9edf1;
-    --line: #d5dbe2;
-    --ink: #111820;
-    --muted: #56626f;
-    --accent: #ad351c;
-    --accent-soft: #f7ded5;
+    --surface: var(--site-surface);
+    --subtle: var(--site-soft);
+    --line: var(--site-line);
+    --ink: var(--foreground);
+    --muted: var(--site-muted);
+    --accent: var(--site-accent);
+    --accent-soft: var(--site-accent-soft);
     --danger: #b13342;
     --danger-soft: #fff2f3;
     --warning: #926011;
@@ -16,13 +16,6 @@
     min-width: 0;
 }
 :global(.dark) .dashboard {
-    --surface: #121b25;
-    --subtle: #1a2531;
-    --line: #293746;
-    --ink: #edf2f7;
-    --muted: #9aa8b7;
-    --accent: #f07856;
-    --accent-soft: #45261f;
     --danger: #f29ca6;
     --danger-soft: #35232c;
     --warning: #e5bf79;
