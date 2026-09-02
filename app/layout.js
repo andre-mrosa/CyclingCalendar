@@ -61,7 +61,7 @@ export const metadata = {
 };
 
 export const viewport = {
-  themeColor: "#191a18",
+  themeColor: "#0b1118",
 };
 
 import { Analytics } from "@vercel/analytics/next";
@@ -83,7 +83,7 @@ export default function RootLayout({ children }) {
         <ClientErrorLogger />
         <PWAUpdateHandler />
         <ColorPaletteManager />
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem={true}>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={true}>
           <ThemeClerkProvider>
             <AnalyticsTracker />
             <Navigation />

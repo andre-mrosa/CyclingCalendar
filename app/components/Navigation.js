@@ -330,12 +330,12 @@ export default function Navigation() {
                         <Menu size={24} />
                     </button>
 
-                    <Link href="/" className={styles.brand}><DynamicLogo className="w-8 h-8" /><span><strong>Cycling Calendar.</strong><small>{currentPage.label}</small></span></Link>
+                    <Link href="/" className={styles.brand}><DynamicLogo className="w-8 h-8" /><span><strong>Cycling Calendar</strong><small>{currentPage.label}</small></span></Link>
                 </div>
 
                 <Link href="/" className={styles.brand} title="Cycling Calendar">
                     <DynamicLogo className="w-9 h-9 rounded-xl" />
-                    <span><strong>Cycling Calendar.</strong><small>Portugal · Ride your season</small></span>
+                    <span><strong>Cycling Calendar</strong><small>Portugal · Ride your season</small></span>
                 </Link>
 
                 <div className={styles.desktopNav}>

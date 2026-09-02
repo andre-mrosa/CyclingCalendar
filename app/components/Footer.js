@@ -14,7 +14,7 @@ export default function Footer() {
       <div className={styles.footerInner}>
         <div className={styles.footerTop}>
           <div>
-            <Link href="/" className="flex items-center gap-2 font-bold tracking-tight"><DynamicLogo className="w-8 h-8" />Cycling Calendar.</Link>
+            <Link href="/" className="flex items-center gap-2 font-bold tracking-tight"><DynamicLogo className="w-8 h-8" />Cycling Calendar</Link>
             <p>Estrada · BTT · Gravel · BMX · Pista</p>
           </div>
           <div className={styles.footerLinks}>

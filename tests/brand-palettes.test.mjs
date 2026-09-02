@@ -93,7 +93,7 @@ test('All four languages include readable palette labels and icon-free UI copy',
 test('Published vector and install metadata use the same new identity', async () => {
     assert.equal(await readFile(new URL('../public/brand.svg', import.meta.url), 'utf8'), brandSVG());
     const manifest = JSON.parse(await readFile(new URL('../public/manifest.json', import.meta.url), 'utf8'));
-    assert.equal(manifest.theme_color, '#191a18');
+    assert.equal(manifest.theme_color, '#0b1118');
     assert.equal(manifest.icons.find(i => i.purpose === 'maskable').src, '/brand-maskable.png');
     for (const icon of manifest.icons) assert.ok((await readFile(new URL('../public' + icon.src, import.meta.url))).length > 0);
 });

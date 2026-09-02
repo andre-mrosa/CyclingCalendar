@@ -1,9 +1,9 @@
 .dashboard {
-    --surface: #fbfaf7;
-    --subtle: #ebe8e1;
-    --line: #d8d3c9;
-    --ink: #191a18;
-    --muted: #68665f;
+    --surface: #ffffff;
+    --subtle: #e9edf1;
+    --line: #d5dbe2;
+    --ink: #111820;
+    --muted: #56626f;
     --accent: #ad351c;
     --accent-soft: #f7ded5;
     --danger: #b13342;
@@ -16,11 +16,11 @@
     min-width: 0;
 }
 :global(.dark) .dashboard {
-    --surface: #1c1d1b;
-    --subtle: #272824;
-    --line: #383934;
-    --ink: #f1eee7;
-    --muted: #aaa79e;
+    --surface: #121b25;
+    --subtle: #1a2531;
+    --line: #293746;
+    --ink: #edf2f7;
+    --muted: #9aa8b7;
     --accent: #f07856;
     --accent-soft: #45261f;
     --danger: #f29ca6;

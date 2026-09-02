@@ -16,6 +16,7 @@ import { useTranslation } from '../i18n/useTranslation';
 import { formatMonthAbbr, translateDateString, translateEscalao, translateAmbito, translateLicenca, translateTag, MONTH_FULL } from '../i18n/formatters';
 import { isStageRace, getEventDiscipline } from '../utils/eventClassifier';
 import { usePathname } from 'next/navigation';
+import { useModalFocus } from '../hooks/useModalFocus';
 import PageHeading from './PageHeading';
 import styles from './site.module.css';
 
@@ -117,6 +118,7 @@ export default function CalendarView({
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [isOffline, setIsOffline] = useState(false);
     const loaderRef = useRef(null);
+    const filterPanelRef = useModalFocus(showFilters, () => setShowFilters(false));
 
     const { favorites, toggleFavorite, isSignedIn } = useFavorites();
     const { markedSet, isMarked, getDateConflict } = useCalendarEvents();
@@ -133,6 +135,13 @@ export default function CalendarView({
             window.removeEventListener('offline', handleOffline);
         };
     }, []);
+
+    useEffect(() => {
+        if (!showFilters) return;
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = previousOverflow; };
+    }, [showFilters]);
 
     // Sync settings on mount
     useEffect(() => {
@@ -314,6 +323,22 @@ export default function CalendarView({
     const availableTags = [...new Set(events.map(e => getEventDiscipline(e)).filter(Boolean))].sort();
 
     const monthNames = MONTH_FULL[language] || MONTH_FULL.pt;
+    const activeFilterLabels = [
+        searchTerm.trim() || null,
+        ...selectedEscaloes.map(value => translateEscalao(value, language)),
+        selectedAmbito !== 'Todos' ? translateAmbito(selectedAmbito, language) : null,
+        selectedLicenca !== 'Todas' ? translateLicenca(selectedLicenca, language) : null,
+        selectedRegiao !== 'Todas' ? selectedRegiao : null,
+        selectedDistrito !== 'Todos' ? selectedDistrito : null,
+        selectedType !== 'Todos' ? selectedType : null,
+        ...selectedTags.map(value => translateTag(value, language)),
+        selectedYears.some(value => parseInt(value, 10) < currentYear) ? selectedYears.join(', ') : null,
+        monthFrom !== 1 || monthTo !== 12 ? `${monthNames[monthFrom - 1]}–${monthNames[monthTo - 1]}` : null,
+        pastEventsFilter !== defaultPastEventsFilter
+            ? (pastEventsFilter === 'passados' ? t('filter_past_only') : pastEventsFilter === 'todos' ? t('filter_all_events') : t('filter_upcoming_only'))
+            : null,
+    ].filter(Boolean);
+    const hasCustomFilters = activeFilterLabels.length > 0;
 
     const eventYears = useMemo(() => {
         return [...new Set(events.map(e => e.sortDate ? new Date(e.sortDate).getFullYear().toString() : (e.date ? e.date.match(/20\d\d/)?.[0] : null)).filter(Boolean))].sort();
@@ -438,38 +463,6 @@ export default function CalendarView({
                     </div>
                 )}
                 <div className={styles.toolbar}>
-                    <div className={styles.toolbarActions}>
-                        <button 
-                            onClick={() => setShowFilters(!showFilters)}
-                            className={styles.filterButton}
-                            aria-expanded={showFilters}
-                            aria-controls="calendar-filters"
-                        >
-                            <Filter size={15} className="shrink-0" />
-                            <span className="truncate">{showFilters ? t('filter_button_close') : t('filter_button_open')}</span>
-                        </button>
-
-                        <select
-                            aria-label={t('filter_past_upcoming')}
-                            value={pastEventsFilter}
-                            onChange={e => setPastEventsFilter(e.target.value)}
-                        >
-                            <option value="todos">{t('filter_all_events')}</option>
-                            <option value="futuros">{t('filter_upcoming_only')}</option>
-                            <option value="passados">{t('filter_past_only')}</option>
-                        </select>
-                        
-                        {(selectedEscaloes.length > 0 || selectedDistrito !== 'Todos' || selectedRegiao !== 'Todas' || selectedTags.length > 0 || selectedType !== 'Todos' || monthFrom !== 1 || monthTo !== 12 || searchTerm !== '' || pastEventsFilter !== defaultPastEventsFilter) && (
-                            <button 
-                                onClick={clearAllFilters}
-                                title={t('filter_clear_all')}
-                                className="col-span-2 sm:col-auto inline-flex items-center justify-center gap-1 font-medium text-xs sm:text-sm text-muted hover:text-slate-800 dark:hover:text-slate-300 transition-colors h-8 sm:h-10 px-2 cursor-pointer"
-                            >
-                                <X size={14} /> {t('filter_clear_all')}
-                            </button>
-                        )}
-                    </div>
-                    
                     <div className={styles.search}>
                         <Search size={17} className="shrink-0" aria-hidden="true" />
                         <input 
@@ -488,17 +481,40 @@ export default function CalendarView({
                             </button>
                         )}
                     </div>
+                    <div className={styles.toolbarActions}>
+                        <select
+                            aria-label={t('filter_past_upcoming')}
+                            value={pastEventsFilter}
+                            onChange={e => setPastEventsFilter(e.target.value)}
+                        >
+                            <option value="todos">{t('filter_all_events')}</option>
+                            <option value="futuros">{t('filter_upcoming_only')}</option>
+                            <option value="passados">{t('filter_past_only')}</option>
+                        </select>
+                        <button
+                            onClick={() => setShowFilters(true)}
+                            className={styles.filterButton}
+                            aria-expanded={showFilters}
+                            aria-controls="calendar-filters"
+                        >
+                            <Filter size={15} className="shrink-0" />
+                            <span>{t('filter_button_open')}</span>
+                            {hasCustomFilters && <span className={styles.filterCount}>{activeFilterLabels.length}</span>}
+                        </button>
+                    </div>
                 </div>
 
-                {/* Sub-header info: Counter & Bulk Export */}
-                <div className={styles.results}>
-                    <div className="text-xs text-muted font-medium flex items-center gap-1.5">
-                        <span>{t('filter_counter_showing')} <strong className="text-ink font-semibold">{Math.min(visibleCount, filteredEvents.length)}</strong> {t('filter_counter_of')} <strong className="text-ink font-semibold">{filteredEvents.length}</strong> {filteredEvents.length === 1 ? t('filter_counter_event') : t('filter_counter_events')}</span>
-                        {events.length > 0 && filteredEvents.length !== events.length && (
-                            <span className="text-slate-400 dark:text-slate-500 font-normal">({events.length} {t('filter_counter_total')})</span>
+                {(hasCustomFilters || ((filterByAgenda || filterByFavorites) && filteredEvents.length > 0)) && (
+                    <div className={styles.activeFilterRow}>
+                        {hasCustomFilters && (
+                            <div className={styles.activeFilters} aria-label={t('filter_button_open')}>
+                                {activeFilterLabels.slice(0, 3).map((label, index) => <span key={`${label}-${index}`}>{label}</span>)}
+                                {activeFilterLabels.length > 3 && <span>+{activeFilterLabels.length - 3}</span>}
+                                <button type="button" onClick={clearAllFilters} title={t('filter_clear_all')}>
+                                    <X size={13} aria-hidden="true" /> {t('filter_clear_all')}
+                                </button>
+                            </div>
                         )}
-                    </div>
-
                     {(filterByAgenda || filterByFavorites) && filteredEvents.length > 0 && (
                         <button
                             onClick={() => {
@@ -515,10 +531,36 @@ export default function CalendarView({
                             <span>{t('filter_export_ics')}</span>
                         </button>
                     )}
-                </div>
-                
+                    </div>
+                )}
+
                 {showFilters && (
-                    <div id="calendar-filters" className={styles.filters}>
+                    <>
+                    <button
+                        type="button"
+                        className={styles.filterBackdrop}
+                        onClick={() => setShowFilters(false)}
+                        aria-label={t('filter_button_close')}
+                    />
+                    <aside
+                        id="calendar-filters"
+                        className={styles.filters}
+                        ref={filterPanelRef}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="calendar-filters-title"
+                        tabIndex={-1}
+                    >
+                        <div className={styles.filterPanelHeader}>
+                            <div>
+                                <strong id="calendar-filters-title">{t('filter_button_open')}</strong>
+                                <span>{filteredEvents.length} {filteredEvents.length === 1 ? t('filter_counter_event') : t('filter_counter_events')}</span>
+                            </div>
+                            <button type="button" onClick={() => setShowFilters(false)} aria-label={t('filter_button_close')}>
+                                <X size={18} aria-hidden="true" />
+                            </button>
+                        </div>
+                        <div className={styles.filterPanelBody}>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 w-full">
                             {activeFilters.includes('year') && (
                                 <div className="flex flex-col gap-2 col-span-full">
@@ -645,19 +687,6 @@ export default function CalendarView({
                                 </select>
                             </div>
 
-                            <div className="flex flex-col gap-2">
-                                <label className="text-xs text-muted uppercase tracking-wider font-bold ml-1">{t('filter_past_upcoming')}</label>
-                                <select 
-                                    className="w-full h-9 px-3 text-sm rounded-lg border border-line bg-soft text-ink outline-none focus:border-blue-500 transition-colors"
-                                    value={pastEventsFilter} 
-                                    onChange={(e) => setPastEventsFilter(e.target.value)} 
-                                >
-                                    <option value="todos">{t('filter_all_events')}</option>
-                                    <option value="futuros">{t('filter_upcoming_only')}</option>
-                                    <option value="passados">{t('filter_past_only')}</option>
-                                </select>
-                            </div>
-                            
                             {activeFilters.includes('regiao') && (
                                 <div className="flex flex-col gap-2">
                                     <label className="text-xs text-muted uppercase tracking-wider font-bold ml-1">{t('filter_region')}</label>
@@ -725,7 +754,17 @@ export default function CalendarView({
                                 </div>
                             </div>
                         )}
-                    </div>
+                        </div>
+                        <div className={styles.filterPanelFooter}>
+                            <button type="button" className={styles.filterButton} onClick={clearAllFilters} disabled={!hasCustomFilters}>
+                                <X size={14} aria-hidden="true" /> {t('filter_clear_all')}
+                            </button>
+                            <button type="button" className={styles.primaryButton} onClick={() => setShowFilters(false)}>
+                                {t('filter_button_close')}
+                            </button>
+                        </div>
+                    </aside>
+                    </>
                 )}
             </header>
 
@@ -808,6 +847,9 @@ export default function CalendarView({
                                 const prevMY = idx > 0 ? getMonthYearInfo(currentArray[idx - 1]) : null;
                                 const isNewMonth = !prevMY || currentMY.key !== prevMY.key;
                                 const monthHeading = isNewMonth ? formatMonthHeading(currentMY.year, currentMY.monthIdx, language) : '';
+                                const monthEventCount = isNewMonth
+                                    ? filteredEvents.reduce((count, item) => count + (getMonthYearInfo(item).key === currentMY.key ? 1 : 0), 0)
+                                    : 0;
 
                                 const rawDate = event.date || '';
                                 const isStage = isStageRace(event);
@@ -845,6 +887,7 @@ export default function CalendarView({
                                     {isNewMonth && (
                                         <div className={styles.monthHeading}>
                                             <h2>{monthHeading}{' '}<span>{currentMY.year}</span></h2>
+                                            <span className={styles.monthCount}>{monthEventCount} {monthEventCount === 1 ? t('filter_counter_event') : t('filter_counter_events')}</span>
                                         </div>
                                     )}
                                     <div 
