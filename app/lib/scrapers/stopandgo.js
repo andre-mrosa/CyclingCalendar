@@ -105,8 +105,16 @@ export function parseStopAndGoEvent(html, url, options = {}) {
         const years = (options.years || [currentYear - 1, currentYear, currentYear + 1]).map(String);
         if (!years.includes(header.year)) return null;
 
+        // Reject historical events that mention past years in title (e.g. 2019, 2020) when assigned to future years
+        const pastYearInTitle = title.match(/\b(201\d|202[0-4])\b/);
+        if (pastYearInTitle && header.year && Number(header.year) > Number(pastYearInTitle[1])) {
+            return null;
+        }
+
         // Cartaz oficial
         let posterUrl = $('h1').first().parent().find('img[src*="storage/events"]').first().attr('src') || null;
+        if (posterUrl && !posterUrl.startsWith('http')) posterUrl = 'https://stopandgo.net' + posterUrl;
+
         if (posterUrl && !posterUrl.startsWith('http')) posterUrl = 'https://stopandgo.net' + posterUrl;
 
         // Data precisa do cabeçalho da prova
@@ -140,15 +148,6 @@ export function parseStopAndGoEvent(html, url, options = {}) {
             }
         });
 
-        let programaHtml = '';
-        if (extraLinks.length > 0) {
-            programaHtml += '<div style="margin-top: 1rem;"><p><strong>Documentos e Acessos Stop and Go:</strong></p><ul style="padding-left: 1.25rem;">';
-            for (const item of extraLinks) {
-                programaHtml += `<li><a href="${item.link}" target="_blank" rel="noopener noreferrer" style="color: #0284c7; text-decoration: underline; font-weight: 500;">${sanitizeHtml(item.label)}</a></li>`;
-            }
-            programaHtml += '</ul></div>';
-        }
-
         const tag = getTag(title, header.modality);
         const regiao = getRegiao(location);
         const distrito = getDistrito(location);
@@ -171,7 +170,7 @@ export function parseStopAndGoEvent(html, url, options = {}) {
             link: registrationLink || url,
             image: posterUrl,
             logo: null,
-            programa: programaHtml || null,
+            programa: null,
             extraLinks: JSON.stringify(extraLinks),
             escaloes: JSON.stringify(['Geral / Aberto']),
             prices: null

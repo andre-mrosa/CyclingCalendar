@@ -2,11 +2,9 @@
 
 import { useEffect } from 'react';
 import { AlertTriangle, RotateCcw } from 'lucide-react';
-import styles from './components/site.module.css';
 
 export default function GlobalErrorBoundary({ error, reset }) {
     useEffect(() => {
-        // Enviar erro de renderização para a API de logs
         try {
             const payload = {
                 message: error?.message || 'Erro de renderização na página',
@@ -26,22 +24,22 @@ export default function GlobalErrorBoundary({ error, reset }) {
     }, [error]);
 
     return (
-        <div className={`${styles.empty} flex flex-col items-center`}>
+        <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
             <div className="w-14 h-14 rounded-2xl bg-rose-500/10 text-rose-500 flex items-center justify-center mb-4">
                 <AlertTriangle size={28} />
             </div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+            <h2 className="text-xl font-bold text-white mb-2">
                 Ocorreu um problema ao carregar a página
             </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mb-6">
+            <p className="text-sm text-slate-400 max-w-md mb-6">
                 O erro foi registado automaticamente no nosso sistema para ser analisado pela equipa.
             </p>
             <button
                 onClick={() => reset()}
-                className={styles.primaryButton}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm transition-colors cursor-pointer"
             >
                 <RotateCcw size={16} />
-                Tentar novamente
+                <span>Tentar novamente</span>
             </button>
         </div>
     );

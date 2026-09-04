@@ -173,34 +173,43 @@ export const getDistrito = (name, det = '') => {
     const full = (name + ' ' + det).toLowerCase();
     
     const distritos = {
-        'Aveiro': ['aveiro', 'águeda', 'agueda', 'albergaria', 'anadia', 'arouca', 'castelo de paiva', 'espinho', 'estarreja', 'ílhavo', 'ilhavo', 'mealhada', 'murtosa', 'oliveira de azeméis', 'azemeis', 'oliveira do bairro', 'ovar', 'santa maria da feira', 'são joão da madeira', 'sao joao da madeira', 'sever do vouga', 'vagos', 'vale de cambra'],
+        'Aveiro': ['aveiro', 'águeda', 'agueda', 'albergaria', 'anadia', 'arouca', 'castelo de paiva', 'espinho', 'estarreja', 'ílhavo', 'ilhavo', 'mealhada', 'ventosa do bairro', 'murtosa', 'oliveira de azeméis', 'azemeis', 'oliveira do bairro', 'ovar', 'santa maria da feira', 'são miguel de souto', 'são joão da madeira', 'sao joao da madeira', 'sever do vouga', 'vagos', 'vale de cambra', 'sanguedo'],
         'Beja': ['beja', 'aljustrel', 'almodôvar', 'almodovar', 'alvito', 'barrancos', 'castro verde', 'cuba', 'ferreira do alentejo', 'mértola', 'mertola', 'moura', 'odemira', 'ourique', 'serpa', 'vidigueira'],
-        'Braga': ['braga', 'amares', 'barcelos', 'cabeceiras de basto', 'celorico de basto', 'esposende', 'fafe', 'guimarães', 'guimaraes', 'póvoa de lanhoso', 'terras de bouro', 'vieira do minho', 'vila nova de famalicão', 'famalicao', 'vila verde', 'vizela'],
+        'Braga': ['braga', 'amares', 'barcelos', 'cabeceiras de basto', 'celorico de basto', 'esposende', 'fafe', 'guimarães', 'guimaraes', 'póvoa de lanhoso', 'povoa de lanhoso', 'terras de bouro', 'vieira do minho', 'vila nova de famalicão', 'famalicao', 'vila verde', 'vizela'],
         'Bragança': ['bragança', 'braganca', 'alfândega da fé', 'alfandega da fe', 'carrazeda de ansiães', 'carrazeda de ansiaes', 'freixo de espada', 'macedo de cavaleiros', 'miranda do douro', 'mirandela', 'mogadouro', 'torre de moncorvo', 'vila flor', 'vimioso', 'vinhais'],
         'Castelo Branco': ['castelo branco', 'belmonte', 'covilhã', 'covilha', 'fundão', 'fundao', 'idanha-a-nova', 'idanha', 'oleiros', 'penamacor', 'proença-a-nova', 'sertã', 'serta', 'vila de rei', 'vila velha de ródão'],
         'Coimbra': ['coimbra', 'arganil', 'cantanhede', 'condeixa-a-nova', 'condeixa', 'figueira da foz', 'góis', 'gois', 'lousã', 'lousa', 'mira', 'miranda do corvo', 'montemor-o-velho', 'oliveira do hospital', 'pampilhosa da serra', 'penacova', 'penela', 'soure', 'tábua', 'tabua', 'vila nova de poiares'],
         'Évora': ['évora', 'evora', 'alandroal', 'arraiolos', 'borba', 'estremoz', 'montemor-o-novo', 'mora', 'mourão', 'mourao', 'portel', 'redondo', 'reguengos de monsaraz', 'vendas novas', 'viana do alentejo', 'vila viçosa', 'vila vicosa'],
-        'Faro': ['faro', 'albufeira', 'alcoutim', 'aljezur', 'castro marim', 'lagoa', 'lagos', 'loulé', 'loule', 'monchique', 'olhão', 'olhao', 'portimão', 'portimao', 'são brás', 'sao bras', 'silves', 'tavira', 'vila do bispo', 'vila real de santo antónio'],
-        'Guarda': ['guarda', 'aguiar da beira', 'almeida', 'celorico da beira', 'figueira de castelo rodrigo', 'fornos de algodres', 'gouveia', 'manteigas', 'mêda', 'meda', 'pinhel', 'sabugal', 'seia', 'trancoso', 'vila nova de foz côa'],
-        'Leiria': ['leiria', 'alcobaça', 'alcobaca', 'alvaiázere', 'alvaiazere', 'ansião', 'ansiao', 'batalha', 'bombarral', 'caldas da rainha', 'castanheira de pêra', 'figueiró dos vinhos', 'marinha grande', 'nazaré', 'nazare', 'óbidos', 'obidos', 'pedrógão grande', 'pedrogao grande', 'peniche', 'pombal', 'porto de mós'],
-        'Lisboa': ['lisboa', 'alenquer', 'amadora', 'arruda dos vinhos', 'azambuja', 'cadaval', 'cascais', 'loures', 'lourinhã', 'lourinha', 'mafra', 'odivelas', 'oeiras', 'sintra', 'sobral de monte agraço', 'torres vedras', 'vila franca de xira'],
+        'Faro': ['faro', 'albufeira', 'alcoutim', 'aljezur', 'castro marim', 'lagoa', 'lagos', 'bensafrim', 'loulé', 'loule', 'monchique', 'olhão', 'olhao', 'portimão', 'portimao', 'são brás', 'sao bras', 'silves', 'são bartolomeu de messines', 'messines', 'tavira', 'vila do bispo', 'vila real de santo antónio'],
+        'Guarda': ['guarda', 'aguiar da beira', 'almeida', 'celorico da beira', 'figueira de castelo rodrigo', 'fornos de algodres', 'gouveia', 'manteigas', 'mêda', 'meda', 'pinhel', 'sabugal', 'seia', 'trancoso', 'vila nova de foz côa', 'serra da estrela'],
+        'Leiria': ['leiria', 'azabuxo', 'pousos', 'barreira', 'cortes', 'maceira', 'alcobaça', 'alcobaca', 'alvaiázere', 'alvaiazere', 'ansião', 'ansiao', 'batalha', 'bombarral', 'caldas da rainha', 'castanheira de pêra', 'figueiró dos vinhos', 'marinha grande', 'nazaré', 'nazare', 'óbidos', 'obidos', 'pedrógão grande', 'pedrogao grande', 'peniche', 'pombal', 'porto de mós'],
+        'Lisboa': ['lisboa', 'alenquer', 'amadora', 'arruda dos vinhos', 'azambuja', 'cadaval', 'cascais', 'cruz quebrada', 'jamor', 'loures', 'lourinhã', 'lourinha', 'mafra', 'odivelas', 'oeiras', 'sintra', 'sobral de monte agraço', 'torres vedras', 'vila franca de xira'],
         'Portalegre': ['portalegre', 'alter do chão', 'alter do chao', 'aronches', 'avis', 'campo maior', 'castelo de vide', 'crato', 'elvas', 'fronteira', 'gavião', 'gaviao', 'marvão', 'marvao', 'monforte', 'nisa', 'ponte de sor', 'sousel'],
-        'Porto': ['porto', 'amarante', 'baião', 'baiao', 'felgueiras', 'gondomar', 'lousada', 'maia', 'marco de canaveses', 'matosinhos', 'paços de ferreira', 'pacos de ferreira', 'paredes', 'penafiel', 'póvoa de varzim', 'povoa de varzim', 'santo tirso', 'trofa', 'valongo', 'vila do conde', 'vila nova de gaia', 'gaia', 'sanguedo'],
-        'Santarém': ['santarém', 'santarem', 'abrantes', 'alcanena', 'almeirim', 'alpiarça', 'alpiarca', 'benavente', 'cartaxo', 'chamusca', 'constância', 'constancia', 'coruche', 'entroncamento', 'ferreira do zêzere', 'golegã', 'golega', 'mação', 'macao', 'ourém', 'ourem', 'fátima', 'fatima', 'rio maior', 'salvaterra de magos', 'sardoal', 'tomar', 'torres novas', 'vila nova da barquinha'],
+        'Porto': ['porto', 'amarante', 'baião', 'baiao', 'felgueiras', 'gondomar', 'lousada', 'maia', 'marco de canaveses', 'matosinhos', 'paços de ferreira', 'pacos de ferreira', 'paredes', 'penafiel', 'póvoa de varzim', 'povoa de varzim', 'póvoa do varzim', 'povoa do varzim', 'santo tirso', 'trofa', 'valongo', 'vila do conde', 'vila nova de gaia', 'gaia', 'gandra'],
+        'Santarém': ['santarém', 'santarem', 'abrantes', 'alcanena', 'almeirim', 'alpiarça', 'alpiarca', 'benavente', 'cartaxo', 'chamusca', 'constância', 'constancia', 'coruche', 'entroncamento', 'ferreira do zêzere', 'golegã', 'golega', 'mação', 'macao', 'ourém', 'ourem', 'fátima', 'fatima', 'seiça', 'seica', 'rio maior', 'salvaterra de magos', 'sardoal', 'tomar', 'torres novas', 'vila nova da barquinha'],
         'Setúbal': ['setúbal', 'setubal', 'alcácer do sal', 'alcacer do sal', 'alcochete', 'almada', 'barreiro', 'grândola', 'grandola', 'moita', 'montijo', 'palmela', 'santiago do cacém', 'santiago do cacem', 'seixal', 'sesimbra', 'sines'],
-        'Viana do Castelo': ['viana do castelo', 'arcos de valdevez', 'caminha', 'melgaço', 'melgaco', 'monção', 'moncao', 'paredes de coura', 'ponte da barca', 'ponte de lima', 'valença', 'valenca', 'vila nova de cerveira'],
+        'Viana do Castelo': ['viana do castelo', 'arcos de valdevez', 'caminha', 'melgaço', 'melgaco', 'monção', 'moncao', 'paredes de coura', 'vascões', 'vascoes', 'ponte da barca', 'ponte de lima', 'valença', 'valenca', 'vila nova de cerveira'],
         'Vila Real': ['vila real', 'alijó', 'alijo', 'boticas', 'chaves', 'mesão frio', 'mesao frio', 'mondim de basto', 'montalegre', 'murça', 'murca', 'peso da régua', 'regua', 'ribeira de pena', 'sabrosa', 'santa marta de penaguião', 'valpaços', 'valpacos'],
         'Viseu': ['viseu', 'armamar', 'carregal do sal', 'castro daire', 'cinfães', 'cinfaes', 'lamego', 'mangualde', 'moimenta da beira', 'mortágua', 'mortagua', 'nelas', 'oliveira de frades', 'penalva do castelo', 'penedono', 'resende', 'santa comba dão', 'são joão da pesqueira', 'são pedro do sul', 'sátão', 'satao', 'sernancelhe', 'tabuaço', 'tabuaco', 'tarouca', 'tondela', 'vila nova de paiva'],
         'Açores': ['açores', 'acores', 'ponta delgada', 'ribeira grande', 'lagoa', 'vila franca do campo', 'povoação', 'nordeste', 'angra do heroísmo', 'praia da vitória'],
         'Madeira': ['madeira', 'funchal', 'câmara de lobos', 'machico', 'santa cruz', 'santana', 'calheta', 'ponta do sol', 'são vicente', 'porto moniz']
     };
     
+    // Flatten all keywords across all distritos and sort by length descending
+    // so longer/specific matches ("paredes de coura", "montemor-o-velho") take precedence over "paredes", "montemor"
+    const allEntries = [];
     for (const [distrito, keywords] of Object.entries(distritos)) {
-        keywords.sort((a, b) => b.length - a.length);
-        for (const keyword of keywords) {
-            const paddedFull = ' ' + full.replace(/[^\w\s\u00C0-\u017F]/g, ' ') + ' ';
-            const paddedKeyword = ' ' + keyword + ' ';
-            if (paddedFull.includes(paddedKeyword)) return distrito;
+        for (const kw of keywords) {
+            allEntries.push({ keyword: kw.toLowerCase(), distrito });
+        }
+    }
+    allEntries.sort((a, b) => b.keyword.length - a.keyword.length);
+
+    const paddedFull = ' ' + full.replace(/[^\w\s\u00C0-\u017F]/g, ' ') + ' ';
+    for (const entry of allEntries) {
+        const paddedKeyword = ' ' + entry.keyword + ' ';
+        if (paddedFull.includes(paddedKeyword)) {
+            return entry.distrito;
         }
     }
     return '';

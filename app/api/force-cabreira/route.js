@@ -37,8 +37,7 @@ export async function GET() {
                 }
             }
             if (!link) continue;
-            
-            const details = await deepScrapeCabreira(link);
+            const details = await deepScrapeCabreira(link, ev.id);
             const updateData = {};
             if (details.description) updateData.description = details.description;
             if (details.insurance) updateData.insurance = details.insurance;

@@ -165,7 +165,12 @@ export function mergeEventRecords(existing, incoming) {
 
     const official = incoming.source === 'FPC' ? incoming : existing.source?.includes('FPC') ? existing : null;
     const finalTitle = official && isOfficialNationalChampionship(official) ? official.title : existing.title || incoming.title;
-    const finalTag = getEventDiscipline({ title: finalTitle, details: official?.details || details, tag: official?.tag || incoming.tag || existing.tag });
+    const finalTag = getEventDiscipline({
+        title: finalTitle,
+        details: official?.details || details,
+        tag: official?.tag || incoming.tag || existing.tag,
+        description: existing.description || incoming.description || ''
+    });
     const finalAmbito = getAmbito(finalTitle, official?.details || details || '', finalTag, sources);
 
     return {
@@ -192,6 +197,7 @@ export function mergeEventRecords(existing, incoming) {
         programa: programa,
         logo: existing.logo || incoming.logo,
         image: existing.image || incoming.image,
+        gpxData: incoming.gpxData || existing.gpxData,
     };
 }
 

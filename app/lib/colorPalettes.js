@@ -1,8 +1,8 @@
 // Brand colors only: semantic success, warning and error colors stay independent.
-export const DEFAULT_PALETTE = 'atlantic';
+export const DEFAULT_PALETTE = 'forest';
 export const SETTINGS_STORAGE_KEY = 'cycling-calendar-settings';
 export const COLOR_PALETTES = [
-    { id: 'forest', accent: '#28705d', soft: '#e5f1ec', nightAccent: '#79c6aa', nightSoft: '#1d332c' },
+    { id: 'forest', accent: '#166534', soft: '#dcfce7', nightAccent: '#22c55e', nightSoft: '#143526' },
     { id: 'atlantic', accent: '#ad351c', soft: '#f7ded5', nightAccent: '#f07856', nightSoft: '#45261f' },
     { id: 'violet', accent: '#6552a8', soft: '#ece8f7', nightAccent: '#b5a7e7', nightSoft: '#302a47' },
     { id: 'terracotta', accent: '#7b5945', soft: '#eee6df', nightAccent: '#caa58f', nightSoft: '#392d27' },

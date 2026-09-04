@@ -6,8 +6,9 @@ import {
 } from './utils.js';
 import { logInfo, logError } from '../logger.js';
 import { saveOrMergeEvent } from '../merging/eventMerger.js';
+import { downloadEventAsset } from './assetDownloader.js';
 
-export const deepScrapeCabreira = async (link) => {
+export const deepScrapeCabreira = async (link, eventId = 'cabreira-event') => {
     if (!link) return { pageTitle: null, opensAt: null, closesAt: null, description: null, prices: null, insurance: null, prizes: null, programa: null, additionalLinks: [] };
     try {
         const response = await fetch(link, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(15000) });
@@ -43,7 +44,7 @@ export const deepScrapeCabreira = async (link) => {
             } else if (text.toUpperCase().includes('PERCURSO') || href.includes('tab=percursos')) {
                 const fullPercursoUrl = href.startsWith('http') ? href : link + (link.includes('?') ? '&' : '?') + 'tab=percursos';
                 if (!additionalLinks.some(l => l.link === fullPercursoUrl)) {
-                    additionalLinks.push({ label: 'Percursos & Tracks', link: fullPercursoUrl });
+                    additionalLinks.push({ label: 'Página de Percursos', link: fullPercursoUrl });
                 }
             } else if (text.toUpperCase().includes('REGULAMENTO') || href.includes('tab=regulamento')) {
                 const fullRegUrl = href.startsWith('http') ? href : link + (link.includes('?') ? '&' : '?') + 'tab=regulamento';
@@ -72,21 +73,29 @@ export const deepScrapeCabreira = async (link) => {
 
         // 2. Extrair Apresentação (Description)
         let descParts = [];
-        $('.event-desc p, #page-content .event-desc, .wpb_text_column .wpb_wrapper p').each((_, el) => {
-            const pText = $(el).text().trim();
-            if (pText.length > 20 && !pText.toUpperCase().includes('COOKIES') && !pText.toUpperCase().includes('PRIVACIDADE')) {
+        const seenTexts = new Set();
+        $('.event-desc p, .wpb_text_column .wpb_wrapper p, #page-content p').each((_, el) => {
+            const pText = $(el).text().replace(/\s+/g, ' ').trim();
+            const upper = pText.toUpperCase();
+            if (
+                pText.length > 25 && 
+                !upper.includes('COOKIES') && 
+                !upper.includes('PRIVACIDADE') &&
+                !upper.includes('TERMOS E CONDIÇÕES') &&
+                !upper.includes('TODOS OS DIREITOS RESERVADOS') &&
+                !seenTexts.has(pText)
+            ) {
+                seenTexts.add(pText);
                 const cleanP = sanitizeHtml($.html(el));
                 if (cleanP) descParts.push(cleanP);
             }
         });
 
         if (descParts.length > 0) {
-            description = (summaryHtml ? summaryHtml + '<br/>' : '') + descParts.join('<br/><br/>');
-        } else if (summaryHtml) {
-            description = summaryHtml;
+            description = descParts.join('<br/><br/>');
         } else {
             $('p').each((_, el) => {
-                const txt = $(el).text().trim();
+                const txt = $(el).text().replace(/\s+/g, ' ').trim();
                 if (txt.length > 50 && !description && !txt.toUpperCase().includes('INSCRIÇÃO') && !txt.toUpperCase().includes('REGULAMENTO') && !txt.toUpperCase().includes('COOKIE')) {
                     description = sanitizeHtml($.html(el));
                 }
@@ -141,24 +150,45 @@ export const deepScrapeCabreira = async (link) => {
             }
         }
 
-        // 4. Fazer fetch da aba Percursos para detalhes dos trajectos
+        // 4. Fazer fetch da aba Percursos para detalhes dos trajectos, imagens de altimetria e vídeos 3D
         try {
             const percUrl = link + (link.includes('?') ? '&' : '?') + 'tab=percursos';
-            const percResponse = await fetch(percUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+            const percResponse = await fetch(percUrl, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(15000) });
             if (percResponse.ok) {
                 const percHtml = await percResponse.text();
                 const $perc = cheerio.load(percHtml);
-                const percItems = [];
+                const rawCourses = [];
+
                 $perc('.single-evento-percurso-item').each((_, pEl) => {
                     const pTitle = $perc(pEl).find('.evento-percurso-item-title').text().trim();
                     const pInfo = $perc(pEl).find('.evento-percurso-item-info p').map((_, p) => $perc(p).text().trim()).get().filter(Boolean).join(' • ');
+                    const pImg = $perc(pEl).find('img').attr('src');
+                    const pIframe = $perc(pEl).find('iframe').attr('src');
                     if (pTitle) {
-                        percItems.push(`<li><strong>${pTitle}:</strong> ${pInfo}</li>`);
+                        rawCourses.push({ pTitle, pInfo, pImg, pIframe });
                     }
                 });
-                if (percItems.length > 0 && !summaryHtml) {
-                    const percBox = `<div class="event-summary-card" style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(54,87,214,0.06); border: 1px solid rgba(54,87,214,0.2); border-radius: 0.75rem;"><h4 style="margin: 0 0 0.5rem 0; font-weight: bold; color: #3657d6; font-size: 0.95rem;">Percursos da prova</h4><ul style="margin: 0; padding-left: 1.25rem; line-height: 1.6; font-size: 0.875rem;">${percItems.join('')}</ul></div>`;
-                    description = percBox + '<br/>' + description;
+
+                for (const c of rawCourses) {
+                    let localImg = null;
+                    if (c.pImg) {
+                        const slug = c.pTitle.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                        localImg = await downloadEventAsset(c.pImg, eventId, `altimetria_${slug}.png`, 'https://cabreirasolutions.com/');
+                    }
+                    const finalImg = localImg || c.pImg;
+
+                    if (finalImg && !additionalLinks.some(l => l.link === finalImg)) {
+                        additionalLinks.push({
+                            label: `Altimetria ${c.pTitle}`,
+                            link: finalImg
+                        });
+                    }
+                    if (c.pIframe && !additionalLinks.some(l => l.link === c.pIframe)) {
+                        additionalLinks.push({
+                            label: `Vídeo 3D ${c.pTitle}`,
+                            link: c.pIframe
+                        });
+                    }
                 }
             }
         } catch (err) {
@@ -166,14 +196,9 @@ export const deepScrapeCabreira = async (link) => {
         }
 
         // 5. Fazer fetch da aba Regulamento para preços, prémios, seguros e datas
-        let pricesParts = [];
-        let insuranceParts = [];
-        let prizesParts = [];
-        let scheduleParts = [];
-
         try {
             const regUrl = link + (link.includes('?') ? '&' : '?') + 'tab=regulamento';
-            const regResponse = await fetch(regUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+            const regResponse = await fetch(regUrl, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(15000) });
             if (regResponse.ok) {
                 const regHtml = await regResponse.text();
                 const $reg = cheerio.load(regHtml);
@@ -198,41 +223,80 @@ export const deepScrapeCabreira = async (link) => {
                     }
                 });
 
-                // Parse blocos de conteúdo do regulamento
-                $reg('p, table, ul, ol').each((_, el) => {
-                    const text = $reg(el).text().trim();
-                    const upper = text.toUpperCase();
-                    const cleanHtml = sanitizeHtml($reg.html(el));
-                    if (!cleanHtml || text.length < 15) return;
-
-                    // Inscrições / Preços
-                    if (upper.includes('INSCRIÇ') || upper.includes('VALOR DE INSCRIÇÃO') || upper.includes('PREÇO') || upper.includes('TAXA') || upper.includes('€') || upper.includes('EUROS') || upper.includes('INCLUSÕES')) {
-                        if (!pricesParts.includes(cleanHtml)) pricesParts.push(cleanHtml);
-                    }
-
-                    // Seguros
-                    if (upper.includes('SEGURO') || upper.includes('COBERTURAS DO SEGURO') || upper.includes('MORTE POR ACIDENTE') || upper.includes('DESPESAS DE TRATAMENTO')) {
-                        if (!insuranceParts.includes(cleanHtml)) insuranceParts.push(cleanHtml);
-                    }
-
-                    // Prémios
-                    if (upper.includes('PRÉMIO') || upper.includes('PREMIO') || upper.includes('TROFÉU') || upper.includes('PÓDIO') || upper.includes('CLASSIFICAÇÃO')) {
-                        if (!prizesParts.includes(cleanHtml)) prizesParts.push(cleanHtml);
-                    }
-
-                    // Horários / Secretariado se não tiver programa
-                    if (!programa && (upper.includes('SECRETARIADO') || upper.includes('HORÁRIO PARTIDA') || upper.includes('HORÁRIOS') || upper.includes('PARTIDA/CHEGADA'))) {
-                        if (!scheduleParts.includes(cleanHtml)) scheduleParts.push(cleanHtml);
+                // Preços & Fases (extração limpa)
+                const priceNumbers = [];
+                $reg('li, p, tr').each((_, el) => {
+                    const t = $reg(el).text().replace(/\s+/g, ' ').trim();
+                    if (t.includes('€') && (t.includes('Federados') || t.includes('Fase') || t.includes('Inscrição') || t.includes('Valor') || t.includes('participação'))) {
+                        const nums = [...t.matchAll(/(\d{1,3})\s*€/g)].map(m => parseInt(m[1])).filter(n => n >= 15 && n <= 150);
+                        priceNumbers.push(...nums);
                     }
                 });
+
+                if (priceNumbers.length > 0) {
+                    const minP = Math.min(...priceNumbers);
+                    const maxP = Math.max(...priceNumbers);
+                    prices = minP === maxP ? `${minP}€` : `Desde ${minP}€`;
+                }
+
+                // Seguros (Artigo 3: coberturas e capitais)
+                const insuranceBullets = [];
+                let inInsurance = false;
+                $reg('p, ul, ol, h2, h3, h4').each((_, el) => {
+                    const t = $reg(el).text().replace(/\s+/g, ' ').trim();
+                    if (/SEGURO DE ACIDENTES PESSOAIS|COBERTURAS DO SEGURO/i.test(t)) {
+                        inInsurance = true;
+                        return;
+                    }
+                    if (inInsurance) {
+                        if (/^\s*(?![3]\.)\d+\./.test(t) || /inscriç[õo]es|programa|secretariado|recursos/i.test(t)) {
+                            inInsurance = false;
+                            return;
+                        }
+                        if (t.length > 10 && (t.includes('€') || /morte|invalidez|tratamento|funeral|franquia|cobertura|sabseg/i.test(t))) {
+                            const lines = t.split(/–|-|•/).map(s => s.trim()).filter(s => s.length > 5);
+                            if (lines.length > 1 && t.includes('€')) {
+                                lines.forEach(l => insuranceBullets.push(l));
+                            } else {
+                                insuranceBullets.push(t);
+                            }
+                        }
+                    }
+                });
+
+                if (insuranceBullets.length > 0) {
+                    insurance = '<ul>' + insuranceBullets.map(item => `<li>${item}</li>`).join('') + '</ul>';
+                }
+
+                // Prémios (Artigo 7 / Prémios e Classificações)
+                const prizeBullets = [];
+                let inPrizes = false;
+                $reg('p, ul, ol, h2, h3, h4, li').each((_, el) => {
+                    const t = $reg(el).text().replace(/\s+/g, ' ').trim();
+                    if (/PRÉMIOS E CLASSIFICAÇÕES|PRÉMIOS|TROFÉUS/i.test(t) && /^\s*[1-9]\./.test(t)) {
+                        inPrizes = true;
+                        return;
+                    }
+                    if (inPrizes) {
+                        if (/^\s*[8-9]\.\s+[A-Z]/i.test(t) || /^\s*\d{2}\.\s+[A-Z]/i.test(t) || /segurança|controlo/i.test(t)) {
+                            inPrizes = false;
+                            return;
+                        }
+                        if (t.length > 10 && /troféu|trofeu|pódio|podio|medalha|primeiro|vencedor|classificados|equipas|fair-play|boa onda/i.test(t)) {
+                            if (!prizeBullets.some(p => p.includes(t.substring(0, 20)))) {
+                                prizeBullets.push(t);
+                            }
+                        }
+                    }
+                });
+
+                if (prizeBullets.length > 0) {
+                    prizes = '<ul>' + prizeBullets.map(item => `<li>${item}</li>`).join('') + '</ul>';
+                }
             }
         } catch (err) {
             console.error('Error fetching Cabreira regulamento', err);
         }
-
-        if (pricesParts.length > 0) prices = pricesParts.join('<br/><br/>');
-        if (insuranceParts.length > 0) insurance = insuranceParts.join('<br/><br/>');
-        if (prizesParts.length > 0) prizes = prizesParts.join('<br/><br/>');
         if (!programa && scheduleParts.length > 0) programa = scheduleParts.join('<br/><br/>');
 
         return { pageTitle, opensAt, closesAt, description, prices, insurance, prizes, programa, additionalLinks };
@@ -311,10 +375,10 @@ export const scrapeCabreira = async (year, options = {}) => {
                     let deepData = null;
 
                     // Apenas descarrega imagens se ainda não existirem na BD
-                    if (!logo && ev.logoUrl) logo = await fetchImageAsBase64(ev.logoUrl);
-                    if (!image && ev.imageUrl) image = await fetchImageAsBase64(ev.imageUrl);
+                    if (!logo && ev.logoUrl) logo = await downloadEventAsset(ev.logoUrl, id, 'logo.png', 'https://cabreirasolutions.com/');
+                    if (!image && ev.imageUrl) image = await downloadEventAsset(ev.imageUrl, id, 'cover.jpg', 'https://cabreirasolutions.com/');
 
-                    if (existing && existing.registrationClosesAt && existing.prices && existing.description) {
+                    if (!options.force && existing && existing.registrationClosesAt && existing.prices && existing.description && existing.description.includes('/media/events')) {
                         deepData = {
                             opensAt: existing.registrationOpensAt,
                             closesAt: existing.registrationClosesAt,
@@ -326,7 +390,7 @@ export const scrapeCabreira = async (year, options = {}) => {
                             additionalLinks: []
                         };
                     } else {
-                        deepData = await deepScrapeCabreira(ev.href);
+                        deepData = await deepScrapeCabreira(ev.href, id);
                     }
 
                     const finalTitle = deepData?.pageTitle ? toTitleCase(deepData.pageTitle) : ev.title;

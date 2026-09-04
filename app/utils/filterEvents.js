@@ -1,4 +1,4 @@
-import { isStageRace, getEventDiscipline, isOfficialNationalChampionship } from './eventClassifier.js';
+import { isStageRace, getEventDiscipline, getEventRaceTypes, getEventDisciplineFamilies, getRaceTypeFamily, isOfficialNationalChampionship } from './eventClassifier.js';
 
 export function normalizeSearchString(str) {
     if (!str) return '';
@@ -23,6 +23,7 @@ export function filterEvents(events, filters) {
         selectedDistrito,
         monthFrom,
         monthTo,
+        selectedDisciplines,
         selectedTags,
         selectedType
     } = filters;
@@ -151,10 +152,21 @@ export function filterEvents(events, filters) {
         });
     }
 
-    if (selectedTags && selectedTags.length > 0) {
+    if (selectedDisciplines && selectedDisciplines.length > 0) {
+        filtered = filtered.filter(event => {
+            const families = getEventDisciplineFamilies(event);
+            const raceTypes = getEventRaceTypes(event);
+            return selectedDisciplines.some(discipline => {
+                if (!families.includes(discipline)) return false;
+                const selectedSpecialities = (selectedTags || []).filter(tag => getRaceTypeFamily(tag) === discipline);
+                return selectedSpecialities.length === 0 || selectedSpecialities.some(tag => raceTypes.includes(tag));
+            });
+        });
+    } else if (selectedTags && selectedTags.length > 0) {
         filtered = filtered.filter(event => {
             const effectiveTag = getEventDiscipline(event);
-            return selectedTags.includes(effectiveTag) || selectedTags.includes(event.tag);
+            const raceTypes = getEventRaceTypes(event);
+            return selectedTags.some(tag => raceTypes.includes(tag)) || selectedTags.includes(effectiveTag) || selectedTags.includes(event.tag);
         });
     }
 

@@ -6,8 +6,9 @@ import {
 } from './utils.js';
 import { logInfo, logError } from '../logger.js';
 import { saveOrMergeEvent } from '../merging/eventMerger.js';
+import { downloadEventAsset, downloadAndParseGpx } from './assetDownloader.js';
 
-export const deepScrapeFPC = async (link) => {
+export const deepScrapeFPC = async (link, eventId = 'fpc-event') => {
     if (!link) return null;
     const response = await fetch(link, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(15000) });
     if (!response.ok) throw new Error(`FPC devolveu HTTP ${response.status}`);
@@ -163,11 +164,11 @@ export const deepScrapeFPC = async (link) => {
     return null;
 };
 
-export async function deepScrapeFPCWithRetry(link, { attempts = 3, delayMs = 750 } = {}) {
+export async function deepScrapeFPCWithRetry(link, eventId = 'fpc-event', { attempts = 3, delayMs = 750 } = {}) {
     let lastError;
     for (let attempt = 1; attempt <= attempts; attempt++) {
         try {
-            const html = await deepScrapeFPC(link);
+            const html = await deepScrapeFPC(link, eventId);
             if (html) return html;
             throw new Error('A página FPC não continha detalhes válidos');
         } catch (error) {
@@ -232,14 +233,17 @@ export const parseFPCCalendar = (html, year) => {
         for (const element of rows) {
             const ths = $(element).find('th');
             const cols = $(element).find('td');
-            
-            if (ths.length >= 1 && cols.length >= 3) {
+                if (ths.length >= 1 && cols.length >= 3) {
                 let dateText = $(ths[0]).text().trim();
                 const endDateText = ths.length > 1 ? $(ths[1]).text().trim() : '';
                 const nameText = $(cols[0]).text().trim();
                 let locText = toTitleCase($(cols[1]).text().trim());
                 const extraText = $(cols[2]).text().trim();
                 const organizadorText = cols.length > 3 ? $(cols[3]).text().trim() : null;
+                
+                if ((/arlu/i.test(nameText) || /arlu/i.test(organizadorText || '')) && locText.toLowerCase() === 'leiria') {
+                    locText = 'Azabuxo, Leiria';
+                }
                 
                 if (nameText && /^\d{2}-\d{2}-\d{4}$/.test(dateText)) {
                     const parts = dateText.split('-');

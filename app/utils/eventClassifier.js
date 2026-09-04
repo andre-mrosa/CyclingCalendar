@@ -63,75 +63,139 @@ export function isStageRace(event) {
 }
 
 export function getEventDiscipline(eventOrTitle, details = '') {
+    return getEventRaceTypes(eventOrTitle, details)[0] || 'Estrada';
+}
+
+export const RACE_TAXONOMY = [
+    {
+        discipline: 'Estrada',
+        specialities: ['Estrada Fundo', 'Estrada Circuito', 'Estrada CRI / ITT', 'Estrada CRE / TTT', 'Granfondo']
+    },
+    {
+        discipline: 'BTT',
+        specialities: ['BTT XCO', 'BTT XCM / Maratona', 'BTT XCC', 'BTT XCE', 'BTT XCR', 'BTT DHI / DHU', 'BTT Enduro']
+    },
+    { discipline: 'Gravel', specialities: [] },
+    { discipline: 'Ciclocrosse', specialities: [] },
+    { discipline: 'Pista', specialities: [] },
+    { discipline: 'BMX', specialities: [] },
+    { discipline: 'Paraciclismo', specialities: [] },
+    { discipline: 'Passeio / Lazer', specialities: [] },
+    { discipline: 'E-Sports', specialities: [] }
+];
+
+export function getRaceTypeFamily(raceType = '') {
+    const group = RACE_TAXONOMY.find(item => item.discipline === raceType || item.specialities.includes(raceType));
+    if (group) return group.discipline;
+    if (raceType.startsWith('Estrada')) return 'Estrada';
+    if (raceType.startsWith('BTT')) return 'BTT';
+    return raceType;
+}
+
+import { getCuratedDiscipline } from './curatedDisciplines.js';
+
+/**
+ * Returns every speciality represented by an event. This is intentionally an
+ * array: championship weekends can legitimately contain XCO and XCC, or CRI
+ * and Fundo, and must be discoverable through either speciality.
+ */
+export function getEventRaceTypes(eventOrTitle, details = '') {
     let title = '';
     let det = '';
     let existingTag = '';
+    let description = '';
 
     if (typeof eventOrTitle === 'object' && eventOrTitle !== null) {
         title = eventOrTitle.title || '';
-        det = (eventOrTitle.details || '') + ' ' + (eventOrTitle.description || '');
+        det = eventOrTitle.details || '';
         existingTag = eventOrTitle.tag || '';
+        description = eventOrTitle.description || '';
     } else {
         title = String(eventOrTitle || '');
         det = String(details || '');
     }
 
-    const lower = (title + ' ' + det).toLowerCase();
-    const titleLower = title.toLowerCase();
-
-    // 1. Gravel
-    if (titleLower.includes('gravel') || (/\bgravel\b/i.test(lower) && !lower.includes('btt'))) {
-        return 'Gravel';
+    // 0. Curated Registry (100% verified ground truth for non-standard / ambiguous event names)
+    const curated = getCuratedDiscipline(title, typeof eventOrTitle === 'object' ? eventOrTitle.id || '' : '');
+    if (curated) {
+        return [curated];
     }
 
-    // 2. Granfondo / Mediofondo / Minifondo (Estrada)
-    if (titleLower.includes('granfondo') || titleLower.includes('gran fondo') || titleLower.includes('mediofondo') || titleLower.includes('minifondo')) {
-        return 'Estrada';
+    // 0.1 UCI & FPC Official Class Code Prefix System
+    // (1.x = Estrada, 2.x = BTT, 3.x = Pista, 4.x = Ciclocrosse, 5.x = BMX, 6.x = Gravel)
+    const fpcClassPrefix = det.match(/\b([1-6])\.\d{2}/);
+    if (fpcClassPrefix) {
+        const prefix = fpcClassPrefix[1];
+        if (prefix === '1') return ['Estrada'];
+        if (prefix === '2') return ['BTT'];
+        if (prefix === '3') return ['Pista'];
+        if (prefix === '4') return ['Ciclocrosse'];
+        if (prefix === '5') return ['BMX'];
+        if (prefix === '6') return ['Gravel'];
     }
 
-    // 3. Specific BTT Sub-disciplines
-    if (/\bxce\b/i.test(lower)) return 'BTT XCE';
-    if (/\bxcc\b/i.test(lower)) return 'BTT XCC';
-    if (/\bxcr\b/i.test(lower)) return 'BTT XCR';
-    if (titleLower.includes('xco') || /\bxco\b/i.test(lower)) return 'BTT XCO';
-    if (titleLower.includes('xcm') || titleLower.includes('maratona btt') || titleLower.includes('meia-maratona btt') || titleLower.includes('raid btt') || /\bxcm\b/i.test(lower)) return 'BTT XCM';
-    if (/\benduro\b/i.test(lower)) return 'BTT Enduro';
-    if (/\b(dhi|dhu|downhill)\b/i.test(lower)) return 'BTT DHI';
+    const titleText = title
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+    const text = `${title} ${det} ${existingTag}`
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+    const extendedText = `${text} ${description
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')}`;
+    const types = [];
+    const add = value => {
+        if (!types.includes(value)) types.push(value);
+    };
 
-    if (/paraciclismo/i.test(lower)) return 'Paraciclismo';
-    if (/ciclismo virtual|e-sports/i.test(lower)) return 'E-Sports';
+    if (/\bxco\b/.test(extendedText)) add('BTT XCO');
+    if (/\bxcm\b|maratona\s+(?:de\s+)?btt|meia[- ]maratona\s+(?:de\s+)?btt|raid\s+btt/.test(extendedText)) add('BTT XCM / Maratona');
+    if (/\bxcc\b/.test(extendedText)) add('BTT XCC');
+    if (/\bxce\b/.test(extendedText)) add('BTT XCE');
+    if (/\bxcr\b/.test(extendedText)) add('BTT XCR');
+    if (/\b(dhi|dhu|downhill)\b/.test(extendedText)) add('BTT DHI / DHU');
+    if (/\benduro\b/.test(extendedText)) add('BTT Enduro');
+    if (/\b(urban\s*race|resistencia\s*urbana|resistência\s*urbana)\b/.test(extendedText)) add('BTT XCO');
+    if (/\b(trilhos?|raid|geotour|bike\s*challenge|racenature|race\s*nature|transportugal|iron\s*rider|gps\s*epic|maratona|meia[- ]maratona)\b/.test(extendedText)) add('BTT XCM / Maratona');
+    if (types.length > 0) return types;
 
-    // 4. Pista
-    if (/\bpista\b|vel[oó]dromo/i.test(lower)) return 'Pista';
-
-    // 5. Ciclocrosse
-    if (/ciclocross|\bcx\b/i.test(lower)) return 'Ciclocrosse';
-
-    // 6. BMX
-    if (/\bbmx\b|pump track/i.test(lower)) return 'BMX';
-
-    // 7. General BTT
-    if (titleLower.includes('btt') || titleLower.includes('btt xcm') || titleLower.includes('btt xco') || titleLower.includes('btt dhi')) {
-        return 'BTT';
+    // Standalone disciplines take precedence over generic words such as
+    // "circuito" (e.g. "Circuito Nacional de Gravel").
+    if (/\bgravel\b/.test(titleText) || (/\bgravel\b/.test(extendedText) && !/\bbtt\b|\bmtb\b/.test(extendedText))) return ['Gravel'];
+    if (/ciclocross|ciclo-cross|\bcx\b/.test(extendedText)) return ['Ciclocrosse'];
+    const isTrack = /\bpista\b|velodromo/.test(text);
+    const isParacycling = /paraciclismo/.test(text);
+    if (isTrack || isParacycling) {
+        if (isTrack) add('Pista');
+        if (isParacycling) add('Paraciclismo');
+        return types;
     }
+    if (/\bbmx\b|pump\s+track/.test(extendedText)) return ['BMX'];
+    if (/ciclismo\s+virtual|e-sports|esports/.test(text)) return ['E-Sports'];
+    if (/granfondo|gran\s+fondo|mediofondo|minifondo/.test(text)) return ['Granfondo'];
 
-    // 8. Estrada
-    if (titleLower.includes('estrada') || titleLower.includes('volta a') || titleLower.includes('volta ao') || titleLower.includes('clássica') || titleLower.includes('classica') || titleLower.includes('circuito') || titleLower.includes('prémio') || titleLower.includes('premio') || titleLower.includes('contra-relógio') || titleLower.includes('crono')) {
-        return 'Estrada';
-    }
+    if (/\bbtt\b|\bmtb\b|mountain\s*bike|\burban\s*race\b|\bresist[eê]ncia\b|\btrilhos?\b|\braid\b|\bgeotour\b|\bbike\s*challenge\b|\bracenature\b|\btransportugal\b/.test(extendedText)) return ['BTT'];
 
-    // 9. Passeio / Lazer
-    if (titleLower.includes('passeio') || titleLower.includes('cicloturismo') || titleLower.includes('cpt') || titleLower.includes('rota')) {
-        return 'Passeio / Lazer';
-    }
+    if (/\bcri\b|\bitt\b|contra[- ]?relogio\s+individual|individual\s+time\s+trial/.test(text)) add('Estrada CRI / ITT');
+    if (/\bcre\b|\bttt\b|contra[- ]?relogio\s+por\s+equipas|team\s+time\s+trial/.test(text)) add('Estrada CRE / TTT');
+    if (/\bcircuito\b|criterium|criterio/.test(text)) add('Estrada Circuito');
+    if (/\bfundo\b|road\s+race/.test(text)) add('Estrada Fundo');
+    if (types.length > 0) return types;
 
-    // 10. Fallback to existing valid tag if known
-    if (existingTag && existingTag !== 'Evento' && existingTag !== 'Ciclismo' && existingTag !== 'Passeio / Granfondo') {
-        return existingTag;
-    }
+    const storedFamily = getRaceTypeFamily(existingTag);
+    if (RACE_TAXONOMY.some(group => group.discipline === storedFamily)) return [storedFamily];
+    if (/passeio|cicloturismo|turismo\s+em\s+bicicleta|\brota\b/.test(titleText)) return ['Passeio / Lazer'];
 
-    if (lower.includes('estrada') && !lower.includes('btt')) return 'Estrada';
-    if (lower.includes('btt') && !lower.includes('estrada')) return 'BTT';
+    return ['Estrada'];
+}
 
-    return 'Estrada';
+export function getEventRaceType(eventOrTitle, details = '') {
+    return getEventRaceTypes(eventOrTitle, details)[0];
+}
+
+export function getEventDisciplineFamilies(eventOrTitle, details = '') {
+    return [...new Set(getEventRaceTypes(eventOrTitle, details).map(getRaceTypeFamily).filter(Boolean))];
 }

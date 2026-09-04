@@ -9,6 +9,7 @@ import { useTranslation } from '../i18n/useTranslation';
 import { formatMonthAbbr, translateDateString, translateEscalao, translateAmbito, translateLicenca, translateTag } from '../i18n/formatters';
 import { getEventDiscipline } from '../utils/eventClassifier';
 import { detectRaceDate } from '../utils/detectRaceDate';
+import { formatEventLocation, extractEventTown } from '../utils/eventLocation';
 import styles from './site.module.css';
 import { useModalFocus } from '../hooks/useModalFocus';
 
@@ -823,7 +824,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         })()}
                     </div>
                     <WeatherWidget 
-                        location={activeEvent.details?.split('|')[0]?.trim()} 
+                        location={extractEventTown(activeEvent) || activeEvent.distrito} 
                         distrito={activeEvent.distrito} 
                         date={activeEvent.sortDate ? new Date(activeEvent.sortDate).toISOString().substring(0, 10) : activeEvent.date}
                         variant="mobile-badge"
@@ -904,7 +905,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                     {/* Weather in Header (Top Right box) */}
                     <WeatherWidget 
-                        location={activeEvent.details?.split('|')[0]?.trim()} 
+                        location={extractEventTown(activeEvent) || activeEvent.distrito} 
                         distrito={activeEvent.distrito} 
                         date={activeEvent.sortDate ? new Date(activeEvent.sortDate).toISOString().substring(0, 10) : activeEvent.date}
                         variant="header"
@@ -1072,8 +1073,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                             <div className="min-w-0">
                                                 <span className="text-[10px] text-muted block font-semibold uppercase leading-tight">{t('summary_location')}</span>
                                                 <span className="font-semibold text-ink truncate block">
-                                                    {activeEvent.details?.split('|')[0]?.trim() || t('summary_location_tbd')}
-                                                    {activeEvent.distrito && !activeEvent.details?.includes(activeEvent.distrito) ? ` (${activeEvent.distrito})` : ''}
+                                                    {formatEventLocation(activeEvent) || t('summary_location_tbd')}
                                                 </span>
                                             </div>
                                         </div>

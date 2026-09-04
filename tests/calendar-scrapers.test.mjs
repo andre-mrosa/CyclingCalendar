@@ -4,7 +4,7 @@ import { deepScrapeFPCWithRetry, parseFPCCalendar, fetchFPCCalendar } from '../a
 import { parseStopAndGoEvent, scrapeEventPage } from '../app/lib/scrapers/stopandgo.js';
 import { readStopAndGoHeader } from '../app/lib/scrapers/stopandgoParser.js';
 import { getAmbito } from '../app/lib/scrapers/utils.js';
-import { getEventDiscipline, isStageRace } from '../app/utils/eventClassifier.js';
+import { getEventDiscipline, getEventRaceType, getEventRaceTypes, getEventDisciplineFamilies, isStageRace } from '../app/utils/eventClassifier.js';
 import { mergeEventRecords } from '../app/lib/merging/eventMerger.js';
 import { isSameEvent } from '../app/lib/merging/eventMatcher.js';
 import { mergeEvents } from '../app/utils/mergeEvents.js';
@@ -120,9 +120,63 @@ test('Stop and Go reads exact header years and ranges, never inventing a current
 });
 
 test('Discipline comes from the official class when the title is generic', () => {
-    for (const tag of ['BTT XCO', 'BTT XCM', 'BTT XCE', 'BTT XCC', 'BTT XCR', 'Pista', 'Paraciclismo']) {
-        assert.equal(getEventDiscipline('Campeonato Nacional', tag), tag);
+    const officialClasses = new Map([
+        ['BTT XCO', 'BTT XCO'],
+        ['BTT XCM', 'BTT XCM / Maratona'],
+        ['BTT XCE', 'BTT XCE'],
+        ['BTT XCC', 'BTT XCC'],
+        ['BTT XCR', 'BTT XCR'],
+        ['BTT DHI', 'BTT DHI / DHU'],
+        ['Pista', 'Pista'],
+        ['Paraciclismo', 'Paraciclismo']
+    ]);
+    for (const [officialClass, expectedType] of officialClasses) {
+        assert.equal(getEventDiscipline('Campeonato Nacional', officialClass), expectedType);
     }
+});
+
+test('Race type filter distinguishes MTB and road specialities', () => {
+    const events = [
+        { title: 'Campeonato Nacional XCO', details: 'BTT XCO' },
+        { title: 'Maratona BTT da Serra', details: 'BTT' },
+        { title: 'Campeonatos Nacionais - CRI', details: 'Estrada' },
+        { title: 'Campeonatos Nacionais - Fundo', details: 'Estrada' },
+        { title: 'Circuito da Malveira', details: 'Estrada' }
+    ];
+    assert.deepEqual(events.map(getEventRaceType), [
+        'BTT XCO', 'BTT XCM / Maratona', 'Estrada CRI / ITT', 'Estrada Fundo', 'Estrada Circuito'
+    ]);
+    assert.deepEqual(
+        filterEvents(events, { selectedTags: ['Estrada CRI / ITT'] }).map(event => event.title),
+        ['Campeonatos Nacionais - CRI']
+    );
+    assert.equal(getEventRaceType('Circuito Nacional de Gravel'), 'Gravel');
+    assert.equal(getEventRaceType('Granfondo da Serra', 'CPT / Lazer'), 'Granfondo');
+    assert.equal(getEventRaceType({ title: '2H Resistência BTT', details: 'CPT - Prova Aberta', tag: 'BTT' }), 'BTT');
+    assert.equal(getEventRaceType({ title: 'Prova aberta local', details: 'CPT - Prova Aberta', tag: 'Estrada' }), 'Estrada');
+    assert.equal(getEventRaceType({ title: 'Passeio local', details: 'Evento não competitivo', tag: 'Passeio / Lazer' }), 'Passeio / Lazer');
+    assert.equal(getEventRaceType({ title: 'Volta ao Concelho', tag: 'Estrada', description: 'Percurso disputado em circuito urbano.' }), 'Estrada');
+    assert.equal(getEventRaceType({ title: 'Racenature', tag: 'Estrada', description: 'Competição BTT por etapas.' }), 'BTT');
+    assert.deepEqual(getEventRaceTypes('Campeonato Nacional XCO / XCC'), ['BTT XCO', 'BTT XCC']);
+    assert.deepEqual(getEventDisciplineFamilies('Campeonato Nacional XCO / XCC'), ['BTT']);
+    assert.deepEqual(
+        getEventRaceTypes({ title: 'Taça de Portugal Pista - Master e Paraciclismo', tag: 'Paraciclismo' }),
+        ['Pista', 'Paraciclismo']
+    );
+    assert.deepEqual(
+        getEventDisciplineFamilies({ title: 'Taça de Portugal Pista - Master e Paraciclismo', tag: 'Paraciclismo' }),
+        ['Pista', 'Paraciclismo']
+    );
+    assert.equal(filterEvents(events, { selectedDisciplines: ['BTT'], selectedTags: [] }).length, 2);
+    assert.equal(filterEvents(events, { selectedDisciplines: ['Estrada'], selectedTags: [] }).length, 3);
+    assert.deepEqual(
+        filterEvents(events, { selectedDisciplines: ['BTT'], selectedTags: ['BTT XCO'] }).map(event => event.title),
+        ['Campeonato Nacional XCO']
+    );
+    assert.equal(filterEvents(events, {
+        selectedDisciplines: ['BTT', 'Estrada'],
+        selectedTags: ['BTT XCO']
+    }).length, 4);
 });
 
 test('A national championship weekend is not a stage race', () => {

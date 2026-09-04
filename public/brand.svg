@@ -1,1 +1,36 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64"><rect width="64" height="64" rx="10" fill="#1a1b19"/><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M14 32V23a6 6 0 0 1 6-6h24a6 6 0 0 1 6 6v9M22 13v8m20-8v8M14 28h36" stroke="#f1eee7" stroke-width="3"/><g stroke="#e55d3b" stroke-width="2.8"><circle cx="22" cy="44" r="8"/><circle cx="47" cy="44" r="8"/><path d="m22 44 9-14 7 14H22m16 0 6-14h-6m6 0 3 14M28 30h6"/></g></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 210" width="200" height="210" fill="none">
+  <rect width="200" height="210" rx="28" fill="#080c14"/>
+  <g stroke="#34d399" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Calendário -->
+    <rect x="74" y="28" width="76" height="60" rx="7" stroke-width="5.5" fill="none"/>
+    <path d="M 92 28 V 18 C 92 15.5, 98 15.5, 98 18 V 28" stroke-width="4.5"/>
+    <path d="M 130 28 V 18 C 130 15.5, 136 15.5, 136 18 V 28" stroke-width="4.5"/>
+    <line x1="74" y1="48" x2="150" y2="48" stroke-width="4"/>
+    <line x1="74" y1="68" x2="150" y2="68" stroke-width="4"/>
+    <line x1="93" y1="28" x2="93" y2="88" stroke-width="4"/>
+    <line x1="112" y1="28" x2="112" y2="88" stroke-width="4"/>
+    <line x1="131" y1="28" x2="131" y2="88" stroke-width="4"/>
+    <!-- Estrela da Prova -->
+    <polygon points="121.5,72.5 123.3,76.5 127.6,76.8 124.3,79.8 125.3,84.1 121.5,81.8 117.7,84.1 118.7,79.8 115.4,76.8 119.7,76.5" fill="#34d399" stroke="none"/>
+    <!-- Estrada Sinuosa -->
+    <path d="M 106 88 C 102 91, 93 94, 88 99 C 81 106, 88 112, 98 115 C 105 117, 85 124, 60 125 C 46 125.5, 34 129, 28 133" stroke-width="5" fill="none"/>
+    <path d="M 88 88 C 82 92, 74 97, 72 103 C 70 109, 78 116, 88 119 C 96 121.5, 78 129.5, 52 131 C 38 132, 24 137, 18 141" stroke-width="5" fill="none"/>
+    <!-- Bicicleta de Estrada -->
+    <circle cx="118" cy="128" r="14" stroke-width="4.8" fill="none"/>
+    <circle cx="162" cy="128" r="14" stroke-width="4.8" fill="none"/>
+    <line x1="118" y1="128" x2="137" y2="128" stroke-width="4.5"/>
+    <line x1="118" y1="128" x2="127" y2="104" stroke-width="4"/>
+    <line x1="137" y1="128" x2="127" y2="104" stroke-width="4.5"/>
+    <line x1="127" y1="104" x2="152" y2="104" stroke-width="4.5"/>
+    <line x1="137" y1="128" x2="152" y2="110" stroke-width="4.5"/>
+    <line x1="152" y1="104" x2="162" y2="128" stroke-width="4.5"/>
+    <line x1="127" y1="104" x2="125" y2="98" stroke-width="4"/>
+    <line x1="120" y1="98" x2="131" y2="98" stroke-width="4.8"/>
+    <line x1="152" y1="104" x2="154" y2="97" stroke-width="4"/>
+    <path d="M 152 97 H 159 C 162 97, 164 100, 162 105" stroke-width="4" fill="none"/>
+  </g>
+  <!-- Tipografia Oficial -->
+  <text x="100" y="166" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="18.5" fill="#34d399" text-anchor="middle" letter-spacing="0.5">CYCLING</text>
+  <text x="100" y="186" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="18.5" fill="#34d399" text-anchor="middle" letter-spacing="0.5">CALENDAR</text>
+  <text x="100" y="202" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="13" fill="#34d399" text-anchor="middle" letter-spacing="3.2">PORTUGAL</text>
+</svg>

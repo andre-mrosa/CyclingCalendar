@@ -66,6 +66,8 @@ export async function GET(request) {
                 registrationOpensAt: true,
                 registrationClosesAt: true,
                 logo: true,
+                image: true,
+                prices: true,
                 translations: {
                     select: {
                         language: true,
