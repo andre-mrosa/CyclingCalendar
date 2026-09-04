@@ -1,8 +1,9 @@
-import { Shield, Eye, Lock, UserCheck, Database, Globe, Cookie, RefreshCw, Mail, Trash2, KeyRound, Calendar, Ban, Check } from 'lucide-react';
+import { Shield, Eye, Lock, UserCheck, Database, Globe, Cookie, RefreshCw, Mail, Trash2, KeyRound, Calendar, Ban, Check, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 
 export const metadata = {
   title: 'Política de Privacidade | Cycling Calendar',
-  description: 'Política de Privacidade do Cycling Calendar',
+  description: 'Como protegemos e tratamos os seus dados no Cycling Calendar.',
 };
 
 export default function PrivacyPolicy() {
@@ -12,28 +13,21 @@ export default function PrivacyPolicy() {
       title: '1. Informação que Recolhemos',
       content: (
         <>
-          <p className="mb-3">Quando utiliza o Cycling Calendar, podemos recolher os seguintes dados:</p>
-          <div className="space-y-3">
-            <div className="p-4 bg-slate-100 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
-              <h4 className="text-slate-900 dark:text-slate-100 font-medium text-sm mb-2"><KeyRound size={15} className="inline-block align-middle shrink-0 mr-1" aria-hidden="true" />Através do Login com Google (via Clerk)</h4>
-              <ul className="space-y-1 text-sm text-slate-600 dark:text-slate-400">
-                <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400">•</span>Nome completo e endereço de e-mail</li>
-                <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400">•</span>Foto de perfil (URL público do Google)</li>
-                <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400">•</span>Identificador único de utilizador</li>
+          <p className="mb-4 text-slate-300">Quando utiliza o Cycling Calendar, recolhemos os seguintes dados essenciais para o funcionamento da plataforma:</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-5 bg-slate-900/50 rounded-xl border border-slate-800/60 shadow-sm">
+              <h4 className="text-white font-bold text-sm mb-3 flex items-center gap-2"><KeyRound size={16} className="text-emerald-400" />Login (via Clerk & Google)</h4>
+              <ul className="space-y-2 text-sm text-slate-400">
+                <li className="flex gap-2 items-start"><Check size={14} className="text-emerald-500 mt-0.5 shrink-0" /><span>Nome e endereço de e-mail</span></li>
+                <li className="flex gap-2 items-start"><Check size={14} className="text-emerald-500 mt-0.5 shrink-0" /><span>Foto de perfil pública</span></li>
+                <li className="flex gap-2 items-start"><Check size={14} className="text-emerald-500 mt-0.5 shrink-0" /><span>Identificador único de conta</span></li>
               </ul>
             </div>
-            <div className="p-4 bg-slate-100 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
-              <h4 className="text-slate-900 dark:text-slate-100 font-medium text-sm mb-2"><Calendar size={15} className="inline-block align-middle shrink-0 mr-1" aria-hidden="true" />Integração com Google Calendar</h4>
-              <ul className="space-y-1 text-sm text-slate-600 dark:text-slate-400">
-                <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400">•</span>Token de acesso OAuth 2.0 (para criar eventos no seu calendário)</li>
-                <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400">•</span><strong className="text-slate-900 dark:text-slate-100">Não acedemos a eventos existentes</strong> — apenas criamos novos eventos que o utilizador solicite</li>
-              </ul>
-            </div>
-            <div className="p-4 bg-slate-100 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
-              <h4 className="text-slate-900 dark:text-slate-100 font-medium text-sm mb-2">⭐ Dados de Utilização</h4>
-              <ul className="space-y-1 text-sm text-slate-600 dark:text-slate-400">
-                <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400">•</span>Lista de eventos marcados como favoritos</li>
-                <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400">•</span>Preferências de filtros e região (armazenadas localmente no browser)</li>
+            <div className="p-5 bg-slate-900/50 rounded-xl border border-slate-800/60 shadow-sm">
+              <h4 className="text-white font-bold text-sm mb-3 flex items-center gap-2"><Calendar size={16} className="text-emerald-400" />Integração Google Calendar</h4>
+              <ul className="space-y-2 text-sm text-slate-400">
+                <li className="flex gap-2 items-start"><Check size={14} className="text-emerald-500 mt-0.5 shrink-0" /><span>Token OAuth (apenas para adicionar provas)</span></li>
+                <li className="flex gap-2 items-start"><Ban size={14} className="text-rose-500 mt-0.5 shrink-0" /><span>Não lemos nem apagamos os teus outros eventos pessoais.</span></li>
               </ul>
             </div>
           </div>
@@ -42,140 +36,90 @@ export default function PrivacyPolicy() {
     },
     {
       icon: Database,
-      title: '2. Como Usamos a Informação',
+      title: '2. Utilização dos Dados',
       content: (
-        <>
-          <p className="mb-3">A informação recolhida é utilizada <strong className="text-slate-900 dark:text-slate-100">exclusivamente</strong> para:</p>
-          <ul className="space-y-2 text-slate-600 dark:text-slate-400">
-            <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1"><Check size={15} aria-hidden="true" /></span><span>Permitir a autenticação segura no nosso serviço</span></li>
-            <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1"><Check size={15} aria-hidden="true" /></span><span>Guardar e sincronizar as suas provas favoritas</span></li>
-            <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1"><Check size={15} aria-hidden="true" /></span><span>Adicionar eventos de ciclismo ao seu Google Calendar quando solicitado</span></li>
-            <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1"><Check size={15} aria-hidden="true" /></span><span>Enviar comunicações relacionadas com o serviço (se aplicável)</span></li>
-          </ul>
-          <div className="mt-4 p-4 bg-rose-50 dark:bg-red-500/10 border border-rose-200 dark:border-red-500/20 rounded-xl">
-            <p className="text-rose-700 dark:text-red-300 text-sm font-medium"><Ban size={15} className="inline-block align-middle shrink-0 mr-1" aria-hidden="true" />Nunca partilhamos, vendemos, alugamos ou cedemos a sua informação pessoal a terceiros para fins comerciais ou de marketing.</p>
-          </div>
-        </>
+        <ul className="space-y-3 text-slate-400 text-sm leading-relaxed">
+          <li className="flex gap-3"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0"></div><span><strong className="text-slate-200 font-semibold">Personalização:</strong> Guardar as tuas provas favoritas e gerir o teu calendário.</span></li>
+          <li className="flex gap-3"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0"></div><span><strong className="text-slate-200 font-semibold">Comunicação:</strong> Enviar atualizações ou avisos importantes (raramente utilizado).</span></li>
+          <li className="flex gap-3"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0"></div><span><strong className="text-slate-200 font-semibold">Estatísticas:</strong> Analisar tráfego de forma anónima para melhorar o site.</span></li>
+        </ul>
       ),
     },
     {
       icon: Globe,
-      title: '3. Partilha com Terceiros',
+      title: '3. Partilha de Dados',
       content: (
-        <>
-          <p className="mb-3">Podemos partilhar informação limitada com os seguintes prestadores de serviço, estritamente necessários ao funcionamento da Plataforma:</p>
-          <ul className="space-y-2 text-slate-600 dark:text-slate-400">
-            <li className="flex gap-2"><span className="text-amber-600 dark:text-amber-500 mt-1">•</span><span><strong className="text-slate-900 dark:text-slate-100">Clerk</strong> — Autenticação e gestão de sessões de utilizador</span></li>
-            <li className="flex gap-2"><span className="text-amber-600 dark:text-amber-500 mt-1">•</span><span><strong className="text-slate-900 dark:text-slate-100">Google (API Calendar)</strong> — Criação de eventos no calendário do utilizador</span></li>
-            <li className="flex gap-2"><span className="text-amber-600 dark:text-amber-500 mt-1">•</span><span><strong className="text-slate-900 dark:text-slate-100">Vercel</strong> — Alojamento e infraestrutura da aplicação</span></li>
-            <li className="flex gap-2"><span className="text-amber-600 dark:text-amber-500 mt-1">•</span><span><strong className="text-slate-900 dark:text-slate-100">Neon (PostgreSQL)</strong> — Armazenamento da base de dados</span></li>
-          </ul>
-          <p className="mt-3 text-sm">Todos estes prestadores cumprem normas rigorosas de proteção de dados e operam sob os seus próprios termos de privacidade.</p>
-        </>
+        <p className="text-slate-400 text-sm leading-relaxed">O Cycling Calendar <strong className="text-emerald-400">nunca vende, aluga ou partilha</strong> os teus dados pessoais com terceiros para fins de marketing. Os únicos serviços externos envolvidos no processo são a <strong>Vercel</strong> (alojamento), o <strong>Clerk</strong> (gestão de autenticação segura) e a <strong>Supabase</strong> (base de dados), operando todos sob estritas normas de segurança e privacidade.</p>
       ),
     },
     {
       icon: Cookie,
-      title: '4. Cookies e Armazenamento Local',
+      title: '4. Cookies e Tecnologias Semelhantes',
       content: (
-        <>
-          <p className="mb-3">O Cycling Calendar utiliza:</p>
-          <ul className="space-y-2 text-slate-600 dark:text-slate-400">
-            <li className="flex gap-2"><span className="text-amber-600 dark:text-amber-500 mt-1">•</span><span><strong className="text-slate-900 dark:text-slate-100">Cookies de sessão</strong> — Essenciais para manter a autenticação ativa (geridos pelo Clerk). Não podem ser desativados sem perder a funcionalidade de login.</span></li>
-            <li className="flex gap-2"><span className="text-amber-600 dark:text-amber-500 mt-1">•</span><span><strong className="text-slate-900 dark:text-slate-100">LocalStorage</strong> — Para guardar preferências de filtros, região, tema e outras definições locais. Estes dados nunca saem do seu browser.</span></li>
-          </ul>
-          <p className="mt-3 text-sm">Não utilizamos cookies de rastreamento, analytics de terceiros ou pixels de publicidade.</p>
-        </>
+        <p className="text-slate-400 text-sm leading-relaxed">Utilizamos apenas cookies essenciais geridos pelo sistema de autenticação (Clerk) e <code>localStorage</code> para guardar as tuas preferências de interface (filtros, dark mode). Não utilizamos cookies de rastreamento invasivos, pixels do Facebook ou Google Analytics.</p>
       ),
     },
     {
       icon: Lock,
-      title: '5. Segurança dos Dados',
+      title: '5. Segurança da Informação',
       content: (
-        <ul className="space-y-2 text-slate-600 dark:text-slate-400">
-          <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1"><Lock size={15} aria-hidden="true" /></span><span>Todas as comunicações são encriptadas via <strong className="text-slate-900 dark:text-slate-100">HTTPS/TLS</strong>.</span></li>
-          <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1"><Lock size={15} aria-hidden="true" /></span><span>A autenticação é gerida pelo <strong className="text-slate-900 dark:text-slate-100">Clerk</strong>, um serviço certificado que segue as melhores práticas de segurança (bcrypt, tokens com validade limitada).</span></li>
-          <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1"><Lock size={15} aria-hidden="true" /></span><span>Os tokens de acesso ao Google Calendar são armazenados de forma segura e utilizados apenas para a finalidade declarada.</span></li>
-          <li className="flex gap-2"><span className="text-emerald-500 dark:text-green-400 mt-1"><Lock size={15} aria-hidden="true" /></span><span>Não armazenamos palavras-passe — a autenticação é feita integralmente via OAuth 2.0 do Google.</span></li>
-        </ul>
+        <p className="text-slate-400 text-sm leading-relaxed">Toda a comunicação com os nossos servidores é encriptada via HTTPS. Não armazenamos palavras-passe no nosso servidor (o login é 100% gerido por OAuth). Caso um token de acesso expire ou seja revogado, o sistema perde imediatamente a autorização para aceder aos recursos integrados.</p>
       ),
     },
     {
       icon: UserCheck,
-      title: '6. Os Seus Direitos (RGPD)',
+      title: '6. Os Teus Direitos (RGPD)',
       content: (
         <>
-          <p className="mb-3">Ao abrigo do Regulamento Geral sobre a Proteção de Dados (RGPD) da União Europeia, o utilizador tem o direito de:</p>
-          <ul className="space-y-2 text-slate-600 dark:text-slate-400">
-            <li className="flex gap-2"><span className="text-amber-600 dark:text-amber-500 mt-1">→</span><span><strong className="text-slate-900 dark:text-slate-100">Acesso</strong> — Solicitar uma cópia de toda a informação pessoal que detemos sobre si.</span></li>
-            <li className="flex gap-2"><span className="text-amber-600 dark:text-amber-500 mt-1">→</span><span><strong className="text-slate-900 dark:text-slate-100">Retificação</strong> — Solicitar a correção de dados pessoais incorretos ou desatualizados.</span></li>
-            <li className="flex gap-2"><span className="text-amber-600 dark:text-amber-500 mt-1">→</span><span><strong className="text-slate-900 dark:text-slate-100">Eliminação</strong> — Solicitar a eliminação permanente dos seus dados pessoais ("direito ao esquecimento").</span></li>
-            <li className="flex gap-2"><span className="text-amber-600 dark:text-amber-500 mt-1">→</span><span><strong className="text-slate-900 dark:text-slate-100">Portabilidade</strong> — Receber os seus dados num formato estruturado e de uso comum.</span></li>
-            <li className="flex gap-2"><span className="text-amber-600 dark:text-amber-500 mt-1">→</span><span><strong className="text-slate-900 dark:text-slate-100">Oposição</strong> — Opor-se ao tratamento dos seus dados para determinadas finalidades.</span></li>
-            <li className="flex gap-2"><span className="text-amber-600 dark:text-amber-500 mt-1">→</span><span><strong className="text-slate-900 dark:text-slate-100">Revogar acesso</strong> — Revogar a permissão do Cycling Calendar na sua <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer" className="text-amber-600 dark:text-amber-500 hover:text-blue-700 dark:hover:text-blue-300 underline underline-offset-2">conta Google</a> a qualquer momento.</span></li>
-          </ul>
-          <p className="mt-3 text-sm">Para exercer qualquer um destes direitos, contacte-nos através da nossa <a href="/contacto" className="text-amber-600 dark:text-amber-500 hover:text-blue-700 dark:hover:text-blue-300 underline underline-offset-2">página de contacto</a>. Responderemos no prazo máximo de 30 dias.</p>
-        </>
-      ),
-    },
-    {
-      icon: Trash2,
-      title: '7. Retenção e Eliminação de Dados',
-      content: (
-        <ul className="space-y-2 text-slate-600 dark:text-slate-400">
-          <li className="flex gap-2"><span className="text-amber-600 dark:text-amber-500 mt-1">•</span><span>Os dados de conta são mantidos enquanto o utilizador tiver uma conta ativa no Cycling Calendar.</span></li>
-          <li className="flex gap-2"><span className="text-amber-600 dark:text-amber-500 mt-1">•</span><span>Ao eliminar a sua conta ou revogar o acesso, todos os dados pessoais associados serão removidos no prazo de 30 dias.</span></li>
-          <li className="flex gap-2"><span className="text-amber-600 dark:text-amber-500 mt-1">•</span><span>Dados de eventos de ciclismo (públicos, agregados de fontes externas) não são considerados dados pessoais e podem ser mantidos independentemente.</span></li>
-        </ul>
-      ),
-    },
-    {
-      icon: Shield,
-      title: '8. Menores de Idade',
-      content: (
-        <p>O Cycling Calendar não se destina a menores de 16 anos. Não recolhemos intencionalmente dados pessoais de menores. Se tomarmos conhecimento de que um menor nos forneceu dados pessoais, procederemos à sua eliminação imediata. Se é pai/tutor e acredita que o seu filho nos forneceu informação pessoal, contacte-nos.</p>
-      ),
-    },
-    {
-      icon: RefreshCw,
-      title: '9. Alterações a esta Política',
-      content: (
-        <>
-          <p>Podemos atualizar esta Política de Privacidade periodicamente para refletir alterações nas nossas práticas ou requisitos legais. Notificaremos sobre quaisquer alterações substanciais publicando a nova Política nesta página, com a data da última atualização visível.</p>
-          <p className="mt-3">Recomendamos que reveja esta página periodicamente para se manter informado sobre como protegemos a sua informação.</p>
+          <p className="text-slate-400 text-sm mb-4">Ao abrigo do RGPD, tens controlo total sobre os teus dados. Podes diretamente na plataforma:</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+            <div className="p-3 bg-slate-900/40 rounded-lg border border-slate-800/40">
+              <span className="block text-emerald-400 font-bold mb-1">Aceder</span>
+              <span className="text-[11px] text-slate-500">Ver o teu perfil</span>
+            </div>
+            <div className="p-3 bg-slate-900/40 rounded-lg border border-slate-800/40">
+              <span className="block text-emerald-400 font-bold mb-1">Retificar</span>
+              <span className="text-[11px] text-slate-500">Alterar dados</span>
+            </div>
+            <div className="p-3 bg-slate-900/40 rounded-lg border border-slate-800/40">
+              <span className="block text-rose-400 font-bold mb-1">Apagar</span>
+              <span className="text-[11px] text-slate-500">Direito ao esquecimento</span>
+            </div>
+            <div className="p-3 bg-slate-900/40 rounded-lg border border-slate-800/40">
+              <span className="block text-emerald-400 font-bold mb-1">Revogar</span>
+              <span className="text-[11px] text-slate-500">Remover acessos Google</span>
+            </div>
+          </div>
         </>
       ),
     },
   ];
 
   return (
-    <div className="min-h-screen py-24 px-6 max-w-4xl mx-auto">
+    <div className="min-h-screen bg-[#090d14] text-slate-200 antialiased selection:bg-emerald-500 selection:text-white py-12 px-4 sm:px-6">
       <div className="max-w-3xl mx-auto">
-        {/* Header */}
-        <div className="mb-8"><h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Política de Privacidade</h1><p className="text-slate-500 dark:text-slate-400">Como protegemos e tratamos os seus dados</p></div>
+        <Link href="/" className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-emerald-400 transition-colors mb-10 group font-mono">
+          <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+          Voltar ao calendário
+        </Link>
+        
+        <header className="mb-12">
+          <h1 className="text-4xl sm:text-5xl font-extrabold text-white mb-4 tracking-tight">Política de <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Privacidade</span></h1>
+          <p className="text-lg text-slate-400 font-medium">Clara, direta e sem complicações. A tua privacidade levada a sério.</p>
+        </header>
 
-        {/* Intro */}
-        <div className="mb-8 p-6 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-800">
-          <p className="text-slate-900 dark:text-slate-100 leading-relaxed">
-            A sua privacidade é muito importante para nós. Esta Política de Privacidade explica de forma clara e transparente 
-            como o <strong className="text-slate-900 dark:text-slate-100">Cycling Calendar</strong> recolhe, utiliza, protege e partilha a sua informação pessoal
-            quando utiliza o nosso website e serviços, em conformidade com o Regulamento Geral sobre a Proteção de Dados (RGPD).
-          </p>
-        </div>
-
-        {/* Sections */}
-        <div className="space-y-4">
+        <div className="space-y-6">
           {sections.map((section, index) => {
             const Icon = section.icon;
             return (
-              <section key={index} className="mb-6 p-6 bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/10">
-                    <Icon size={18} className="text-slate-600 dark:text-slate-400" />
+              <section key={index} className="p-6 sm:p-8 bg-slate-950/80 rounded-3xl border border-slate-800/60 shadow-2xl backdrop-blur-xl">
+                <div className="flex items-center gap-4 mb-5">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-slate-900 border border-slate-800 shadow-inner">
+                    <Icon size={22} className="text-emerald-400" />
                   </div>
-                  <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{section.title}</h2>
+                  <h2 className="text-xl font-bold text-white tracking-tight">{section.title}</h2>
                 </div>
-                <div className="text-slate-600 dark:text-slate-400 leading-relaxed text-[15px]">
+                <div className="pl-0 sm:pl-16">
                   {section.content}
                 </div>
               </section>
@@ -183,13 +127,12 @@ export default function PrivacyPolicy() {
           })}
         </div>
 
-        {/* Footer */}
-        <div className="mt-8 text-center">
-          <p className="text-sm text-slate-500">Última atualização: 24 de agosto de 2026</p>
-          <a href="/contacto" className="inline-flex items-center gap-2 mt-3 text-sm text-blue-400 hover:text-blue-300 transition-colors">
-            <Mail size={14} /> Dúvidas sobre privacidade? Contacte-nos
+        <footer className="mt-16 text-center border-t border-slate-800/60 pt-8">
+          <p className="text-xs text-slate-500 font-mono mb-4">Última atualização: {new Date().toLocaleDateString('pt-PT')}</p>
+          <a href="mailto:andre.mrosa@outlook.com" className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-slate-900 border border-slate-800 text-sm font-semibold text-slate-300 hover:bg-slate-800 hover:text-white transition-all shadow-sm">
+            <Mail size={16} className="text-emerald-400" /> Contactar o administrador
           </a>
-        </div>
+        </footer>
       </div>
     </div>
   );
