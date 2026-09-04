@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { useTranslation } from "@/app/i18n/useTranslation";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
@@ -19,6 +20,7 @@ import { formatEventLocation, extractEventTown } from '@/app/utils/eventLocation
 import { useUser } from '@clerk/nextjs';
 
 export default function EventDetailClient({ event }) {
+  const { t } = useTranslation();
     const router = useRouter();
     const { isSignedIn } = useUser();
     
@@ -501,7 +503,7 @@ export default function EventDetailClient({ event }) {
                             className="inline-flex items-center gap-1.5 text-slate-700 dark:text-slate-300 hover:text-white transition-colors cursor-pointer py-1 px-2 rounded-lg hover:bg-slate-900 shrink-0 font-sans"
                         >
                             <ChevronLeft size={16} />
-                            <span>Voltar</span>
+                            <span>{t("detail_back")}</span>
                         </button>
                         <span className="text-slate-600">/</span>
                         <Link href="/" className="hover:text-emerald-400 transition-colors shrink-0">
@@ -527,7 +529,7 @@ export default function EventDetailClient({ event }) {
                                     ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' 
                                     : 'bg-slate-100 dark:bg-slate-900 hover:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-800'
                             }`}
-                            title="Partilhar Prova"
+                            title={t("detail_share_event")}
                         >
                             <Share2 size={13} />
                             <span className="hidden sm:inline">{shareCopied ? 'Link Copiado!' : 'Partilhar'}</span>
@@ -737,9 +739,9 @@ export default function EventDetailClient({ event }) {
                         <div className="flex items-center gap-2 border-b border-slate-300 dark:border-slate-800 pb-3 overflow-x-auto scrollbar-none">
                             {[
                                 { id: 'geral', label: 'Visão Geral', icon: Compass },
-                                { id: 'percursos', label: 'Percursos & Altimetria', icon: Mountain },
+                                { id: 'percursos', label: t('detail_routes'), icon: Mountain },
                                 ...(hasValidSchedule ? [{ id: 'programa', label: 'Programa & Horários', icon: Clock }] : []),
-                                ...(hasDocuments ? [{ id: 'documentos', label: 'Documentos Oficiais', icon: FileText }] : [])
+                                ...(hasDocuments ? [{ id: 'documentos', label: t('detail_docs'), icon: FileText }] : [])
                             ].map(tab => {
                                 const Icon = tab.icon;
                                 const isActive = activeTab === tab.id;

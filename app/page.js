@@ -26,6 +26,7 @@ const fetcher = async (url) => {
 
 export default function HomePage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear.toString());
   const [searchTerm, setSearchTerm] = useState('');
@@ -354,7 +355,7 @@ export default function HomePage() {
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Pesquisar prova, terra, escalão..." 
+                placeholder={t('home_search_placeholder')} 
                 className="w-full bg-slate-100 dark:bg-slate-900/90 border border-slate-300 dark:border-slate-800 rounded-xl pl-9 pr-8 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-all"
               />
               {searchTerm && (
@@ -490,12 +491,12 @@ export default function HomePage() {
               className="bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl px-2.5 py-1.5 text-slate-700 dark:text-slate-300 text-xs focus:outline-none focus:border-slate-700"
             >
               <option value="todas">Todas as Regiões</option>
-              <option value="norte">Norte</option>
-              <option value="centro">Centro</option>
-              <option value="lisboa">Lisboa e Vale do Tejo</option>
-              <option value="alentejo">Alentejo</option>
-              <option value="algarve">Algarve</option>
-              <option value="ilhas">Ilhas</option>
+              <option value="norte">{t("home_region_norte")}</option>
+              <option value="centro">{t("home_region_centro")}</option>
+              <option value="lisboa">{t("home_region_lisboa")}</option>
+              <option value="alentejo">{t("home_region_alentejo")}</option>
+              <option value="algarve">{t("home_region_algarve")}</option>
+              <option value="ilhas">{t("home_region_ilhas")}</option>
             </select>
           </div>
         </div>
@@ -539,7 +540,7 @@ export default function HomePage() {
                 </span>
               )}
               <span className="text-xs font-bold text-slate-700 dark:text-slate-300 group-hover:text-white flex items-center gap-1">
-                Ver Prova &rarr;
+                {t("home_view_event")}
               </span>
             </div>
           </div>
@@ -548,10 +549,10 @@ export default function HomePage() {
         {/* RESULTS BAR (Light & Minimal) */}
         <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 pb-1">
           <div>
-            A mostrar <strong className="text-slate-900 dark:text-white font-bold">{filteredEvents.length}</strong> provas
+            {t("home_showing_events", { count: filteredEvents.length })}
           </div>
           <div className="flex items-center gap-2 font-mono">
-            <span className="text-slate-500">Ano:</span>
+            <span className="text-slate-500">{t("home_year")}</span>
             <select 
               value={selectedYear}
               onChange={(e) => setSelectedYear(e.target.value)}
@@ -560,7 +561,7 @@ export default function HomePage() {
               <option value="2027">2027</option>
               <option value="2026">2026</option>
               <option value="2025">2025</option>
-              <option value="all">Todos os Anos</option>
+              <option value="all">{t("home_all_years")}</option>
             </select>
           </div>
         </div>
@@ -581,7 +582,7 @@ export default function HomePage() {
         {/* ERROR MESSAGE */}
         {error && (
           <div className="bg-rose-950/30 border border-rose-900/50 rounded-2xl p-6 text-center text-rose-300 text-xs space-y-2">
-            <p className="font-bold">Ocorreu um erro ao carregar as provas da base de dados.</p>
+            <p className="font-bold">{t("home_error_loading")}</p>
             <p className="text-rose-400/80">{error.message}</p>
           </div>
         )}
@@ -592,7 +593,7 @@ export default function HomePage() {
             <div className="w-12 h-12 rounded-2xl bg-slate-200 dark:bg-slate-800 border border-slate-700 flex items-center justify-center mx-auto text-slate-600 dark:text-slate-400">
               <CalendarDays className="w-6 h-6" />
             </div>
-            <h3 className="font-bold text-slate-900 dark:text-white text-base">Nenhuma prova encontrada</h3>
+            <h3 className="font-bold text-slate-900 dark:text-white text-base">{t("home_no_events_title")}</h3>
             <p className="text-slate-600 dark:text-slate-400 text-xs max-w-sm mx-auto">
               Experimenta remover os filtros de pesquisa, mudar de região ou ver todas as modalidades.
             </p>
@@ -739,7 +740,7 @@ export default function HomePage() {
                         <Heart className={`w-4 h-4 ${isFav ? 'fill-rose-500 text-rose-500' : ''}`} />
                       </button>
                       <span className="font-bold text-slate-700 dark:text-slate-300 group-hover:text-emerald-400 transition flex items-center gap-1 text-xs">
-                        Ver Prova &rarr;
+                        {t("home_view_event")}
                       </span>
                     </div>
                   </div>

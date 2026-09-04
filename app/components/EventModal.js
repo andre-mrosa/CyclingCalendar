@@ -529,9 +529,9 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
         setCalendarStatus(eventMarked ? 'exists' : null);
         setCalendarMsg(eventMarked ? 'Já no calendário' : '');
         setRegOpenCalStatus(regOpenMarked ? 'exists' : null);
-        setRegOpenCalMsg(regOpenMarked ? 'Marcado' : '');
+        setRegOpenCalMsg(regOpenMarked ? t('modal_calendar_marked') : '');
         setRegCloseCalStatus(regCloseMarked ? 'exists' : null);
-        setRegCloseCalMsg(regCloseMarked ? 'Marcado' : '');
+        setRegCloseCalMsg(regCloseMarked ? t('modal_calendar_marked') : '');
         setShowCalMenu(false);
 
         if (activeEvent.programa && activeEvent.programa.trim().length > 0 && activeEvent.programa !== 'Não disponível') {
@@ -598,7 +598,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                     setRegCloseCalMsg(successMsg);
                 } else {
                     setCalendarStatus(isExists ? 'exists' : 'success');
-                    setCalendarMsg(isExists ? 'Já no calendário!' : 'Adicionado com sucesso!');
+                    setCalendarMsg(isExists ? 'Já no calendário!' : t('modal_calendar_added'));
                 }
 
                 // Sincronizar o estado global do calendário
