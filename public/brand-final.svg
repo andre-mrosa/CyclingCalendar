@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <title>Cycling Calendar Portugal</title>
+  <desc>Calendário minimalista integrado com uma bicicleta de estrada</desc>
+
+  <!-- Calendar: deliberately open at the bottom so the bicycle becomes part of it. -->
+  <path
+    d="M82 306V132c0-22 18-40 40-40h268c22 0 40 18 40 40v174"
+    stroke="#19C37D" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M82 162h348" stroke="#19C37D" stroke-width="16" stroke-linecap="round"/>
+  <path d="M150 64v48M362 64v48" stroke="#19C37D" stroke-width="16" stroke-linecap="round"/>
+
+  <!-- Small date rhythm, kept intentionally sparse. -->
+  <rect x="148" y="194" width="24" height="24" rx="6" fill="#19C37D"/>
+  <rect x="194" y="194" width="24" height="24" rx="6" fill="#19C37D" opacity=".58"/>
+  <rect x="240" y="194" width="24" height="24" rx="6" fill="#19C37D" opacity=".34"/>
+
+  <!-- Bicycle: two aligned wheels, clear frame triangle, saddle and drop handlebar. -->
+  <circle cx="158" cy="368" r="76" stroke="#19C37D" stroke-width="14"/>
+  <circle cx="354" cy="368" r="76" stroke="#19C37D" stroke-width="14"/>
+  <circle cx="158" cy="368" r="7" fill="#19C37D"/>
+  <circle cx="354" cy="368" r="7" fill="#19C37D"/>
+
+  <path
+    d="M158 368 222 264h75l57 104M222 264l62 104M284 368H158M222 264l-25-20M190 244h58"
+    stroke="#19C37D" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M297 264h31l26-28h25c12 0 18 10 12 20l-9 14" stroke="#19C37D" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="284" cy="368" r="12" stroke="#19C37D" stroke-width="12"/>
+</svg>
