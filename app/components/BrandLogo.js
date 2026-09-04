@@ -65,21 +65,11 @@ export default function BrandLogo({
     </svg>
   );
 
-  // Final clean mark: calendar structure + unmistakable bicycle silhouette.
-  const finalIcon = (
-    <img
-      src="/brand-final.svg"
-      alt=""
-      aria-hidden="true"
-      className="w-full h-full object-contain"
-    />
-  );
-
   if (variant === 'full') {
     return (
       <div className={`flex flex-col items-center text-center ${className}`}>
         <div style={{ width: size, height: size }} className="p-1">
-          {finalIcon}
+          {iconSvg}
         </div>
         <div className="mt-1 font-black text-emerald-400 tracking-wider">
           <div className="text-sm leading-tight font-black">CYCLING</div>
@@ -97,7 +87,7 @@ export default function BrandLogo({
         style={{ width: size, height: size }} 
         className="rounded-xl bg-[#090e18] border border-emerald-500/30 flex items-center justify-center p-1 shrink-0 shadow-md shadow-emerald-500/10 transition-transform group-hover:scale-105"
       >
-        {finalIcon}
+        {iconSvg}
       </div>
 
       {showText && (

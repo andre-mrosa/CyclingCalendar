@@ -11,15 +11,15 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/brand-final.svg",
+      "src": "/icon-192x192.jpg",
       "sizes": "192x192",
-      "type": "image/svg+xml",
+      "type": "image/jpeg",
       "purpose": "any"
     },
     {
-      "src": "/brand-final.svg",
+      "src": "/icon-512x512.jpg",
       "sizes": "512x512",
-      "type": "image/svg+xml",
+      "type": "image/jpeg",
       "purpose": "any"
     },
     {
