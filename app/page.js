@@ -893,7 +893,17 @@ export default function HomePage() {
           </div>
         )}
 
+      
+        {/* FOOTER */}
+        <footer className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 border-t border-slate-800/60 mt-12 flex flex-col md:flex-row items-center justify-between text-[11px] text-slate-500 font-mono">
+          <p>© {new Date().getFullYear()} Cycling Calendar. Todos os direitos reservados.</p>
+          <div className="flex gap-4 mt-4 md:mt-0">
+            <a href="/privacy-policy" className="hover:text-emerald-400 transition-colors">Política de Privacidade</a>
+            <a href="/terms-of-service" className="hover:text-emerald-400 transition-colors">Termos de Serviço</a>
+          </div>
+        </footer>
       </main>
+
 
       {/* EVENT MODAL */}
       {selectedEvent && (
