@@ -17,9 +17,9 @@ export const metadata = {
   title: "Cycling Calendar — Provas de ciclismo em Portugal",
   description: "O calendário unificado de ciclismo em Portugal.",
   icons: {
-    icon: "/brand.svg",
-    shortcut: "/brand.svg",
-    apple: "/brand.svg",
+    icon: "/brand-final.png",
+    shortcut: "/brand-final.png",
+    apple: "/brand-final.png",
   },
 };
 
