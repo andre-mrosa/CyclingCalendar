@@ -487,18 +487,18 @@ export default function EventDetailClient({ event }) {
     const primaryRegLink = links.registrationList[0]?.link || event.link;
 
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-100 selection:bg-emerald-500 selection:text-slate-950">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-emerald-500 selection:text-slate-950">
             {/* 1. TOP NAV & BREADCRUMB BAR */}
-            <header className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/80 transition-colors">
+            <header className="sticky top-0 z-40 bg-slate-50 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-300 dark:border-slate-800/80 transition-colors">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
                     {/* Breadcrumbs */}
-                    <div className="flex items-center gap-2.5 text-xs font-mono text-slate-400 truncate">
+                    <div className="flex items-center gap-2.5 text-xs font-mono text-slate-600 dark:text-slate-400 truncate">
                         <Link href="/" className="hover:opacity-80 transition-opacity shrink-0 flex items-center mr-1" title="Página Inicial - Cycling Calendar Portugal">
                             <BrandLogo size={30} showText={false} />
                         </Link>
                         <button 
                             onClick={() => router.back()}
-                            className="inline-flex items-center gap-1.5 text-slate-300 hover:text-white transition-colors cursor-pointer py-1 px-2 rounded-lg hover:bg-slate-900 shrink-0 font-sans"
+                            className="inline-flex items-center gap-1.5 text-slate-700 dark:text-slate-300 hover:text-white transition-colors cursor-pointer py-1 px-2 rounded-lg hover:bg-slate-900 shrink-0 font-sans"
                         >
                             <ChevronLeft size={16} />
                             <span>Voltar</span>
@@ -508,11 +508,11 @@ export default function EventDetailClient({ event }) {
                             Calendário
                         </Link>
                         <span className="text-slate-600">/</span>
-                        <span className="text-slate-300 font-bold uppercase truncate">
+                        <span className="text-slate-700 dark:text-slate-300 font-bold uppercase truncate">
                             {event.tag || 'Ciclismo'}
                         </span>
                         <span className="text-slate-600 hidden sm:inline">/</span>
-                        <span className="text-slate-400 truncate hidden sm:inline max-w-[200px]">
+                        <span className="text-slate-600 dark:text-slate-400 truncate hidden sm:inline max-w-[200px]">
                             {event.title}
                         </span>
                     </div>
@@ -525,7 +525,7 @@ export default function EventDetailClient({ event }) {
                             className={`flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
                                 shareCopied 
                                     ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' 
-                                    : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-800'
+                                    : 'bg-slate-100 dark:bg-slate-900 hover:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-800'
                             }`}
                             title="Partilhar Prova"
                         >
@@ -539,7 +539,7 @@ export default function EventDetailClient({ event }) {
                             className={`flex items-center justify-center w-8 h-8 rounded-lg border transition-all cursor-pointer ${
                                 isFavorited 
                                     ? 'bg-amber-400/15 border-amber-500/40 text-amber-400' 
-                                    : 'bg-slate-900 hover:bg-slate-800 border-slate-800 text-slate-400'
+                                    : 'bg-slate-100 dark:bg-slate-900 hover:bg-slate-800 border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400'
                             }`}
                             title={isFavorited ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
                         >
@@ -550,7 +550,7 @@ export default function EventDetailClient({ event }) {
                         <div className="relative" ref={calMenuRef}>
                             <button 
                                 onClick={() => setShowCalMenu(!showCalMenu)}
-                                className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 transition-colors cursor-pointer"
+                                className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-900 hover:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-800 transition-colors cursor-pointer"
                             >
                                 <Calendar size={13} className="text-emerald-400" />
                                 <span className="hidden sm:inline">Calendário</span>
@@ -558,8 +558,8 @@ export default function EventDetailClient({ event }) {
                             </button>
 
                             {showCalMenu && (
-                                <div className="absolute right-0 mt-2 w-64 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-2">
-                                    <div className="px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-slate-400 border-b border-slate-800 mb-1">
+                                <div className="absolute right-0 mt-2 w-64 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-2">
+                                    <div className="px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-slate-600 dark:text-slate-400 border-b border-slate-300 dark:border-slate-800 mb-1">
                                         Exportar Evento
                                     </div>
                                     <a 
@@ -567,7 +567,7 @@ export default function EventDetailClient({ event }) {
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         onClick={() => setShowCalMenu(false)}
-                                        className="flex items-center gap-2.5 px-3 py-2 text-xs text-slate-200 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                                        className="flex items-center gap-2.5 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
                                     >
                                         <div className="w-6 h-6 rounded-md bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-xs">G</div>
                                         <span>Google Calendar</span>
@@ -577,7 +577,7 @@ export default function EventDetailClient({ event }) {
                                             downloadIcsFile(event);
                                             setShowCalMenu(false);
                                         }}
-                                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-slate-200 hover:text-white hover:bg-slate-800 rounded-lg transition-colors cursor-pointer text-left"
+                                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 hover:text-white hover:bg-slate-800 rounded-lg transition-colors cursor-pointer text-left"
                                     >
                                         <div className="w-6 h-6 rounded-md bg-rose-500/20 text-rose-400 flex items-center justify-center font-bold text-xs">iC</div>
                                         <span>Apple / Outlook (.ics)</span>
@@ -603,7 +603,7 @@ export default function EventDetailClient({ event }) {
             </header>
 
             {/* 2. CINEMATIC HERO SECTION */}
-            <section className="relative overflow-hidden bg-slate-950 border-b border-slate-800/80">
+            <section className="relative overflow-hidden bg-slate-50 dark:bg-slate-950 border-b border-slate-300 dark:border-slate-800/80">
                 {/* Visual Cover (Real Image or Topographic Grid) */}
                 <div className="absolute inset-0 h-96 w-full overflow-hidden pointer-events-none">
                     {event.image ? (
@@ -660,13 +660,13 @@ export default function EventDetailClient({ event }) {
                                 )}
 
                                 {event.source && (
-                                    <span className="px-2.5 py-0.5 rounded-md text-[11px] font-mono text-slate-400 bg-slate-900 border border-slate-800">
+                                    <span className="px-2.5 py-0.5 rounded-md text-[11px] font-mono text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800">
                                         Origem: {event.source}
                                     </span>
                                 )}
 
                                 {displayLocation && (
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-medium text-slate-300 bg-slate-900 border border-slate-800">
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800">
                                         <MapPin size={11} className="text-emerald-400" />
                                         {displayLocation}
                                     </span>
@@ -674,15 +674,15 @@ export default function EventDetailClient({ event }) {
                             </div>
 
                             {/* Main Title */}
-                            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-tight">
+                            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight">
                                 {event.title}
                             </h1>
 
                             {/* Fast Meta Info */}
-                            <div className="flex flex-wrap items-center gap-y-2 gap-x-6 text-sm text-slate-300 pt-1">
+                            <div className="flex flex-wrap items-center gap-y-2 gap-x-6 text-sm text-slate-700 dark:text-slate-300 pt-1">
                                 <div className="flex items-center gap-2">
                                     <Calendar size={15} className="text-emerald-400 shrink-0" />
-                                    <span className="font-semibold text-white">{event.date}</span>
+                                    <span className="font-semibold text-slate-900 dark:text-white">{event.date}</span>
                                 </div>
 
                                 {event.details && (
@@ -694,7 +694,7 @@ export default function EventDetailClient({ event }) {
 
                                 {countdownDays !== null && (
                                     <div className="flex items-center gap-2 font-mono text-xs">
-                                        <Clock size={14} className="text-slate-400 shrink-0" />
+                                        <Clock size={14} className="text-slate-600 dark:text-slate-400 shrink-0" />
                                         {countdownDays > 0 ? (
                                             <span className="text-emerald-400 font-bold">Faltam {countdownDays} dias</span>
                                         ) : countdownDays === 0 ? (
@@ -709,15 +709,15 @@ export default function EventDetailClient({ event }) {
 
                         {/* Hero Date Box & Quick Registration */}
                         <div className="flex md:flex-col items-center md:items-end gap-3 self-stretch md:self-auto justify-between md:justify-end">
-                            <div className="flex items-center gap-3 bg-slate-900/90 border border-slate-800 p-3 rounded-2xl shadow-xl backdrop-blur">
-                                <div className="w-14 h-14 rounded-xl bg-slate-950 border border-slate-800 flex flex-col items-center justify-center text-center font-mono">
+                            <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-900/90 border border-slate-300 dark:border-slate-800 p-3 rounded-2xl shadow-xl backdrop-blur">
+                                <div className="w-14 h-14 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 flex flex-col items-center justify-center text-center font-mono">
                                     <span className="text-[10px] font-bold text-emerald-400 uppercase leading-none">{monthStr}</span>
-                                    <span className="text-xl font-black text-white leading-none mt-1">{dayStr}</span>
+                                    <span className="text-xl font-black text-slate-900 dark:text-white leading-none mt-1">{dayStr}</span>
                                 </div>
                                 <div className="text-left pr-2">
-                                    <span className="block text-[11px] font-mono text-slate-400 uppercase">Data Oficial</span>
-                                    <span className="block text-sm font-bold text-white leading-snug">{event.date}</span>
-                                    <span className="block text-[11px] text-slate-400">{event.regiao || 'Portugal'}</span>
+                                    <span className="block text-[11px] font-mono text-slate-600 dark:text-slate-400 uppercase">Data Oficial</span>
+                                    <span className="block text-sm font-bold text-slate-900 dark:text-white leading-snug">{event.date}</span>
+                                    <span className="block text-[11px] text-slate-600 dark:text-slate-400">{event.regiao || 'Portugal'}</span>
                                 </div>
                             </div>
                         </div>
@@ -734,7 +734,7 @@ export default function EventDetailClient({ event }) {
                     <div className="lg:col-span-2 space-y-8">
                         
                         {/* Tab Switcher for Section Navigation */}
-                        <div className="flex items-center gap-2 border-b border-slate-800 pb-3 overflow-x-auto scrollbar-none">
+                        <div className="flex items-center gap-2 border-b border-slate-300 dark:border-slate-800 pb-3 overflow-x-auto scrollbar-none">
                             {[
                                 { id: 'geral', label: 'Visão Geral', icon: Compass },
                                 { id: 'percursos', label: 'Percursos & Altimetria', icon: Mountain },
@@ -750,7 +750,7 @@ export default function EventDetailClient({ event }) {
                                         className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                                             isActive 
                                                 ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20' 
-                                                : 'text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent'
+                                                : 'text-slate-600 dark:text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent'
                                         }`}
                                     >
                                         <Icon size={14} />
@@ -764,54 +764,54 @@ export default function EventDetailClient({ event }) {
                         <section id="geral" className="space-y-6 scroll-mt-28">
                                 
                                 {/* Card: Descrição e Apresentação */}
-                                <div className="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-6 space-y-4">
+                                <div className="bg-slate-100 dark:bg-slate-900/70 border border-slate-300 dark:border-slate-800/80 rounded-2xl p-6 space-y-4">
                                     <div className="flex items-center justify-between">
-                                        <h2 className="text-base font-bold text-white flex items-center gap-2">
+                                        <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                             <Bike size={18} className="text-emerald-400" />
                                             Apresentação da Prova
                                         </h2>
                                         {event.organizador && (
-                                            <span className="text-xs text-slate-400 font-mono">
-                                                Org: <strong className="text-slate-200">{event.organizador}</strong>
+                                            <span className="text-xs text-slate-600 dark:text-slate-400 font-mono">
+                                                Org: <strong className="text-slate-800 dark:text-slate-200">{event.organizador}</strong>
                                             </span>
                                         )}
                                     </div>
 
                                     {cleanDescription ? (
                                         <div 
-                                            className="text-slate-300 text-sm leading-relaxed prose prose-invert max-w-none prose-p:my-2 prose-headings:text-white"
+                                            className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed prose prose-invert max-w-none prose-p:my-2 prose-headings:text-slate-900 dark:text-white"
                                             dangerouslySetInnerHTML={{ __html: cleanDescription }}
                                         />
                                     ) : (
-                                        <p className="text-slate-400 text-sm leading-relaxed">
+                                        <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
                                             Edição oficial de {event.title}. Esta prova faz parte do calendário oficial de {event.tag || 'Ciclismo'} em Portugal. Consulta abaixo os percursos, os horários de partida e o regulamento oficial aprovado pela organização.
                                         </p>
                                     )}
 
                                     {/* Highlights metrics strip */}
-                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-slate-800/80">
-                                        <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800/60">
-                                            <span className="block text-[10px] font-mono text-slate-400 uppercase">Modalidade</span>
-                                            <span className="block text-sm font-bold text-white mt-0.5">{event.tag || 'Ciclismo'}</span>
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-slate-300 dark:border-slate-800/80">
+                                        <div className="bg-slate-50 dark:bg-slate-950/60 p-3 rounded-xl border border-slate-300 dark:border-slate-800/60">
+                                            <span className="block text-[10px] font-mono text-slate-600 dark:text-slate-400 uppercase">Modalidade</span>
+                                            <span className="block text-sm font-bold text-slate-900 dark:text-white mt-0.5">{event.tag || 'Ciclismo'}</span>
                                         </div>
-                                        <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800/60">
-                                            <span className="block text-[10px] font-mono text-slate-400 uppercase">Âmbito</span>
-                                            <span className="block text-sm font-bold text-white mt-0.5 truncate">{event.ambito || 'Regional / Aberto'}</span>
+                                        <div className="bg-slate-50 dark:bg-slate-950/60 p-3 rounded-xl border border-slate-300 dark:border-slate-800/60">
+                                            <span className="block text-[10px] font-mono text-slate-600 dark:text-slate-400 uppercase">Âmbito</span>
+                                            <span className="block text-sm font-bold text-slate-900 dark:text-white mt-0.5 truncate">{event.ambito || 'Regional / Aberto'}</span>
                                         </div>
-                                        <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800/60">
-                                            <span className="block text-[10px] font-mono text-slate-400 uppercase">Licença</span>
-                                            <span className="block text-sm font-bold text-white mt-0.5 truncate">{event.licenca || 'Federados & CPT'}</span>
+                                        <div className="bg-slate-50 dark:bg-slate-950/60 p-3 rounded-xl border border-slate-300 dark:border-slate-800/60">
+                                            <span className="block text-[10px] font-mono text-slate-600 dark:text-slate-400 uppercase">Licença</span>
+                                            <span className="block text-sm font-bold text-slate-900 dark:text-white mt-0.5 truncate">{event.licenca || 'Federados & CPT'}</span>
                                         </div>
-                                        <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800/60">
-                                            <span className="block text-[10px] font-mono text-slate-400 uppercase">Local</span>
-                                            <span className="block text-sm font-bold text-white mt-0.5 truncate">{displayLocation}</span>
+                                        <div className="bg-slate-50 dark:bg-slate-950/60 p-3 rounded-xl border border-slate-300 dark:border-slate-800/60">
+                                            <span className="block text-[10px] font-mono text-slate-600 dark:text-slate-400 uppercase">Local</span>
+                                            <span className="block text-sm font-bold text-slate-900 dark:text-white mt-0.5 truncate">{displayLocation}</span>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Card: Categorias & Escalões Admitidos */}
-                                <div className="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-6 space-y-4">
-                                    <h3 className="text-base font-bold text-white flex items-center gap-2">
+                                <div className="bg-slate-100 dark:bg-slate-900/70 border border-slate-300 dark:border-slate-800/80 rounded-2xl p-6 space-y-4">
+                                    <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                         <Flag size={18} className="text-emerald-400" />
                                         Categorias e Escalões de Competição
                                     </h3>
@@ -821,14 +821,14 @@ export default function EventDetailClient({ event }) {
                                             {event.escaloes.map((esc, i) => (
                                                 <span 
                                                     key={i} 
-                                                    className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-950 border border-slate-800 text-slate-200"
+                                                    className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-slate-800 dark:text-slate-200"
                                                 >
                                                     {esc}
                                                 </span>
                                             ))}
                                         </div>
                                     ) : (
-                                        <p className="text-xs text-slate-400">
+                                        <p className="text-xs text-slate-600 dark:text-slate-400">
                                             Escalões oficiais de acordo com as normas da Federação Portuguesa de Ciclismo (Elites, Masters, Sub-23 e Categorias de Promoção / CPT).
                                         </p>
                                     )}
@@ -836,14 +836,14 @@ export default function EventDetailClient({ event }) {
 
                                 {/* Poster Oficial se existir */}
                                 {fpcBannerMatch && (
-                                    <div className="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-6 space-y-3">
-                                        <h3 className="text-base font-bold text-white flex items-center gap-2">
+                                    <div className="bg-slate-100 dark:bg-slate-900/70 border border-slate-300 dark:border-slate-800/80 rounded-2xl p-6 space-y-3">
+                                        <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                             <Sparkles size={18} className="text-amber-400" />
                                             Cartaz Oficial da Edição
                                         </h3>
                                         <div 
                                             onClick={() => setFullscreenImage(fpcBannerMatch)}
-                                            className="relative rounded-xl overflow-hidden border border-slate-800 cursor-zoom-in group max-h-[420px] bg-slate-950 flex items-center justify-center"
+                                            className="relative rounded-xl overflow-hidden border border-slate-300 dark:border-slate-800 cursor-zoom-in group max-h-[420px] bg-slate-50 dark:bg-slate-950 flex items-center justify-center"
                                         >
                                             <img 
                                                 src={fpcBannerMatch} 
@@ -851,7 +851,7 @@ export default function EventDetailClient({ event }) {
                                                 alt={`Cartaz ${event.title}`} 
                                                 className="max-h-[400px] w-auto object-contain group-hover:scale-[1.02] transition-transform duration-300"
                                             />
-                                            <div className="absolute bottom-3 right-3 bg-slate-950/80 backdrop-blur px-2.5 py-1 rounded-md text-[11px] font-mono text-slate-300 border border-slate-800">
+                                            <div className="absolute bottom-3 right-3 bg-slate-50 dark:bg-slate-950/80 backdrop-blur px-2.5 py-1 rounded-md text-[11px] font-mono text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-800">
                                                 Clica para ampliar
                                             </div>
                                         </div>
@@ -865,7 +865,7 @@ export default function EventDetailClient({ event }) {
                                 {/* Seletor de Percursos / Distâncias se houver mais do que um */}
                                 {detectedCourses.length > 1 && (
                                     <div className="space-y-2">
-                                        <div className="flex items-center justify-between text-xs text-slate-400 font-mono">
+                                        <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 font-mono">
                                             <span>Escolhe a distância / percurso:</span>
                                             <span className="text-emerald-400 font-bold">{detectedCourses.length} percursos disponíveis</span>
                                         </div>
@@ -879,12 +879,12 @@ export default function EventDetailClient({ event }) {
                                                         className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                                                             isSelected 
                                                                 ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/25 scale-[1.02]' 
-                                                                : 'bg-slate-900/90 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700'
+                                                                : 'bg-slate-100 dark:bg-slate-900/90 border border-slate-300 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-white hover:border-slate-700'
                                                         }`}
                                                     >
                                                         <Mountain size={14} className={isSelected ? 'text-slate-950' : 'text-emerald-400'} />
                                                         <span>{c.name}</span>
-                                                        <span className={`text-[11px] font-mono px-1.5 py-0.5 rounded ${isSelected ? 'bg-slate-950/20 text-slate-950 font-black' : 'bg-slate-950 text-slate-400'}`}>
+                                                        <span className={`text-[11px] font-mono px-1.5 py-0.5 rounded ${isSelected ? 'bg-slate-50 dark:bg-slate-950/20 text-slate-950 font-black' : 'bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400'}`}>
                                                             {c.km}
                                                         </span>
                                                     </button>
@@ -902,19 +902,19 @@ export default function EventDetailClient({ event }) {
                                         title={activeCourse?.name || event.title} 
                                     />
                                 ) : gpxLoading ? (
-                                    <div className="min-h-[300px] rounded-3xl bg-slate-900/70 border border-slate-800/80 flex flex-col items-center justify-center gap-3 p-8 text-center">
+                                    <div className="min-h-[300px] rounded-3xl bg-slate-100 dark:bg-slate-900/70 border border-slate-300 dark:border-slate-800/80 flex flex-col items-center justify-center gap-3 p-8 text-center">
                                         <Loader2 size={32} className="animate-spin text-emerald-400" />
-                                        <p className="text-sm font-bold text-white">A processar ficheiro GPX oficial...</p>
-                                        <p className="text-xs text-slate-400 font-mono">A calcular cotas de elevação, distância e desnível acumulado D+</p>
+                                        <p className="text-sm font-bold text-slate-900 dark:text-white">A processar ficheiro GPX oficial...</p>
+                                        <p className="text-xs text-slate-600 dark:text-slate-400 font-mono">A calcular cotas de elevação, distância e desnível acumulado D+</p>
                                     </div>
                                 ) : activeAltimetryImage ? (
-                                    <div className="bg-slate-900/70 border border-slate-800/80 rounded-3xl p-6 space-y-4">
+                                    <div className="bg-slate-100 dark:bg-slate-900/70 border border-slate-300 dark:border-slate-800/80 rounded-3xl p-6 space-y-4">
                                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                             <div className="flex items-center gap-2">
                                                 <span className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
                                                     Perfil Oficial Publicado
                                                 </span>
-                                                <h3 className="text-base font-bold text-white">
+                                                <h3 className="text-base font-bold text-slate-900 dark:text-white">
                                                     Altimetria {activeCourse?.name ? `• ${activeCourse.name}` : ''}
                                                 </h3>
                                             </div>
@@ -932,7 +932,7 @@ export default function EventDetailClient({ event }) {
 
                                         <div 
                                             onClick={() => setFullscreenImage(activeAltimetryImage)}
-                                            className="relative rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 p-4 cursor-zoom-in group flex items-center justify-center min-h-[320px]"
+                                            className="relative rounded-2xl overflow-hidden border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-4 cursor-zoom-in group flex items-center justify-center min-h-[320px]"
                                         >
                                             <img 
                                                 key={activeAltimetryImage}
@@ -941,24 +941,24 @@ export default function EventDetailClient({ event }) {
                                                 alt={`Perfil Altimétrico ${activeCourse?.name || event.title}`} 
                                                 className="max-h-[480px] w-auto object-contain group-hover:scale-[1.01] transition-all duration-300 animate-in fade-in"
                                             />
-                                            <div className="absolute bottom-3 right-3 bg-slate-950/90 backdrop-blur px-3 py-1 rounded-lg text-[11px] font-mono text-slate-300 border border-slate-800">
+                                            <div className="absolute bottom-3 right-3 bg-slate-50 dark:bg-slate-950/90 backdrop-blur px-3 py-1 rounded-lg text-[11px] font-mono text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-800">
                                                 Clica para ampliar o perfil
                                             </div>
                                         </div>
                                     </div>
                                 ) : (
                                     /* ESTADO FACTUAL: SEM ALTIMETRIA PUBLICADA */
-                                    <div className="bg-slate-900/60 border border-slate-800/80 rounded-3xl p-6 sm:p-8 space-y-4">
+                                    <div className="bg-slate-100 dark:bg-slate-900/60 border border-slate-300 dark:border-slate-800/80 rounded-3xl p-6 sm:p-8 space-y-4">
                                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700/60 flex items-center justify-center shrink-0 text-slate-400">
+                                                <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-800 border border-slate-700/60 flex items-center justify-center shrink-0 text-slate-600 dark:text-slate-400">
                                                     <Mountain size={20} />
                                                 </div>
                                                 <div>
-                                                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-slate-800 text-slate-400 border border-slate-700/50">
+                                                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-700/50">
                                                         Altimetria & Percurso
                                                     </span>
-                                                    <h3 className="text-base font-bold text-white mt-1">
+                                                    <h3 className="text-base font-bold text-slate-900 dark:text-white mt-1">
                                                         Perfil Oficial a Aguardar Publicação
                                                     </h3>
                                                 </div>
@@ -969,7 +969,7 @@ export default function EventDetailClient({ event }) {
                                                     href={primaryRegLink}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors shrink-0"
+                                                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-700 transition-colors shrink-0"
                                                 >
                                                     <span>Página da Prova</span>
                                                     <ArrowUpRight size={13} />
@@ -977,19 +977,19 @@ export default function EventDetailClient({ event }) {
                                             )}
                                         </div>
 
-                                        <p className="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-2xl">
+                                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl">
                                             A organização ainda não disponibilizou o perfil altimétrico oficial nem o track GPX desta prova. Os dados detalhados de altimetria e desnível acumulado (D+) serão apresentados aqui assim que constem no regulamento ou guia técnico oficial.
                                         </p>
 
-                                        <div className="flex flex-wrap items-center gap-4 pt-3 border-t border-slate-800/60 text-xs font-mono text-slate-400">
+                                        <div className="flex flex-wrap items-center gap-4 pt-3 border-t border-slate-300 dark:border-slate-800/60 text-xs font-mono text-slate-600 dark:text-slate-400">
                                             <div className="flex items-center gap-1.5">
                                                 <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                                                <span>Modalidade: <strong className="text-white">{event.tag || 'Ciclismo'}</strong></span>
+                                                <span>Modalidade: <strong className="text-slate-900 dark:text-white">{event.tag || 'Ciclismo'}</strong></span>
                                             </div>
                                             {displayLocation && (
                                                 <div className="flex items-center gap-1.5">
                                                     <span className="w-2 h-2 rounded-full bg-sky-400"></span>
-                                                    <span>Local: <strong className="text-white">{displayLocation}</strong></span>
+                                                    <span>Local: <strong className="text-slate-900 dark:text-white">{displayLocation}</strong></span>
                                                 </div>
                                             )}
                                         </div>
@@ -998,17 +998,17 @@ export default function EventDetailClient({ event }) {
 
                                 {/* Vídeo de Reconhecimento 3D se existir */}
                                 {activeVideo && (
-                                    <div className="bg-slate-900/70 border border-slate-800/80 rounded-3xl p-6 space-y-4 animate-in fade-in duration-200">
+                                    <div className="bg-slate-100 dark:bg-slate-900/70 border border-slate-300 dark:border-slate-800/80 rounded-3xl p-6 space-y-4 animate-in fade-in duration-200">
                                         <div className="flex items-center gap-2">
                                             <span className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-sky-500/15 border border-sky-500/30 text-sky-400 flex items-center gap-1.5">
                                                 <Play size={11} fill="currentColor" />
                                                 Sobrevoo Virtual 3D
                                             </span>
-                                            <h3 className="text-base font-bold text-white">
+                                            <h3 className="text-base font-bold text-slate-900 dark:text-white">
                                                 Reconhecimento 3D de Percurso {activeCourse?.name ? `• ${activeCourse.name}` : ''}
                                             </h3>
                                         </div>
-                                        <div className="relative rounded-2xl overflow-hidden border border-slate-800 bg-black aspect-video max-h-[480px]">
+                                        <div className="relative rounded-2xl overflow-hidden border border-slate-300 dark:border-slate-800 bg-black aspect-video max-h-[480px]">
                                             <iframe 
                                                 key={activeVideo}
                                                 src={activeVideo} 
@@ -1030,10 +1030,10 @@ export default function EventDetailClient({ event }) {
                                                 <div 
                                                     key={i} 
                                                     onClick={() => setSelectedCourseIndex(i)}
-                                                    className={`bg-slate-900/70 border rounded-2xl p-5 space-y-3 cursor-pointer transition-all ${
+                                                    className={`bg-slate-100 dark:bg-slate-900/70 border rounded-2xl p-5 space-y-3 cursor-pointer transition-all ${
                                                         isSelected 
                                                             ? 'border-emerald-500/60 bg-emerald-500/5 shadow-md shadow-emerald-500/10' 
-                                                            : 'border-slate-800/80 hover:border-slate-700'
+                                                            : 'border-slate-300 dark:border-slate-800/80 hover:border-slate-700'
                                                     }`}
                                                 >
                                                     <div className="flex items-center justify-between">
@@ -1046,14 +1046,14 @@ export default function EventDetailClient({ event }) {
                                                         </span>
                                                         <Mountain size={15} className={isSelected ? 'text-emerald-400' : 'text-slate-500'} />
                                                     </div>
-                                                    <h3 className="text-base font-bold text-white">{c.name}</h3>
-                                                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800/60 font-mono text-xs">
+                                                    <h3 className="text-base font-bold text-slate-900 dark:text-white">{c.name}</h3>
+                                                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-300 dark:border-slate-800/60 font-mono text-xs">
                                                         <div>
-                                                            <span className="text-slate-400 block text-[10px]">Extensão</span>
-                                                            <strong className="text-white text-sm">{c.km}</strong>
+                                                            <span className="text-slate-600 dark:text-slate-400 block text-[10px]">Extensão</span>
+                                                            <strong className="text-slate-900 dark:text-white text-sm">{c.km}</strong>
                                                         </div>
                                                         <div>
-                                                            <span className="text-slate-400 block text-[10px]">Altimetria</span>
+                                                            <span className="text-slate-600 dark:text-slate-400 block text-[10px]">Altimetria</span>
                                                             <strong className="text-emerald-400 text-sm">{c.dPlus}</strong>
                                                         </div>
                                                     </div>
@@ -1067,13 +1067,13 @@ export default function EventDetailClient({ event }) {
                         {/* SECTION: PROGRAMA & HORÁRIOS */}
                         {hasValidSchedule && (
                             <section id="programa" className="space-y-6 scroll-mt-28">
-                                <div className="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-6 space-y-5">
+                                <div className="bg-slate-100 dark:bg-slate-900/70 border border-slate-300 dark:border-slate-800/80 rounded-2xl p-6 space-y-5">
                                     <div>
-                                        <h2 className="text-base font-bold text-white flex items-center gap-2">
+                                        <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                             <Clock size={18} className="text-emerald-400" />
                                             Programa Horário Oficial
                                         </h2>
-                                        <p className="text-xs text-slate-400 mt-0.5">
+                                        <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
                                             Cronograma com os principais momentos da prova e secretariado
                                         </p>
                                     </div>
@@ -1083,20 +1083,20 @@ export default function EventDetailClient({ event }) {
                                         <div className="space-y-6">
                                             {parsedSchedule.days.map((day, dIdx) => (
                                                 <div key={dIdx} className="space-y-4">
-                                                    <div className="flex items-center gap-2 text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800 w-fit">
+                                                    <div className="flex items-center gap-2 text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider bg-slate-50 dark:bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-800 w-fit">
                                                         <Calendar size={13} />
                                                         <span>{day.dayTitle}</span>
                                                     </div>
 
-                                                    <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-800">
+                                                    <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200 dark:bg-slate-800">
                                                         {day.activities.map((act, aIdx) => (
                                                             <div key={aIdx} className="relative flex items-start gap-4 group">
-                                                                <div className="absolute -left-6 top-1 w-4 h-4 rounded-full bg-slate-900 border-2 border-emerald-500 flex items-center justify-center">
+                                                                <div className="absolute -left-6 top-1 w-4 h-4 rounded-full bg-slate-100 dark:bg-slate-900 border-2 border-emerald-500 flex items-center justify-center">
                                                                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>
                                                                 </div>
-                                                                <div className="flex-1 bg-slate-950 p-3.5 rounded-xl border border-slate-800/80 hover:border-slate-700 transition-colors">
+                                                                <div className="flex-1 bg-slate-50 dark:bg-slate-950 p-3.5 rounded-xl border border-slate-300 dark:border-slate-800/80 hover:border-slate-700 transition-colors">
                                                                     <div className="flex items-center justify-between gap-2">
-                                                                        <h4 className="text-xs sm:text-sm font-bold text-white">{act.title}</h4>
+                                                                        <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">{act.title}</h4>
                                                                         {act.time && (
                                                                             <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold shrink-0">
                                                                                 {act.time}
@@ -1104,7 +1104,7 @@ export default function EventDetailClient({ event }) {
                                                                         )}
                                                                     </div>
                                                                     {act.desc && (
-                                                                        <p className="text-xs text-slate-400 mt-1 leading-relaxed">{act.desc}</p>
+                                                                        <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">{act.desc}</p>
                                                                     )}
                                                                 </div>
                                                             </div>
@@ -1115,7 +1115,7 @@ export default function EventDetailClient({ event }) {
                                         </div>
                                     ) : (
                                         <div 
-                                            className="text-slate-300 text-sm leading-relaxed prose prose-invert max-w-none prose-p:my-2"
+                                            className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed prose prose-invert max-w-none prose-p:my-2"
                                             dangerouslySetInnerHTML={{ __html: event.programa }}
                                         />
                                     )}
@@ -1126,8 +1126,8 @@ export default function EventDetailClient({ event }) {
                         {/* SECTION: DOWNLOADS & DOCUMENTOS OFICIAIS */}
                         {hasDocuments && (
                             <section id="documentos" className="space-y-6 scroll-mt-28">
-                                <div className="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-6 space-y-4">
-                                    <h2 className="text-base font-bold text-white flex items-center gap-2">
+                                <div className="bg-slate-100 dark:bg-slate-900/70 border border-slate-300 dark:border-slate-800/80 rounded-2xl p-6 space-y-4">
+                                    <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                         <FileText size={18} className="text-emerald-400" />
                                         Documentos & Ficheiros Oficiais
                                     </h2>
@@ -1139,16 +1139,16 @@ export default function EventDetailClient({ event }) {
                                                 href={links.primaryRules.link}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="p-4 rounded-xl bg-slate-950 border border-slate-800 hover:border-emerald-500/50 transition-all flex items-start gap-3 group"
+                                                className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 hover:border-emerald-500/50 transition-all flex items-start gap-3 group"
                                             >
                                                 <div className="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20">
                                                     <FileText size={20} />
                                                 </div>
                                                 <div>
-                                                    <h3 className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors">
+                                                    <h3 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-emerald-400 transition-colors">
                                                         Regulamento Oficial da Prova
                                                     </h3>
-                                                    <p className="text-[11px] text-slate-400 mt-0.5">Normas técnicas, escalões e segurança (PDF / Link Oficial)</p>
+                                                    <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">Normas técnicas, escalões e segurança (PDF / Link Oficial)</p>
                                                     <span className="inline-flex items-center gap-1 text-[11px] font-mono text-emerald-400 mt-2">
                                                         <span>Abrir Regulamento</span>
                                                         <ArrowUpRight size={12} />
@@ -1163,16 +1163,16 @@ export default function EventDetailClient({ event }) {
                                                 key={`track-${i}`}
                                                 href={`/api/download-track?eventId=${encodeURIComponent(event.id)}&url=${encodeURIComponent(track.link)}&title=${encodeURIComponent(track.label || event.title)}`}
                                                 download={`${(track.label || event.title || 'track').toLowerCase().replace(/[^a-z0-9]/g, '_')}.gpx`}
-                                                className="p-4 rounded-xl bg-slate-950 border border-slate-800 hover:border-emerald-500/50 transition-all flex items-start gap-3 group cursor-pointer"
+                                                className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 hover:border-emerald-500/50 transition-all flex items-start gap-3 group cursor-pointer"
                                             >
                                                 <div className="w-10 h-10 rounded-lg bg-sky-500/10 text-sky-400 flex items-center justify-center shrink-0 border border-sky-500/20">
                                                     <Navigation size={20} />
                                                 </div>
                                                 <div>
-                                                    <h3 className="text-xs font-bold text-white group-hover:text-sky-400 transition-colors">
+                                                    <h3 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-sky-400 transition-colors">
                                                         {track.label || `Track GPX ${i + 1}`}
                                                     </h3>
-                                                    <p className="text-[11px] text-slate-400 mt-0.5">Ficheiro oficial para GPS Garmin, Wahoo e Hammerhead</p>
+                                                    <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">Ficheiro oficial para GPS Garmin, Wahoo e Hammerhead</p>
                                                     <span className="inline-flex items-center gap-1 text-[11px] font-mono text-sky-400 mt-2">
                                                         <Download size={12} />
                                                         <span>Baixar GPX</span>
@@ -1188,16 +1188,16 @@ export default function EventDetailClient({ event }) {
                                                 href={cond.link}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="p-4 rounded-xl bg-slate-950 border border-slate-800 hover:border-amber-500/50 transition-all flex items-start gap-3 group"
+                                                className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 hover:border-amber-500/50 transition-all flex items-start gap-3 group"
                                             >
                                                 <div className="w-10 h-10 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20">
                                                     <Shield size={20} />
                                                 </div>
                                                 <div>
-                                                    <h3 className="text-xs font-bold text-white group-hover:text-amber-400 transition-colors">
+                                                    <h3 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-amber-400 transition-colors">
                                                         {cond.label || 'Condições & Cancelamentos'}
                                                     </h3>
-                                                    <p className="text-[11px] text-slate-400 mt-0.5">Termos da organização e política de cancelamento</p>
+                                                    <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">Termos da organização e política de cancelamento</p>
                                                     <span className="inline-flex items-center gap-1 text-[11px] font-mono text-amber-400 mt-2">
                                                         <span>Consultar Condições</span>
                                                         <ArrowUpRight size={12} />
@@ -1213,16 +1213,16 @@ export default function EventDetailClient({ event }) {
                                                 href={part.link}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="p-4 rounded-xl bg-slate-950 border border-slate-800 hover:border-purple-500/50 transition-all flex items-start gap-3 group"
+                                                className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 hover:border-purple-500/50 transition-all flex items-start gap-3 group"
                                             >
                                                 <div className="w-10 h-10 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center shrink-0 border border-purple-500/20">
                                                     <Users size={20} />
                                                 </div>
                                                 <div>
-                                                    <h3 className="text-xs font-bold text-white group-hover:text-purple-400 transition-colors">
+                                                    <h3 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-purple-400 transition-colors">
                                                         {part.label || 'Lista Oficial de Inscritos'}
                                                     </h3>
-                                                    <p className="text-[11px] text-slate-400 mt-0.5">Consulta de dorsais e atletas confirmados</p>
+                                                    <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">Consulta de dorsais e atletas confirmados</p>
                                                     <span className="inline-flex items-center gap-1 text-[11px] font-mono text-purple-400 mt-2">
                                                         <span>Ver Lista de Inscritos</span>
                                                         <ArrowUpRight size={12} />
@@ -1238,16 +1238,16 @@ export default function EventDetailClient({ event }) {
                                                 href={doc.link}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="p-4 rounded-xl bg-slate-950 border border-slate-800 hover:border-blue-500/50 transition-all flex items-start gap-3 group"
+                                                className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 hover:border-blue-500/50 transition-all flex items-start gap-3 group"
                                             >
                                                 <div className="w-10 h-10 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0 border border-blue-500/20">
                                                     <FileText size={20} />
                                                 </div>
                                                 <div>
-                                                    <h3 className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors">
+                                                    <h3 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-blue-400 transition-colors">
                                                         {doc.label || 'Documento Oficial'}
                                                     </h3>
-                                                    <p className="text-[11px] text-slate-400 mt-0.5">Informação e regulamentação complementar</p>
+                                                    <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">Informação e regulamentação complementar</p>
                                                     <span className="inline-flex items-center gap-1 text-[11px] font-mono text-blue-400 mt-2">
                                                         <span>Abrir Documento</span>
                                                         <ArrowUpRight size={12} />
@@ -1264,25 +1264,25 @@ export default function EventDetailClient({ event }) {
                         {(cleanPrizes || cleanInsurance) && (
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {cleanPrizes && (
-                                    <div className="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-5 space-y-2">
+                                    <div className="bg-slate-100 dark:bg-slate-900/70 border border-slate-300 dark:border-slate-800/80 rounded-2xl p-5 space-y-2">
                                         <h3 className="text-xs font-bold text-amber-400 flex items-center gap-1.5 uppercase font-mono tracking-wider">
                                             <Trophy size={14} />
                                             Prémios e Pódios
                                         </h3>
                                         <div 
-                                            className="text-xs text-slate-300 leading-relaxed prose prose-invert"
+                                            className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed prose prose-invert"
                                             dangerouslySetInnerHTML={{ __html: cleanPrizes }}
                                         />
                                     </div>
                                 )}
                                 {cleanInsurance && (
-                                    <div className="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-5 space-y-2">
+                                    <div className="bg-slate-100 dark:bg-slate-900/70 border border-slate-300 dark:border-slate-800/80 rounded-2xl p-5 space-y-2">
                                         <h3 className="text-xs font-bold text-emerald-400 flex items-center gap-1.5 uppercase font-mono tracking-wider">
                                             <Shield size={14} />
                                             Seguro Desportivo
                                         </h3>
                                         <div 
-                                            className="text-xs text-slate-300 leading-relaxed prose prose-invert"
+                                            className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed prose prose-invert"
                                             dangerouslySetInnerHTML={{ __html: cleanInsurance }}
                                         />
                                     </div>
@@ -1296,7 +1296,7 @@ export default function EventDetailClient({ event }) {
                     <aside className="space-y-6">
                         
                         {/* 1. CARTÃO DE INSCRIÇÃO PRIMÁRIA */}
-                        <div className="bg-slate-900 border-2 border-emerald-500/40 rounded-3xl p-6 shadow-2xl space-y-5 relative overflow-hidden">
+                        <div className="bg-slate-100 dark:bg-slate-900 border-2 border-emerald-500/40 rounded-3xl p-6 shadow-2xl space-y-5 relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
 
                             <div className="flex items-center justify-between">
@@ -1304,24 +1304,24 @@ export default function EventDetailClient({ event }) {
                                     Inscrições
                                 </span>
                                 {priceBadge && (
-                                    <span className="text-xs font-bold text-emerald-400 font-mono px-2.5 py-0.5 rounded-md bg-slate-950 border border-slate-800">
+                                    <span className="text-xs font-bold text-emerald-400 font-mono px-2.5 py-0.5 rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800">
                                         {priceBadge}
                                     </span>
                                 )}
                             </div>
 
                             <div>
-                                <h3 className="text-lg font-extrabold text-white">Inscrições & Página Oficial</h3>
-                                <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                                <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">Inscrições & Página Oficial</h3>
+                                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
                                     O Cycling Calendar divulga o calendário desportivo. As inscrições e informações oficiais decorrem diretamente na página da entidade organizadora.
                                 </p>
                             </div>
 
                             {pricePhases.length > 0 && (
-                                <div className="bg-slate-950/80 rounded-xl p-3 border border-slate-800/80 space-y-1.5 text-xs font-mono">
-                                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Tabela de Preços</span>
+                                <div className="bg-slate-50 dark:bg-slate-950/80 rounded-xl p-3 border border-slate-300 dark:border-slate-800/80 space-y-1.5 text-xs font-mono">
+                                    <span className="text-[10px] text-slate-600 dark:text-slate-400 uppercase font-bold block">Tabela de Preços</span>
                                     {pricePhases.map((phase, pIdx) => (
-                                        <div key={pIdx} className="text-slate-300 text-[11px] leading-relaxed border-b border-slate-900 last:border-0 pb-1 last:pb-0">
+                                        <div key={pIdx} className="text-slate-700 dark:text-slate-300 text-[11px] leading-relaxed border-b border-slate-900 last:border-0 pb-1 last:pb-0">
                                             {phase}
                                         </div>
                                     ))}
@@ -1345,7 +1345,7 @@ export default function EventDetailClient({ event }) {
                                             href={links.officialSite.link}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="w-full flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl text-xs font-semibold bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800 transition-colors"
+                                            className="w-full flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-950 hover:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-800 transition-colors"
                                         >
                                             <span>Site Oficial da Organização</span>
                                             <ArrowUpRight size={13} />
@@ -1353,14 +1353,14 @@ export default function EventDetailClient({ event }) {
                                     )}
                                 </div>
                             ) : (
-                                <div className="w-full py-3 px-4 rounded-xl text-center bg-slate-950 border border-slate-800 text-slate-400 text-xs font-semibold">
+                                <div className="w-full py-3 px-4 rounded-xl text-center bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400 text-xs font-semibold">
                                     Página da Prova a Disponibilizar Brevemente
                                 </div>
                             )}
 
                             {/* Prazos de inscrição se disponíveis */}
                             {(event.registrationOpensAt || event.registrationClosesAt) && (
-                                <div className="space-y-2 pt-2 border-t border-slate-800/80 text-xs font-mono text-slate-300">
+                                <div className="space-y-2 pt-2 border-t border-slate-300 dark:border-slate-800/80 text-xs font-mono text-slate-700 dark:text-slate-300">
                                     {event.registrationOpensAt && (
                                         <div className="flex items-center justify-between">
                                             <span className="text-slate-500">Abertura:</span>
@@ -1378,9 +1378,9 @@ export default function EventDetailClient({ event }) {
                         </div>
 
                         {/* 2. METEOROLOGIA OFICIAL (OPEN-METEO) */}
-                        <div className="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-5 space-y-3">
+                        <div className="bg-slate-100 dark:bg-slate-900/70 border border-slate-300 dark:border-slate-800/80 rounded-2xl p-5 space-y-3">
                             <div className="flex items-center justify-between">
-                                <h3 className="text-xs font-bold text-white uppercase font-mono tracking-wider flex items-center gap-1.5">
+                                <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase font-mono tracking-wider flex items-center gap-1.5">
                                     <Sparkles size={14} className="text-sky-400" />
                                     Previsão Meteorológica
                                 </h3>
@@ -1396,42 +1396,42 @@ export default function EventDetailClient({ event }) {
                         </div>
 
                         {/* 3. FICHA TÉCNICA RÁPIDA */}
-                        <div className="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-5 space-y-4">
-                            <h3 className="text-xs font-bold text-white uppercase font-mono tracking-wider flex items-center gap-1.5">
+                        <div className="bg-slate-100 dark:bg-slate-900/70 border border-slate-300 dark:border-slate-800/80 rounded-2xl p-5 space-y-4">
+                            <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase font-mono tracking-wider flex items-center gap-1.5">
                                 <FileText size={14} className="text-emerald-400" />
                                 Ficha Técnica
                             </h3>
 
                             <dl className="divide-y divide-slate-800/80 text-xs">
                                 <div className="py-2.5 flex items-center justify-between">
-                                    <dt className="text-slate-400">Modalidade</dt>
-                                    <dd className="font-bold text-white">{event.tag || 'Ciclismo'}</dd>
+                                    <dt className="text-slate-600 dark:text-slate-400">Modalidade</dt>
+                                    <dd className="font-bold text-slate-900 dark:text-white">{event.tag || 'Ciclismo'}</dd>
                                 </div>
                                 <div className="py-2.5 flex items-center justify-between">
-                                    <dt className="text-slate-400">Chancela</dt>
-                                    <dd className="font-bold text-white">{event.source || 'Oficial'}</dd>
+                                    <dt className="text-slate-600 dark:text-slate-400">Chancela</dt>
+                                    <dd className="font-bold text-slate-900 dark:text-white">{event.source || 'Oficial'}</dd>
                                 </div>
                                 <div className="py-2.5 flex items-center justify-between">
-                                    <dt className="text-slate-400">Âmbito</dt>
-                                    <dd className="font-bold text-slate-200">{event.ambito || 'Nacional'}</dd>
+                                    <dt className="text-slate-600 dark:text-slate-400">Âmbito</dt>
+                                    <dd className="font-bold text-slate-800 dark:text-slate-200">{event.ambito || 'Nacional'}</dd>
                                 </div>
                                 <div className="py-2.5 flex items-center justify-between">
-                                    <dt className="text-slate-400">Localização</dt>
-                                    <dd className="font-bold text-slate-200">{displayLocation}</dd>
+                                    <dt className="text-slate-600 dark:text-slate-400">Localização</dt>
+                                    <dd className="font-bold text-slate-800 dark:text-slate-200">{displayLocation}</dd>
                                 </div>
                                 {event.organizador && (
                                     <div className="py-2.5 flex items-center justify-between">
-                                        <dt className="text-slate-400">Organizador</dt>
-                                        <dd className="font-bold text-slate-200 max-w-[150px] truncate text-right">{event.organizador}</dd>
+                                        <dt className="text-slate-600 dark:text-slate-400">Organizador</dt>
+                                        <dd className="font-bold text-slate-800 dark:text-slate-200 max-w-[150px] truncate text-right">{event.organizador}</dd>
                                     </div>
                                 )}
                             </dl>
                         </div>
 
                         {/* 4. LOCALIZAÇÃO & COMO CHEGAR (MAPA) */}
-                        <div className="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-5 space-y-3">
+                        <div className="bg-slate-100 dark:bg-slate-900/70 border border-slate-300 dark:border-slate-800/80 rounded-2xl p-5 space-y-3">
                             <div className="flex items-center justify-between">
-                                <h3 className="text-xs font-bold text-white uppercase font-mono tracking-wider flex items-center gap-1.5">
+                                <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase font-mono tracking-wider flex items-center gap-1.5">
                                     <MapPin size={14} className="text-rose-400" />
                                     Ponto de Concentração
                                 </h3>
@@ -1446,7 +1446,7 @@ export default function EventDetailClient({ event }) {
                                 </a>
                             </div>
 
-                            <div className="w-full h-44 rounded-xl overflow-hidden border border-slate-800 relative bg-slate-950">
+                            <div className="w-full h-44 rounded-xl overflow-hidden border border-slate-300 dark:border-slate-800 relative bg-slate-50 dark:bg-slate-950">
                                 <iframe 
                                     className="w-full h-full border-0 [filter:invert(90%)_hue-rotate(180deg)] transition-all duration-300"
                                     loading="lazy" 
@@ -1455,7 +1455,7 @@ export default function EventDetailClient({ event }) {
                                 ></iframe>
                             </div>
 
-                            <span className="block text-[11px] text-slate-400 font-mono">
+                            <span className="block text-[11px] text-slate-600 dark:text-slate-400 font-mono">
                                 📍 {displayLocation}
                             </span>
                         </div>
@@ -1475,7 +1475,7 @@ export default function EventDetailClient({ event }) {
                     }}
                 >
                     <button 
-                        className="fixed top-5 right-5 bg-slate-900 text-white p-2.5 rounded-full border border-slate-700 hover:bg-slate-800 cursor-pointer z-50"
+                        className="fixed top-5 right-5 bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white p-2.5 rounded-full border border-slate-700 hover:bg-slate-800 cursor-pointer z-50"
                         onClick={() => setFullscreenImage(null)}
                     >
                         <X size={20} />
@@ -1490,11 +1490,11 @@ export default function EventDetailClient({ event }) {
             )}
 
             {/* 5. STICKY MOBILE BOTTOM BAR */}
-            <div className="sm:hidden fixed bottom-0 left-0 right-0 bg-slate-950/95 border-t border-slate-800 p-3 flex items-center gap-2 z-40 backdrop-blur">
+            <div className="sm:hidden fixed bottom-0 left-0 right-0 bg-slate-50 dark:bg-slate-950/95 border-t border-slate-300 dark:border-slate-800 p-3 flex items-center gap-2 z-40 backdrop-blur">
                 <button 
                     onClick={toggleFavorite}
                     className={`p-3 rounded-xl border transition-colors cursor-pointer ${
-                        isFavorited ? 'bg-amber-500/20 text-amber-400 border-amber-500/40' : 'bg-slate-900 text-slate-400 border-slate-800'
+                        isFavorited ? 'bg-amber-500/20 text-amber-400 border-amber-500/40' : 'bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-800'
                     }`}
                 >
                     <Star size={18} fill={isFavorited ? '#fbbf24' : 'none'} />
@@ -1502,7 +1502,7 @@ export default function EventDetailClient({ event }) {
 
                 <button 
                     onClick={() => setShowCalMenu(true)}
-                    className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 cursor-pointer"
+                    className="p-3 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 text-slate-800 dark:text-slate-200 cursor-pointer"
                     title="Adicionar ao Calendário"
                 >
                     <Calendar size={18} className="text-emerald-400" />
@@ -1519,7 +1519,7 @@ export default function EventDetailClient({ event }) {
                         <ArrowUpRight size={14} />
                     </a>
                 ) : (
-                    <div className="flex-1 py-3 px-4 rounded-xl text-center text-xs font-bold bg-slate-900 text-slate-400 border border-slate-800">
+                    <div className="flex-1 py-3 px-4 rounded-xl text-center text-xs font-bold bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-300 dark:border-slate-800">
                         Página a Disponibilizar Brevemente
                     </div>
                 )}
