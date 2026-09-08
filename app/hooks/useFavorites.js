@@ -24,7 +24,10 @@ export function useFavorites() {
         }
 
         if (!isSignedIn || !user) {
-            setFavorites([]);
+            try {
+                const saved = JSON.parse(localStorage.getItem(getCacheKey(null)) || localStorage.getItem('cycling_favorites') || '[]');
+                setFavorites(Array.isArray(saved) ? saved : []);
+            } catch { setFavorites([]); }
             return;
         }
 
@@ -105,6 +108,10 @@ export function useFavorites() {
             const newFavorites = isFavorited 
                 ? currentFavs.filter(id => id !== eventId)
                 : [...currentFavs, eventId];
+
+            if (!isSignedIn) {
+                try { localStorage.setItem(getCacheKey(null), JSON.stringify(newFavorites)); } catch {}
+            }
 
             if (isSignedIn && user) {
                 const cacheKey = getCacheKey(user.id);

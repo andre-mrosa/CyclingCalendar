@@ -2,6 +2,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "./components/ThemeProvider";
 import ThemeClerkProvider from "./components/ThemeClerkProvider";
+import CalendarShell from "./components/CalendarShell";
+import ColorPaletteManager from "./components/ColorPaletteManager";
+import { paletteCSS, paletteBootstrap } from "./lib/colorPalettes";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,21 +18,24 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: "Cycling Calendar — Provas de ciclismo em Portugal",
-  description: "O calendário unificado de ciclismo em Portugal.",
+  description: "Planeia a tua época de ciclismo: descobre provas em Portugal, guarda a tua seleção e adiciona as datas ao teu calendário com lembretes.",
   icons: {
-    icon: "/brand-final.png",
-    shortcut: "/brand-final.png",
-    apple: "/brand-final.png",
+    icon: "/favicon.ico?v=1.0.0",
+    shortcut: "/favicon.ico?v=1.0.0",
+    apple: "/apple-icon.jpg?v=1.0.0",
   },
+  manifest: "/manifest.json?v=1.0.0",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="pt"  suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased`} suppressHydrationWarning>
+      <head><style id="color-palettes">{paletteCSS()}</style><script dangerouslySetInnerHTML={{ __html: paletteBootstrap }} /></head>
+      <body className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-canvas text-ink antialiased`} suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem={true}>
           <ThemeClerkProvider>
-            {children}
+            <ColorPaletteManager />
+            <CalendarShell>{children}</CalendarShell>
           </ThemeClerkProvider>
         </ThemeProvider>
       </body>

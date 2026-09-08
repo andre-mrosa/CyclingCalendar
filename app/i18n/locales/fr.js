@@ -1,7 +1,7 @@
 export default {
     settings_palette_title: "Couleur de l’application",
     settings_palette_desc: "La couleur s’applique uniquement aux accents. Les fonds restent neutres en mode clair et sombre. Votre choix est enregistré sur cet appareil.",
-    settings_palette_forest: "Forêt",
+    settings_palette_forest: "Cuivre",
     settings_palette_atlantic: "Corail",
     settings_palette_violet: "Violet",
     settings_palette_terracotta: "Terre cuite",

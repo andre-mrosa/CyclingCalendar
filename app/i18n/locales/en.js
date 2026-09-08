@@ -1,7 +1,7 @@
 export default {
     settings_palette_title: "App color",
     settings_palette_desc: "Color applies only to accents. Backgrounds stay neutral in light and dark modes. Your choice is saved on this device.",
-    settings_palette_forest: "Forest",
+    settings_palette_forest: "Copper",
     settings_palette_atlantic: "Coral",
     settings_palette_violet: "Violet",
     settings_palette_terracotta: "Terracotta",

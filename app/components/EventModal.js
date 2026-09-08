@@ -10,6 +10,7 @@ import { formatMonthAbbr, translateDateString, translateEscalao, translateAmbito
 import { getEventDiscipline } from '../utils/eventClassifier';
 import { detectRaceDate } from '../utils/detectRaceDate';
 import { formatEventLocation, extractEventTown } from '../utils/eventLocation';
+import { downloadIcsFile, generateGoogleCalendarUrl } from '../utils/calendarExport';
 import styles from './site.module.css';
 import { useModalFocus } from '../hooks/useModalFocus';
 
@@ -138,6 +139,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
     const [fullEvent, setFullEvent] = useState(null);
     const [isLoadingFullEvent, setIsLoadingFullEvent] = useState(false);
     const activeEvent = fullEvent || selectedEvent;
+    const googleCalendarUrl = activeEvent ? generateGoogleCalendarUrl(activeEvent) : null;
 
     useEffect(() => {
         if (!selectedEvent) {
@@ -217,7 +219,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
         if (bannerMatch) {
             fpcBannerHtml = bannerMatch[0]
                 .replace(/style="[^"]*"/g, '')
-                .replace(/<img /g, '<img title="Clica para ampliar o cartaz" class="max-h-[440px] sm:max-h-[480px] w-auto max-w-full rounded-xl mx-auto object-contain shadow-lg border border-slate-300 dark:border-slate-800 cursor-zoom-in hover:scale-[1.01] transition-transform" ');
+                .replace(/<img /g, '<img title="Clica para ampliar o cartaz" class="max-h-[440px] sm:max-h-[480px] w-auto max-w-full rounded-xl mx-auto object-contain shadow-lg border border-slate-300 dark:border-line cursor-zoom-in hover:scale-[1.01] transition-transform" ');
             programaCleanHtml = programaContentFull.replace(bannerMatch[0], '');
         }
     }
@@ -245,7 +247,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
     );
     programaCleanHtml = programaCleanHtml.replace(
         /style="display: flex; align-items: center; gap: 0\.75rem; padding: 1rem; background: var\(--bg-secondary\); border: 1px solid var\(--card-border\); border-radius: var\(--radius-md\); text-decoration: none; color: var\(--text-primary\); transition: all 0\.2s ease;"/g,
-        'class="flex items-center gap-3 p-3 bg-slate-200 dark:bg-slate-800/50 hover:bg-slate-700/80 border border-white/5 rounded-lg text-slate-700 dark:text-slate-300 hover:text-white text-sm transition-colors !no-underline shadow-sm"'
+        'class="flex items-center gap-3 p-3 bg-slate-200 dark:bg-soft hover:bg-slate-700/80 border border-white/5 rounded-lg text-slate-700 dark:text-slate-300 hover:text-white text-sm transition-colors !no-underline shadow-sm"'
     );
     programaCleanHtml = programaCleanHtml.replace(
         /<span style="font-weight: 500;">/g,
@@ -741,13 +743,13 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                     className="w-full pt-3 pb-2 flex items-center justify-center sm:hidden shrink-0 group cursor-grab active:cursor-grabbing touch-none select-none"
                     title="Arrastar para baixo para fechar ou para cima para expandir"
                 >
-                    <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 group-hover:bg-slate-400 dark:group-hover:bg-slate-500 rounded-full transition-colors" />
+                    <div className="w-12 h-1.5 bg-slate-300 dark:bg-[#4a433b] group-hover:bg-slate-400 dark:group-hover:bg-slate-500 rounded-full transition-colors" />
                 </div>
 
                 {/* Mobile Top Bar (sm:hidden) */}
                 <div className="sm:hidden flex items-center justify-between px-4 pt-1 pb-1 shrink-0">
                     <div className="flex items-center gap-2.5">
-                        <div className="flex flex-col shrink-0 w-[42px] h-[42px] bg-slate-100 dark:bg-slate-950 rounded-xl overflow-hidden border border-line">
+                        <div className="flex flex-col shrink-0 w-[42px] h-[42px] bg-slate-100 dark:bg-canvas rounded-xl overflow-hidden border border-line">
                             <div className="bg-brand-soft text-brand text-[8px] font-bold uppercase tracking-wider text-center py-0.5">
                                 {formatMonthAbbr(month, language)}
                             </div>
@@ -769,7 +771,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                     <div className="flex items-center gap-1.5">
                         <button 
                             onClick={handleShare}
-                            className={`flex items-center justify-center gap-1 h-8 px-2 rounded-full transition-all cursor-pointer text-xs font-semibold ${shareCopied ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40' : 'bg-soft border border-line text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
+                            className={`flex items-center justify-center gap-1 h-8 px-2 rounded-full transition-all cursor-pointer text-xs font-semibold ${shareCopied ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40' : 'bg-soft border border-line text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#4a433b]'}`}
                             title={t('action_share')}
                         >
                             <Share2 size={13} />
@@ -813,7 +815,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             return (
                                 <h2 className="text-base font-bold text-ink m-0 leading-snug line-clamp-2">
                                     {activeEvent.logo ? (
-                                        <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="text-inherit no-underline hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                                        <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="text-inherit no-underline hover:text-brand transition-colors">
                                             {modalTitle}
                                         </a>
                                     ) : (
@@ -833,12 +835,12 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                 {/* Desktop Header (hidden sm:flex) */}
                 <div className="hidden sm:flex items-center justify-between gap-3.5 pr-14 p-5 pb-2 min-w-0 shrink-0">
-                    <button className="absolute top-4 right-4 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors z-10 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer" onClick={closeModal} title={t('action_close')}>
+                    <button className="absolute top-4 right-4 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors z-10 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-soft cursor-pointer" onClick={closeModal} title={t('action_close')}>
                         <X size={20} />
                     </button>
                     
                     <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                        <div className="flex flex-col shrink-0 w-[54px] h-[54px] bg-slate-100 dark:bg-slate-950 rounded-xl overflow-hidden border border-line">
+                        <div className="flex flex-col shrink-0 w-[54px] h-[54px] bg-slate-100 dark:bg-canvas rounded-xl overflow-hidden border border-line">
                             <div className="bg-brand-soft text-brand text-[10px] font-bold uppercase tracking-wider text-center py-0.5">
                                 {formatMonthAbbr(month, language)}
                             </div>
@@ -864,7 +866,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 return (
                                     <h2 className="text-xl font-bold text-ink m-0 truncate">
                                         {activeEvent.logo ? (
-                                            <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="text-inherit no-underline hover:text-blue-600 dark:hover:text-blue-400 transition-colors truncate">
+                                            <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="text-inherit no-underline hover:text-brand transition-colors truncate">
                                                 {modalTitle}
                                             </a>
                                         ) : (
@@ -875,7 +877,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             })()}
                             <button 
                                 onClick={handleShare}
-                                className={`flex shrink-0 items-center justify-center gap-1.5 h-7 px-2.5 rounded-full transition-all cursor-pointer text-xs font-semibold ${shareCopied ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40' : 'bg-soft border border-line text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
+                                className={`flex shrink-0 items-center justify-center gap-1.5 h-7 px-2.5 rounded-full transition-all cursor-pointer text-xs font-semibold ${shareCopied ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40' : 'bg-soft border border-line text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#4a433b]'}`}
                                 title={t('action_share')}
                             >
                                 <Share2 size={13} />
@@ -889,7 +891,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                             e.stopPropagation();
                                             toggleFavorite(activeEvent.id);
                                         }}
-                                        className={`flex shrink-0 items-center justify-center w-7 h-7 rounded-full transition-all cursor-pointer ${isEventFavorited ? 'bg-amber-400/15 border border-amber-500/40 text-amber-400' : 'bg-soft border border-line text-slate-600 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
+                                        className={`flex shrink-0 items-center justify-center w-7 h-7 rounded-full transition-all cursor-pointer ${isEventFavorited ? 'bg-amber-400/15 border border-amber-500/40 text-amber-400' : 'bg-soft border border-line text-slate-600 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#4a433b]'}`}
                                         title={isEventFavorited ? t('card_remove_favorite') : t('card_add_favorite')}
                                     >
                                         <Star 
@@ -976,7 +978,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             href={activeEvent.link} 
                             target="_blank" 
                             rel="noopener noreferrer" 
-                            className="bg-blue-600 text-slate-900 dark:text-white no-underline px-6 py-2.5 rounded-xl font-semibold inline-block shadow-lg hover:bg-blue-500 transition-colors text-sm"
+                            className="bg-brand text-slate-900 dark:text-white no-underline px-6 py-2.5 rounded-xl font-semibold inline-block shadow-lg hover:brightness-110 transition-colors text-sm"
                         >
                             {t('action_official_site')}
                         </a>
@@ -1034,9 +1036,9 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 const raceInfo = detectRaceDate(activeEvent);
                                 return (
                                 <div className={styles.eventSummary}>
-                                    <div className="flex items-center justify-between gap-2 mb-2.5 pb-2 border-b border-slate-200/80 dark:border-slate-800/80">
+                                    <div className="flex items-center justify-between gap-2 mb-2.5 pb-2 border-b border-slate-200/80 dark:border-line">
                                         <div className="flex items-center gap-2">
-                                            <div className="w-6 h-6 rounded-lg bg-blue-500/15 text-brand flex items-center justify-center shrink-0">
+                                            <div className="w-6 h-6 rounded-lg bg-brand-soft text-brand flex items-center justify-center shrink-0">
                                                 <Sparkles size={13} />
                                             </div>
                                             <h4 className="text-xs sm:text-sm font-bold text-ink m-0 tracking-tight">
@@ -1046,7 +1048,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                         {activeEvent.source && (
                                             <div className="flex items-center gap-1 flex-wrap">
                                                 {activeEvent.source.split(',').map(s => s.trim()).filter(Boolean).map(src => (
-                                                    <span key={src} className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-200/80 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-300/60 dark:border-slate-700">
+                                                    <span key={src} className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-200/80 dark:bg-soft text-slate-600 dark:text-slate-300 border border-slate-300/60 dark:border-line">
                                                         {src}
                                                     </span>
                                                 ))}
@@ -1057,7 +1059,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                                         {/* Data */}
                                         <div className="flex items-start gap-2 text-ink">
-                                            <Calendar size={14} className="text-blue-500 shrink-0 mt-0.5" />
+                                            <Calendar size={14} className="text-brand shrink-0 mt-0.5" />
                                             <div className="min-w-0">
                                                 <span className="text-[10px] text-muted block font-semibold uppercase leading-tight">{t('summary_date')}</span>
                                                 <span className="font-semibold text-ink truncate block">{translateDateString(activeEvent.date, language)}</span>
@@ -1101,7 +1103,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                                     {/* Percursos & Distâncias */}
                                     {percursosSummary && percursosSummary.length > 0 && (
-                                        <div className="mt-2.5 pt-2 border-t border-slate-200/80 dark:border-slate-800/80">
+                                        <div className="mt-2.5 pt-2 border-t border-slate-200/80 dark:border-line">
                                             <span className="text-[10px] text-muted font-semibold uppercase block mb-1.5">
                                                 <Bike size={16} className="inline-block align-middle shrink-0 mr-1" aria-hidden="true" />{t('summary_routes_distances')}
                                             </span>
@@ -1111,15 +1113,15 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                                     const title = parts.length > 1 ? parts[0] : null;
                                                     const metrics = parts.length > 1 ? parts.slice(1).join(': ') : p;
                                                     return (
-                                                        <div key={idx} className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-blue-500/10 dark:bg-blue-500/15 border border-blue-500/20 text-xs shadow-sm">
-                                                            <div className="w-5 h-5 rounded-lg bg-blue-500/20 text-brand flex items-center justify-center shrink-0">
+                                                        <div key={idx} className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-brand-soft dark:bg-brand-soft border border-brand text-xs shadow-sm">
+                                                            <div className="w-5 h-5 rounded-lg bg-brand-soft text-brand flex items-center justify-center shrink-0">
                                                                 <Bike size={12} />
                                                             </div>
                                                             <div className="flex flex-wrap items-center gap-1.5 min-w-0">
                                                                 {title && (
                                                                     <span className="font-bold text-ink">{title}:</span>
                                                                 )}
-                                                                <span className="font-semibold text-blue-700 dark:text-blue-300">{metrics}</span>
+                                                                <span className="font-semibold text-brand">{metrics}</span>
                                                             </div>
                                                         </div>
                                                     );
@@ -1132,7 +1134,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             })()}
 
                             {isLoadingFullEvent && (
-                                <div className="w-full h-32 rounded-xl bg-slate-200 dark:bg-slate-800/30 border border-slate-300 dark:border-slate-800/80 animate-pulse flex flex-col items-center justify-center gap-2 mb-2 text-slate-500">
+                                <div className="w-full h-32 rounded-xl bg-slate-200 dark:bg-soft/30 border border-slate-300 dark:border-line animate-pulse flex flex-col items-center justify-center gap-2 mb-2 text-slate-500">
                                     <div className="w-5 h-5 border-2 border-slate-600 border-t-blue-400 rounded-full animate-spin"></div>
                                     <span className="text-xs font-medium">{t('action_loading_data')}</span>
                                 </div>
@@ -1151,7 +1153,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             {parsedLinks.resources.length > 0 && !isLoadingFullEvent && (
                                 <div className="mt-3.5 mb-1 p-3.5 bg-soft rounded-2xl border border-line">
                                     <h5 className="text-[11px] uppercase tracking-wider font-bold text-muted mb-2.5 flex items-center gap-1.5">
-                                        <ExternalLink size={12} className="text-blue-500" /> {t('resources_title')}
+                                        <ExternalLink size={12} className="text-brand" /> {t('resources_title')}
                                     </h5>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                         {parsedLinks.resources.map((res, idx) => (
@@ -1160,18 +1162,18 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                                 href={res.link} 
                                                 target="_blank" 
                                                 rel="noopener noreferrer" 
-                                                className="flex items-center gap-2.5 p-2 rounded-xl bg-surface border border-line hover:border-blue-400 dark:hover:border-slate-700 text-ink hover:text-blue-600 dark:hover:text-white transition-colors text-xs font-semibold shadow-2xs group"
+                                                className="flex items-center gap-2.5 p-2 rounded-xl bg-surface border border-line hover:border-brand dark:hover:border-line text-ink hover:text-brand dark:hover:text-white transition-colors text-xs font-semibold shadow-2xs group"
                                             >
-                                                <span className="p-1 rounded-lg bg-soft group-hover:bg-blue-500/10 transition-colors shrink-0">
+                                                <span className="p-1 rounded-lg bg-soft group-hover:bg-brand-soft transition-colors shrink-0">
                                                     {res.icon === 'track' && <MapPin size={13} className="text-emerald-500" />}
-                                                    {res.icon === 'users' && <Users size={13} className="text-blue-500" />}
+                                                    {res.icon === 'users' && <Users size={13} className="text-brand" />}
                                                     {res.icon === 'trophy' && <Trophy size={13} className="text-amber-500" />}
                                                     {res.icon === 'file' && <FileText size={13} className="text-indigo-500" />}
                                                     {res.icon === 'shield' && <Shield size={13} className="text-purple-500" />}
                                                     {res.icon === 'fpc' && <Globe size={13} className="text-slate-600 dark:text-slate-400" />}
                                                 </span>
                                                 <span className="truncate flex-1">{res.label}</span>
-                                                <ExternalLink size={11} className="text-slate-600 dark:text-slate-400 group-hover:text-blue-500 transition-colors shrink-0" />
+                                                <ExternalLink size={11} className="text-slate-600 dark:text-slate-400 group-hover:text-brand transition-colors shrink-0" />
                                             </a>
                                         ))}
                                     </div>
@@ -1193,7 +1195,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             )}
                             {(activeEvent.organizador || activeEvent.source) && (
                                 <div className="px-3 py-2 bg-soft rounded-xl border border-line flex items-center gap-2.5">
-                                    <div className="w-7 h-7 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
+                                    <div className="w-7 h-7 rounded-lg bg-brand-soft border border-brand flex items-center justify-center shrink-0">
                                         <Users size={13} className="text-brand" />
                                     </div>
                                     <div className="min-w-0">
@@ -1223,7 +1225,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 </h4>
                                 <div className="flex flex-wrap gap-2">
                                     {activeEvent.escaloes.map((esc, idx) => (
-                                        <div key={`esc-${idx}`} className="inline-flex items-center px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-blue-700 dark:text-blue-300 text-xs font-semibold shadow-sm cursor-default">
+                                        <div key={`esc-${idx}`} className="inline-flex items-center px-3 py-1.5 rounded-lg bg-brand-soft border border-brand text-brand text-xs font-semibold shadow-sm cursor-default">
                                             <span>{translateEscalao(esc, language)}</span>
                                         </div>
                                     ))}
@@ -1243,7 +1245,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                         <div key={`day-${dIdx}`} className="bg-soft border border-line rounded-2xl p-3.5 sm:p-4 shadow-sm">
                                             {/* Day Header */}
                                             <div className="flex items-center gap-2.5 mb-3.5 pb-2.5 border-b border-line">
-                                                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-brand shrink-0">
+                                                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-brand-soft border border-brand flex items-center justify-center text-brand shrink-0">
                                                     <Calendar size={15} />
                                                 </div>
                                                 <h3 className="text-xs sm:text-sm font-bold text-ink m-0">
@@ -1252,7 +1254,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                             </div>
 
                                             {/* Timeline items */}
-                                            <div className="relative pl-3.5 sm:pl-5 space-y-3 before:absolute before:left-[17px] sm:before:left-[23px] before:top-2.5 before:bottom-2.5 before:w-[2px] before:bg-slate-200 dark:before:bg-slate-200 dark:bg-slate-800">
+                                            <div className="relative pl-3.5 sm:pl-5 space-y-3 before:absolute before:left-[17px] sm:before:left-[23px] before:top-2.5 before:bottom-2.5 before:w-[2px] before:bg-slate-200 dark:before:bg-slate-200 dark:bg-soft">
                                                 {day.activities.map((act, aIdx) => {
                                                     const isStartOrFinish = /partida|chegada|início/i.test(act.title);
                                                     const isPodium = /pódio|podio|prémio|premio/i.test(act.title);
@@ -1268,10 +1270,10 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                                                     : isPodium 
                                                                     ? 'bg-amber-400 border-amber-300 shadow-[0_0_8px_rgba(251,191,36,0.5)]'
                                                                     : isSecretariado
-                                                                    ? 'bg-blue-500 border-blue-400'
+                                                                    ? 'bg-brand border-brand'
                                                                     : isLunch
                                                                     ? 'bg-orange-500 border-orange-400'
-                                                                    : 'bg-slate-400 dark:bg-slate-700 border-slate-300 dark:border-slate-500'
+                                                                    : 'bg-slate-400 dark:bg-[#4a433b] border-slate-300 dark:border-slate-500'
                                                             }`} />
 
                                                             {/* Activity Card */}
@@ -1281,7 +1283,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                                                         {act.title}
                                                                     </h4>
                                                                     {act.time && (
-                                                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-blue-700 dark:text-blue-400 text-[11px] font-semibold tracking-wide">
+                                                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-brand-soft border border-brand text-brand text-[11px] font-semibold tracking-wide">
                                                                             <Clock size={11} />
                                                                             {act.time}
                                                                         </span>
@@ -1295,13 +1297,13 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                                                 )}
 
                                                                 {act.location && (
-                                                                    <div className="pt-1.5 border-t border-slate-100 dark:border-slate-800/60 mt-1.5 flex items-center justify-between">
+                                                                    <div className="pt-1.5 border-t border-slate-100 dark:border-line/60 mt-1.5 flex items-center justify-between">
                                                                         {act.locationUrl ? (
                                                                             <a 
                                                                                 href={act.locationUrl} 
                                                                                 target="_blank" 
                                                                                 rel="noopener noreferrer"
-                                                                                className="inline-flex items-center gap-1.5 text-[11px] text-muted hover:text-blue-600 dark:hover:text-blue-400 transition-colors group/link"
+                                                                                className="inline-flex items-center gap-1.5 text-[11px] text-muted hover:text-brand transition-colors group/link"
                                                                                 title="Abrir no Google Maps"
                                                                             >
                                                                                 <MapPin size={12} className="text-rose-500 dark:text-rose-400 shrink-0" />
@@ -1372,7 +1374,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                                         ? 'bg-emerald-500/10 hover:bg-rose-500/10 text-emerald-600 hover:text-rose-600 dark:text-emerald-400 dark:hover:text-rose-400 border border-emerald-500/20 hover:border-rose-500/30'
                                                         : regOpenCalStatus === 'error'
                                                         ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30'
-                                                        : 'bg-white hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 text-brand border border-line shadow-sm'
+                                                        : 'bg-white hover:bg-slate-100 dark:bg-surface dark:hover:bg-soft text-brand border border-line shadow-sm'
                                                 } ${regOpenCalStatus === 'loading' ? 'opacity-70 cursor-default' : ''}`}
                                                 title={isRegOpenMarked ? t('action_remove_confirm') : regOpenCalMsg || t('reg_reminder_alert')}
                                             >
@@ -1404,7 +1406,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 </div>
                                 {activeEvent.registrationOpensAt && (
                                     <span className="text-[10px] text-muted mt-1 flex items-center gap-1">
-                                        <Clock size={10} className="text-blue-500" /> {t('reg_reminder_alert')}
+                                        <Clock size={10} className="text-brand" /> {t('reg_reminder_alert')}
                                     </span>
                                 )}
                             </div>
@@ -1434,7 +1436,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                                         ? 'bg-emerald-500/10 hover:bg-rose-500/10 text-emerald-600 hover:text-rose-600 dark:text-emerald-400 dark:hover:text-rose-400 border border-emerald-500/20 hover:border-rose-500/30'
                                                         : regCloseCalStatus === 'error'
                                                         ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30'
-                                                        : 'bg-white hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 text-brand border border-line shadow-sm'
+                                                        : 'bg-white hover:bg-slate-100 dark:bg-surface dark:hover:bg-soft text-brand border border-line shadow-sm'
                                                 } ${regCloseCalStatus === 'loading' ? 'opacity-70 cursor-default' : ''}`}
                                                 title={isRegCloseMarked ? t('action_remove_confirm') : regCloseCalMsg || t('reg_reminder_alert')}
                                             >
@@ -1550,7 +1552,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                     href={parsedLinks.primaryRules.link} 
                                     target="_blank" 
                                     rel="noopener noreferrer" 
-                                    className="px-3.5 py-2 bg-soft hover:bg-slate-200 dark:hover:bg-slate-700 text-ink rounded-xl text-xs sm:text-sm font-semibold transition-colors border border-line flex items-center gap-1.5"
+                                    className="px-3.5 py-2 bg-soft hover:bg-slate-200 dark:hover:bg-[#4a433b] text-ink rounded-xl text-xs sm:text-sm font-semibold transition-colors border border-line flex items-center gap-1.5"
                                 >
                                     <FileText size={14} className="text-muted shrink-0" />
                                     <span>{t('action_rules')}</span>
@@ -1563,7 +1565,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                     href={parsedLinks.officialSite.link} 
                                     target="_blank" 
                                     rel="noopener noreferrer" 
-                                    className="px-3.5 py-2 bg-soft hover:bg-slate-200 dark:hover:bg-slate-700 text-ink rounded-xl text-xs sm:text-sm font-semibold transition-colors border border-line flex items-center gap-1.5"
+                                    className="px-3.5 py-2 bg-soft hover:bg-slate-200 dark:hover:bg-[#4a433b] text-ink rounded-xl text-xs sm:text-sm font-semibold transition-colors border border-line flex items-center gap-1.5"
                                 >
                                     <Globe size={14} className="text-muted shrink-0" />
                                     <span>{parsedLinks.officialSite.label}</span>
@@ -1596,16 +1598,40 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                                     href={src.link} 
                                                     target="_blank" 
                                                     rel="noopener noreferrer" 
-                                                    className="px-3.5 py-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-ink text-xs transition-colors border-b border-slate-100 dark:border-slate-800 last:border-0 font-medium flex items-center justify-between"
+                                                    className="px-3.5 py-2.5 hover:bg-slate-100 dark:hover:bg-soft text-ink text-xs transition-colors border-b border-slate-100 dark:border-line last:border-0 font-medium flex items-center justify-between"
                                                 >
                                                     <span>{t('action_register')}</span>
-                                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 text-brand font-semibold">{src._plat}</span>
+                                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand-soft text-brand font-semibold">{src._plat}</span>
                                                 </a>
                                             ))}
                                         </div>
                                     </div>
                                 </div>
                             )}
+                        </div>
+                    )}
+
+                    {googleCalendarUrl && (
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <a
+                                href={googleCalendarUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-3.5 py-2 bg-soft hover:bg-slate-200 dark:hover:bg-[#4a433b] text-ink rounded-xl text-xs sm:text-sm font-semibold transition-colors border border-line flex items-center gap-1.5"
+                            >
+                                <CalendarPlus size={15} className="text-brand shrink-0" />
+                                <span>Google Calendar</span>
+                            </a>
+                            <button
+                                type="button"
+                                onClick={() => downloadIcsFile(activeEvent)}
+                                className="px-3.5 py-2 bg-soft hover:bg-slate-200 dark:hover:bg-[#4a433b] text-ink rounded-xl text-xs sm:text-sm font-semibold transition-colors border border-line flex items-center gap-1.5 cursor-pointer"
+                                title="Adicionar ao Apple Calendar, Outlook ou outro calendário"
+                            >
+                                <Calendar size={15} className="text-brand shrink-0" />
+                                <span>Apple / Outlook (.ics)</span>
+                            </button>
+                            <span className="text-[10px] text-muted">Evento de dia inteiro com lembrete no dia anterior.</span>
                         </div>
                     )}
 
@@ -1629,7 +1655,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                     className={`group px-3.5 py-2 rounded-xl ${(activeEvent.registrationOpensAt || activeEvent.registrationClosesAt) ? 'rounded-r-none border-r-0' : ''} text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
                                         isEventAlreadyMarked
                                             ? 'bg-emerald-500/10 hover:bg-rose-500/10 text-emerald-600 hover:text-rose-600 dark:text-emerald-400 dark:hover:text-rose-400 border border-emerald-500/20 hover:border-rose-500/30'
-                                            : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-ink border border-line'
+                                            : 'bg-slate-100 hover:bg-slate-200 dark:bg-soft dark:hover:bg-[#4a433b] text-ink border border-line'
                                     } ${isAddingToCalendar ? 'opacity-70 cursor-default' : ''}`}
                                     title={isEventAlreadyMarked ? t('action_remove_confirm') : t('cal_menu_google_cal')}
                                 >
@@ -1660,7 +1686,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 {(activeEvent.registrationOpensAt || activeEvent.registrationClosesAt) && (
                                     <button
                                         onClick={() => setShowCalMenu(!showCalMenu)}
-                                        className="px-2 py-2 rounded-r-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-ink border border-line transition-colors cursor-pointer"
+                                        className="px-2 py-2 rounded-r-xl bg-slate-100 hover:bg-slate-200 dark:bg-soft dark:hover:bg-[#4a433b] text-ink border border-line transition-colors cursor-pointer"
                                         title={t('cal_menu_google_cal')}
                                     >
                                         <ChevronDown size={14} className={`transition-transform duration-200 ${showCalMenu ? 'rotate-180' : ''}`} />
@@ -1670,7 +1696,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                             {showCalMenu && (
                                 <div className="absolute bottom-full right-0 mb-2 w-72 bg-surface border border-line rounded-xl shadow-2xl overflow-hidden z-50 animate-fade-in p-1.5 flex flex-col gap-1">
-                                    <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-muted border-b border-slate-100 dark:border-slate-800/80">
+                                    <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-muted border-b border-slate-100 dark:border-line">
                                         {t('cal_menu_google_cal')}
                                     </div>
 
@@ -1686,18 +1712,18 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                         className={`w-full text-left px-2.5 py-2 rounded-lg text-xs flex items-center justify-between transition-colors cursor-pointer ${
                                             isEventAlreadyMarked 
                                                 ? 'hover:bg-rose-500/10 text-emerald-600 hover:text-rose-600 dark:text-emerald-400 dark:hover:text-rose-400' 
-                                                : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-ink'
+                                                : 'hover:bg-slate-100 dark:hover:bg-soft text-ink'
                                         }`}
                                     >
                                         <div className="flex items-center gap-2">
-                                            <Calendar size={14} className={isEventAlreadyMarked ? "text-emerald-500 shrink-0" : "text-blue-500 shrink-0"} />
+                                            <Calendar size={14} className={isEventAlreadyMarked ? "text-emerald-500 shrink-0" : "text-brand shrink-0"} />
                                             <div>
                                                 <span className="font-semibold block leading-tight">{t('cal_menu_mark_event')}</span>
                                                 <span className="text-[10px] text-slate-600 dark:text-slate-400">{t('reg_reminder_alert')}</span>
                                             </div>
                                         </div>
                                         {isEventAlreadyMarked && (
-                                            <Check size={13} className="text-emerald-500 shrink-0" />
+                                            <Check size={13} className="text-brand shrink-0" />
                                         )}
                                     </button>
 
@@ -1714,18 +1740,18 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                             className={`w-full text-left px-2.5 py-2 rounded-lg text-xs flex items-center justify-between transition-colors cursor-pointer ${
                                                 isRegOpenMarked 
                                                     ? 'hover:bg-rose-500/10 text-emerald-600 hover:text-rose-600 dark:text-emerald-400 dark:hover:text-rose-400' 
-                                                    : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-ink'
+                                                    : 'hover:bg-slate-100 dark:hover:bg-soft text-ink'
                                             }`}
                                         >
                                             <div className="flex items-center gap-2">
-                                                <Clock size={14} className={isRegOpenMarked ? "text-emerald-500 shrink-0" : "text-blue-500 shrink-0"} />
+                                                <Clock size={14} className={isRegOpenMarked ? "text-emerald-500 shrink-0" : "text-brand shrink-0"} />
                                                 <div>
                                                     <span className="font-semibold block leading-tight">{t('cal_menu_mark_reg_open')}</span>
                                                     <span className="text-[10px] text-slate-600 dark:text-slate-400">{t('reg_reminder_alert')}</span>
                                                 </div>
                                             </div>
                                             {isRegOpenMarked && (
-                                                <Check size={13} className="text-emerald-500 shrink-0" />
+                                                <Check size={13} className="text-brand shrink-0" />
                                             )}
                                         </button>
                                     )}
@@ -1743,7 +1769,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                             className={`w-full text-left px-2.5 py-2 rounded-lg text-xs flex items-center justify-between transition-colors cursor-pointer ${
                                                 isRegCloseMarked 
                                                     ? 'hover:bg-rose-500/10 text-emerald-600 hover:text-rose-600 dark:text-emerald-400 dark:hover:text-rose-400' 
-                                                    : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-ink'
+                                                    : 'hover:bg-slate-100 dark:hover:bg-soft text-ink'
                                             }`}
                                         >
                                             <div className="flex items-center gap-2">
@@ -1754,7 +1780,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                                 </div>
                                             </div>
                                             {isRegCloseMarked && (
-                                                <Check size={13} className="text-emerald-500 shrink-0" />
+                                                <Check size={13} className="text-brand shrink-0" />
                                             )}
                                         </button>
                                     )}
@@ -1801,7 +1827,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             <button
                                 disabled={isDeletingFromCalendar}
                                 onClick={() => setDeleteConfirmation(null)}
-                                className="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-ink hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                                className="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-ink hover:bg-slate-100 dark:hover:bg-soft transition-colors cursor-pointer"
                             >
                                 {t('action_cancel')}
                             </button>
@@ -1837,7 +1863,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                     }}
                 >
                     <button 
-                        className="fixed top-4 right-4 sm:top-6 sm:right-6 bg-slate-100 dark:bg-slate-900/80 hover:bg-slate-800 text-slate-900 dark:text-white p-2.5 rounded-full transition-colors cursor-pointer z-[10000] border border-slate-700 shadow-xl" 
+                        className="fixed top-4 right-4 sm:top-6 sm:right-6 bg-surface hover:bg-soft text-ink p-2.5 rounded-full transition-colors cursor-pointer z-[10000] border border-line shadow-xl"
                         onClick={(e) => {
                             e.stopPropagation();
                             setFullscreenImage(null);

@@ -14,18 +14,17 @@ import WeatherWidget from '@/app/components/WeatherWidget';
 import ElevationProfileChart from '@/app/components/ElevationProfileChart';
 import BrandLogo from '@/app/components/BrandLogo';
 import { categorizeEventLinks } from '@/app/utils/eventLinks';
-import { generateGoogleCalendarUrl, downloadIcsFile } from '@/app/utils/calendarExport';
+import { generateGoogleCalendarUrl, downloadIcsFile, getCalendarDates } from '@/app/utils/calendarExport';
 import { parsePrograma } from '@/app/utils/parsePrograma';
 import { formatEventLocation, extractEventTown } from '@/app/utils/eventLocation';
-import { useUser } from '@clerk/nextjs';
+import { useFavorites } from '@/app/hooks/useFavorites';
 
 export default function EventDetailClient({ event }) {
   const { t } = useTranslation();
     const router = useRouter();
-    const { isSignedIn } = useUser();
+    const { favorites, toggleFavorite: toggleSavedEvent, isSignedIn } = useFavorites();
     
     // Estados interativos
-    const [favorites, setFavorites] = useState([]);
     const [shareCopied, setShareCopied] = useState(false);
     const [showCalMenu, setShowCalMenu] = useState(false);
     const [fullscreenImage, setFullscreenImage] = useState(null);
@@ -35,16 +34,6 @@ export default function EventDetailClient({ event }) {
     const [gpxData, setGpxData] = useState(event.gpxData || null);
     const [gpxLoading, setGpxLoading] = useState(false);
     const calMenuRef = useRef(null);
-
-    // Carregar favoritos do localStorage
-    useEffect(() => {
-        try {
-            const saved = localStorage.getItem('cycling_favorites');
-            if (saved) {
-                setFavorites(JSON.parse(saved));
-            }
-        } catch (e) {}
-    }, []);
 
     // Fechar dropdown de calendário ao clicar fora
     useEffect(() => {
@@ -126,16 +115,9 @@ export default function EventDetailClient({ event }) {
     };
 
     const isFavorited = favorites.includes(event.id);
+    const canExportCalendar = !!getCalendarDates(event);
 
-    const toggleFavorite = () => {
-        const next = isFavorited 
-            ? favorites.filter(id => id !== event.id) 
-            : [...favorites, event.id];
-        setFavorites(next);
-        try {
-            localStorage.setItem('cycling_favorites', JSON.stringify(next));
-        } catch (e) {}
-    };
+    const toggleFavorite = () => toggleSavedEvent(event.id);
 
     const handleShare = async () => {
         const shareUrl = typeof window !== 'undefined' ? window.location.href : `https://cyclingcalendar.pt/events/${event.id}`;
@@ -543,7 +525,7 @@ export default function EventDetailClient({ event }) {
                                     ? 'bg-amber-400/15 border-amber-500/40 text-amber-400' 
                                     : 'bg-slate-100 dark:bg-slate-900 hover:bg-slate-800 border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400'
                             }`}
-                            title={isFavorited ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+                            title={isFavorited ? 'Remover da minha seleção' : 'Guardar na minha seleção'}
                         >
                             <Star size={14} fill={isFavorited ? '#fbbf24' : 'none'} />
                         </button>
@@ -552,18 +534,21 @@ export default function EventDetailClient({ event }) {
                         <div className="relative" ref={calMenuRef}>
                             <button 
                                 onClick={() => setShowCalMenu(!showCalMenu)}
+                                disabled={!canExportCalendar}
+                                title={canExportCalendar ? "Adicionar ao teu calendário" : "Data por confirmar"}
                                 className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-900 hover:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-800 transition-colors cursor-pointer"
                             >
                                 <Calendar size={13} className="text-emerald-400" />
-                                <span className="hidden sm:inline">Calendário</span>
+                                <span className="hidden sm:inline">Adicionar ao calendário</span>
                                 <ChevronDown size={12} className={`transition-transform ${showCalMenu ? 'rotate-180' : ''}`} />
                             </button>
 
                             {showCalMenu && (
                                 <div className="absolute right-0 mt-2 w-64 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-2">
                                     <div className="px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-slate-600 dark:text-slate-400 border-b border-slate-300 dark:border-slate-800 mb-1">
-                                        Exportar Evento
+                                        Levar para a minha agenda
                                     </div>
+                                    <p className="px-3 py-2 text-xs leading-relaxed text-slate-600 dark:text-slate-400">Reserva de dia completo. Confirma o horário no programa da prova. No Google, escolhe o aviso antes de guardar; o ficheiro .ics inclui um lembrete de 1 dia, sujeito às definições da tua aplicação.</p>
                                     <a 
                                         href={generateGoogleCalendarUrl(event)}
                                         target="_blank"
@@ -1504,6 +1489,7 @@ export default function EventDetailClient({ event }) {
 
                 <button 
                     onClick={() => setShowCalMenu(true)}
+                    disabled={!canExportCalendar}
                     className="p-3 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 text-slate-800 dark:text-slate-200 cursor-pointer"
                     title="Adicionar ao Calendário"
                 >

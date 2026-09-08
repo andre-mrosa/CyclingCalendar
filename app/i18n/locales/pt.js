@@ -1,7 +1,7 @@
 export default {
     settings_palette_title: "Cor da aplicação",
     settings_palette_desc: "A cor aplica-se apenas aos destaques. Os fundos mantêm-se neutros, em modo claro e escuro. A escolha fica guardada neste dispositivo.",
-    settings_palette_forest: "Floresta",
+    settings_palette_forest: "Cobre",
     settings_palette_atlantic: "Coral",
     settings_palette_violet: "Violeta",
     settings_palette_terracotta: "Terracota",
