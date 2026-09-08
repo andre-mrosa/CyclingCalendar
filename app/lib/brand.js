@@ -1,3 +1,3 @@
 export function brandSVG() {
-    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512"><image href="/brand-final.png?v=1.0.0" width="512" height="512"/></svg>\n';
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512"><image href="/brand-final.png?v=1.0.0-2" width="512" height="512"/></svg>\n';
 }

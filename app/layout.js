@@ -20,11 +20,11 @@ export const metadata = {
   title: "Cycling Calendar — Provas de ciclismo em Portugal",
   description: "Planeia a tua época de ciclismo: descobre provas em Portugal, guarda a tua seleção e adiciona as datas ao teu calendário com lembretes.",
   icons: {
-    icon: "/favicon.ico?v=1.0.0",
-    shortcut: "/favicon.ico?v=1.0.0",
-    apple: "/apple-icon.jpg?v=1.0.0",
+    icon: "/favicon.ico?v=1.0.0-2",
+    shortcut: "/favicon.ico?v=1.0.0-2",
+    apple: "/apple-icon.jpg?v=1.0.0-2",
   },
-  manifest: "/manifest.json?v=1.0.0",
+  manifest: "/manifest.json?v=1.0.0-2",
 };
 
 export default function RootLayout({ children }) {
