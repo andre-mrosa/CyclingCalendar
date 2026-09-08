@@ -1,5 +1,6 @@
 import { prisma } from '@/app/lib/db';
 import { getEventDiscipline } from '@/app/utils/eventClassifier';
+import { withRegistrationDates } from '@/app/utils/registrationDates';
 
 export async function GET(request, { params }) {
     try {
@@ -23,7 +24,7 @@ export async function GET(request, { params }) {
 
         // Convert stringified arrays back to arrays for frontend
         const formattedEvent = {
-            ...event,
+            ...withRegistrationDates(event),
             tag: getEventDiscipline(event),
             escaloes: event.escaloes ? (typeof event.escaloes === 'string' ? JSON.parse(event.escaloes) : event.escaloes) : [],
             extraLinks: event.extraLinks ? (typeof event.extraLinks === 'string' ? JSON.parse(event.extraLinks) : event.extraLinks) : []

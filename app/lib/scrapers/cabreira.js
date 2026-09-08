@@ -7,6 +7,7 @@ import {
 import { logInfo, logError } from '../logger.js';
 import { saveOrMergeEvent } from '../merging/eventMerger.js';
 import { downloadEventAsset } from './assetDownloader.js';
+import { parseRegistrationDates } from '../../utils/registrationDates.js';
 
 export const deepScrapeCabreira = async (link, eventId = 'cabreira-event') => {
     if (!link) return { pageTitle: null, opensAt: null, closesAt: null, description: null, prices: null, insurance: null, prizes: null, programa: null, additionalLinks: [] };
@@ -203,25 +204,9 @@ export const deepScrapeCabreira = async (link, eventId = 'cabreira-event') => {
                 const regHtml = await regResponse.text();
                 const $reg = cheerio.load(regHtml);
                 
-                // Parse phase dates do regulamento
-                $reg('li, p, ul, ol, td, div').each((_, el) => {
-                    const text = $reg(el).text();
-                    
-                    // Match abertura
-                    if (!opensAt && text.match(/abertura\s+(?:dia|a)?\s*(\d{2}[-/.]\d{2}[-/.]\d{4})/i)) {
-                        const m = text.match(/abertura\s+(?:dia|a)?\s*(\d{2}[-/.]\d{2}[-/.]\d{4})/i);
-                        if (m) opensAt = parsePTDateToISO(m[1].replace(/\./g, '-').replace(/\//g, '-'));
-                    }
-                    
-                    // Match fecho ("inscrições serão efetuadas até ao dia 08-09-2026" ou "encerram dia 08-09-2026")
-                    if (!closesAt) {
-                        const mClose = text.match(/(?:encerram|efetuadas até ao dia|até ao dia)\s+(\d{2}[-/.]\d{2}[-/.]\d{4})/i);
-                        if (mClose) {
-                            const cleanD = mClose[1].replace(/\./g, '-').replace(/\//g, '-');
-                            closesAt = parsePTDateToISO(cleanD + ' pelas 23h59');
-                        }
-                    }
-                });
+                const dates = parseRegistrationDates($reg('body').html());
+                opensAt = dates.registrationOpensAt ? new Date(dates.registrationOpensAt) : opensAt;
+                closesAt = dates.registrationClosesAt ? new Date(dates.registrationClosesAt) : closesAt;
 
                 // Preços & Fases (extração limpa)
                 const priceNumbers = [];
@@ -358,7 +343,7 @@ export const scrapeCabreira = async (year, options = {}) => {
         // Consultar provas Cabreira já existentes na base de dados para acelerar sincronização
         const existingEvents = await prisma.event.findMany({
             where: { source: { contains: 'Cabreira' } },
-            select: { id: true, logo: true, image: true, registrationClosesAt: true, prices: true, description: true, insurance: true, prizes: true, programa: true, extraLinks: true }
+            select: { id: true, logo: true, image: true, registrationOpensAt: true, registrationClosesAt: true, prices: true, description: true, insurance: true, prizes: true, programa: true, extraLinks: true }
         });
         const existingMap = new Map(existingEvents.map(e => [e.id, e]));
 

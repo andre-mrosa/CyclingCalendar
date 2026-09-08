@@ -17,7 +17,9 @@ import { formatMonthAbbr, translateDateString, translateEscalao, translateAmbito
 import { isStageRace, getEventDiscipline } from '../utils/eventClassifier';
 import { usePathname } from 'next/navigation';
 import PageHeading from './PageHeading';
+import AgendaOverview from './AgendaOverview';
 import styles from './site.module.css';
+import { matchesPeriod, isCancelled, conciseEscaloes, registrationDaysUntil } from '../utils/planning';
 
 const fetcher = async (url) => {
     const response = await fetch(url);
@@ -110,6 +112,7 @@ export default function CalendarView({
     const [monthTo, setMonthTo] = useState(12);
     const [selectedTags, setSelectedTags] = useState([]);
     const [showFilters, setShowFilters] = useState(false);
+    const [quickPeriod, setQuickPeriod] = useState('');
     const [selectedType, setSelectedType] = useState('Todos');
     const defaultPastEventsFilter = forceAmbito === 'Campeonato Nacional' ? 'todos' : 'futuros';
     const [pastEventsFilter, setPastEventsFilter] = useState(defaultPastEventsFilter);
@@ -296,9 +299,10 @@ export default function CalendarView({
             filtered = filtered.filter(e => e.sortDate && new Date(e.sortDate) < today);
         }
 
+        filtered = filtered.filter(event => matchesPeriod(event, quickPeriod));
         setFilteredEvents(filtered);
         setVisibleCount(15); // Reset visible count on filter change
-    }, [events, searchTerm, selectedYears, selectedEscaloes, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, filterByFavorites, favorites, forceEscalao, forceAmbito, forceLicenca]);
+    }, [events, searchTerm, selectedYears, selectedEscaloes, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, filterByFavorites, filterByAgenda, markedSet, favorites, forceEscalao, forceAmbito, forceLicenca, quickPeriod]);
 
     const uniqueEscaloes = ['Elite', 'Elite Amador', 'Sub-23', 'Sub-19 (Juniores)', 'Sub-17 (Cadetes)', 'Sub-15 (Juvenis)', 'Masters / Veteranos', 'Femininas', 'Escolas', 'Profissional (UCI)', 'Todos (Aberto)', 'Geral / Vários'];
     const uniqueAmbitos = ['Todos', ...new Set(events.map(e => e.ambito))];
@@ -390,6 +394,7 @@ export default function CalendarView({
     };
 
     const clearAllFilters = () => {
+        setQuickPeriod('');
         setSelectedEscaloes(forceEscalao ? [forceEscalao] : (defaultEscalao && defaultEscalao !== 'Todos' ? [defaultEscalao] : []));
         setSelectedAmbito(forceAmbito || 'Todos');
         setSelectedLicenca(forceLicenca || 'Todas');
@@ -446,20 +451,20 @@ export default function CalendarView({
                             aria-controls="calendar-filters"
                         >
                             <Filter size={15} className="shrink-0" />
-                            <span className="truncate">{showFilters ? t('filter_button_close') : t('filter_button_open')}</span>
+                            <span className="truncate">{showFilters ? t('filter_button_close') : t('planning_advanced')}</span>
                         </button>
 
                         <select
                             aria-label={t('filter_past_upcoming')}
                             value={pastEventsFilter}
-                            onChange={e => setPastEventsFilter(e.target.value)}
+                            onChange={e => { setPastEventsFilter(e.target.value); setQuickPeriod(''); }}
                         >
                             <option value="todos">{t('filter_all_events')}</option>
                             <option value="futuros">{t('filter_upcoming_only')}</option>
                             <option value="passados">{t('filter_past_only')}</option>
                         </select>
                         
-                        {(selectedEscaloes.length > 0 || selectedDistrito !== 'Todos' || selectedRegiao !== 'Todas' || selectedTags.length > 0 || selectedType !== 'Todos' || monthFrom !== 1 || monthTo !== 12 || searchTerm !== '' || pastEventsFilter !== defaultPastEventsFilter) && (
+                        {(quickPeriod || selectedEscaloes.length > 0 || selectedDistrito !== 'Todos' || selectedRegiao !== 'Todas' || selectedTags.length > 0 || selectedType !== 'Todos' || monthFrom !== 1 || monthTo !== 12 || searchTerm !== '' || pastEventsFilter !== defaultPastEventsFilter) && (
                             <button 
                                 onClick={clearAllFilters}
                                 title={t('filter_clear_all')}
@@ -491,10 +496,35 @@ export default function CalendarView({
                 </div>
 
                 {/* Sub-header info: Counter & Bulk Export */}
+                <div className={styles.quickFilters}>
+                    <div className={styles.periods}>
+                        {['', 'weekend', 'month', 'open'].map(period => (
+                            <button key={period} type="button" aria-pressed={quickPeriod === period} onClick={() => {
+                                setQuickPeriod(period);
+                                if (period) {
+                                    setPastEventsFilter('futuros');
+                                    setSelectedYears([String(new Date().getFullYear()), String(new Date().getFullYear() + 1)]);
+                                    setMonthFrom(1); setMonthTo(12);
+                                }
+                            }}>{t(period ? `planning_${period}` : 'planning_any')}</button>
+                        ))}
+                    </div>
+                    <label>{t('planning_modality')}
+                        <select value={selectedTags.length === 1 ? selectedTags[0] : ''} onChange={e => setSelectedTags(e.target.value ? [e.target.value] : [])}>
+                            <option value="">{t('planning_all_modalities')}</option>
+                            {availableTags.map(tag => <option key={tag} value={tag}>{translateTag(tag, language)}</option>)}
+                        </select>
+                    </label>
+                    {activeFilters.includes('distrito') && <label>{t('filter_district')}
+                        <select value={selectedDistrito} onChange={e => setSelectedDistrito(e.target.value)}>
+                            {uniqueDistritos.map(d => <option key={d} value={d}>{d === 'Todos' ? t('filter_all_districts') : d}</option>)}
+                        </select>
+                    </label>}
+                </div>
                 <div className={styles.results}>
                     <div className="text-xs text-muted font-medium flex items-center gap-1.5">
                         <span>{t('filter_counter_showing')} <strong className="text-ink font-semibold">{Math.min(visibleCount, filteredEvents.length)}</strong> {t('filter_counter_of')} <strong className="text-ink font-semibold">{filteredEvents.length}</strong> {filteredEvents.length === 1 ? t('filter_counter_event') : t('filter_counter_events')}</span>
-                        {events.length > 0 && filteredEvents.length !== events.length && (
+                        {!filterByAgenda && !filterByFavorites && events.length > 0 && filteredEvents.length !== events.length && (
                             <span className="text-slate-400 dark:text-slate-500 font-normal">({events.length} {t('filter_counter_total')})</span>
                         )}
                     </div>
@@ -730,6 +760,7 @@ export default function CalendarView({
             </header>
 
             <section className={styles.calendarFeed} aria-label={pageTitle}>
+                {(filterByAgenda || filterByFavorites) && !isInitialLoading && <AgendaOverview events={events.filter(event => filterByAgenda ? isMarked(event.id, 'event', event._allIds || []) : favorites.includes(event.id) || event._allIds?.some(id => favorites.includes(id)))} onSelect={setSelectedEvent} />}
                 {isInitialLoading && (
                     <div className="flex flex-col items-center justify-center py-16 text-slate-400">
                         <div className="w-8 h-8 border-4 border-line border-t-brand rounded-full animate-spin mb-4"></div>
@@ -849,7 +880,7 @@ export default function CalendarView({
                                     )}
                                     <div 
                                         className={styles.eventCard}
-                                        data-state={isEventMarked ? 'marked' : dateConflict.hasConflict ? 'conflict' : isEventFavorited ? 'favorite' : undefined}
+                                        data-state={isCancelled(event) ? 'cancelled' : isEventMarked ? 'marked' : dateConflict.hasConflict ? 'conflict' : isEventFavorited ? 'favorite' : undefined}
                                     >
                                     <div className={styles.eventMain}>
                                         <div className={styles.date}>
@@ -858,6 +889,7 @@ export default function CalendarView({
                                             </div>
                                             <div className={`${styles.dateDay} ${day.length > 2 ? styles.dateRange : ''}`}>
                                                 {day}
+                                                {event.sortDate && !day.includes('-') && <small className={styles.weekday}>{new Intl.DateTimeFormat(language, { weekday: 'short', timeZone: 'UTC' }).format(new Date(event.sortDate))}</small>}
                                             </div>
                                         </div>
 
@@ -892,13 +924,14 @@ export default function CalendarView({
                                                 </span>
                                                 <span>
                                                     <Bike size={12} className="text-slate-400 dark:text-slate-500 shrink-0" />
-                                                    <span>{(event.escaloes || []).map(esc => translateEscalao(esc, language)).join(' · ')} {discipline ? `(${translateTag(discipline, language)})` : ''}</span>
+                                                    <span>{conciseEscaloes(event.escaloes).map(esc => translateEscalao(esc, language)).join(' · ')} {discipline ? `(${translateTag(discipline, language)})` : ''}</span>
                                                 </span>
                                             </div>
                                         </div>
                                     </div>
 
                                     <div className={styles.eventBadges}>
+                                            {isCancelled(event) && <span className={styles.cancelledBadge}><AlertTriangle size={12} />{t('planning_cancelled')}</span>}
                                             {isEventMarked && (
                                                 <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-brand-soft text-brand border border-brand flex items-center gap-1 shrink-0">
                                                     <Check size={11} className="stroke-[3]" /> {t('card_on_agenda')}
@@ -919,7 +952,7 @@ export default function CalendarView({
                                                 const now = new Date();
                                                 if (event.registrationClosesAt) {
                                                     const closes = new Date(event.registrationClosesAt);
-                                                    const diffDays = Math.ceil((closes - now) / (1000 * 60 * 60 * 24));
+                                                    const diffDays = registrationDaysUntil(event.registrationClosesAt, now);
                                                     if (diffDays >= 0 && diffDays <= 4) {
                                                         const countdownText = diffDays === 0 
                                                             ? t('card_last_day') 

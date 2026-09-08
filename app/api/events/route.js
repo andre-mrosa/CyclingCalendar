@@ -1,5 +1,6 @@
 import { prisma } from '@/app/lib/db';
 import { getEventDiscipline } from '@/app/utils/eventClassifier';
+import { withRegistrationDates } from '@/app/utils/registrationDates';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request) {
@@ -85,7 +86,7 @@ export async function GET(request) {
 
         // Convert stringified arrays back to arrays and assign accurate discipline tag
         const formattedEvents = events.map(e => ({
-            ...e,
+            ...withRegistrationDates(e),
             tag: getEventDiscipline(e),
             escaloes: e.escaloes ? (typeof e.escaloes === 'string' ? JSON.parse(e.escaloes) : e.escaloes) : []
         }));

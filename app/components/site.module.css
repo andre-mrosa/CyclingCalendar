@@ -1,11 +1,25 @@
 /* Cycling Calendar — data-first race ledger. */
 .page { width: min(100%, 1480px); margin: 0 auto; padding: 28px 36px 96px; color: var(--foreground); }
-.heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 32px; margin: 12px 0 22px; padding: 24px 0 22px; border-bottom: 2px solid var(--foreground); }
+.heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 32px; margin: 0 0 18px; padding: 12px 0 18px; border-bottom: 2px solid var(--foreground); }
 .heading > div:first-child { min-width: 0; }
 .eyebrow { display: inline-flex; align-items: center; gap: 7px; margin-bottom: 9px; color: var(--site-accent); font-size: 11px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
 .heading h1 { margin: 0; font-size: clamp(29px, 3.5vw, 48px); font-weight: 780; letter-spacing: -.06em; line-height: 1; }
 .heading p { max-width: 680px; margin-top: 10px; color: var(--site-muted); font-size: 14px; line-height: 1.6; }
-.homeHeading h1 { font-size: clamp(34px, 4vw, 56px); }
+.homeHeading h1 { font-size: clamp(32px, 3.5vw, 48px); }
+.quickFilters { display: grid; gap: 12px; margin-top: 14px; }
+.quickFilters label { display: grid; gap: 5px; font-size: 12px; color: var(--site-muted); }
+.quickFilters select { width: 100%; min-height: 40px; border: 1px solid var(--site-line); border-radius: 4px; background: var(--background); color: var(--foreground); padding: 6px; }
+.periods { display: flex; flex-wrap: wrap; gap: 6px; }
+.periods button { padding: 7px 9px; border: 1px solid var(--site-line); border-radius: 4px; font-size: 12px; text-align: left; cursor: pointer; }
+.periods button[aria-pressed='true'] { color: var(--site-accent); border-color: var(--site-accent); background: var(--site-soft); }
+.weekday { display: block; margin-top: 4px; font-size: 10px; font-weight: 500; color: var(--site-muted); letter-spacing: 0; }
+.cancelledBadge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 7px; border: 1px solid #e46565; border-radius: 4px; color: #b42323; background: #ffdddd; font-size: 11px; font-weight: 700; }
+:global(.dark) .cancelledBadge { color: #ffb3b3; background: #472020; }
+.eventCard[data-state='cancelled'] .eventTitle { text-decoration: line-through; }
+.agendaOverview { display: grid; gap: 12px; padding: 16px; margin-bottom: 20px; border: 1px solid var(--site-line); border-radius: 6px; background: var(--site-surface); font-size: 13px; }
+.agendaOverview h2 { font-weight: 700; margin-bottom: 5px; }
+.agendaOverview p { color: var(--site-muted); }
+.agendaOverview button { text-align: left; color: var(--site-accent); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 .headingMeta { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; max-width: 520px; }
 .headingMeta span { display: inline-flex; align-items: center; gap: 7px; min-height: 34px; padding: 0 10px; color: var(--site-muted); background: var(--site-surface); border: 1px solid var(--site-line); border-radius: 4px; font-size: 12px; font-weight: 650; white-space: nowrap; }
 .headingMeta svg { color: var(--site-accent); }
@@ -109,7 +123,7 @@
 .eventDialog:focus, .welcome:focus, .drawer:focus { outline: 0; }
 .eventTabs { display: flex; gap: 1px; overflow-x: auto; padding: 3px; background: var(--site-soft); border: 1px solid var(--site-line); border-radius: 4px; }
 .eventTab { display: flex; flex: 1; align-items: center; justify-content: center; gap: 7px; padding: 9px 10px; color: var(--site-muted); border-radius: 2px; white-space: nowrap; font-size: 11px; font-weight: 680; }
-.eventTab[aria-pressed='true'] { color: #fff; background: var(--foreground); }
+.eventTab[aria-pressed='true'] { color: var(--background); background: var(--foreground); }
 .eventSummary { margin-bottom: 14px; padding: 18px; background: var(--background); border: 1px solid var(--site-line); border-radius: 4px; }
 .eventDialog h2 { letter-spacing: -.045em; }
 .eventDialog > :last-child { background: var(--site-soft); border-color: var(--site-line); }

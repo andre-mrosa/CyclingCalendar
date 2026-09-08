@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/db';
 import { logInfo, logError } from '@/app/lib/logger';
 import { detectRaceDate } from '@/app/utils/detectRaceDate';
+import { withRegistrationDates } from '@/app/utils/registrationDates';
 
 function parsePtDate(dateStr) {
     if (!dateStr || typeof dateStr !== 'string') return null;
@@ -163,7 +164,7 @@ export async function POST(req) {
             console.warn("Não foi possível carregar dbEvent para o calendário:", e);
         }
 
-        const fullEvent = { ...event, ...(dbEvent || {}) };
+        const fullEvent = withRegistrationDates({ ...event, ...(dbEvent || {}) });
 
         let token;
         try {

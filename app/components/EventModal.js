@@ -13,6 +13,8 @@ import { formatEventLocation, extractEventTown } from '../utils/eventLocation';
 import { downloadIcsFile, generateGoogleCalendarUrl } from '../utils/calendarExport';
 import styles from './site.module.css';
 import { useModalFocus } from '../hooks/useModalFocus';
+import { withRegistrationDates, registrationPriceSummary } from '../utils/registrationDates';
+import { isCancelled, registrationDaysUntil } from '../utils/planning';
 
 const eventDetailsCache = new Map();
 
@@ -138,7 +140,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
     const [fullEvent, setFullEvent] = useState(null);
     const [isLoadingFullEvent, setIsLoadingFullEvent] = useState(false);
-    const activeEvent = fullEvent || selectedEvent;
+    const activeEvent = useMemo(() => withRegistrationDates(fullEvent || selectedEvent), [fullEvent, selectedEvent]);
     const googleCalendarUrl = activeEvent ? generateGoogleCalendarUrl(activeEvent) : null;
 
     useEffect(() => {
@@ -170,7 +172,9 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 const res = await fetch(`/api/events/${selectedEvent.id}`);
                 const data = await res.json();
                 if (data.success && data.event) {
-                    const merged = { ...selectedEvent, ...data.event, _hasFullDetails: true };
+                    const merged = { ...selectedEvent, ...data.event, _hasFullDetails: true,
+                        extraLinks: [...new Map([...(selectedEvent.extraLinks || []), ...(data.event.extraLinks || [])].map(link => [link.link, link])).values()],
+                    };
                     eventDetailsCache.set(selectedEvent.id, merged);
                     setFullEvent(merged);
                 }
@@ -969,6 +973,11 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                 {/* Tab content area */}
                 <div className="flex-grow overflow-hidden flex flex-col px-4 sm:px-5 min-h-0 pt-2">
+                {isCancelled(activeEvent) && <p className={styles.cancelledBadge}><Info size={14} />{t('planning_cancelled')}</p>}
+                <p className="text-[11px] text-muted pb-2 shrink-0">
+                    {t('planning_sources')}: {(activeEvent._mergedSources || [activeEvent.source]).filter(Boolean).join(' · ')}
+                    {activeEvent.updatedAt && <> · {t('planning_updated')} {new Intl.DateTimeFormat(language, { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Europe/Lisbon' }).format(new Date(activeEvent.updatedAt))}</>}
+                </p>
                 
                 {availableTabs.length === 0 && (
                     <div className="flex flex-col items-center justify-center h-full gap-4 p-6 animate-fade-in">
@@ -995,11 +1004,11 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             const locale = language === 'en' ? 'en-GB' : language === 'es' ? 'es-ES' : language === 'fr' ? 'fr-FR' : 'pt-PT';
                             if (activeEvent.registrationClosesAt) {
                                 const closes = new Date(activeEvent.registrationClosesAt);
-                                const diffDays = Math.ceil((closes - now) / (1000 * 60 * 60 * 24));
+                                const diffDays = registrationDaysUntil(activeEvent.registrationClosesAt, now);
                                 if (diffDays >= 0 && diffDays <= 7) {
                                     const closesLabel = diffDays === 0
                                         ? t('card_last_day')
-                                        : `${t('reg_close_title')}: ${t('card_days_to_close').replace('{days}', diffDays)} (${closes.toLocaleDateString(locale)})`;
+                                        : `${t('reg_close_title')}: ${t('card_days_to_close').replace('{days}', diffDays)} (${closes.toLocaleDateString(locale, { timeZone: 'UTC' })})`;
                                     return (
                                         <div className="mb-2.5 px-3.5 py-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-between gap-2 text-rose-600 dark:text-rose-400 text-xs font-semibold shrink-0">
                                             <div className="flex items-center gap-2">
@@ -1017,12 +1026,12 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             }
                             if (activeEvent.registrationOpensAt) {
                                 const opens = new Date(activeEvent.registrationOpensAt);
-                                const diffDays = Math.ceil((opens - now) / (1000 * 60 * 60 * 24));
+                                const diffDays = registrationDaysUntil(activeEvent.registrationOpensAt, now);
                                 if (diffDays > 0 && diffDays <= 14) {
                                     return (
                                         <div className="mb-2.5 px-3.5 py-2.5 rounded-xl bg-lime-500/10 border border-lime-500/30 flex items-center gap-2 text-lime-700 dark:text-lime-400 text-xs font-semibold shrink-0">
                                             <Clock size={15} className="shrink-0 text-lime-500" />
-                                            <span>{t('reg_open_title')}: {diffDays}d ({opens.toLocaleDateString(locale)})</span>
+                                            <span>{t('reg_open_title')}: {diffDays}d ({opens.toLocaleDateString(locale, { timeZone: 'UTC' })})</span>
                                         </div>
                                     );
                                 }
@@ -1199,7 +1208,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                         <Users size={13} className="text-brand" />
                                     </div>
                                     <div className="min-w-0">
-                                        <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold block leading-tight">{t('summary_organizer')}</span>
+                                        <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold block leading-tight">{t(activeEvent.organizador ? 'summary_organizer' : 'planning_sources')}</span>
                                         <span className="text-xs sm:text-sm font-semibold text-ink truncate block">
                                             {activeEvent.organizador 
                                                 ? (activeEvent.organizador === 'U.V.P./F.P.C' ? 'FPC' : activeEvent.organizador) 
@@ -1340,14 +1349,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
                 {/* Tab: INSCRIÇÃO & PREÇOS */}
                 {activeTab === 'inscricao' && (
-                    <div className="flex flex-col h-full animate-fade-in min-h-0">
-                        <div className="flex-1 overflow-y-auto min-h-0 pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent mb-2 overscroll-contain touch-pan-y">
-                            {activeEvent.prices ? (
-                                <div className="text-ink text-xs sm:text-sm prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: activeEvent.prices }} />
-                            ) : (
-                                <p className="text-muted text-xs sm:text-sm">{t('summary_no_description')}</p>
-                            )}
-                        </div>
+                    <div className="flex flex-col h-full animate-fade-in min-h-0 overflow-y-auto">
                         <div className="shrink-0 grid grid-cols-1 sm:grid-cols-2 gap-2 pb-1">
                             <div className="bg-soft p-3 rounded-xl border border-line flex flex-col justify-between">
                                 <div className="flex items-start justify-between gap-2">
@@ -1473,6 +1475,11 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 )}
                             </div>
                         </div>
+                        {registrationPriceSummary(activeEvent.prices) && <div className="mt-3 p-3 border border-line rounded-lg text-sm whitespace-pre-line shrink-0">{registrationPriceSummary(activeEvent.prices)}</div>}
+                        {activeEvent.prices && <details className="mt-3 border border-line rounded-lg p-3 shrink-0">
+                            <summary className="cursor-pointer text-sm font-semibold text-ink">{t('planning_registration_details')}</summary>
+                            <div className="mt-3 text-ink text-xs sm:text-sm prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: activeEvent.prices || '' }} />
+                        </details>}
                     </div>
                 )}
 
@@ -1620,7 +1627,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 className="px-3.5 py-2 bg-soft hover:bg-slate-200 dark:hover:bg-[#4a433b] text-ink rounded-xl text-xs sm:text-sm font-semibold transition-colors border border-line flex items-center gap-1.5"
                             >
                                 <CalendarPlus size={15} className="text-brand shrink-0" />
-                                <span>Google Calendar</span>
+                                <span>{t('planning_google_manual')}</span>
                             </a>
                             <button
                                 type="button"
@@ -1631,7 +1638,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 <Calendar size={15} className="text-brand shrink-0" />
                                 <span>Apple / Outlook (.ics)</span>
                             </button>
-                            <span className="text-[10px] text-muted">Evento de dia inteiro com lembrete no dia anterior.</span>
+                            <span className="text-[10px] text-muted">{t('planning_export_help')}</span>
                         </div>
                     )}
 
