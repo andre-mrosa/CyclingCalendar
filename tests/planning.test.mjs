@@ -10,6 +10,22 @@ test('price summary preserves phases and excludes insurance or refund amounts', 
     assert.equal(registrationPriceSummary('Seguro 30000€'), null);
 });
 import { mergeEvents } from '../app/utils/mergeEvents.js';
+import { toCalendarListEvent, chooseCalendarEvents } from '../app/utils/calendarList.js';
+
+test('list payload omits heavy assets but retains registration dates and translated labels', () => {
+    const result = toCalendarListEvent({ id: 'race', title: 'Race', image: 'data:image/png;huge', logo: 'huge', prices: 'As inscrições encerram dia 08-09-2026 pelas 23h59.', translations: [{language:'en',title:'Race',details:'Town',description:'long',programa:'long'}] });
+    assert.equal(result.registrationClosesAt, '2026-09-08T23:59:00.000Z');
+    assert.equal(result.image, undefined);
+    assert.equal(result.prices, undefined);
+    assert.deepEqual(result.translations, [{language:'en',title:'Race',details:'Town'}]);
+});
+test('online loading does not show stale cached races and empty responses remain empty', () => {
+    const cached = [{id:'old'}];
+    assert.deepEqual(chooseCalendarEvents(undefined, cached), []);
+    assert.deepEqual(chooseCalendarEvents([], cached, {failed:true}), []);
+    assert.deepEqual(chooseCalendarEvents(undefined, cached, {offline:true}), cached);
+    assert.deepEqual(chooseCalendarEvents(undefined, cached, {failed:true}), cached);
+});
 import { matchesPeriod, lisbonWallClock, isCancelled, registrationDaysUntil } from '../app/utils/planning.js';
 
 test('weekend shortcut includes the current Sunday and crosses year boundaries', () => {

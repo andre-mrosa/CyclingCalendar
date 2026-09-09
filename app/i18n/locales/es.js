@@ -1,4 +1,5 @@
 export default {
+    planning_load_more: "Mostrar más pruebas",
     planning_export_help: "ICS: incluye aviso el día anterior. En Google Calendar, comprueba los avisos antes de guardar.",
     planning_google_manual: "Abrir en Google Calendar",
     planning_updated: "Ficha actualizada el",

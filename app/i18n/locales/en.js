@@ -1,4 +1,5 @@
 export default {
+    planning_load_more: "Show more events",
     planning_export_help: "ICS: includes a reminder the day before. In Google Calendar, check notifications before saving.",
     planning_google_manual: "Open in Google Calendar",
     planning_updated: "Record updated on",

@@ -1,4 +1,5 @@
 export default {
+    planning_load_more: "Afficher plus d’épreuves",
     planning_export_help: "ICS : rappel la veille. Dans Google Calendar, vérifiez les notifications avant de sauvegarder.",
     planning_google_manual: "Ouvrir dans Google Calendar",
     planning_updated: "Fiche mise à jour le",

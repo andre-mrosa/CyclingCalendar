@@ -91,8 +91,8 @@
 .dateMonth { color: var(--site-accent); font-size: 9px; font-weight: 850; letter-spacing: .1em; writing-mode: vertical-rl; transform: rotate(180deg); text-align: center; }
 .dateDay { font-size: 24px; font-weight: 790; line-height: 1; letter-spacing: -.065em; font-variant-numeric: tabular-nums; }
 .dateRange { font-size: 15px; letter-spacing: -.04em; }
-.eventTitle { position: relative; color: var(--foreground); font-size: 15px; font-weight: 740; line-height: 1.4; letter-spacing: -.025em; text-align: left; cursor: pointer; }
-.eventTitle::after { content: ''; position: absolute; inset: -24px -20px -24px -12px; }
+.eventTitle { position: static; color: var(--foreground); font-size: 15px; font-weight: 740; line-height: 1.4; letter-spacing: -.025em; text-align: left; cursor: pointer; }
+.eventTitle::after { content: ''; position: absolute; inset: 0; z-index: 1; }
 .eventFavorite { position: relative; z-index: 3; min-width: 31px; min-height: 31px; }
 .eventMeta { display: flex; align-items: center; flex-wrap: wrap; gap: 3px 12px; margin-top: 5px; color: var(--site-muted); font-size: 12px; line-height: 1.55; }
 .eventMeta > span { display: inline-flex; align-items: center; gap: 5px; min-width: 0; }
@@ -199,7 +199,7 @@
   .dateDay { font-size: 21px; }
   .dateRange { font-size: 13px; }
   .eventTitle { font-size: 14px; line-height: 1.42; }
-  .eventTitle::after { inset: -20px -12px -20px -8px; }
+  .eventTitle::after { inset: 0; }
   .eventMeta { gap: 3px 9px; font-size: 11px; }
   .eventBadges { max-width: none; padding-left: 75px; justify-content: flex-start; }
   .eventBadges:empty, .eventArrow { display: none; }

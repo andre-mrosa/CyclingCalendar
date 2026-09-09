@@ -1,4 +1,5 @@
 export default {
+    planning_load_more: "Mostrar mais provas",
     planning_export_help: "ICS: inclui lembrete na véspera. No Google Calendar, confirma os avisos antes de guardar.",
     planning_google_manual: "Abrir no Google Calendar",
     planning_updated: "Ficha atualizada em",

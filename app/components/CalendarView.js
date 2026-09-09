@@ -8,6 +8,7 @@ import { useFavorites } from '../hooks/useFavorites';
 import { useCalendarEvents } from '../hooks/useCalendarEvents';
 import { filterEvents } from '../utils/filterEvents';
 import { mergeEvents } from '../utils/mergeEvents';
+import { chooseCalendarEvents, toCalendarListEvent } from '../utils/calendarList';
 import { exportEventsToICS } from '../utils/exportCalendar';
 import EventModal from './EventModal';
 import EscalaoAssistant from './EscalaoAssistant';
@@ -22,7 +23,7 @@ import styles from './site.module.css';
 import { matchesPeriod, isCancelled, conciseEscaloes, registrationDaysUntil } from '../utils/planning';
 
 const fetcher = async (url) => {
-    const response = await fetch(url);
+    const response = await fetch(url, { signal: AbortSignal.timeout(15000) });
     const data = await response.json().catch(() => null);
 
     if (!response.ok || !data?.success) {
@@ -116,10 +117,9 @@ export default function CalendarView({
     const [selectedType, setSelectedType] = useState('Todos');
     const defaultPastEventsFilter = forceAmbito === 'Campeonato Nacional' ? 'todos' : 'futuros';
     const [pastEventsFilter, setPastEventsFilter] = useState(defaultPastEventsFilter);
-    const [visibleCount, setVisibleCount] = useState(15);
+    const [visibleCount, setVisibleCount] = useState(100);
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [isOffline, setIsOffline] = useState(false);
-    const loaderRef = useRef(null);
 
     const { favorites, toggleFavorite, isSignedIn } = useFavorites();
     const { markedSet, isMarked, getDateConflict } = useCalendarEvents();
@@ -155,8 +155,10 @@ export default function CalendarView({
     }, [defaultEscalao, defaultRegiao, forceEscalao, forceAmbito, forceLicenca, applyDefaultRegiao]);
 
     const effectiveSources = (selectedSources && selectedSources.length > 0) ? selectedSources : ['FPC', 'Cabreira', 'Stop and Go'];
+    const eventsUrl = `/api/events?view=list-v2&years=all&sources=${effectiveSources.join(',')}`;
+    const eventsCacheKey = `cycling_calendar_list_v2_${[...effectiveSources].sort().join(',')}`;
     const { data: fetchedEvents, error, isLoading: loading, mutate } = useSWR(
-        `/api/events?years=all&sources=${effectiveSources.join(',')}`,
+        eventsUrl,
         fetcher,
         {
             revalidateOnFocus: false, // Don't refetch on tab switch
@@ -168,71 +170,25 @@ export default function CalendarView({
     const [mounted, setMounted] = useState(false);
     const [localCachedEvents, setLocalCachedEvents] = useState([]);
 
-    // On mount: if online, check /api/sync-version to invalidate stale cache.
-    // If the server has a newer scrape than what we have locally, wipe the
-    // events cache so fresh data is fetched from the API instead of localStorage.
+    // Cached data is a fallback only, never a partial online result.
     useEffect(() => {
         setMounted(true);
-        if (typeof window === 'undefined') return;
+        try {
+            const cached = JSON.parse(localStorage.getItem(eventsCacheKey) || '[]');
+            setLocalCachedEvents(Array.isArray(cached) ? cached : []);
+        } catch { setLocalCachedEvents([]); }
+    }, [eventsCacheKey]);
 
-        const EVENTS_KEY = 'cycling_calendar_cached_events';
-        const VERSION_KEY = 'cycling_calendar_sync_version';
-
-        const loadCache = () => {
-            try {
-                const cached = localStorage.getItem(EVENTS_KEY);
-                if (cached) {
-                    const parsed = JSON.parse(cached);
-                    if (Array.isArray(parsed) && parsed.length > 0) {
-                        setLocalCachedEvents(parsed);
-                    }
-                }
-            } catch (e) {}
-        };
-
-        if (navigator.onLine) {
-            // Check if server has a newer scrape version
-            fetch('/api/sync-version')
-                .then(r => r.json())
-                .then(({ version }) => {
-                    if (!version) { loadCache(); return; }
-                    const localVersion = localStorage.getItem(VERSION_KEY);
-                    if (localVersion !== version) {
-                        // New scrape detected — clear stale cache
-                        try {
-                            localStorage.removeItem(EVENTS_KEY);
-                            localStorage.setItem(VERSION_KEY, version);
-                        } catch (e) {}
-                        // Don't load stale cache; SWR will fetch fresh data
-                    } else {
-                        loadCache();
-                    }
-                })
-                .catch(() => loadCache()); // If check fails, fall back to cache
-        } else {
-            // Offline — use whatever we have cached
-            loadCache();
-        }
-    }, []);
-
-    // Save fetched events to offline localStorage cache
     useEffect(() => {
-        if (fetchedEvents && Array.isArray(fetchedEvents) && fetchedEvents.length > 0) {
-            try {
-                localStorage.setItem('cycling_calendar_cached_events', JSON.stringify(fetchedEvents));
-            } catch (e) {}
+        if (Array.isArray(fetchedEvents)) {
+            try { localStorage.setItem(eventsCacheKey, JSON.stringify(fetchedEvents)); } catch {}
         }
-    }, [fetchedEvents]);
+    }, [fetchedEvents, eventsCacheKey]);
 
     const events = useMemo(() => {
-        if (fetchedEvents && fetchedEvents.length > 0) {
-            return mergeEvents(fetchedEvents);
-        }
-        if (localCachedEvents && localCachedEvents.length > 0) {
-            return mergeEvents(localCachedEvents);
-        }
-        return EMPTY_EVENTS;
-    }, [fetchedEvents, localCachedEvents]);
+        const records = chooseCalendarEvents(fetchedEvents, localCachedEvents, { offline: isOffline, failed: !!error });
+        return records.length ? mergeEvents(records.map(toCalendarListEvent)) : EMPTY_EVENTS;
+    }, [fetchedEvents, localCachedEvents, isOffline, error]);
 
     // Deep linking: Auto-open modal if ?event=ID is present in URL
     useEffect(() => {
@@ -301,7 +257,7 @@ export default function CalendarView({
 
         filtered = filtered.filter(event => matchesPeriod(event, quickPeriod));
         setFilteredEvents(filtered);
-        setVisibleCount(15); // Reset visible count on filter change
+        setVisibleCount(100); // Reset visible count on filter change
     }, [events, searchTerm, selectedYears, selectedEscaloes, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, filterByFavorites, filterByAgenda, markedSet, favorites, forceEscalao, forceAmbito, forceLicenca, quickPeriod]);
 
     const uniqueEscaloes = ['Elite', 'Elite Amador', 'Sub-23', 'Sub-19 (Juniores)', 'Sub-17 (Cadetes)', 'Sub-15 (Juvenis)', 'Masters / Veteranos', 'Femininas', 'Escolas', 'Profissional (UCI)', 'Todos (Aberto)', 'Geral / Vários'];
@@ -370,7 +326,7 @@ export default function CalendarView({
 
     const handleFilterChange = (key, value) => {
         setFilters(prev => ({ ...prev, [key]: value }));
-        setVisibleCount(15);
+        setVisibleCount(100);
     };
     
     const onMonthToChange = (e) => {
@@ -409,27 +365,7 @@ export default function CalendarView({
         setSearchTerm('');
     };
 
-    useEffect(() => {
-        const observer = new IntersectionObserver(
-            (entries) => {
-                if (entries[0].isIntersecting && filteredEvents.length > visibleCount) {
-                    setVisibleCount((prev) => Math.min(prev + 15, filteredEvents.length));
-                }
-            },
-            { rootMargin: '300px 0px', threshold: 0 }
-        );
 
-        const currentLoader = loaderRef.current;
-        if (currentLoader) {
-            observer.observe(currentLoader);
-        }
-
-        return () => {
-            if (currentLoader) {
-                observer.unobserve(currentLoader);
-            }
-        };
-    }, [filteredEvents.length, visibleCount]);
 
     return (
         <div className={styles.page}>
@@ -1026,8 +962,8 @@ export default function CalendarView({
                         </div>
                         
                         {filteredEvents.length > visibleCount && (
-                            <div ref={loaderRef} className="h-10 flex justify-center items-center py-8 mt-4">
-                                <div className="w-8 h-8 border-4 border-line border-t-brand rounded-full animate-spin"></div>
+                            <div className="flex justify-center py-6">
+                                <button type="button" className={styles.filterButton} onClick={() => setVisibleCount(count => count + 100)}>{t('planning_load_more')}</button>
                             </div>
                         )}
                     </>

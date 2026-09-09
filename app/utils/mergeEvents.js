@@ -35,6 +35,10 @@ export function mergeEvents(events) {
     };
 
     const processed = new Set();
+    const calendarDays = events.map(event => {
+        const date = new Date(event.sortDate);
+        return event.sortDate && !Number.isNaN(date.getTime()) ? date.toISOString().slice(0, 10) : null;
+    });
 
     for (let i = 0; i < events.length; i++) {
         if (processed.has(i)) continue;
@@ -46,11 +50,7 @@ export function mergeEvents(events) {
         for (let j = i + 1; j < events.length; j++) {
             if (processed.has(j)) continue;
             const candidate = events[j];
-            const calendarDay = event => {
-                const date = new Date(event.sortDate);
-                return event.sortDate && !Number.isNaN(date.getTime()) ? date.toISOString().slice(0, 10) : null;
-            };
-            const sameDay = calendarDay(current) && calendarDay(current) === calendarDay(candidate);
+            const sameDay = calendarDays[i] && calendarDays[i] === calendarDays[j];
             if ((sameDay || (current.date && current.date === candidate.date)) && (isSameEvent(current, candidate) || (sameDay && sameOpenRide(current, candidate)))) {
                 duplicates.push(candidate);
                 processed.add(j);

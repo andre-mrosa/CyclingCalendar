@@ -1,5 +1,14 @@
 # Continuação — utilidade do calendário (2026-09-08)
 
+## Correção validada — carregamento e clique (1.1.1, 2026-09-09)
+- Relato: lista aparece em duas fases e linha da prova não abre ao clicar.
+- Confirmado: título abre em produção, mas seta/localidade não tinham área clicável. Botão nativo agora cobre a linha inteira; estrela fica acima e independente. Testado clicando na localidade (abriu) e estrela (não abriu); favorito temporário de visitante reposto no QA.
+- API de lista tinha 5 953 917 bytes para 1611 provas. Nova resposta tem 863 368 bytes, mesmas 1611 provas (redução ~85,5%, sem compressão). Retira imagens/base64, regulamentos e traduções extensas da lista; ficha continua a obter detalhes completos.
+- Cache local passa a fallback offline/erro, separado por fontes; resposta vazia válida não ressuscita dados antigos. Eliminada corrida com /api/sync-version. Novo namespace de cache e removido fallback prematuro aos 3 segundos no service worker.
+- Datas para deduplicação calculadas uma vez por registo, não milhões de vezes durante comparações.
+- Mostra até 100 provas de uma vez; no histórico usa botão explícito Mostrar mais, sem spinner/crescimento automático a cada 15 linhas. No QA as 69 próximas provas apareceram juntas.
+- Testes de regressão para conteúdo da lista e seleção de cache adicionados: 70/70 testes passaram. QA de abertura fora do título e independência da estrela concluído. Build final passou em 09/09. Entrega preparada para master; confirmar publicação no remoto ao retomar.
+
 ## Objetivo autorizado
 Melhorar a fiabilidade dos dados, fichas de provas, filtros e agenda mantendo o design compacto atual. O utilizador aprovou a análise e pediu documentação contínua para retomar quando renovar o uso. Não confundir guardar favoritos, marcar agenda e inscrição real.
 
