@@ -33,6 +33,8 @@ master, versão 1.0.1, commit 28e22e1. Logo aprovado: arredondado e transparente
 - Agenda já tem exportação ICS, conflitos e integração Google: desenvolver essa base.
 
 ## Retomar
+Revisão mais recente: ver [SITE_REVIEW.md](SITE_REVIEW.md), com divergências verificadas entre modal/página pública, datas exportadas, classificação e prioridades. Rótulos de época/fontes removidos do cabeçalho; build de produção passou. As restantes conclusões da revisão continuam pendentes.
+
 Ler este documento e git diff/status antes de trabalhar. Seguir AGENTS.md. Não lançar scrapers nem alterações na BD de produção indiscriminadamente. Validar com dados de teste primeiro. npm no PATH estava avariado (npm-cli.js em Roaming ausente); node funciona, é possível executar testes com node --test e Next via node node_modules/next/dist/bin/next.
 
 ## Checkpoint de implementação
