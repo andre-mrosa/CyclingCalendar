@@ -49,6 +49,7 @@ next-env.d.ts
 # Scratch and testing scripts
 *.js
 !next.config.js
+!proxy.js
 !tailwind.config.js
 !postcss.config.js
 !app/**/*.js
@@ -79,3 +80,4 @@ public/out.css
 
 
 dev.db
+/.swc

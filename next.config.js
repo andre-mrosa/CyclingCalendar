@@ -1,3 +1,4 @@
+const { withWorkflow } = require("workflow/next");
 const withPWAInit = require("@ducanh2912/next-pwa").default;
 
 const withPWA = withPWAInit({
@@ -80,4 +81,4 @@ const nextConfig = {
   turbopack: {}
 };
 
-module.exports = withPWA(nextConfig);
+module.exports = withWorkflow(withPWA(nextConfig));

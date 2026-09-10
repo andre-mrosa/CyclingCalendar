@@ -26,54 +26,6 @@ export function runUnifiedScrapingPipeline(triggeredBy = 'CRON', options = {}) {
         () => runPipeline(triggeredBy, { ...options, runId })));
 }
 
-/**
- * Trigger the next pipeline stage via an internal HTTP request.
- * The caller must keep this promise alive (normally from Next.js `after`).
- * An unawaited serverless fetch can be discarded as soon as the current
- * invocation finishes, leaving the persisted run permanently between stages.
- */
-export async function triggerNextStage(result) {
-    if (!result?.nextStage) return;
-    // Production aliases avoid deployment URLs that may require Vercel login.
-    const host = process.env.VERCEL_ENV === 'production'
-        ? process.env.VERCEL_PROJECT_PRODUCTION_URL : process.env.VERCEL_URL;
-    const baseUrl = process.env.NEXT_PUBLIC_URL || (host ? `https://${host}` :
-        (process.env.VERCEL_ENV === 'production' ? 'https://www.cyclingcalendar.pt' : 'http://localhost:3000'));
-    const params = new URLSearchParams({
-        stage: result.nextStage,
-        runId: result.runId,
-        years: result.years.join(','),
-        scope: result.scope,
-        attempt: String(result.nextAttempt || 1),
-        hadErrors: String(Boolean(result.hadErrors)),
-        triggeredBy: result.triggeredBy || 'CRON',
-        ...(result.fullHistorical != null ? { historical: String(result.fullHistorical) } : {})
-    });
-    const continueUrl = `${baseUrl}/api/cron/scrape?${params}`;
-    const headers = {
-        ...(process.env.CRON_SECRET ? { Authorization: `Bearer ${process.env.CRON_SECRET}` } : {}),
-        ...(process.env.VERCEL_AUTOMATION_BYPASS_SECRET ? {
-            'x-vercel-protection-bypass': process.env.VERCEL_AUTOMATION_BYPASS_SECRET
-        } : {})
-    };
-    await withScraperLogContext({ runId: result.runId }, () => logInfo('SCRAPER',
-        `A iniciar continuação para ${result.nextStage}.`,
-        { event: 'handoff-start', pipelineStage: result.nextStage, host: new URL(baseUrl).host }));
-    // The receiver acknowledges scheduling; do not spend this invocation's
-    // remaining execution budget waiting for the next scraper to finish too.
-    const response = await fetch(continueUrl, { headers, cache: 'no-store', signal: AbortSignal.timeout(20000) });
-    if (!response.ok) {
-        throw new Error(`A continuação para ${result.nextStage} falhou (HTTP ${response.status}).`);
-    }
-    const receipt = await response.json().catch(() => null);
-    if (response.status !== 202 || receipt?.accepted !== true || receipt.runId !== result.runId || receipt.pipelineStage !== result.nextStage) {
-        throw new Error(`A continuação para ${result.nextStage} não foi confirmada pelo servidor (HTTP ${response.status}).`);
-    }
-    await withScraperLogContext({ runId: result.runId }, () => logInfo('SCRAPER',
-        `Continuação para ${result.nextStage} aceite.`,
-        { event: 'handoff-accepted', pipelineStage: result.nextStage }));
-}
-
 async function runPipeline(triggeredBy, options) {
     const { runId } = options;
     const startTime = Date.now();
@@ -253,7 +205,8 @@ async function runPipeline(triggeredBy, options) {
                 });
             } else {
                 await logInfo('SCRAPER', `Etapa ${pipelineStage} concluída em ${durationSeconds}s.`,
-                    { ...stats, event: 'pipeline-stage-done', pipelineStage, nextStage, durationSeconds });
+                    { ...stats, event: 'pipeline-stage-done', pipelineStage, nextStage, durationSeconds,
+                        nextAttempt: retrying ? attempt + 1 : 1, hadErrors });
             }
 
             return {
@@ -264,8 +217,8 @@ async function runPipeline(triggeredBy, options) {
             };
         } catch (error) {
             const durationSeconds = Number(((Date.now() - startTime) / 1000).toFixed(1));
-            await logError('SCRAPER', `Falha crítica na sincronização (etapa ${pipelineStage}): ${error.message}`, {
-                ...stats, event: 'run-complete', status: 'error', error: error.message,
+            await logError('SCRAPER', `${options.durable ? "Falha na tentativa" : "Falha crítica na sincronização"} (etapa ${pipelineStage}): ${error.message}`, {
+                ...stats, event: options.durable ? 'stage-failure' : 'run-complete', status: 'error', error: error.message,
                 startedAt: now.toISOString(), completedAt: new Date().toISOString(),
                 durationSeconds
             });

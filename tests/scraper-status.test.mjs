@@ -215,62 +215,9 @@ test('API authorizes before reading logs', async () => {
     assert.equal((await route.GET()).status, 403);
 });
 
-test('manual trigger responds immediately and schedules the scraper after the response', async () => {
-    let backgroundWork;
-    let pipelineCalls = 0;
-    const queuedLog = { id: 'queued-log' };
-    const route = await isolatedModule('../app/api/force-scrape/route.js', {
-        runUnifiedScrapingPipeline: async (_source, options) => {
-            pipelineCalls++;
-            assert.equal(options.runId, 'manual-run');
-            assert.equal(options.startLogged, true);
-            return { nextStage: null };
-        },
-        triggerNextStage: async () => {},
-        requireAdmin: async () => ({ authorized: true }),
-        logInfo: async () => queuedLog,
-        logError: async () => {},
-        withScraperLogContext: (_context, work) => work(),
-        prisma: { systemLog: {
-            findUnique: async () => null,
-            deleteMany: async () => ({ count: 0 })
-        } },
-        SCRAPER_LEASE_ID: 'lease', SCRAPER_LEASE_MS: 900000,
-        after: work => { backgroundWork = work; },
-        randomUUID: () => 'manual-run'
-    });
-    const response = await route.GET(new Request('https://calendar.test/api/force-scrape'));
-    const body = await response.json();
-    assert.equal(response.status, 202);
-    assert.equal(body.runId, 'manual-run');
-    assert.equal(pipelineCalls, 0);
-    assert.equal(typeof backgroundWork, 'function');
-    await backgroundWork();
-    assert.equal(pipelineCalls, 1);
-});
 
-test('cron stage responds before scheduling its serverless continuation', async () => {
-    let backgroundWork;
-    let continuationCalls = 0;
-    const stageResult = {
-        success: true, nextStage: 'fpc-2027', runId: 'cron-run', years: ['2026', '2027'],
-        scope: 'weekly', nextAttempt: 1, hadErrors: false, triggeredBy: 'TEST',
-        stats: { pipelineStage: 'fpc-2026' }
-    };
-    const route = await isolatedModule('../app/api/cron/scrape/route.js', {
-        runUnifiedScrapingPipeline: async () => stageResult,
-        triggerNextStage: async result => { assert.equal(result, stageResult); continuationCalls++; },
-        logError: async () => {}, withScraperLogContext: (_context, work) => work(),
-        after: work => { backgroundWork = work; }
-    });
-    const headers = process.env.CRON_SECRET ? { Authorization: `Bearer ${process.env.CRON_SECRET}` } : undefined;
-    const response = await route.GET(new Request('https://calendar.test/api/cron/scrape?scope=weekly', { headers }));
-    assert.equal(response.status, 200);
-    assert.equal(continuationCalls, 0);
-    assert.equal(typeof backgroundWork, 'function');
-    await backgroundWork();
-    assert.equal(continuationCalls, 1);
-});
+
+
 
 function captureLogs(t) {
     const logs = [];
@@ -378,34 +325,7 @@ test('daily and weekly plans isolate FPC into one bounded stage per season', asy
     assert.deepEqual(pipeline.getPipelineStages('weekly', ['2026', '2027']), ['fpc-2026', 'fpc-2027', 'deepScrape', 'finalize']);
 });
 
-test('stage handoff keeps the internal request alive and rejects HTTP failures', async t => {
-    captureLogs(t);
-    const pipeline = await pipelineFixture();
-    let releaseFetch;
-    let requestedUrl;
-    const gate = new Promise(resolve => { releaseFetch = resolve; });
-    t.mock.method(globalThis, 'fetch', async url => {
-        requestedUrl = String(url);
-        await gate;
-        return Response.json({ accepted: true, runId: 'fixture-run', pipelineStage: 'fpc-2027' }, { status: 202 });
-    });
-    let settled = false;
-    const handoff = pipeline.triggerNextStage({
-        nextStage: 'fpc-2027', runId: 'fixture-run', years: ['2026', '2027'],
-        scope: 'manual', nextAttempt: 1, hadErrors: false, triggeredBy: 'TEST', fullHistorical: false
-    }).then(() => { settled = true; });
-    await new Promise(resolve => setImmediate(resolve));
-    assert.equal(settled, false);
-    assert.match(requestedUrl, /stage=fpc-2027/);
-    releaseFetch();
-    await handoff;
-    assert.equal(settled, true);
 
-    t.mock.method(globalThis, 'fetch', async () => new Response('upstream unavailable', { status: 503 }));
-    await assert.rejects(pipeline.triggerNextStage({
-        nextStage: 'finalize', runId: 'fixture-run', years: ['2026'], scope: 'weekly'
-    }), /HTTP 503/);
-});
 
 test('pipeline leases every bounded stage and publishes complete metrics', async t => {
     const logs = captureLogs(t);
@@ -486,65 +406,76 @@ test('a failed unification transaction reports partial and does not count a merg
     assert.equal(readLogDetails(logs.at(-1)).steps.unification.status, 'error');
 });
 
-test('handoff rejects HTML, skipped runs and acknowledgments for another stage', async t => {
-    captureLogs(t);
-    const pipeline = await pipelineFixture();
-    for (const reply of [
-        new Response('<html>Login</html>'),
-        Response.json({ success: true, skipped: true }),
-        Response.json({ accepted: true, runId: 'other', pipelineStage: 'finalize' }, { status: 202 }),
-        Response.json({ accepted: true, runId: 'fixture-run', pipelineStage: 'cabreira' }, { status: 202 })
-    ]) {
-        t.mock.method(globalThis, 'fetch', async () => reply);
-        await assert.rejects(pipeline.triggerNextStage({ nextStage: 'finalize', runId: 'fixture-run', years: ['2026'], scope: 'daily' }), /não foi confirmada/);
-    }
-});
 
-test('continuation acknowledges before scraping and logs background failures with the run ID', async () => {
-    let backgroundWork;
-    let calls = 0;
-    const failures = [];
-    const contexts = [];
-    const route = await isolatedModule('../app/api/cron/scrape/route.js', {
-        getPipelineStages: () => ['cabreira', 'stopandgo', 'finalize'],
-        runUnifiedScrapingPipeline: async () => { calls++; throw Object.assign(new Error('lease busy'), { code: 'SCRAPER_ALREADY_RUNNING' }); },
-        triggerNextStage: async () => { throw new Error('must not continue'); },
-        logInfo: async () => ({ id: 'receipt-log' }),
-        logError: async (_source, _message, details) => failures.push(details),
-        withScraperLogContext: (context, work) => { contexts.push(context); return work(); },
-        after: work => { backgroundWork = work; }
-    });
+
+
+
+
+
+test('cron and manual starts enqueue durable work, and old recursive calls cannot launch runs', async () => {
+    const calls = [];
+    const deps = { startCalendarSync: async options => { calls.push(options); return { accepted: true, runId: 'queued-run' }; } };
+    const manual = await isolatedModule('../app/api/force-scrape/route.js', { ...deps, requireAdmin: async () => ({ authorized: true }) });
+    assert.equal((await manual.GET(new Request('https://calendar.test/api/force-scrape?resume=true'))).status, 202);
+    assert.equal(calls[0].resume, true);
+    assert.equal(calls[0].scope, 'manual');
+    const cron = await isolatedModule('../app/api/cron/scrape/route.js', deps);
     const headers = process.env.CRON_SECRET ? { Authorization: `Bearer ${process.env.CRON_SECRET}` } : undefined;
-    const response = await route.GET(new Request('https://calendar.test/api/cron/scrape?scope=daily&stage=stopandgo&runId=receipt-run&years=2026', { headers }));
-    assert.equal(response.status, 202);
-    assert.deepEqual(await response.json(), { success: true, accepted: true, runId: 'receipt-run', pipelineStage: 'stopandgo' });
-    assert.equal(calls, 0);
-    await backgroundWork();
-    assert.equal(calls, 1);
-    assert.equal(failures[0].status, 'error');
-    assert.equal(failures[0].event, 'run-complete');
-    assert.ok(contexts.every(context => context.runId === 'receipt-run'));
-    backgroundWork = null;
-    const invalid = await route.GET(new Request('https://calendar.test/api/cron/scrape?scope=daily&stage=unknown&runId=receipt-run&years=2026', { headers }));
-    assert.equal(invalid.status, 400);
-    assert.equal(backgroundWork, null);
+    assert.equal((await cron.GET(new Request('https://calendar.test/api/cron/scrape?scope=daily', { headers }))).status, 202);
+    assert.equal(calls[1].scope, 'daily');
+    assert.equal((await cron.GET(new Request('https://calendar.test/api/cron/scrape?stage=deepScrape&runId=old', { headers }))).status, 400);
+    assert.equal(calls.length, 2);
 });
 
-test('production handoff uses the production alias and bounded authenticated requests', async t => {
-    captureLogs(t);
-    const keys = ['VERCEL_ENV', 'VERCEL_PROJECT_PRODUCTION_URL', 'VERCEL_URL', 'NEXT_PUBLIC_URL', 'CRON_SECRET', 'VERCEL_AUTOMATION_BYPASS_SECRET'];
-    const previous = Object.fromEntries(keys.map(key => [key, process.env[key]]));
-    t.after(() => { for (const key of keys) { if (previous[key] === undefined) delete process.env[key]; else process.env[key] = previous[key]; } });
-    Object.assign(process.env, { VERCEL_ENV: 'production', VERCEL_PROJECT_PRODUCTION_URL: 'calendar.test', VERCEL_URL: 'protected-deployment.test', CRON_SECRET: 'fixture-secret', VERCEL_AUTOMATION_BYPASS_SECRET: 'fixture-bypass' });
-    delete process.env.NEXT_PUBLIC_URL;
-    t.mock.method(globalThis, 'fetch', async (url, options) => {
-        assert.equal(new URL(url).host, 'calendar.test');
-        assert.equal(options.headers.Authorization, 'Bearer fixture-secret');
-        assert.equal(options.headers['x-vercel-protection-bypass'], 'fixture-bypass');
-        assert.equal(options.cache, 'no-store');
-        assert.ok(options.signal instanceof AbortSignal);
-        return Response.json({ accepted: true, runId: 'fixture-run', pipelineStage: 'finalize' }, { status: 202 });
+test('durable workflow carries stage checkpoints and retry state without self HTTP requests', async t => {
+    t.mock.method(globalThis, 'fetch', () => { throw new Error('Self HTTP is forbidden'); });
+    const seen = [];
+    const workflow = await isolatedModule('../app/workflows/calendarSync.js', {
+        executeCalendarStage: async options => {
+            seen.push(options);
+            return { success: true, nextStage: seen.length === 1 ? 'finalize' : null, years: ['2026'], nextAttempt: 2, hadErrors: true, fullHistorical: false };
+        }, recordCalendarFailure: async () => { throw new Error('Unexpected failure'); }
     });
-    const pipeline = await pipelineFixture();
-    await pipeline.triggerNextStage({ nextStage: 'finalize', runId: 'fixture-run', years: ['2026'], scope: 'daily' });
+    assert.deepEqual(await workflow.calendarSyncWorkflow({ runId: 'r', pipelineStage: 'deepScrape' }), { success: true, runId: 'r' });
+    assert.equal(seen.length, 2);
+    assert.equal(seen[1].pipelineStage, 'finalize');
+    assert.equal(seen[1].attempt, 2);
+    assert.equal(seen[1].hadErrors, true);
+});
+
+test('durable workflow terminates corrupt plans and records terminal step failures', async () => {
+    let failures = [];
+    let count = 0;
+    const workflow = await isolatedModule('../app/workflows/calendarSync.js', {
+        executeCalendarStage: async () => { count++; return { nextStage: 'loop' }; },
+        recordCalendarFailure: async (...args) => failures.push(args)
+    });
+    await assert.rejects(workflow.calendarSyncWorkflow({ runId: 'r' }), /Limite de etapas/);
+    assert.equal(count, 36);
+    assert.equal(failures[0][0], 'r');
+});
+
+test('resume queues only the pending checkpoint and refuses an already active workflow', async () => {
+    let queued;
+    let active = false;
+    const startSync = await isolatedModule('../app/lib/scrapers/startSync.js', {
+        randomUUID: () => 'new-run', start: async (_workflow, args) => { queued = args[0]; return { runId: 'workflow-id' }; },
+        getRun: () => ({ status: Promise.resolve('running') }), calendarSyncWorkflow: () => {},
+        withScraperLock: work => work(), withScraperLogContext: (_ctx, work) => work(),
+        logInfo: async () => ({ id: 'log' }), logError: async () => {},
+        getPipelineStages: () => ['fpc-2026', 'deepScrape', 'finalize'],
+        prisma: { systemLog: { findFirst: async ({ where }) => {
+            if (where.message === 'Workflow de sincronização agendado.') return active ? { details: JSON.stringify({ workflowId: 'existing' }) } : null;
+            if (where.message) return { details: JSON.stringify({ runId: 'old-run' }) };
+            return { details: JSON.stringify({ nextStage: 'deepScrape', scope: 'manual', yearsScraped: ['2026'], mode: 'DAILY_ACTIVE' }) };
+        } } }
+    });
+    const result = await startSync.startCalendarSync({ resume: true });
+    assert.equal(result.resumedFrom, 'old-run');
+    assert.equal(queued.pipelineStage, 'deepScrape');
+    assert.deepEqual(queued.years, ['2026']);
+    queued = null;
+    active = true;
+    await assert.rejects(startSync.startCalendarSync(), { code: 'SCRAPER_ALREADY_RUNNING' });
+    assert.equal(queued, null);
 });

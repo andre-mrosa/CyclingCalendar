@@ -219,7 +219,7 @@ export default function AdminDashboardPage() {
         } catch (error) { if (requestId === statusRequest.current) setScraperError(error.message); }
     }, [authFetch]);
 
-    const handleRunOperation = async (fullHistorical = false) => {
+    const handleRunOperation = async (fullHistorical = false, resume = false) => {
         if (triggerPending.current || runningOp) return;
         triggerPending.current = true;
         triggerFence.current = {
@@ -236,7 +236,7 @@ export default function AdminDashboardPage() {
         let confirmedRun = false;
         try {
             // Do not retry this mutating GET; a network error does not prove that it failed to start.
-            const response = await authFetch(fullHistorical ? '/api/force-scrape?history=true' : '/api/force-scrape', {}, 0);
+            const response = await authFetch(resume ? '/api/force-scrape?resume=true' : fullHistorical ? '/api/force-scrape?history=true' : '/api/force-scrape', {}, 0);
             const data = await readResponse(response);
             if (response.status === 409 && data.alreadyRunning) {
                 triggerFence.current = null; // Reconnect to the lock holder, even if it predates our request.
