@@ -1,8 +1,47 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildIcsContent, generateGoogleCalendarUrl, getCalendarDates } from '../app/utils/calendarExport.js';
+import { buildEventsIcsContent, getGoogleCalendarDatePayload } from '../app/utils/calendarExport.js';
+import { detectRaceDate } from '../app/utils/detectRaceDate.js';
 
 const event = { id: 'prova/1', title: 'Prova de ciclismo', date: '20 SET 2026', sortDate: '2026-09-20T00:00:00.000Z' };
+
+test('Alves Barbosa and ordinary weekends preserve every published day in all exports', () => {
+    for (const title of ['Grande Prémio Alves Barbosa', 'Taça de Portugal XCO']) {
+        const race = { ...event, title, date: '11 SET 2026 a 13 SET 2026', programa: 'Sábado secretariado. Domingo partida da competição às 09:00.' };
+        assert.deepEqual(getCalendarDates(race), { start: '20260911', end: '20260914' });
+        assert.deepEqual(getGoogleCalendarDatePayload(race), { start: { date: '2026-09-11' }, end: { date: '2026-09-14' } });
+        assert.equal(detectRaceDate(race).startTime, null);
+        const batch = buildEventsIcsContent([race]);
+        assert.match(batch, /DTSTART;VALUE=DATE:20260911\r\nDTEND;VALUE=DATE:20260914/);
+        assert.doesNotMatch(batch, /T090000/);
+    }
+});
+
+test('Month and year boundaries retain explicit years and exclusive ends', () => {
+    for (const [date, start, end] of [
+        ['31 OUT a 01 NOV 2026', '20261031', '20261102'],
+        ['31 DEZ 2026 a 02 JAN 2027', '20261231', '20270103'],
+        ['31 DEZ a 02 JAN 2027', '20261231', '20270103'],
+        ['29 FEV 2028', '20280229', '20280301'],
+    ]) assert.deepEqual(getCalendarDates({ ...event, date }), { start, end });
+});
+
+test('Technical sort dates cannot turn unknown or malformed published dates into appointments', () => {
+    for (const date of ['A definir', 'EVENTO', 'Adiado', '31 FEV 2026', '28 SET a 27 SET 2026', '6 e 20 SET 2026']) {
+        const race = { ...event, date };
+        assert.equal(getCalendarDates(race), null);
+        assert.equal(getGoogleCalendarDatePayload(race), null);
+        assert.equal(buildEventsIcsContent([race]), null);
+    }
+});
+
+test('Batch ICS keeps separate valid events and ignores unknown dates', () => {
+    const content = buildEventsIcsContent([event, { ...event, id: '2', date: '21 SET 2026' }, { ...event, date: 'A definir' }]);
+    assert.equal(content.match(/BEGIN:VCALENDAR/g).length, 1);
+    assert.equal(content.match(/BEGIN:VEVENT/g).length, 2);
+    assert.equal(content.match(/BEGIN:VALARM/g).length, 2);
+});
 
 test('Google and ICS reserve the same full day without inventing a race time', () => {
     const dates = getCalendarDates(event);

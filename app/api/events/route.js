@@ -1,5 +1,5 @@
 import { prisma } from '@/app/lib/db';
-import { getEventDiscipline } from '@/app/utils/eventClassifier';
+import { getEventDiscipline, getEventCategories } from '@/app/utils/eventClassifier';
 import { toCalendarListEvent } from '@/app/utils/calendarList';
 export const dynamic = 'force-dynamic';
 
@@ -84,7 +84,7 @@ export async function GET(request) {
         const formattedEvents = events.map(e => ({
             ...toCalendarListEvent(e),
             tag: getEventDiscipline(e),
-            escaloes: e.escaloes ? (typeof e.escaloes === 'string' ? JSON.parse(e.escaloes) : e.escaloes) : []
+            escaloes: getEventCategories(e)
         }));
 
         return Response.json(

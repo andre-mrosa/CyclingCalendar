@@ -26,8 +26,7 @@ const withPWA = withPWAInit({
         urlPattern: ({ request }) => request.mode === 'navigate',
         handler: "NetworkFirst",
         options: {
-          cacheName: "pages-cache",
-          networkTimeoutSeconds: 2.5,
+          cacheName: "pages-cache-v1.2",
           expiration: {
             maxEntries: 50,
             maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
@@ -60,16 +59,9 @@ const withPWA = withPWAInit({
         },
       },
       {
+        // Account calendar responses must not be reused across sessions.
         urlPattern: /\/api\/calendar\/events.*/i,
-        handler: "NetworkFirst",
-        options: {
-          cacheName: "api-calendar-cache",
-          networkTimeoutSeconds: 3,
-          expiration: {
-            maxEntries: 50,
-            maxAgeSeconds: 7 * 24 * 60 * 60,
-          },
-        },
+        handler: "NetworkOnly",
       },
     ],
   },

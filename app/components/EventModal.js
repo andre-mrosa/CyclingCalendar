@@ -1,3 +1,6 @@
+import { eventDateDisplay } from '../utils/eventDateDisplay';
+import { getEventDocuments } from '../utils/eventDocuments';
+import EventRouteProfile from './EventRouteProfile';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Calendar, Star, X, CalendarPlus, Check, Bike, FileText, CreditCard, Trophy, Shield, Users, Globe, Clock, MapPin, ExternalLink, ChevronDown, Bell, Sparkles, Trash2, Info, Tag, Share2, Flag } from 'lucide-react';
 import { useTheme } from 'next-themes';
@@ -7,10 +10,9 @@ import { useCalendarEvents } from '../hooks/useCalendarEvents';
 import WeatherWidget from './WeatherWidget';
 import { useTranslation } from '../i18n/useTranslation';
 import { formatMonthAbbr, translateDateString, translateEscalao, translateAmbito, translateLicenca, translateTag } from '../i18n/formatters';
-import { getEventDiscipline } from '../utils/eventClassifier';
-import { detectRaceDate } from '../utils/detectRaceDate';
+import { getEventDiscipline, getEventCategories } from '../utils/eventClassifier';
 import { formatEventLocation, extractEventTown } from '../utils/eventLocation';
-import { downloadIcsFile, generateGoogleCalendarUrl } from '../utils/calendarExport';
+import { downloadIcsFile, generateGoogleCalendarUrl, getGoogleCalendarDatePayload } from '../utils/calendarExport';
 import styles from './site.module.css';
 import { useModalFocus } from '../hooks/useModalFocus';
 import { withRegistrationDates, registrationPriceSummary } from '../utils/registrationDates';
@@ -18,11 +20,11 @@ import { isCancelled, registrationDaysUntil } from '../utils/planning';
 
 const eventDetailsCache = new Map();
 
-export default function EventModal({ selectedEvent, setSelectedEvent, favorites, toggleFavorite, isSignedIn }) {
-    const dialogRef = useModalFocus(!!selectedEvent);
+export default function EventModal({ selectedEvent, setSelectedEvent, favorites, toggleFavorite, isSignedIn, standalone = false }) {
+    const dialogRef = useModalFocus(!!selectedEvent && !standalone);
     const { resolvedTheme } = useTheme();
     const { t, language } = useTranslation();
-    const { isMarked, refreshCalendar } = useCalendarEvents();
+    const { isMarked, refreshCalendar, getCalendarEntry } = useCalendarEvents();
     const [programaData, setProgramaData] = useState({ loading: false, html: null, error: null, additionalLinks: [] });
     const [fullscreenImage, setFullscreenImage] = useState(null);
     const [isImageZoomed, setIsImageZoomed] = useState(false);
@@ -53,8 +55,8 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
             navigator.vibrate(10);
         }
         const shareUrl = typeof window !== 'undefined' 
-            ? `${window.location.origin}/?event=${selectedEvent.id}` 
-            : `https://cyclingcalendar.pt/?event=${selectedEvent.id}`;
+            ? `${window.location.origin}/events/${encodeURIComponent(selectedEvent.id)}`
+            : `https://cyclingcalendar.pt/events/${encodeURIComponent(selectedEvent.id)}`;
 
         const shareData = {
             title: `${selectedEvent.title} | Cycling Calendar Portugal`,
@@ -86,6 +88,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
     }, []);
 
     const closeModal = () => {
+        if (standalone) return;
         setIsClosing(true);
         setTimeout(() => {
             setSelectedEvent(null);
@@ -140,7 +143,9 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
     const [fullEvent, setFullEvent] = useState(null);
     const [isLoadingFullEvent, setIsLoadingFullEvent] = useState(false);
-    const activeEvent = useMemo(() => withRegistrationDates(fullEvent || selectedEvent), [fullEvent, selectedEvent]);
+    const activeEvent = useMemo(() => withRegistrationDates({ ...(fullEvent || selectedEvent), escaloes: getEventCategories(fullEvent || selectedEvent || {}) }), [fullEvent, selectedEvent]);
+    const documents = useMemo(() => getEventDocuments(activeEvent), [activeEvent]);
+    const [showCalendarOptions, setShowCalendarOptions] = useState(false);
     const googleCalendarUrl = activeEvent ? generateGoogleCalendarUrl(activeEvent) : null;
 
     useEffect(() => {
@@ -190,14 +195,14 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
     // Bloquear o scroll da página de fundo quando o modal ou imagem em ecrã inteiro estiver aberto
     useEffect(() => {
-        if (selectedEvent || fullscreenImage) {
+        if ((!standalone && selectedEvent) || fullscreenImage) {
             const originalOverflow = document.body.style.overflow;
             document.body.style.overflow = 'hidden';
             return () => {
                 document.body.style.overflow = originalOverflow || '';
             };
         }
-    }, [selectedEvent, fullscreenImage]);
+    }, [selectedEvent, fullscreenImage, standalone]);
 
 
     // Formata datas de inscrição no idioma ativo sem segundos (usa UTC para preservar hora original)
@@ -497,15 +502,14 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
     // Calcula as tabs ativas baseadas nos dados reais do evento
     const availableTabs = useMemo(() => {
         if (!selectedEvent) return [];
-        const tabs = [];
-        if (activeEvent.description || activeEvent.ambito || activeEvent.organizador) tabs.push('info');
-        if (activeEvent.escaloes && activeEvent.escaloes.length > 0) tabs.push('escaloes');
-        if (programaCleanHtml && programaCleanHtml.trim().length > 0 && programaCleanHtml !== 'Não disponível') tabs.push('programa');
+        const tabs = ['info'];
+        // Categories are visible in the summary.
+        if (activeEvent.gpxData || documents.length || (programaCleanHtml && programaCleanHtml.trim().length > 0 && programaCleanHtml !== 'Não disponível')) tabs.push('programa');
         if (activeEvent.prices || activeEvent.registrationOpensAt || activeEvent.registrationClosesAt) tabs.push('inscricao');
         if (activeEvent.prizes || activeEvent.insurance) tabs.push('premios');
         if (activeEvent.details && activeEvent.details !== 'A definir') tabs.push('localizacao');
         return tabs;
-    }, [activeEvent, programaCleanHtml]);
+    }, [activeEvent, programaCleanHtml, documents]);
 
     useEffect(() => {
         if (availableTabs.length > 0 && !availableTabs.includes(activeTab)) {
@@ -685,43 +689,32 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
 
     if (!selectedEvent) return null;
 
-    const rawDate = activeEvent.date || '';
-    const isMultiDay = rawDate.includes(',') || rawDate.includes(' e ') || rawDate.includes(' a ');
-    const monthAbbrs = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
-    
-    // Extrai o dia ou intervalo real do evento
-    let day = '';
-    let month = '';
-    const fullRangeMatch = rawDate.trim().match(/^(\d{1,2})\s*(?:[A-ZÀ-Úa-zà-ú]{3})?(?:\s*\d{4})?\s*(?:a|-|e)\s*(\d{1,2})\s+([A-ZÀ-Úa-zà-ú]{3})/i);
-    if (fullRangeMatch && monthAbbrs.includes(fullRangeMatch[3].toUpperCase())) {
-        const startDay = fullRangeMatch[1];
-        const endDay = fullRangeMatch[2];
-        month = fullRangeMatch[3].toUpperCase();
-        day = startDay === endDay ? startDay : `${startDay}-${endDay}`;
-    } else {
-        const dateParts = rawDate.trim().split(/\s+/);
-        day = dateParts[0] ? dateParts[0].replace(/,/g, '') : '';
-        month = dateParts.find(p => monthAbbrs.includes(p.toUpperCase()))?.toUpperCase() || '';
-    }
+    const EventTitle = standalone ? "h1" : "h2";
+    const { day, month, start: weatherDate } = eventDateDisplay(activeEvent);
+    const savedEntry = getCalendarEntry(activeEvent.id, activeEvent._allIds);
+    const expectedDates = getGoogleCalendarDatePayload(activeEvent);
+    const savedDatesChanged = savedEntry && expectedDates && (savedEntry.start?.slice(0, 10) !== expectedDates.start.date || savedEntry.end?.slice(0, 10) !== expectedDates.end.date || !savedEntry.allDay);
+    const savedEnd = savedEntry?.allDay && savedEntry.end ? new Date(new Date(savedEntry.end).getTime() - 86400000).toISOString().slice(0, 10) : savedEntry?.end?.slice(0, 10);
+
 
     return (
         <div 
-            className={`${styles.overlay} fixed inset-0 z-[9000] flex items-end sm:items-center justify-center p-0 pt-8 sm:p-4 overflow-hidden transition-opacity duration-300 ${
+            className={standalone ? styles.eventPage : `${styles.overlay} fixed inset-0 z-[9000] flex items-end sm:items-center justify-center p-0 pt-8 sm:p-4 overflow-hidden transition-opacity duration-300 ${
                 isClosing || !isOpenAnimated ? 'opacity-0 pointer-events-none' : 'opacity-100'
             }`} 
             style={{
                 opacity: isDragging && dragY > 0 ? Math.max(0.2, 1 - (dragY / 400)) : undefined
             }}
-            onClick={closeModal}
+            onClick={standalone ? undefined : closeModal}
         >
             <div 
-                role="dialog"
+                role={standalone ? "article" : "dialog"}
                 ref={dialogRef}
                 tabIndex={-1}
-                aria-modal="true"
+                aria-modal={standalone ? undefined : true}
                 aria-label={activeEvent.title}
-                className={`${styles.eventDialog} border-t sm:border rounded-t-3xl sm:rounded-3xl w-full max-w-5xl ${
-                    isExpanded ? 'h-[96dvh] max-h-[96dvh]' : 'h-[90dvh] sm:h-[88vh] max-h-[calc(100dvh-2rem)] sm:max-h-[88vh]'
+                className={`${styles.eventDialog} ${standalone ? styles.standaloneEvent : ""} border-t sm:border rounded-t-3xl sm:rounded-3xl w-full max-w-5xl ${
+                    standalone ? '' : isExpanded ? 'h-[96dvh] max-h-[96dvh]' : 'h-auto max-h-[calc(100dvh-2rem)] sm:max-h-[88vh]'
                 } flex flex-col shadow-2xl overflow-hidden relative ${
                     isDragging ? 'transition-none' : 'transition-all duration-300 ease-out'
                 } transform ${
@@ -737,6 +730,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 
                 {/* Mobile Drag / Dismiss Handle */}
                 <div 
+                    style={{ display: standalone ? 'none' : undefined }}
                     onTouchStart={handleTouchStart}
                     onTouchMove={handleTouchMove}
                     onTouchEnd={handleTouchEnd}
@@ -801,8 +795,8 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         })()}
                         <button 
                             className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors p-1.5 rounded-full bg-soft border border-line cursor-pointer"
-                            onClick={closeModal} 
-                            title={t('action_close')}
+                            onClick={standalone ? undefined : closeModal}
+                            title={t('action_close')} style={{ display: standalone ? 'none' : undefined }}
                         >
                             <X size={17} />
                         </button>
@@ -817,7 +811,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                 || (language !== 'pt' ? activeEvent.translations?.find(t => t.language === 'en') : null);
                             const modalTitle = language === 'pt' ? activeEvent.title : (translation?.title || activeEvent.title);
                             return (
-                                <h2 className="text-base font-bold text-ink m-0 leading-snug line-clamp-2">
+                                <EventTitle className="text-base font-bold text-ink m-0 leading-snug line-clamp-2">
                                     {activeEvent.logo ? (
                                         <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="text-inherit no-underline hover:text-brand transition-colors">
                                             {modalTitle}
@@ -825,21 +819,21 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                     ) : (
                                         <span>{modalTitle}</span>
                                     )}
-                                </h2>
+                                </EventTitle>
                             );
                         })()}
                     </div>
                     <WeatherWidget 
                         location={extractEventTown(activeEvent) || activeEvent.distrito} 
                         distrito={activeEvent.distrito} 
-                        date={activeEvent.sortDate ? new Date(activeEvent.sortDate).toISOString().substring(0, 10) : activeEvent.date}
+                        date={weatherDate}
                         variant="mobile-badge"
                     />
                 </div>
 
                 {/* Desktop Header (hidden sm:flex) */}
                 <div className="hidden sm:flex items-center justify-between gap-3.5 pr-14 p-5 pb-2 min-w-0 shrink-0">
-                    <button className="absolute top-4 right-4 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors z-10 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-soft cursor-pointer" onClick={closeModal} title={t('action_close')}>
+                    <button className="absolute top-4 right-4 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors z-10 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-soft cursor-pointer" onClick={standalone ? undefined : closeModal} title={t('action_close')} style={{ display: standalone ? 'none' : undefined }}>
                         <X size={20} />
                     </button>
                     
@@ -868,7 +862,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                     || (language !== 'pt' ? activeEvent.translations?.find(t => t.language === 'en') : null);
                                 const modalTitle = language === 'pt' ? activeEvent.title : (translation?.title || activeEvent.title);
                                 return (
-                                    <h2 className="text-xl font-bold text-ink m-0 truncate">
+                                    <EventTitle className="text-xl font-bold text-ink m-0 truncate">
                                         {activeEvent.logo ? (
                                             <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="text-inherit no-underline hover:text-brand transition-colors truncate">
                                                 {modalTitle}
@@ -876,7 +870,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                         ) : (
                                             <span className="text-ink truncate">{modalTitle}</span>
                                         )}
-                                    </h2>
+                                    </EventTitle>
                                 );
                             })()}
                             <button 
@@ -913,7 +907,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                     <WeatherWidget 
                         location={extractEventTown(activeEvent) || activeEvent.distrito} 
                         distrito={activeEvent.distrito} 
-                        date={activeEvent.sortDate ? new Date(activeEvent.sortDate).toISOString().substring(0, 10) : activeEvent.date}
+                        date={weatherDate}
                         variant="header"
                     />
                 </div>
@@ -971,6 +965,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                     </div>
                 )}
 
+                {weatherDate && <p className="px-5 m-0 pb-1 text-[10px] text-muted">{t('planning_weather_day')}: {new Intl.DateTimeFormat(language, { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(weatherDate + 'T00:00:00Z'))}</p>}
                 {/* Tab content area */}
                 <div className="flex-grow overflow-hidden flex flex-col px-4 sm:px-5 min-h-0 pt-2">
                 {isCancelled(activeEvent) && <p className={styles.cancelledBadge}><Info size={14} />{t('planning_cancelled')}</p>}
@@ -1017,7 +1012,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                             </div>
                                             {activeEvent.link && (
                                                 <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-slate-900 dark:text-white text-[11px] font-bold no-underline transition-colors shrink-0">
-                                                    {t('action_register')}
+                                                    {t(activeEvent.registrationClosesAt && registrationDaysUntil(activeEvent.registrationClosesAt) < 0 ? 'planning_registration_page' : 'action_register')}
                                                 </a>
                                             )}
                                         </div>
@@ -1042,7 +1037,6 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         <div className="flex-1 overflow-y-auto min-h-0 pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent overscroll-contain touch-pan-y">
                             {/* Native Universal Resumo da Prova Card */}
                             {(() => {
-                                const raceInfo = detectRaceDate(activeEvent);
                                 return (
                                 <div className={styles.eventSummary}>
                                     <div className="flex items-center justify-between gap-2 mb-2.5 pb-2 border-b border-slate-200/80 dark:border-line">
@@ -1054,15 +1048,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                                 {t('summary_title')}
                                             </h4>
                                         </div>
-                                        {activeEvent.source && (
-                                            <div className="flex items-center gap-1 flex-wrap">
-                                                {activeEvent.source.split(',').map(s => s.trim()).filter(Boolean).map(src => (
-                                                    <span key={src} className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-200/80 dark:bg-soft text-slate-600 dark:text-slate-300 border border-slate-300/60 dark:border-line">
-                                                        {src}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        )}
+
                                     </div>
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
@@ -1071,10 +1057,8 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                             <Calendar size={14} className="text-brand shrink-0 mt-0.5" />
                                             <div className="min-w-0">
                                                 <span className="text-[10px] text-muted block font-semibold uppercase leading-tight">{t('summary_date')}</span>
-                                                <span className="font-semibold text-ink truncate block">{translateDateString(activeEvent.date, language)}</span>
-                                                {raceInfo && raceInfo.raceDayOnly && raceInfo.label !== activeEvent.date && (
-                                                    <span className="text-[11px] text-brand font-bold block mt-0.5"><Flag size={12} className="inline-block align-middle shrink-0 mr-1" aria-hidden="true" />{translateDateString(raceInfo.label, language)}</span>
-                                                )}
+                                                <span className="font-semibold text-ink truncate block">{expectedDates ? translateDateString(activeEvent.date, language) : t('planning_date_unconfirmed')}</span>
+
                                             </div>
                                         </div>
 
@@ -1110,6 +1094,18 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                         </div>
                                     </div>
 
+                                    {activeEvent.escaloes?.length > 0 && (
+                                        <div className="mt-3 pt-3 border-t border-line text-xs">
+                                            <span className="text-muted block mb-1">{t('tab_categories')}</span>
+                                            <span className="font-semibold">{activeEvent.escaloes.map(esc => translateEscalao(esc, language)).join(' · ')}</span>
+                                        </div>
+                                    )}
+                                    {activeEvent.organizador && <p className="text-xs mt-3 mb-0"><span className="text-muted">{t('summary_organizer')}: </span>{activeEvent.organizador}</p>}
+
+                                    {(activeEvent.registrationOpensAt || activeEvent.registrationClosesAt) && <div className="mt-3 pt-3 border-t border-line text-xs grid gap-1">
+                                        {activeEvent.registrationOpensAt && <p className="m-0"><span className="text-muted">{t('reg_open_title')}: </span>{formatRegDate(activeEvent.registrationOpensAt)}</p>}
+                                        {activeEvent.registrationClosesAt && <p className="m-0"><span className="text-muted">{t('reg_close_title')}: </span>{formatRegDate(activeEvent.registrationClosesAt)}{registrationDaysUntil(activeEvent.registrationClosesAt) < 0 && <strong className="text-brand"> · {t('planning_registration_closed')}</strong>}</p>}
+                                    </div>}
                                     {/* Percursos & Distâncias */}
                                     {percursosSummary && percursosSummary.length > 0 && (
                                         <div className="mt-2.5 pt-2 border-t border-slate-200/80 dark:border-line">
@@ -1152,11 +1148,10 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             {fpcBannerHtml && !isLoadingFullEvent && (
                                 <div className="mb-2 text-center" dangerouslySetInnerHTML={{ __html: fpcBannerHtml }} onClick={handleHtmlClick} />
                             )}
-                            {cleanDescriptionHtml ? (
-                                <div className="text-ink text-xs sm:text-sm leading-relaxed prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: cleanDescriptionHtml }} />
-                            ) : !isLoadingFullEvent ? (
-                                <p className="text-muted text-xs sm:text-sm">{t('summary_no_description')}</p>
-                            ) : null}
+                            {cleanDescriptionHtml && <details className="my-3 border border-line rounded p-3">
+                                <summary className="text-sm font-semibold text-ink cursor-pointer">{t('planning_description')}</summary>
+                                <div className="mt-3 text-ink text-xs sm:text-sm leading-relaxed prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: cleanDescriptionHtml }} />
+                            </details>}
 
                             {/* Recursos e Documentos Úteis da Prova */}
                             {parsedLinks.resources.length > 0 && !isLoadingFullEvent && (
@@ -1190,34 +1185,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             )}
                         </div>
                         
-                        <div className="shrink-0 mt-2 grid grid-cols-2 gap-2 pb-1">
-                            {activeEvent.licenca && (
-                                <div className="px-3 py-2 bg-soft rounded-xl border border-line flex items-center gap-2.5">
-                                    <div className="w-7 h-7 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
-                                        <FileText size={13} className="text-purple-500 dark:text-purple-400" />
-                                    </div>
-                                    <div className="min-w-0">
-                                        <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold block leading-tight">{t('summary_license')}</span>
-                                        <span className="text-xs sm:text-sm font-semibold text-ink truncate block">{translateLicenca(activeEvent.licenca, language)}</span>
-                                    </div>
-                                </div>
-                            )}
-                            {(activeEvent.organizador || activeEvent.source) && (
-                                <div className="px-3 py-2 bg-soft rounded-xl border border-line flex items-center gap-2.5">
-                                    <div className="w-7 h-7 rounded-lg bg-brand-soft border border-brand flex items-center justify-center shrink-0">
-                                        <Users size={13} className="text-brand" />
-                                    </div>
-                                    <div className="min-w-0">
-                                        <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold block leading-tight">{t(activeEvent.organizador ? 'summary_organizer' : 'planning_sources')}</span>
-                                        <span className="text-xs sm:text-sm font-semibold text-ink truncate block">
-                                            {activeEvent.organizador 
-                                                ? (activeEvent.organizador === 'U.V.P./F.P.C' ? 'FPC' : activeEvent.organizador) 
-                                                : (activeEvent.source === 'Cabreira' ? 'Cabreira Solutions' : activeEvent.source)}
-                                        </span>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
+
                     </div>
                 )}
 
@@ -1248,6 +1216,14 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 {activeTab === 'programa' && (
                     <div className="flex flex-col h-full animate-fade-in min-h-0">
                         <div className="flex-1 overflow-y-auto min-h-0 pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent overscroll-contain touch-pan-y">
+                            <EventRouteProfile event={activeEvent} documents={documents} />
+                            {documents.length > 0 && (
+                                <div className="grid gap-2 mb-4">
+                                    {documents.map(doc => <a key={doc.link} href={doc.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded border border-line bg-soft text-ink hover:text-brand">
+                                        <FileText size={16} className="text-brand shrink-0" /><span className="text-sm">{doc.label}</span><ExternalLink size={13} className="ml-auto shrink-0" />
+                                    </a>)}
+                                </div>
+                            )}
                             {parsedSchedule && parsedSchedule.type === 'timeline' ? (
                                 <div className="space-y-4 pb-3">
                                     {parsedSchedule.days.map((day, dIdx) => (
@@ -1335,14 +1311,9 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                         </div>
                                     ))}
                                 </div>
-                            ) : programaCleanHtml ? (
+                            ) : programaCleanHtml && !(documents.length && activeEvent.source?.includes("FPC")) ? (
                                 <div className="prose dark:prose-invert max-w-none text-xs sm:text-sm leading-relaxed text-ink" dangerouslySetInnerHTML={{ __html: programaCleanHtml }} onClick={handleHtmlClick} />
-                            ) : (
-                                <div className="p-4 bg-soft border border-line rounded-xl text-muted text-xs flex items-center gap-2.5">
-                                    <FileText size={16} className="text-slate-600 dark:text-slate-400 dark:text-slate-500 shrink-0" />
-                                    <span>{t('schedule_not_available')}</span>
-                                </div>
-                            )}
+                            ) : null}
                         </div>
                     </div>
                 )}
@@ -1514,6 +1485,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                 {/* Tab: LOCALIZACAO */}
                 {activeTab === 'localizacao' && (
                     <div className="flex flex-col h-full animate-fade-in pb-2 min-h-0 overflow-hidden pr-1">
+                        <p className="text-xs text-muted mb-3">{t('planning_map_approx')}</p>
                         {activeEvent.details && activeEvent.details !== 'A definir' ? (
                             <div className="w-full h-full min-h-[300px] flex-1 rounded-xl overflow-hidden border border-line shadow-sm relative">
                                 <iframe 
@@ -1587,14 +1559,14 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                     rel="noopener noreferrer" 
                                     className="px-4 py-2 bg-brand hover:brightness-110 text-surface rounded-xl text-xs sm:text-sm font-semibold transition-colors shadow-sm flex items-center justify-center"
                                 >
-                                    {t('action_register')}
+                                    {t(activeEvent.registrationClosesAt && registrationDaysUntil(activeEvent.registrationClosesAt) < 0 ? 'planning_registration_page' : 'action_register')}
                                 </a>
                             )}
                             
                             {parsedLinks.registrationList.length > 1 && (
                                 <div className="relative group">
                                     <button className="px-4 py-2 bg-brand hover:brightness-110 text-surface rounded-xl text-xs sm:text-sm font-semibold transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer">
-                                        <span>{t('action_register')}</span>
+                                        <span>{t(activeEvent.registrationClosesAt && registrationDaysUntil(activeEvent.registrationClosesAt) < 0 ? 'planning_registration_page' : 'action_register')}</span>
                                         <ChevronDown size={13} className="shrink-0" />
                                     </button>
                                     <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block w-48 bg-surface border border-line rounded-xl shadow-2xl overflow-hidden z-50 animate-fade-in">
@@ -1607,7 +1579,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                                     rel="noopener noreferrer" 
                                                     className="px-3.5 py-2.5 hover:bg-slate-100 dark:hover:bg-soft text-ink text-xs transition-colors border-b border-slate-100 dark:border-line last:border-0 font-medium flex items-center justify-between"
                                                 >
-                                                    <span>{t('action_register')}</span>
+                                                    <span>{t(activeEvent.registrationClosesAt && registrationDaysUntil(activeEvent.registrationClosesAt) < 0 ? 'planning_registration_page' : 'action_register')}</span>
                                                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand-soft text-brand font-semibold">{src._plat}</span>
                                                 </a>
                                             ))}
@@ -1618,6 +1590,18 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         </div>
                     )}
 
+                    <div className="w-full">
+                        <button type="button" onClick={() => setShowCalendarOptions(value => !value)} disabled={!googleCalendarUrl && !activeEvent.registrationOpensAt && !activeEvent.registrationClosesAt} aria-expanded={showCalendarOptions} className="px-4 py-2 rounded border border-brand text-brand font-semibold text-sm flex items-center gap-2">
+                            <CalendarPlus size={16} />{t('action_add_calendar')}<ChevronDown size={14} />
+                        </button>
+                        {savedEntry && <p className="text-xs text-muted mt-2 mb-0">
+                            {t('planning_saved_dates')}: {savedEntry.start?.slice(0, 10)}{savedEnd && savedEnd !== savedEntry.start?.slice(0, 10) ? ' – ' + savedEnd : ''}
+                            {Array.isArray(savedEntry.reminderMinutes) && <> · {t('planning_reminders')}: {savedEntry.reminderMinutes.length ? savedEntry.reminderMinutes.map(minutes => minutes % 1440 === 0 ? (minutes / 1440) + 'd' : minutes % 60 === 0 ? (minutes / 60) + 'h' : minutes + 'min').join(' / ') : t('planning_no_reminders')}</>}
+                        </p>}
+                        {savedDatesChanged && <p className="text-xs text-brand mt-2">{t('planning_saved_changed')}</p>}
+                        <a className="text-xs text-muted underline inline-block mt-2" href={"/contacto?event=" + encodeURIComponent(activeEvent.id) + "&title=" + encodeURIComponent(activeEvent.title)}>{t('planning_report_error')}</a>
+                        {showCalendarOptions && <div className="flex flex-wrap items-center gap-2 pt-3">
+                            <p className="w-full text-xs text-muted m-0">{translateDateString(activeEvent.date, language)}</p>
                     {googleCalendarUrl && (
                         <div className="flex items-center gap-2 flex-wrap">
                             <a
@@ -1642,7 +1626,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         </div>
                     )}
 
-                    {isSignedIn && (() => {
+                    {isSignedIn && googleCalendarUrl && (() => {
                         const isEventAlreadyMarked = calendarStatus === 'success' || calendarStatus === 'exists';
                         const isRegOpenMarked = regOpenCalStatus === 'success' || regOpenCalStatus === 'exists';
                         const isRegCloseMarked = regCloseCalStatus === 'success' || regCloseCalStatus === 'exists';
@@ -1726,7 +1710,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                                             <Calendar size={14} className={isEventAlreadyMarked ? "text-emerald-500 shrink-0" : "text-brand shrink-0"} />
                                             <div>
                                                 <span className="font-semibold block leading-tight">{t('cal_menu_mark_event')}</span>
-                                                <span className="text-[10px] text-slate-600 dark:text-slate-400">{t('reg_reminder_alert')}</span>
+                                                <span className="text-[10px] text-slate-600 dark:text-slate-400">{t('planning_race_reminders')}</span>
                                             </div>
                                         </div>
                                         {isEventAlreadyMarked && (
@@ -1796,6 +1780,8 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         </div>
                         );
                     })()}
+                        </div>}
+                    </div>
                 </div>
             </div>
 
@@ -1876,7 +1862,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                             setFullscreenImage(null);
                             setIsImageZoomed(false);
                         }}
-                        title={t('action_close')}
+                        title={t('action_close')} style={{ display: standalone ? 'none' : undefined }}
                     >
                         <X size={20} />
                     </button>

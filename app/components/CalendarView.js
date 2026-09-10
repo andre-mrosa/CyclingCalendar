@@ -1,4 +1,5 @@
 "use client";
+import { eventDateDisplay } from "../utils/eventDateDisplay";
 import { useState, useEffect, useRef, useMemo, Fragment } from 'react';
 import { useSettingsStore } from '../store/useSettingsStore';
 import useSWR from 'swr';
@@ -38,29 +39,7 @@ const fetcher = async (url) => {
 
 const EMPTY_EVENTS = [];
 
-const getMonthYearInfo = (ev) => {
-    if (ev.sortDate) {
-        const d = new Date(ev.sortDate);
-        if (!isNaN(d.getTime())) {
-            return {
-                year: d.getFullYear(),
-                monthIdx: d.getMonth(),
-                key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-            };
-        }
-    }
-    const rawDate = ev.date || '';
-    const matchYear = rawDate.match(/20\d\d/);
-    const year = matchYear ? parseInt(matchYear[0], 10) : new Date().getFullYear();
-    const monthAbbrsPt = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
-    const foundIdx = monthAbbrsPt.findIndex(m => rawDate.toUpperCase().includes(m));
-    const monthIdx = foundIdx !== -1 ? foundIdx : 0;
-    return {
-        year,
-        monthIdx,
-        key: `${year}-${String(monthIdx + 1).padStart(2, '0')}`
-    };
-};
+const getMonthYearInfo = eventDateDisplay;
 
 const formatMonthHeading = (year, monthIdx, lang) => {
     const localeMap = { pt: 'pt-PT', en: 'en-US', es: 'es-ES', fr: 'fr-FR' };
@@ -247,16 +226,20 @@ export default function CalendarView({
                 if (evYear && selectedYears.includes(evYear) && parseInt(evYear) < today.getFullYear()) {
                     return true;
                 }
-                return !e.sortDate || new Date(e.sortDate) >= today;
+                const end = eventDateDisplay(e).end;
+                return !end || new Date(end + 'T23:59:59Z') >= today;
             });
         } else if (pastEventsFilter === 'passados') {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            filtered = filtered.filter(e => e.sortDate && new Date(e.sortDate) < today);
+            filtered = filtered.filter(e => { const end = eventDateDisplay(e).end; return end && new Date(end + 'T23:59:59Z') < today; });
         }
 
         filtered = filtered.filter(event => matchesPeriod(event, quickPeriod));
-        setFilteredEvents(filtered);
+        setFilteredEvents([...filtered].sort((a, b) => {
+            const first = eventDateDisplay(a), second = eventDateDisplay(b);
+            return (first.start || '9999').localeCompare(second.start || '9999');
+        }));
         setVisibleCount(100); // Reset visible count on filter change
     }, [events, searchTerm, selectedYears, selectedEscaloes, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, filterByFavorites, filterByAgenda, markedSet, favorites, forceEscalao, forceAmbito, forceLicenca, quickPeriod]);
 
@@ -696,7 +679,7 @@ export default function CalendarView({
             </header>
 
             <section className={styles.calendarFeed} aria-label={pageTitle}>
-                {(filterByAgenda || filterByFavorites) && !isInitialLoading && <AgendaOverview events={events.filter(event => filterByAgenda ? isMarked(event.id, 'event', event._allIds || []) : favorites.includes(event.id) || event._allIds?.some(id => favorites.includes(id)))} onSelect={setSelectedEvent} />}
+                {(filterByAgenda || filterByFavorites) && !isInitialLoading && <AgendaOverview mode={filterByAgenda ? "agenda" : "favorites"} events={events.filter(event => filterByAgenda ? isMarked(event.id, 'event', event._allIds || []) : favorites.includes(event.id) || event._allIds?.some(id => favorites.includes(id)))} onSelect={setSelectedEvent} />}
                 {isInitialLoading && (
                     <div className="flex flex-col items-center justify-center py-16 text-slate-400">
                         <div className="w-8 h-8 border-4 border-line border-t-brand rounded-full animate-spin mb-4"></div>
@@ -774,27 +757,12 @@ export default function CalendarView({
                                 const currentMY = getMonthYearInfo(event);
                                 const prevMY = idx > 0 ? getMonthYearInfo(currentArray[idx - 1]) : null;
                                 const isNewMonth = !prevMY || currentMY.key !== prevMY.key;
-                                const monthHeading = isNewMonth ? formatMonthHeading(currentMY.year, currentMY.monthIdx, language) : '';
+                                const monthHeading = currentMY.key === 'unknown' ? t('planning_date_unconfirmed') : isNewMonth ? formatMonthHeading(currentMY.year, currentMY.monthIdx, language) : '';
 
                                 const rawDate = event.date || '';
                                 const isStage = isStageRace(event);
                                 const discipline = getEventDiscipline(event);
-                                const monthAbbrs = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
-                                
-                                // Extrai o dia ou intervalo real do evento
-                                let day = '';
-                                let month = '';
-                                const fullRangeMatch = rawDate.trim().match(/^(\d{1,2})\s*(?:[A-ZÀ-Úa-zà-ú]{3})?(?:\s*\d{4})?\s*(?:a|-|e)\s*(\d{1,2})\s+([A-ZÀ-Úa-zà-ú]{3})/i);
-                                if (fullRangeMatch && monthAbbrs.includes(fullRangeMatch[3].toUpperCase())) {
-                                    const startDay = fullRangeMatch[1];
-                                    const endDay = fullRangeMatch[2];
-                                    month = fullRangeMatch[3].toUpperCase();
-                                    day = startDay === endDay ? startDay : `${startDay}-${endDay}`;
-                                } else {
-                                    const dateParts = rawDate.trim().split(/\s+/);
-                                    day = dateParts[0] ? dateParts[0].replace(/,/g, '') : '';
-                                    month = dateParts.find(p => monthAbbrs.includes(p.toUpperCase()))?.toUpperCase() || '';
-                                }
+                                const { day, month, singleDay, start } = currentMY;
 
                                 const allIds = [event.id, ...(event._allIds || [])];
                                 const isEventMarked = isMarked(event.id, 'event', allIds);
@@ -825,7 +793,7 @@ export default function CalendarView({
                                             </div>
                                             <div className={`${styles.dateDay} ${day.length > 2 ? styles.dateRange : ''}`}>
                                                 {day}
-                                                {event.sortDate && !day.includes('-') && <small className={styles.weekday}>{new Intl.DateTimeFormat(language, { weekday: 'short', timeZone: 'UTC' }).format(new Date(event.sortDate))}</small>}
+                                                {singleDay && start && <small className={styles.weekday}>{new Intl.DateTimeFormat(language, { weekday: 'short', timeZone: 'UTC' }).format(new Date(start + 'T00:00:00Z'))}</small>}
                                             </div>
                                         </div>
 

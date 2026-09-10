@@ -66,6 +66,19 @@ export function getEventDiscipline(eventOrTitle, details = '') {
     return getEventRaceTypes(eventOrTitle, details)[0] || 'Estrada';
 }
 
+export function getEventCategories(event) {
+    let categories = event.escaloes || [];
+    if (typeof categories === 'string') { try { categories = JSON.parse(categories); } catch { categories = []; } }
+    if (!Array.isArray(categories)) categories = [];
+    // FPC 2026 road calendar: 1.17/2.17 are Sub17 (Cadetes), not Masters.
+    // https://www.fpciclismo.pt/prova/prova-estrada
+    const eventClass = (event.details || '').split('|').pop().trim();
+    if (event.source?.split(',').some(source => source.trim() === 'FPC') && /^[12]\.17$/.test(eventClass)) {
+        return ['Sub-17 (Cadetes)', ...categories.filter(value => value === 'Femininas')];
+    }
+    return categories;
+}
+
 export const RACE_TAXONOMY = [
     {
         discipline: 'Estrada',
@@ -121,19 +134,10 @@ export function getEventRaceTypes(eventOrTitle, details = '') {
         return [curated];
     }
 
-    // 0.1 UCI & FPC Official Class Code Prefix System
-    // (1.x = Estrada, 2.x = BTT, 3.x = Pista, 4.x = Ciclocrosse, 5.x = BMX, 6.x = Gravel)
-    const fpcClassPrefix = det.match(/\b([1-6])\.\d{2}/);
-    if (fpcClassPrefix) {
-        const prefix = fpcClassPrefix[1];
-        if (prefix === '1') return ['Estrada'];
-        if (prefix === '2') return ['BTT'];
-        if (prefix === '3') return ['Pista'];
-        if (prefix === '4') return ['Ciclocrosse'];
-        if (prefix === '5') return ['BMX'];
-        if (prefix === '6') return ['Gravel'];
-    }
-
+    // Known road classes from the FPC road calendar. A numeric prefix alone
+    // never establishes the discipline (2.x also includes road stage races).
+    const eventClass = det.split('|').pop().trim();
+    if (typeof eventOrTitle === 'object' && eventOrTitle?.source?.split(',').some(source => source.trim() === 'FPC') && /^[12]\.(12|14|17|19)$/.test(eventClass)) return ['Estrada'];
     const titleText = title
         .toLowerCase()
         .normalize('NFD')

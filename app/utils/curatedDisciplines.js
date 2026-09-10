@@ -52,6 +52,9 @@ export const CURATED_DISCIPLINES = {
     'gravel-das-aldeias-do-xisto': 'Gravel',
     'alentejo-gravel': 'Gravel',
 
+    // FPC page /pagina/grande-premio-alves-barbosa-10-prova: Estrada (reviewed 2026-09-09).
+    'grande-premio-alves-barbosa': 'Estrada',
+
     // Estrada (Road)
     'figueira-champions-classic': 'Estrada',
     'figueira-champions-day': 'Estrada',

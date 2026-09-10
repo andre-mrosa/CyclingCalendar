@@ -33,7 +33,19 @@ master, versão 1.0.1, commit 28e22e1. Logo aprovado: arredondado e transparente
 - Agenda já tem exportação ICS, conflitos e integração Google: desenvolver essa base.
 
 ## Retomar
-Revisão mais recente: ver [SITE_REVIEW.md](SITE_REVIEW.md), com divergências verificadas entre modal/página pública, datas exportadas, classificação e prioridades. Rótulos de época/fontes removidos do cabeçalho; build de produção passou. As restantes conclusões da revisão continuam pendentes.
+### Checkpoint 1.2.0 — validada em 10 setembro
+- Datas: removidas suposições de último dia/09:00; Google manual/API e ICS individual/lote usam o mesmo intervalo inclusivo publicado (fim exclusivo nos calendários). Datas desconhecidas/inválidas não são exportadas. Testes reais Alves Barbosa e mudanças de mês/ano.
+- Ficha: EventDetailClient reutiliza EventModal em modo standalone (sem foco preso, overlay ou scroll bloqueado). Escalões no resumo, altura pelo conteúdo, fonte/licença sem repetições, documentos FPC PDF/KML com nomes úteis, opções de calendário agrupadas. Perfil GPX partilhado quando os dados existem.
+- FPC: removida inferência errada de modalidade pelo primeiro dígito da classe. Classes de estrada verificadas no calendário FPC; 1.17/2.17 passam a Sub-17/Cadetes, tanto na leitura como na próxima recolha. Não houve alteração em massa da BD. Fonte: https://www.fpciclismo.pt/prova/prova-estrada .
+- Lista: ambos os meses nos intervalos; datas malformadas e por anunciar em grupo separado; BTT inclui especialidades. Provas em curso mantêm-se nas próximas até ao último dia.
+- Agenda: devolve datas/avisos efetivos do Google e mostra discrepância com a ficha atual; conflitos por intervalo excluem lembretes de inscrição e canceladas. Resposta de agenda fora da cache partilhada do service worker. Exportações antigas NÃO são alteradas automaticamente.
+- Ajuda prática antes dos assistentes; comunicar erro abre contacto com identificação da prova (sem enviar); mapa identifica localidade aproximada; meteorologia identifica o dia.
+- Validação final: 81/81 testes e build de produção passaram em 10/09. Navegador com dados reais: ficha pública e modal móvel 390×844; desktop claro/escuro; docs com scroll; exportação 11–13 setembro; Estrada/Sub-17 corretos; Lousã com datas de inscrição/preços e descrição expansível; contacto identificado sem envio. Ajuda e ficha confirmadas no build de produção numa porta nova (3002), sem a cache dos testes anteriores e sem erros de consola. Servidor de validação: sessão 49240. Commit/push é o último passo desta entrega; confirmar git log/status ao retomar.
+- O build de 09/09 falhou ao obter fontes Google na sandbox e a repetição autorizada foi bloqueada pelo limite de uso. Retomado em 10/09 com rede autorizada e concluído. Os ficheiros PWA apagados temporariamente pelo build falhado foram regenerados; não publicar a árvore incompleta de 09/09.
+- Cache de páginas renovada para pages-cache-v1.2, sem devolver HTML antigo após timeout prematuro. Respostas de agenda usam NetworkOnly no service worker; dados de avisos apresentados apenas após resposta bem-sucedida do Google. Não houve criação/remoção de marcações Google durante QA.
+- Nota técnica: manter decodeURIComponent nos params da página de prova; neste Next a remoção gerou 404 com IDs acentuados e foi revertida após reprodução. Não assumir o comportamento de versões anteriores.
+
+Revisão mais recente: ver [SITE_REVIEW.md](SITE_REVIEW.md), com histórico, alterações entregues e pontos a aprofundar. Não repetir trabalho já concluído na 1.2.0.
 
 Ler este documento e git diff/status antes de trabalhar. Seguir AGENTS.md. Não lançar scrapers nem alterações na BD de produção indiscriminadamente. Validar com dados de teste primeiro. npm no PATH estava avariado (npm-cli.js em Roaming ausente); node funciona, é possível executar testes com node --test e Next via node node_modules/next/dist/bin/next.
 

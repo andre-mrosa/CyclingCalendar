@@ -1,5 +1,5 @@
 import { prisma } from '@/app/lib/db';
-import { getEventDiscipline } from '@/app/utils/eventClassifier';
+import { getEventDiscipline, getEventCategories } from '@/app/utils/eventClassifier';
 import { withRegistrationDates } from '@/app/utils/registrationDates';
 
 export async function GET(request, { params }) {
@@ -26,7 +26,7 @@ export async function GET(request, { params }) {
         const formattedEvent = {
             ...withRegistrationDates(event),
             tag: getEventDiscipline(event),
-            escaloes: event.escaloes ? (typeof event.escaloes === 'string' ? JSON.parse(event.escaloes) : event.escaloes) : [],
+            escaloes: getEventCategories(event),
             extraLinks: event.extraLinks ? (typeof event.extraLinks === 'string' ? JSON.parse(event.extraLinks) : event.extraLinks) : []
         };
 

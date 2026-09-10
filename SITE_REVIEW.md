@@ -1,5 +1,13 @@
 # Revisão do site — 9 de setembro de 2026
 
+## Estado após implementação 1.2.0 — 10 setembro
+
+As observações abaixo registam a revisão original. A versão 1.2.0 implementa: datas consistentes Google/ICS (incluindo exportação em lote); classes FPC corrigidas na leitura e recolha; ficha pública e modal com os mesmos componentes; documentos PDF/KML identificados; altura compacta, escalões e datas de inscrição no resumo; descrição recolhida; ação de calendário agrupada; consulta dos avisos reais e aviso de datas guardadas diferentes; conflitos por intervalo; grupos de datas por confirmar; filtro por famílias; ajuda prática e comunicação de erros com prova identificada.
+
+Verificados 81 testes, build de produção e navegador local com dados reais (desktop claro/escuro e mobile 390×844). Na validação final do build, ajuda e ficha Alves Barbosa sem erros de consola; exportação 20260911/20260914, oito documentos e Sub-17/Estrada. Lousã: prazos, preços e descrição expansível; contacto pré-preenchido sem envio. Não se criaram/removeram eventos na conta Google durante QA; o fluxo autenticado foi coberto por testes de dados, sem validação externa de criação.
+
+Continuação recomendada, fora desta entrega: investigar a recolha original de Race Nature Vieira Minho (data invertida e localidade contaminada, agora sinalizada como data por confirmar), validar restantes classes/escalões ambíguos da FPC, estudar simplificação do menu e recolher feedback sobre a ficha. Avisos personalizados, subscrição dinâmica ICS e atualização automática de marcações antigas continuam por implementar; não os anunciar como disponíveis. O menu atual foi preservado para evitar alterar a navegação ao mesmo tempo que a ficha.
+
 ## Âmbito e entrega
 
 Pedido: retirar os rótulos de época/fontes e analisar o site, sobretudo a ficha da prova. Removidos os dois rótulos de PageHeading em todos os idiomas e páginas que o reutilizam. Build de produção passou. As correções abaixo são trabalho pendente, não funcionalidades entregues nesta alteração.

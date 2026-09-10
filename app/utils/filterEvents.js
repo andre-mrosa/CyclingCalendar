@@ -166,7 +166,7 @@ export function filterEvents(events, filters) {
         filtered = filtered.filter(event => {
             const effectiveTag = getEventDiscipline(event);
             const raceTypes = getEventRaceTypes(event);
-            return selectedTags.some(tag => raceTypes.includes(tag)) || selectedTags.includes(effectiveTag) || selectedTags.includes(event.tag);
+            return selectedTags.some(tag => raceTypes.includes(tag) || (getRaceTypeFamily(tag) === tag && raceTypes.some(type => getRaceTypeFamily(type) === tag))) || selectedTags.includes(effectiveTag);
         });
     }
 

@@ -19,7 +19,8 @@ export function matchesPeriod(event, period, now = new Date()) {
     const day = eventDate.toISOString().slice(0, 10);
     const dates = getCalendarDates(event);
     const compactToISO = value => `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}`;
-    const endDay = dates ? compactToISO(dates.end) : day;
+    if (!dates) return false;
+    const endDay = compactToISO(dates.end);
     const today = lisbonWallClock(now).slice(0, 10);
     if (period === 'month') return endDay > today && day.slice(0, 7) <= today.slice(0, 7);
     if (period === 'weekend') {

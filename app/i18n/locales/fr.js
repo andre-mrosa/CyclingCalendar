@@ -35,6 +35,21 @@ export default {
     nav_settings: "Paramètres",
     nav_help: "Aide",
     nav_admin: "Panneau de Gestion",
+    action_add_calendar: "Ajouter au calendrier",
+    planning_date_unconfirmed: "Date à confirmer",
+    planning_race_reminders: "Rappels 1 semaine et 2 jours avant",
+    planning_marked_help: "Ces épreuves sont dans votre agenda Google. Ouvrez une fiche pour gérer les dates. Un événement dans votre agenda ne constitue pas une inscription.",
+    planning_weather_day: "Météo pour le",
+    planning_saved_dates: "Enregistré dans Google",
+    planning_reminders: "Rappels",
+    planning_no_reminders: "Aucun rappel",
+    planning_report_error: "Signaler une erreur sur cette épreuve",
+    planning_map_approx: "La carte indique la localité. Confirmez le départ dans le programme de l’organisateur.",
+    planning_saved_changed: "Les dates enregistrées diffèrent. Supprimez l’ancienne entrée puis ajoutez à nouveau l’épreuve.",
+    planning_default_reminders: "Rappels Google par défaut",
+    planning_description: "Présentation et images de l’épreuve",
+    planning_registration_closed: "Inscriptions closes",
+    planning_registration_page: "Page d’inscription",
     nav_calendar: "Calendrier",
     nav_signin: "Connexion",
 
@@ -217,7 +232,7 @@ export default {
     reg_remind_close: "Rappel de clôture",
     reg_open_marked: "Ouverture programmée",
     reg_close_marked: "Clôture programmée",
-    reg_reminder_alert: "Alerte 1 jour avant et 1 heure avant",
+    reg_reminder_alert: "Après ajout : rappels 1 jour et 1 heure avant",
 
     // Weather Widget
     weather_forecast_title: "Météo Prévue",
@@ -279,7 +294,7 @@ export default {
 
     // Assistants
     escalao_modal_title: "Assistant de Catégorie",
-    escalao_modal_desc: "Découvrez exactement quelle est votre catégorie officielle en FPC / courses ouvertes.",
+    escalao_modal_desc: "Obtenez une suggestion de catégorie pour filtrer. Confirmez votre éligibilité dans le règlement de chaque épreuve.",
     escalao_year_label: "Année de Naissance",
     escalao_gender_label: "Genre",
     escalao_gender_male: "Masculin",
@@ -313,8 +328,8 @@ export default {
     region_applied_success: "Région appliquée avec succès !",
 
     // Help Page
-    help_title: "Centre d'Aide et Assistants",
-    help_subtitle: "Utilisez les assistants intelligents pour configurer votre calendrier cycliste personnalisé.",
+    help_title: "Utiliser le calendrier",
+    help_subtitle: "Trouvez des épreuves, organisez votre agenda et configurez vos rappels.",
 
     // Contact Page
     contact_title: "Contact et Suggestions",

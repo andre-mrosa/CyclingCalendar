@@ -1,5 +1,5 @@
 import { prisma } from '@/app/lib/db';
-import { getEventDiscipline } from '@/app/utils/eventClassifier';
+import { getEventDiscipline, getEventCategories } from '@/app/utils/eventClassifier';
 import { parseScheduleServer } from '@/app/utils/scheduleParserServer';
 import EventDetailClient from './EventDetailClient';
 import { notFound } from 'next/navigation';
@@ -23,7 +23,7 @@ export async function generateMetadata({ params }) {
     }
 
     const title = `${event.title} (${event.date}) | Cycling Calendar Portugal`;
-    const description = `Detalhes oficiais, altimetria, regulamento, inscrições e meteorologia para ${event.title} em ${event.distrito || event.details || 'Portugal'}.`;
+    const description = `Datas, localização e informação disponível para ${event.title} em ${event.distrito || event.details || 'Portugal'}.`;
 
     return {
         title,
@@ -72,7 +72,7 @@ export default async function EventPage({ params }) {
         createdAt: event.createdAt ? event.createdAt.toISOString() : null,
         updatedAt: event.updatedAt ? event.updatedAt.toISOString() : null,
         tag: getEventDiscipline(event),
-        escaloes: event.escaloes ? (typeof event.escaloes === 'string' ? JSON.parse(event.escaloes) : event.escaloes) : [],
+        escaloes: getEventCategories(event),
         extraLinks: event.extraLinks ? (typeof event.extraLinks === 'string' ? JSON.parse(event.extraLinks) : event.extraLinks) : [],
         parsedSchedule: parseScheduleServer(event.programa),
         gpxData: event.gpxData ? (typeof event.gpxData === 'string' ? JSON.parse(event.gpxData) : event.gpxData) : null

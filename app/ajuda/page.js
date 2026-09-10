@@ -6,6 +6,7 @@ import { HelpCircle } from 'lucide-react';
 import RegionAssistant from '../components/RegionAssistant';
 import EscalaoAssistant from '../components/EscalaoAssistant';
 import PageHeading from '../components/PageHeading';
+import PlanningHelp from '../components/PlanningHelp';
 import styles from '../components/site.module.css';
 
 export default function Ajuda() {
@@ -24,6 +25,7 @@ export default function Ajuda() {
         <div className={`${styles.page} ${styles.secondaryWide}`}>
             <PageHeading title={t('help_title')} subtitle={t('help_subtitle')} icon={HelpCircle} />
 
+            <PlanningHelp />
             <div className={styles.supportGrid}>
                 <RegionAssistant onApply={(val) => handleApply('regiao', val)} />
                 <EscalaoAssistant onApply={(val) => handleApply('escalao', val)} />

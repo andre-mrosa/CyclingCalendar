@@ -12,14 +12,29 @@ function formatIcsDate(dateObj) {
 export function getCalendarDates(event) {
     if (!event) return null;
     const race = detectRaceDate(event);
-    const startISO = race?.raceDateISO || (event.sortDate ? String(event.sortDate).slice(0, 10) : '');
-    const endISO = race?.raceEndDateISO || startISO;
+    if (!race) return null;
+    const startISO = race.raceDateISO;
+    const endISO = race.raceEndDateISO;
     const start = new Date(`${startISO}T00:00:00Z`);
     const end = new Date(`${endISO}T00:00:00Z`);
     if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || end < start ||
         start.toISOString().slice(0, 10) !== startISO || end.toISOString().slice(0, 10) !== endISO) return null;
     end.setUTCDate(end.getUTCDate() + 1);
     return { start: startISO.replaceAll('-', ''), end: end.toISOString().slice(0, 10).replaceAll('-', '') };
+}
+
+export function getGoogleCalendarDatePayload(event) {
+    const dates = getCalendarDates(event);
+    if (!dates) return null;
+    const iso = value => `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}`;
+    return { start: { date: iso(dates.start) }, end: { date: iso(dates.end) } };
+}
+
+export function buildEventsIcsContent(events, origin) {
+    const entries = (events || []).map(event => buildIcsContent(event, origin))
+        .filter(Boolean).map(content => content.slice(content.indexOf('BEGIN:VEVENT'), content.lastIndexOf('END:VCALENDAR')));
+    if (!entries.length) return null;
+    return 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Cycling Calendar Portugal//PT\r\nCALSCALE:GREGORIAN\r\nMETHOD:PUBLISH\r\n' + entries.join('') + 'END:VCALENDAR\r\n';
 }
 
 function escapeText(value) {

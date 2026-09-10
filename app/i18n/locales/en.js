@@ -35,6 +35,21 @@ export default {
     nav_settings: "Settings",
     nav_help: "Help",
     nav_admin: "Management Panel",
+    action_add_calendar: "Add to calendar",
+    planning_date_unconfirmed: "Date to be confirmed",
+    planning_race_reminders: "Reminders 1 week and 2 days before",
+    planning_marked_help: "These events are in your Google calendar. Open an event to manage its calendar entries. A calendar entry is not a registration.",
+    planning_weather_day: "Weather for",
+    planning_saved_dates: "Saved in Google",
+    planning_reminders: "Reminders",
+    planning_no_reminders: "No reminders",
+    planning_report_error: "Report an error in this event",
+    planning_map_approx: "The map shows the town. Confirm the start location in the organiser’s programme.",
+    planning_saved_changed: "Your saved dates differ from this event. Remove the old entry and add it again to update.",
+    planning_default_reminders: "Google default reminders",
+    planning_description: "Event description and images",
+    planning_registration_closed: "Registration closed",
+    planning_registration_page: "Registration page",
     nav_calendar: "Calendar",
     nav_signin: "Sign In",
 
@@ -217,7 +232,7 @@ export default {
     reg_remind_close: "Remind close",
     reg_open_marked: "Opening reminder set",
     reg_close_marked: "Closing reminder set",
-    reg_reminder_alert: "Alerts 1 day before and 1 hour before",
+    reg_reminder_alert: "When added: reminders 1 day and 1 hour before",
 
     // Weather Widget
     weather_forecast_title: "Weather Forecast",
@@ -279,7 +294,7 @@ export default {
 
     // Assistants
     escalao_modal_title: "Category Assistant",
-    escalao_modal_desc: "Find out your exact official category in FPC / open races.",
+    escalao_modal_desc: "Get a suggested category to filter events. Confirm eligibility in each event’s rules.",
     escalao_year_label: "Birth Year",
     escalao_gender_label: "Gender",
     escalao_gender_male: "Male",
@@ -313,8 +328,8 @@ export default {
     region_applied_success: "Region applied successfully!",
 
     // Help Page
-    help_title: "Help Center & Assistants",
-    help_subtitle: "Use smart assistants to configure your personalized cycling calendar.",
+    help_title: "How to use the calendar",
+    help_subtitle: "Find events, plan your schedule and set up reminders.",
 
     // Contact Page
     contact_title: "Contact & Suggestions",

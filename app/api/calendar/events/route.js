@@ -1,3 +1,4 @@
+import { calendarEntry } from '@/app/utils/calendarEntries';
 import { auth, getAuth, verifyToken, clerkClient } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
@@ -119,12 +120,15 @@ export async function GET(req) {
         const calData = await calRes.json();
         const items = calData.items || [];
 
+        const markedEntries = {};
         const markedEventIds = [];
         const markedDates = {};
 
         for (const item of items) {
             const cyclingId = item.extendedProperties?.private?.cyclingCalendarEventId;
-            if (!cyclingId) continue;
+            if (!cyclingId || item.status === "cancelled") continue;
+            const entry = calendarEntry(item);
+            if (entry) markedEntries[cyclingId] = entry;
 
             markedEventIds.push(cyclingId);
 
@@ -153,6 +157,7 @@ export async function GET(req) {
             signedIn: true,
             calendar: targetCalendarId,
             markedEventIds,
+            markedEntries,
             markedDates
         });
 

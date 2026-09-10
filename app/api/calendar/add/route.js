@@ -2,7 +2,7 @@ import { auth, getAuth, verifyToken, clerkClient } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/db';
 import { logInfo, logError } from '@/app/lib/logger';
-import { detectRaceDate } from '@/app/utils/detectRaceDate';
+import { getGoogleCalendarDatePayload } from '@/app/utils/calendarExport';
 import { withRegistrationDates } from '@/app/utils/registrationDates';
 
 function parsePtDate(dateStr) {
@@ -165,6 +165,10 @@ export async function POST(req) {
         }
 
         const fullEvent = withRegistrationDates({ ...event, ...(dbEvent || {}) });
+
+        if (target === "event" && !getGoogleCalendarDatePayload(fullEvent)) {
+            return NextResponse.json({ error: "A data da prova ainda não está confirmada ou precisa de revisão." }, { status: 400 });
+        }
 
         let token;
         try {
@@ -362,25 +366,17 @@ export async function POST(req) {
             return NextResponse.json({ ...result, calendar: targetCalendarId, target: 'registration_close' });
         }
 
-        // CASO 3: Prova (Dia da Competição / Corrida estrita)
-        const raceInfo = detectRaceDate(fullEvent);
-        const startDateStr = raceInfo?.raceDateISO || parsePtDate(fullEvent.date);
-        let endDateStr = raceInfo?.raceEndDateISO || parsePtDate(fullEvent.endDate) || startDateStr;
-
-        if (!startDateStr) {
-            return NextResponse.json({ error: 'Não é possível marcar este evento porque a data ainda não está definida ou foi adiada.' }, { status: 400 });
+        // All export paths preserve the same published interval.
+        const datePayload = getGoogleCalendarDatePayload(fullEvent);
+        if (!datePayload) {
+            return NextResponse.json({ error: 'A data da prova ainda não está confirmada ou precisa de revisão.' }, { status: 400 });
         }
-
-        const endDt = new Date(endDateStr);
-        endDt.setDate(endDt.getDate() + 1);
-        endDateStr = endDt.toISOString().split('T')[0];
 
         const gEvent = {
             summary: fullEvent.title,
-            description: `Data da prova: ${raceInfo?.label || fullEvent.date || startDateStr}\nMais informações: ${fullEvent.link || 'Cycling Calendar'}\n\nEscalão: ${fullEvent.escalao || '-'}\nÂmbito: ${fullEvent.ambito || '-'}\nOrganização: ${fullEvent.organizador || fullEvent.source || '-'}`,
+            description: `Data da prova: ${fullEvent.date || datePayload.start.date}\nMais informações: ${fullEvent.link || 'Cycling Calendar'}\n\nEscalão: ${fullEvent.escalao || '-'}\nÂmbito: ${fullEvent.ambito || '-'}\nOrganização: ${fullEvent.organizador || fullEvent.source || '-'}`,
             location: location,
-            start: { date: startDateStr },
-            end: { date: endDateStr },
+            ...datePayload,
             extendedProperties: {
                 private: {
                     cyclingCalendarEventId: fullEvent.id.toString()

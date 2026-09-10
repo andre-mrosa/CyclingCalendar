@@ -1,5 +1,5 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Mail } from 'lucide-react';
 import { useTranslation } from '../i18n/useTranslation';
 import PageHeading from '../components/PageHeading';
@@ -10,6 +10,12 @@ export default function ContactoPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitStatus, setSubmitStatus] = useState(null);
     const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get('event');
+        if (id) setFormData(previous => ({ ...previous, message: (params.get('title') || 'Prova') + '\nhttps://cyclingcalendar.pt/events/' + encodeURIComponent(id) + '\n\n' }));
+    }, []);
 
     const handleContactSubmit = async (e) => {
         e.preventDefault();

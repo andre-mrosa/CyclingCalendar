@@ -14,6 +14,7 @@ export const MONTH_FULL = {
 
 export function formatMonthAbbr(monthPt, lang = 'pt') {
     if (!monthPt) return '';
+    if (String(monthPt).includes('/')) return String(monthPt).split('/').map(month => formatMonthAbbr(month, lang)).join('/');
     const cleanMonth = String(monthPt).trim().toUpperCase();
     const idx = MONTH_ABBRS.pt.indexOf(cleanMonth);
     if (idx === -1) return monthPt;

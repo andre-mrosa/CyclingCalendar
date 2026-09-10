@@ -35,6 +35,21 @@ export default {
     nav_settings: "Definições",
     nav_help: "Ajuda",
     nav_admin: "Painel de Gestão",
+    action_add_calendar: "Adicionar ao calendário",
+    planning_date_unconfirmed: "Data por confirmar",
+    planning_race_reminders: "Avisos 1 semana e 2 dias antes",
+    planning_marked_help: "Estas provas estão na tua agenda Google. Consulta a ficha para gerir as marcações. Uma marcação no calendário não é uma inscrição.",
+    planning_weather_day: "Meteorologia para",
+    planning_saved_dates: "Guardado no Google",
+    planning_reminders: "Avisos",
+    planning_no_reminders: "Sem avisos",
+    planning_report_error: "Comunicar um erro nesta prova",
+    planning_map_approx: "O mapa indica a localidade. Confirma o ponto de partida no programa da organização.",
+    planning_saved_changed: "As datas guardadas diferem da ficha atual. Remove a marcação antiga e volta a adicionar a prova para atualizar.",
+    planning_default_reminders: "Avisos predefinidos do Google",
+    planning_description: "Apresentação e imagens da prova",
+    planning_registration_closed: "Inscrições encerradas",
+    planning_registration_page: "Página de inscrição",
     nav_calendar: "Calendário",
     nav_signin: "Entrar",
 
@@ -217,7 +232,7 @@ export default {
     reg_remind_close: "Lembrar fecho",
     reg_open_marked: "Abertura marcada",
     reg_close_marked: "Fecho marcado",
-    reg_reminder_alert: "Avisa 1 dia antes e 1 hora antes",
+    reg_reminder_alert: "Ao marcar: aviso 1 dia e 1 hora antes",
 
     // Weather Widget
     weather_forecast_title: "Meteorologia Prevista",
@@ -279,7 +294,7 @@ export default {
 
     // Assistants
     escalao_modal_title: "Assistente de Escalão",
-    escalao_modal_desc: "Descobre exatamente qual é a tua categoria oficial na FPC / provas abertas.",
+    escalao_modal_desc: "Obtém uma sugestão de escalão para filtrar o calendário. Confirma a elegibilidade no regulamento de cada prova.",
     escalao_year_label: "Ano de Nascimento",
     escalao_gender_label: "Género",
     escalao_gender_male: "Masculino",
@@ -313,8 +328,8 @@ export default {
     region_applied_success: "Região aplicada com sucesso!",
 
     // Help Page
-    help_title: "Centro de Ajuda & Assistentes",
-    help_subtitle: "Utiliza os assistentes inteligentes para configurar o teu calendário de ciclismo personalizado.",
+    help_title: "Como usar o calendário",
+    help_subtitle: "Encontra provas, organiza a tua agenda e configura os teus lembretes.",
 
     // Contact Page
     contact_title: "Contacto & Sugestões",

@@ -1,3 +1,4 @@
+import { getEventCategories } from '../../utils/eventClassifier.js';
 import * as cheerio from 'cheerio';
 import { prisma } from '../db.js';
 import { 
@@ -283,7 +284,7 @@ export const parseFPCCalendar = (html, year) => {
                     if (det.toLowerCase().includes('escolas') || lowerName.includes('escolas')) escaloes.push('Escolas');
 
                     if (escaloes.length === 0) escaloes.push('Geral / Vários');
-                    escaloes = [...new Set(escaloes)];
+                    escaloes = getEventCategories({ source: 'FPC', details: det, escaloes: [...new Set(escaloes)] });
 
                     const ambitoVal = getAmbito(nameText, det, '', 'FPC');
                     
