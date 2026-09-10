@@ -379,6 +379,7 @@ test('daily and weekly plans isolate FPC into one bounded stage per season', asy
 });
 
 test('stage handoff keeps the internal request alive and rejects HTTP failures', async t => {
+    captureLogs(t);
     const pipeline = await pipelineFixture();
     let releaseFetch;
     let requestedUrl;
@@ -386,14 +387,14 @@ test('stage handoff keeps the internal request alive and rejects HTTP failures',
     t.mock.method(globalThis, 'fetch', async url => {
         requestedUrl = String(url);
         await gate;
-        return new Response('{}', { status: 200 });
+        return Response.json({ accepted: true, runId: 'fixture-run', pipelineStage: 'fpc-2027' }, { status: 202 });
     });
     let settled = false;
     const handoff = pipeline.triggerNextStage({
         nextStage: 'fpc-2027', runId: 'fixture-run', years: ['2026', '2027'],
         scope: 'manual', nextAttempt: 1, hadErrors: false, triggeredBy: 'TEST', fullHistorical: false
     }).then(() => { settled = true; });
-    await Promise.resolve();
+    await new Promise(resolve => setImmediate(resolve));
     assert.equal(settled, false);
     assert.match(requestedUrl, /stage=fpc-2027/);
     releaseFetch();
@@ -403,7 +404,7 @@ test('stage handoff keeps the internal request alive and rejects HTTP failures',
     t.mock.method(globalThis, 'fetch', async () => new Response('upstream unavailable', { status: 503 }));
     await assert.rejects(pipeline.triggerNextStage({
         nextStage: 'finalize', runId: 'fixture-run', years: ['2026'], scope: 'weekly'
-    }), /HTTP 503.*upstream unavailable/);
+    }), /HTTP 503/);
 });
 
 test('pipeline leases every bounded stage and publishes complete metrics', async t => {
@@ -483,4 +484,67 @@ test('a failed unification transaction reports partial and does not count a merg
     assert.equal(result.success, false);
     assert.equal(result.stats.mergedEvents, null);
     assert.equal(readLogDetails(logs.at(-1)).steps.unification.status, 'error');
+});
+
+test('handoff rejects HTML, skipped runs and acknowledgments for another stage', async t => {
+    captureLogs(t);
+    const pipeline = await pipelineFixture();
+    for (const reply of [
+        new Response('<html>Login</html>'),
+        Response.json({ success: true, skipped: true }),
+        Response.json({ accepted: true, runId: 'other', pipelineStage: 'finalize' }, { status: 202 }),
+        Response.json({ accepted: true, runId: 'fixture-run', pipelineStage: 'cabreira' }, { status: 202 })
+    ]) {
+        t.mock.method(globalThis, 'fetch', async () => reply);
+        await assert.rejects(pipeline.triggerNextStage({ nextStage: 'finalize', runId: 'fixture-run', years: ['2026'], scope: 'daily' }), /não foi confirmada/);
+    }
+});
+
+test('continuation acknowledges before scraping and logs background failures with the run ID', async () => {
+    let backgroundWork;
+    let calls = 0;
+    const failures = [];
+    const contexts = [];
+    const route = await isolatedModule('../app/api/cron/scrape/route.js', {
+        getPipelineStages: () => ['cabreira', 'stopandgo', 'finalize'],
+        runUnifiedScrapingPipeline: async () => { calls++; throw Object.assign(new Error('lease busy'), { code: 'SCRAPER_ALREADY_RUNNING' }); },
+        triggerNextStage: async () => { throw new Error('must not continue'); },
+        logInfo: async () => ({ id: 'receipt-log' }),
+        logError: async (_source, _message, details) => failures.push(details),
+        withScraperLogContext: (context, work) => { contexts.push(context); return work(); },
+        after: work => { backgroundWork = work; }
+    });
+    const headers = process.env.CRON_SECRET ? { Authorization: `Bearer ${process.env.CRON_SECRET}` } : undefined;
+    const response = await route.GET(new Request('https://calendar.test/api/cron/scrape?scope=daily&stage=stopandgo&runId=receipt-run&years=2026', { headers }));
+    assert.equal(response.status, 202);
+    assert.deepEqual(await response.json(), { success: true, accepted: true, runId: 'receipt-run', pipelineStage: 'stopandgo' });
+    assert.equal(calls, 0);
+    await backgroundWork();
+    assert.equal(calls, 1);
+    assert.equal(failures[0].status, 'error');
+    assert.equal(failures[0].event, 'run-complete');
+    assert.ok(contexts.every(context => context.runId === 'receipt-run'));
+    backgroundWork = null;
+    const invalid = await route.GET(new Request('https://calendar.test/api/cron/scrape?scope=daily&stage=unknown&runId=receipt-run&years=2026', { headers }));
+    assert.equal(invalid.status, 400);
+    assert.equal(backgroundWork, null);
+});
+
+test('production handoff uses the production alias and bounded authenticated requests', async t => {
+    captureLogs(t);
+    const keys = ['VERCEL_ENV', 'VERCEL_PROJECT_PRODUCTION_URL', 'VERCEL_URL', 'NEXT_PUBLIC_URL', 'CRON_SECRET', 'VERCEL_AUTOMATION_BYPASS_SECRET'];
+    const previous = Object.fromEntries(keys.map(key => [key, process.env[key]]));
+    t.after(() => { for (const key of keys) { if (previous[key] === undefined) delete process.env[key]; else process.env[key] = previous[key]; } });
+    Object.assign(process.env, { VERCEL_ENV: 'production', VERCEL_PROJECT_PRODUCTION_URL: 'calendar.test', VERCEL_URL: 'protected-deployment.test', CRON_SECRET: 'fixture-secret', VERCEL_AUTOMATION_BYPASS_SECRET: 'fixture-bypass' });
+    delete process.env.NEXT_PUBLIC_URL;
+    t.mock.method(globalThis, 'fetch', async (url, options) => {
+        assert.equal(new URL(url).host, 'calendar.test');
+        assert.equal(options.headers.Authorization, 'Bearer fixture-secret');
+        assert.equal(options.headers['x-vercel-protection-bypass'], 'fixture-bypass');
+        assert.equal(options.cache, 'no-store');
+        assert.ok(options.signal instanceof AbortSignal);
+        return Response.json({ accepted: true, runId: 'fixture-run', pipelineStage: 'finalize' }, { status: 202 });
+    });
+    const pipeline = await pipelineFixture();
+    await pipeline.triggerNextStage({ nextStage: 'finalize', runId: 'fixture-run', years: ['2026'], scope: 'daily' });
 });

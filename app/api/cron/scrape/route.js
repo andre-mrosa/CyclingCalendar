@@ -1,5 +1,5 @@
-import { runUnifiedScrapingPipeline, triggerNextStage } from '@/app/lib/scrapers/unifiedPipeline';
-import { logError, withScraperLogContext } from '@/app/lib/logger';
+import { runUnifiedScrapingPipeline, triggerNextStage, getPipelineStages } from '@/app/lib/scrapers/unifiedPipeline';
+import { logError, logInfo, withScraperLogContext } from '@/app/lib/logger';
 import { after } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -20,6 +20,32 @@ export async function GET(request) {
         const fullHistorical = searchParams.has('historical') ? searchParams.get('historical') === 'true' : undefined;
         const attempt = Number(searchParams.get('attempt')) || 1;
         const hadErrors = searchParams.get('hadErrors') === 'true';
+
+        if (pipelineStage && runId) {
+            if (!years?.length || !years.every(year => /^\d{4}$/.test(year)) ||
+                !['daily', 'weekly', 'manual'].includes(scope) ||
+                !getPipelineStages(scope, years).includes(pipelineStage)) {
+                return Response.json({ success: false, error: 'Continuação inválida.' }, { status: 400 });
+            }
+            const receipt = await withScraperLogContext({ runId }, () => logInfo('SCRAPER',
+                `Continuação recebida: ${pipelineStage}.`,
+                { event: 'handoff-received', pipelineStage, scope, attempt }));
+            if (!receipt?.id) throw new Error('Não foi possível registar a continuação.');
+            after(async () => {
+                try {
+                    const result = await runUnifiedScrapingPipeline(triggeredBy, {
+                        pipelineStage, scope, runId, years, fullHistorical, attempt, hadErrors
+                    });
+                    await triggerNextStage(result);
+                } catch (error) {
+                    await withScraperLogContext({ runId }, () => logError('SCRAPER',
+                        `Falha crítica na sincronização na etapa ${pipelineStage}: ${error.message}`,
+                        { event: 'run-complete', status: 'error', pipelineStage,
+                            error: error.message, completedAt: new Date().toISOString() }));
+                }
+            });
+            return Response.json({ success: true, accepted: true, runId, pipelineStage }, { status: 202 });
+        }
 
         const result = await runUnifiedScrapingPipeline(triggeredBy, {
             pipelineStage, scope, runId, years, fullHistorical, attempt, hadErrors

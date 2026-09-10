@@ -68,3 +68,12 @@ Ler este documento e git diff/status antes de trabalhar. Seguir AGENTS.md. Não 
 - Parser conservador cobre o formato numérico explícito observado; outros regulamentos podem continuar a mostrar dados por definir. Não prometer cobertura completa das fontes.
 - Junção atual é de apresentação; não remove registos de produção. As regras destrutivas de unificação da BD não foram relaxadas.
 - Melhorias futuras: filtros por famílias (BTT agregando XCO/XCM/etc.), normalizar horários de todos os scrapers para um esquema explícito de fuso horário, expandir extração de inscrições por fonte com fixtures reais e validação de conflitos.
+
+## Sincronização — diagnóstico de 10/09/2026
+- Registos reais consultados em modo leitura: automático diário 7e73946a-bdd5-4c6d-b85e-16e728ac3326 termina Cabreira (24 processadas, 11,9 s) sem iniciar Stop and Go; mesmo padrão desde 02/09. Sem run-complete nem erro registado.
+- Semanal c03b8095-6633-4c74-bf34-c415023dca70 para depois de fpc-2026 (82,7 s). Manual 9da6463d-497c-4934-9f56-0984ce82c13a para depois de fpc-2026 (81,7 s). Não chegaram à unificação.
+- A causa exata na infraestrutura não está provada pelos logs antigos. O protocolo aceitava qualquer HTTP 2xx e aguardava todo o scraper seguinte dentro do tempo restante da função anterior.
+- Correção: continuação devolve confirmação 202 com runId/etapa antes de executar; chamada exige essa confirmação, usa timeout 20 s, prefere alias de produção e suporta VERCEL_AUTOMATION_BYPASS_SECRET. Registos handoff-start/received/accepted permitem localizar falhas. Conflito de lock após aceitação termina com erro explícito em vez de sucesso silencioso.
+- A revisão automática bloqueou a execução diária completa em produção por poder unificar/apagar registos. Não contornar por outro endpoint ou execução local. Validar cadeia real apenas após aprovação explícita do utilizador para sincronização produtiva incluindo unificação. Nenhum scraper lançado nesta investigação; pedido com etapa inválida apenas verificou acesso à rota.
+- CRON_SECRET não está nas variáveis locais e a rota publicada respondeu sem autenticação ao pedido inválido: rever configuração de CRON_SECRET na Vercel (não expor valores). Esta entrega não altera credenciais.
+- Validação: 84/84 testes passaram e build Next de produção concluído. Correção pronta para commit/push; depois é necessária aprovação para validar uma execução real. Não declarar cron/manual resolvidos em produção sem log final da cadeia completa.

@@ -34,9 +34,11 @@ export function runUnifiedScrapingPipeline(triggeredBy = 'CRON', options = {}) {
  */
 export async function triggerNextStage(result) {
     if (!result?.nextStage) return;
-    const baseUrl = process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : (process.env.NEXT_PUBLIC_URL || 'http://localhost:3000');
+    // Production aliases avoid deployment URLs that may require Vercel login.
+    const host = process.env.VERCEL_ENV === 'production'
+        ? process.env.VERCEL_PROJECT_PRODUCTION_URL : process.env.VERCEL_URL;
+    const baseUrl = process.env.NEXT_PUBLIC_URL || (host ? `https://${host}` :
+        (process.env.VERCEL_ENV === 'production' ? 'https://www.cyclingcalendar.pt' : 'http://localhost:3000'));
     const params = new URLSearchParams({
         stage: result.nextStage,
         runId: result.runId,
@@ -48,14 +50,28 @@ export async function triggerNextStage(result) {
         ...(result.fullHistorical != null ? { historical: String(result.fullHistorical) } : {})
     });
     const continueUrl = `${baseUrl}/api/cron/scrape?${params}`;
-    const headers = process.env.CRON_SECRET
-        ? { Authorization: `Bearer ${process.env.CRON_SECRET}` }
-        : undefined;
-    const response = await fetch(continueUrl, { headers });
+    const headers = {
+        ...(process.env.CRON_SECRET ? { Authorization: `Bearer ${process.env.CRON_SECRET}` } : {}),
+        ...(process.env.VERCEL_AUTOMATION_BYPASS_SECRET ? {
+            'x-vercel-protection-bypass': process.env.VERCEL_AUTOMATION_BYPASS_SECRET
+        } : {})
+    };
+    await withScraperLogContext({ runId: result.runId }, () => logInfo('SCRAPER',
+        `A iniciar continuação para ${result.nextStage}.`,
+        { event: 'handoff-start', pipelineStage: result.nextStage, host: new URL(baseUrl).host }));
+    // The receiver acknowledges scheduling; do not spend this invocation's
+    // remaining execution budget waiting for the next scraper to finish too.
+    const response = await fetch(continueUrl, { headers, cache: 'no-store', signal: AbortSignal.timeout(20000) });
     if (!response.ok) {
-        const body = await response.text().catch(() => '');
-        throw new Error(`A continuação para ${result.nextStage} falhou (HTTP ${response.status})${body ? `: ${body.slice(0, 300)}` : ''}`);
+        throw new Error(`A continuação para ${result.nextStage} falhou (HTTP ${response.status}).`);
     }
+    const receipt = await response.json().catch(() => null);
+    if (response.status !== 202 || receipt?.accepted !== true || receipt.runId !== result.runId || receipt.pipelineStage !== result.nextStage) {
+        throw new Error(`A continuação para ${result.nextStage} não foi confirmada pelo servidor (HTTP ${response.status}).`);
+    }
+    await withScraperLogContext({ runId: result.runId }, () => logInfo('SCRAPER',
+        `Continuação para ${result.nextStage} aceite.`,
+        { event: 'handoff-accepted', pipelineStage: result.nextStage }));
 }
 
 async function runPipeline(triggeredBy, options) {
