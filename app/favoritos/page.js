@@ -4,6 +4,7 @@ import CalendarView from "../components/CalendarView";
 import { useUser } from '@clerk/nextjs';
 import { useFavorites } from '../hooks/useFavorites';
 import { useTranslation } from '../i18n/useTranslation';
+import { FavoriteSubscription } from '../components/FavoritePlanning';
 import CalendarEmptyState from '../components/CalendarEmptyState';
 
 export default function Favoritos() {
@@ -21,7 +22,7 @@ export default function Favoritos() {
 
 
 
-    if (favorites.length === 0) return <CalendarEmptyState />;
+    if (favorites.length === 0) return <><CalendarEmptyState /><div className="mx-auto max-w-5xl px-4 pb-8"><FavoriteSubscription /></div></>;
 
     return (
         <CalendarView

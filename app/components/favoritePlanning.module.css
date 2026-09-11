@@ -1,0 +1,11 @@
+.panel { border: 1px solid var(--line, #766c60); border-radius: 8px; padding: 18px; margin-bottom: 20px; color: inherit; background: transparent; }
+.panel h2 { font-size: 1rem; font-weight: 750; margin: 0 0 8px; }
+.panel p { font-size: .875rem; line-height: 1.5; margin: 8px 0; }
+.panel ul { padding-left: 20px; list-style: disc; margin: 10px 0; }
+.panel li { margin: 8px 0; font-size: .875rem; }
+.panel button, .panel a { border: 1px solid currentColor; border-radius: 5px; padding: 8px 12px; font-size: .875rem; cursor: pointer; }
+.panel button:disabled { opacity: .55; cursor: wait; }
+.panel .event { padding: 0; border: 0; text-align: left; font-weight: 700; text-decoration: underline; }
+.link { display: flex; flex-direction: column; gap: 6px; font-size: .875rem; }
+.link input { width: 100%; min-width: 0; background: transparent; border: 1px solid currentColor; border-radius: 5px; padding: 10px; font: inherit; color: inherit; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }

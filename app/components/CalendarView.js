@@ -1,4 +1,5 @@
 "use client";
+import { FavoriteChanges, FavoriteSubscription } from './FavoritePlanning';
 import { eventDateDisplay } from "../utils/eventDateDisplay";
 import { useState, useEffect, useRef, useMemo, Fragment } from 'react';
 import { useSettingsStore } from '../store/useSettingsStore';
@@ -9,7 +10,7 @@ import { useFavorites } from '../hooks/useFavorites';
 import { useCalendarEvents } from '../hooks/useCalendarEvents';
 import { filterEvents } from '../utils/filterEvents';
 import { mergeEvents } from '../utils/mergeEvents';
-import { chooseCalendarEvents, toCalendarListEvent } from '../utils/calendarList';
+import { chooseCalendarEvents, toCalendarListEvent, sortCalendarEvents } from '../utils/calendarList';
 import { exportEventsToICS } from '../utils/exportCalendar';
 import EventModal from './EventModal';
 import EscalaoAssistant from './EscalaoAssistant';
@@ -236,10 +237,7 @@ export default function CalendarView({
         }
 
         filtered = filtered.filter(event => matchesPeriod(event, quickPeriod));
-        setFilteredEvents([...filtered].sort((a, b) => {
-            const first = eventDateDisplay(a), second = eventDateDisplay(b);
-            return (first.start || '9999').localeCompare(second.start || '9999');
-        }));
+        setFilteredEvents(sortCalendarEvents(filtered, favorites));
         setVisibleCount(100); // Reset visible count on filter change
     }, [events, searchTerm, selectedYears, selectedEscaloes, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, filterByFavorites, filterByAgenda, markedSet, favorites, forceEscalao, forceAmbito, forceLicenca, quickPeriod]);
 
@@ -679,6 +677,8 @@ export default function CalendarView({
             </header>
 
             <section className={styles.calendarFeed} aria-label={pageTitle}>
+                <FavoriteChanges events={events} favorites={favorites} ready={Array.isArray(fetchedEvents) && !error && !isOffline} onSelect={setSelectedEvent} />
+                {filterByFavorites && <FavoriteSubscription />}
                 {(filterByAgenda || filterByFavorites) && !isInitialLoading && <AgendaOverview mode={filterByAgenda ? "agenda" : "favorites"} events={events.filter(event => filterByAgenda ? isMarked(event.id, 'event', event._allIds || []) : favorites.includes(event.id) || event._allIds?.some(id => favorites.includes(id)))} onSelect={setSelectedEvent} />}
                 {isInitialLoading && (
                     <div className="flex flex-col items-center justify-center py-16 text-slate-400">
