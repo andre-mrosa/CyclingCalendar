@@ -18,8 +18,8 @@ export function detectRaceDate(event) {
     const year = raw.match(/\b(20\d{2})\b/)?.[1] || sortISO?.slice(0, 4);
     let start, end;
     if (raw && /definir|anunciar|adiad|tbd|evento|unknown/i.test(raw)) return null;
-    const range = raw.match(/^(\d{1,2})\s*([a-zà-ú]{3,9})?(?:\s+(20\d{2}))?\s*(?:a|até|e|[-–—])\s*(\d{1,2})\s+([a-zà-ú]{3,9})(?:\s+(20\d{2}))?$/i);
-    const single = raw.match(/^(\d{1,2})\s+([a-zà-ú]{3,9})(?:\s+(20\d{2}))?$/i);
+    const range = raw.match(/^(\d{1,2})\s*(?:de\s+)?([a-zà-ú]{3,9})?(?:\s+(20\d{2}))?\s*(?:a|até|e|[-–—])\s*(\d{1,2})\s+(?:de\s+)?([a-zà-ú]{3,9})(?:\s+(20\d{2}))?$/i);
+    const single = raw.match(/^(\d{1,2})\s+(?:de\s+)?([a-zà-ú]{3,9})(?:\s+(20\d{2}))?$/i);
     if (range) {
         const firstMonth = range[2] || range[5], lastMonth = range[5];
         let firstYear = Number(range[3] || range[6] || year);

@@ -227,13 +227,20 @@ export default function CalendarView({
                 if (evYear && selectedYears.includes(evYear) && parseInt(evYear) < today.getFullYear()) {
                     return true;
                 }
-                const end = eventDateDisplay(e).end;
+                let end = eventDateDisplay(e).end;
+                if (!end && e.sortDate) {
+                    end = String(e.sortDate).slice(0, 10);
+                }
                 return !end || new Date(end + 'T23:59:59Z') >= today;
             });
         } else if (pastEventsFilter === 'passados') {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            filtered = filtered.filter(e => { const end = eventDateDisplay(e).end; return end && new Date(end + 'T23:59:59Z') < today; });
+            filtered = filtered.filter(e => { 
+                let end = eventDateDisplay(e).end; 
+                if (!end && e.sortDate) end = String(e.sortDate).slice(0, 10);
+                return end && new Date(end + 'T23:59:59Z') < today; 
+            });
         }
 
         filtered = filtered.filter(event => matchesPeriod(event, quickPeriod));
