@@ -17,12 +17,13 @@ export function trackEvent(type, data = {}) {
 export default function AnalyticsTracker() {
     const pathname = usePathname();
     const { user, isLoaded } = useUser();
-    const sessionStartRef = useRef(Date.now());
-    const lastHeartbeatRef = useRef(Date.now());
-    const initialReferrerRef = useRef(typeof document !== 'undefined' ? document.referrer : '');
+    const lastHeartbeatRef = useRef(0);
+    const initialReferrerRef = useRef('');
 
     useEffect(() => {
         if (typeof window === 'undefined') return;
+        lastHeartbeatRef.current = Date.now();
+        initialReferrerRef.current = document.referrer;
 
         // 1. Verificar se este dispositivo pertence ao Administrador (Mobile ou PC)
         const isAdminUser = 

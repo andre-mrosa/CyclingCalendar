@@ -4,7 +4,7 @@ const withPWAInit = require("@ducanh2912/next-pwa").default;
 const withPWA = withPWAInit({
   dest: "public",
   disable: process.env.NODE_ENV === "development",
-  register: true,
+  register: false,
   skipWaiting: true,
   cacheOnFrontEndNav: true,
   aggressiveFrontEndNavCaching: true,
@@ -20,7 +20,7 @@ const withPWA = withPWAInit({
       {
         // Operational state and mutating endpoints must never fall back to an
         // old successful response from the offline cache.
-        urlPattern: ({ url }) => /^\/(?:admin(?:\/|$)|api\/(?:admin(?:\/|$)|force-scrape(?:-all)?(?:\/|$)|cron(?:\/|$)))/.test(url.pathname),
+        urlPattern: ({ url }) => /^\/(?:admin(?:\/|$)|api\/(?:admin|force-scrape|force-scrape-all|force-cabreira|test-cabreira|sync-gpx|cleanup-duplicates|reset|cron)(?:\/|$))/.test(url.pathname),
         handler: "NetworkOnly",
       },
       {

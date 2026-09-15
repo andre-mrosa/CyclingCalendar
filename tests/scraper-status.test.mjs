@@ -412,7 +412,13 @@ test('a failed unification transaction reports partial and does not count a merg
 
 
 
-test('cron and manual starts enqueue durable work, and old recursive calls cannot launch runs', async () => {
+test('cron and manual starts enqueue durable work, and old recursive calls cannot launch runs', async t => {
+    const previousSecret = process.env.CRON_SECRET;
+    process.env.CRON_SECRET = 'isolated-cron-test';
+    t.after(() => {
+        if (previousSecret === undefined) delete process.env.CRON_SECRET;
+        else process.env.CRON_SECRET = previousSecret;
+    });
     const calls = [];
     const deps = { startCalendarSync: async options => { calls.push(options); return { accepted: true, runId: 'queued-run' }; } };
     const manual = await isolatedModule('../app/api/force-scrape/route.js', { ...deps, requireAdmin: async () => ({ authorized: true }) });
@@ -420,7 +426,7 @@ test('cron and manual starts enqueue durable work, and old recursive calls canno
     assert.equal(calls[0].resume, true);
     assert.equal(calls[0].scope, 'manual');
     const cron = await isolatedModule('../app/api/cron/scrape/route.js', deps);
-    const headers = process.env.CRON_SECRET ? { Authorization: `Bearer ${process.env.CRON_SECRET}` } : undefined;
+    const headers = { Authorization: `Bearer ${process.env.CRON_SECRET}` };
     assert.equal((await cron.GET(new Request('https://calendar.test/api/cron/scrape?scope=daily', { headers }))).status, 202);
     assert.equal(calls[1].scope, 'daily');
     assert.equal((await cron.GET(new Request('https://calendar.test/api/cron/scrape?stage=deepScrape&runId=old', { headers }))).status, 400);

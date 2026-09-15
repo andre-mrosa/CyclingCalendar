@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
+import { useClientReady } from "../hooks/useBrowserState";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTheme } from 'next-themes';
 import { SignInButton, Show, UserButton, useUser, useAuth } from '@clerk/nextjs';
 import { Home, Trophy, MapPin, Bike, HelpCircle, Settings, Menu, X, Moon, Sun, Flag, Star, Globe, LogIn, CalendarCheck, Shield, Trash2, RotateCcw, ChevronDown, Award, Check } from 'lucide-react';
@@ -21,14 +22,17 @@ export default function Navigation() {
     const { t, language, setLanguage } = useTranslation();
     const { isLoaded, isSignedIn, user } = useUser();
     const { getToken } = useAuth();
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [mobileMenuPath, setMobileMenuPath] = useState(null);
+    const isMobileMenuOpen = mobileMenuPath === pathname;
+    const setIsMobileMenuOpen = useCallback(open => setMobileMenuPath(current => (typeof open === "function" ? open(current === pathname) : open) ? pathname : null), [pathname]);
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
     const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
     const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
-    const [isAdmin, setIsAdmin] = useState(false);
+    const [adminIdentity, setAdminIdentity] = useState(null);
+    const isAdmin = isSignedIn && adminIdentity === user?.id;
     const [adminPendingCount, setAdminPendingCount] = useState(0);
     const [dismissedAdminBanner, setDismissedAdminBanner] = useState(false);
-    const [mounted, setMounted] = useState(false);
+    const mounted = useClientReady();
     const drawerRef = useModalFocus(isMobileMenuOpen, () => setIsMobileMenuOpen(false));
     const pageDialogRef = useModalFocus(isSettingsModalOpen || isHelpModalOpen, () => {
         setIsSettingsModalOpen(false);
@@ -40,103 +44,41 @@ export default function Navigation() {
         const closeOnDesktop = () => { if (desktop.matches) setIsMobileMenuOpen(false); };
         desktop.addEventListener('change', closeOnDesktop);
         return () => desktop.removeEventListener('change', closeOnDesktop);
-    }, []);
+    }, [setIsMobileMenuOpen]);
+
 
     useEffect(() => {
-        setMounted(true);
-    }, []);
-
-    useEffect(() => {
-        if (!isLoaded || !isSignedIn) {
-            setIsAdmin(false);
-            setAdminPendingCount(0);
-            return;
-        }
-
-        // 1. Verificação instantânea e abrangente no lado do cliente
-        const userEmails = [
-            user?.primaryEmailAddress?.emailAddress,
-            user?.email,
-            ...(user?.emailAddresses || []).map(e => typeof e === 'string' ? e : e?.emailAddress),
-            ...(user?.externalAccounts || []).map(a => a?.emailAddress)
-        ].filter(Boolean).map(e => String(e).toLowerCase().trim());
-
-        const masterList = ['andre.rosa1603@gmail.com', 'andremrosa@gmail.com', 'andre_rosa', 'andrerosa', 'user_3HoiHwpGl9suYXrYx0QFhDMXHWD'];
-        const isMaster = !!user && (
-            masterList.includes(user.id) ||
-            userEmails.some(e => masterList.some(m => e === m || e.includes(m) || m.includes(e))) ||
-            (user.username && masterList.some(m => user.username.toLowerCase().includes(m)))
-        );
-        const hasAdminRole = user?.publicMetadata?.role === 'admin';
-        const isLocalAdmin = isMaster || hasAdminRole;
-
-        if (isLocalAdmin) {
-            setIsAdmin(true);
-        }
-
+        if (!isLoaded || !isSignedIn) return;
+        let cancelled = false;
+        let authorized = false;
         const fetchNotifications = async () => {
+            if (!authorized || cancelled) return;
             try {
-                const token = await getToken().catch(() => null);
-                const r = await fetch('/api/admin/notifications', {
-                    headers: {
-                        'Accept': 'application/json',
-                        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-                    }
-                });
-                const notifData = await r.json();
-                if (notifData.success && notifData.notifications) {
-                    setAdminPendingCount(notifData.notifications.deletionRequests?.count || 0);
-                }
-            } catch (e) {}
+                const response = await fetch('/api/admin/notifications');
+                const data = await response.json();
+                if (!cancelled && response.ok && data.success) setAdminPendingCount(data.notifications?.deletionRequests?.count || 0);
+            } catch {}
         };
-
-        // 2. Carrega as notificações imediatamente no arranque se for admin
-        if (isLocalAdmin) {
-            fetchNotifications();
-        }
-
-        // 3. Confirmação com o backend
-        getToken().then(token => {
-            fetch('/api/admin/me', {
-                headers: {
-                    'Accept': 'application/json',
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-                }
-            })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success && data.isAdmin) {
-                        setIsAdmin(true);
-                        fetchNotifications();
-                    } else if (!isLocalAdmin) {
-                        setIsAdmin(false);
-                        setAdminPendingCount(0);
-                    }
-                })
-                .catch(() => {});
-        });
-
-        // 4. Polling periódico em segundo plano a cada 15 segundos
-        const pollInterval = setInterval(() => {
-            if (isLocalAdmin) {
-                fetchNotifications();
-            }
-        }, 15000);
-
-        const handleNotifUpdate = () => fetchNotifications();
-        window.addEventListener('admin-notif-update', handleNotifUpdate);
-
-        return () => {
-            clearInterval(pollInterval);
-            window.removeEventListener('admin-notif-update', handleNotifUpdate);
+        const verify = async () => {
+            try {
+                const token = await getToken();
+                const response = await fetch('/api/admin/me', { headers: token ? { Authorization: 'Bearer ' + token } : {} });
+                const data = await response.json();
+                if (cancelled) return;
+                authorized = response.ok && data.success && data.isAdmin;
+                setAdminIdentity(authorized ? user.id : null);
+                setAdminPendingCount(0);
+                if (authorized) await fetchNotifications();
+            } catch { if (!cancelled) setAdminIdentity(null); }
         };
-    }, [isLoaded, isSignedIn, user, pathname]);
+        verify();
+        const timer = setInterval(fetchNotifications, 15000);
+        window.addEventListener('admin-notif-update', fetchNotifications);
+        return () => { cancelled = true; clearInterval(timer); window.removeEventListener('admin-notif-update', fetchNotifications); };
+    }, [isLoaded, isSignedIn, user?.id, getToken, pathname]);
 
     const isDarkMode = mounted ? resolvedTheme === 'dark' : true;
 
-    useEffect(() => {
-        setIsMobileMenuOpen(false);
-    }, [pathname]);
 
     useEffect(() => {
         if (isSettingsModalOpen || isHelpModalOpen || isMobileMenuOpen) {

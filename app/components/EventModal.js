@@ -1,7 +1,7 @@
 import { eventDateDisplay } from '../utils/eventDateDisplay';
 import { getEventDocuments } from '../utils/eventDocuments';
 import EventRouteProfile from './EventRouteProfile';
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Calendar, Star, X, CalendarPlus, Check, Bike, FileText, CreditCard, Trophy, Shield, Users, Globe, Clock, MapPin, ExternalLink, ChevronDown, Bell, Sparkles, Trash2, Info, Tag, Share2, Flag } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import SmartLogo from './SmartLogo';
@@ -18,29 +18,35 @@ import { useModalFocus } from '../hooks/useModalFocus';
 import { withRegistrationDates, registrationPriceSummary } from '../utils/registrationDates';
 import { isCancelled, registrationDaysUntil } from '../utils/planning';
 
-const eventDetailsCache = new Map();
+import useSWR from 'swr';
+const fetchDetail = async url => { const response = await fetch(url); const data = await response.json(); if (!response.ok || !data.success) throw new Error('Event unavailable'); return data.event; };
 
-export default function EventModal({ selectedEvent, setSelectedEvent, favorites, toggleFavorite, isSignedIn, standalone = false }) {
+export default function EventModal(props) {
+    return props.selectedEvent ? <EventModalContent key={props.selectedEvent.id} {...props} /> : null;
+}
+function EventModalContent({ selectedEvent, setSelectedEvent, favorites, toggleFavorite, isSignedIn, standalone = false }) {
     const dialogRef = useModalFocus(!!selectedEvent && !standalone);
     const { resolvedTheme } = useTheme();
     const { t, language } = useTranslation();
     const { isMarked, refreshCalendar, getCalendarEntry } = useCalendarEvents();
-    const [programaData, setProgramaData] = useState({ loading: false, html: null, error: null, additionalLinks: [] });
     const [fullscreenImage, setFullscreenImage] = useState(null);
     const [isImageZoomed, setIsImageZoomed] = useState(false);
     const [isAddingToCalendar, setIsAddingToCalendar] = useState(false);
     const [isDeletingFromCalendar, setIsDeletingFromCalendar] = useState(false);
     const [deleteConfirmation, setDeleteConfirmation] = useState(null); // { target, label }
-    const [calendarStatus, setCalendarStatus] = useState(null); // 'success', 'exists', 'error'
+    const [calendarStatusOverride, setCalendarStatus] = useState(null);
+    const calendarStatus = calendarStatusOverride || (isMarked(selectedEvent.id, 'event', selectedEvent._allIds || []) ? 'exists' : null); // 'success', 'exists', 'error'
     const [calendarMsg, setCalendarMsg] = useState('');
-    const [regOpenCalStatus, setRegOpenCalStatus] = useState(null);
+    const [regOpenCalStatusOverride, setRegOpenCalStatus] = useState(null);
+    const regOpenCalStatus = regOpenCalStatusOverride || (isMarked(selectedEvent.id, 'registration_open', selectedEvent._allIds || []) ? 'exists' : null);
     const [regOpenCalMsg, setRegOpenCalMsg] = useState('');
-    const [regCloseCalStatus, setRegCloseCalStatus] = useState(null);
+    const [regCloseCalStatusOverride, setRegCloseCalStatus] = useState(null);
+    const regCloseCalStatus = regCloseCalStatusOverride || (isMarked(selectedEvent.id, 'registration_close', selectedEvent._allIds || []) ? 'exists' : null);
     const [regCloseCalMsg, setRegCloseCalMsg] = useState('');
     const [showCalMenu, setShowCalMenu] = useState(false);
     const [shareCopied, setShareCopied] = useState(false);
     const calMenuRef = useRef(null);
-    const [activeTab, setActiveTab] = useState('info');
+    const [tabChoice, setActiveTab] = useState('info');
     const [isClosing, setIsClosing] = useState(false);
     const [isOpenAnimated, setIsOpenAnimated] = useState(false);
     const [dragY, setDragY] = useState(0);
@@ -87,7 +93,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
         return () => cancelAnimationFrame(raf);
     }, []);
 
-    const closeModal = () => {
+    const closeModal = useCallback(() => {
         if (standalone) return;
         setIsClosing(true);
         setTimeout(() => {
@@ -97,7 +103,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
             setIsDragging(false);
             setIsExpanded(false);
         }, 260);
-    };
+    }, [standalone, setSelectedEvent]);
 
     const handleTouchStart = (e) => {
         touchStartY.current = e.touches[0].clientY;
@@ -139,59 +145,21 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, []);
+    }, [closeModal]);
 
-    const [fullEvent, setFullEvent] = useState(null);
-    const [isLoadingFullEvent, setIsLoadingFullEvent] = useState(false);
-    const activeEvent = useMemo(() => withRegistrationDates({ ...(fullEvent || selectedEvent), escaloes: getEventCategories(fullEvent || selectedEvent || {}) }), [fullEvent, selectedEvent]);
+    const { data: fetchedDetail, isLoading: isLoadingFullEvent } = useSWR(
+        selectedEvent._hasFullDetails ? null : '/api/events/' + encodeURIComponent(selectedEvent.id), fetchDetail,
+        { revalidateOnFocus: false, dedupingInterval: 120000 }
+    );
+    const activeEvent = useMemo(() => {
+        const full = { ...selectedEvent, ...fetchedDetail,
+            extraLinks: [...new Map([...(selectedEvent.extraLinks || []), ...(fetchedDetail?.extraLinks || [])].map(link => [link.link, link])).values()] };
+        return withRegistrationDates({ ...full, escaloes: getEventCategories(full) });
+    }, [selectedEvent, fetchedDetail]);
     const documents = useMemo(() => getEventDocuments(activeEvent), [activeEvent]);
+    const programaData = useMemo(() => ({ loading: false, html: activeEvent.programa && activeEvent.programa !== 'Não disponível' ? activeEvent.programa : null, error: null, additionalLinks: [] }), [activeEvent.programa]);
     const [showCalendarOptions, setShowCalendarOptions] = useState(false);
-    const googleCalendarUrl = activeEvent ? generateGoogleCalendarUrl(activeEvent) : null;
-
-    useEffect(() => {
-        if (!selectedEvent) {
-            setFullEvent(null);
-            setIsLoadingFullEvent(false);
-            return;
-        }
-
-        // Instant load from cache if available
-        if (eventDetailsCache.has(selectedEvent.id)) {
-            setFullEvent(eventDetailsCache.get(selectedEvent.id));
-            setIsLoadingFullEvent(false);
-            return;
-        }
-
-        // If selectedEvent already has full deep details explicitly
-        if (selectedEvent._hasFullDetails) {
-            setFullEvent(selectedEvent);
-            setIsLoadingFullEvent(false);
-            return;
-        }
-
-        setFullEvent(null);
-        setIsLoadingFullEvent(true);
-
-        const loadFullEvent = async () => {
-            try {
-                const res = await fetch(`/api/events/${selectedEvent.id}`);
-                const data = await res.json();
-                if (data.success && data.event) {
-                    const merged = { ...selectedEvent, ...data.event, _hasFullDetails: true,
-                        extraLinks: [...new Map([...(selectedEvent.extraLinks || []), ...(data.event.extraLinks || [])].map(link => [link.link, link])).values()],
-                    };
-                    eventDetailsCache.set(selectedEvent.id, merged);
-                    setFullEvent(merged);
-                }
-            } catch (e) {
-                console.error("Error fetching full event:", e);
-            } finally {
-                setIsLoadingFullEvent(false);
-            }
-        };
-
-        loadFullEvent();
-    }, [selectedEvent]);
+    const googleCalendarUrl = generateGoogleCalendarUrl(activeEvent);
 
     // Bloquear o scroll da página de fundo quando o modal ou imagem em ecrã inteiro estiver aberto
     useEffect(() => {
@@ -336,7 +304,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
         return activeEvent.description
             .replace(/<div class="event-summary-card"[\s\S]*?<\/div>(?:<br\s*\/?>)*/gi, '')
             .trim();
-    }, [activeEvent?.description]);
+    }, [activeEvent]);
 
     // Processamento e categorização inteligente de links (evita duplicações e hierarquiza fontes)
     const parsedLinks = useMemo(() => {
@@ -497,7 +465,7 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
             officialSite,
             resources: Array.from(new Map(resources.map(r => [r.link, r])).values())
         };
-    }, [programaData.additionalLinks, activeEvent, language, t]);
+    }, [programaData.additionalLinks, activeEvent, t]);
 
     // Calcula as tabs ativas baseadas nos dados reais do evento
     const availableTabs = useMemo(() => {
@@ -509,47 +477,9 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
         if (activeEvent.prizes || activeEvent.insurance) tabs.push('premios');
         if (activeEvent.details && activeEvent.details !== 'A definir') tabs.push('localizacao');
         return tabs;
-    }, [activeEvent, programaCleanHtml, documents]);
+    }, [activeEvent, programaCleanHtml, documents, selectedEvent]);
 
-    useEffect(() => {
-        if (availableTabs.length > 0 && !availableTabs.includes(activeTab)) {
-            setActiveTab(availableTabs[0]);
-        }
-    }, [availableTabs, activeTab]);
-
-    // Fetch Programa on Modal open (Now exclusively uses DB cache for speed)
-    useEffect(() => {
-        if (!selectedEvent) {
-            setProgramaData({ loading: false, html: null, error: null, additionalLinks: [] });
-            setCalendarStatus(null);
-            setCalendarMsg('');
-            setRegOpenCalStatus(null);
-            setRegOpenCalMsg('');
-            setRegCloseCalStatus(null);
-            setRegCloseCalMsg('');
-            setShowCalMenu(false);
-            return;
-        }
-
-        const allIds = [selectedEvent.id, ...(selectedEvent._allIds || [])];
-        const eventMarked = isMarked(selectedEvent.id, 'event', allIds);
-        const regOpenMarked = isMarked(selectedEvent.id, 'registration_open', allIds);
-        const regCloseMarked = isMarked(selectedEvent.id, 'registration_close', allIds);
-
-        setCalendarStatus(eventMarked ? 'exists' : null);
-        setCalendarMsg(eventMarked ? 'Já no calendário' : '');
-        setRegOpenCalStatus(regOpenMarked ? 'exists' : null);
-        setRegOpenCalMsg(regOpenMarked ? t('modal_calendar_marked') : '');
-        setRegCloseCalStatus(regCloseMarked ? 'exists' : null);
-        setRegCloseCalMsg(regCloseMarked ? t('modal_calendar_marked') : '');
-        setShowCalMenu(false);
-
-        if (activeEvent.programa && activeEvent.programa.trim().length > 0 && activeEvent.programa !== 'Não disponível') {
-            setProgramaData({ loading: false, html: activeEvent.programa, error: null, additionalLinks: [] });
-        } else {
-            setProgramaData({ loading: false, html: null, error: null, additionalLinks: [] });
-        }
-    }, [selectedEvent, isMarked]);
+    const activeTab = availableTabs.includes(tabChoice) ? tabChoice : availableTabs[0];
 
     // Fechar menu do calendário ao clicar fora
     useEffect(() => {
@@ -1874,6 +1804,8 @@ export default function EventModal({ selectedEvent, setSelectedEvent, favorites,
                         }}
                         title={isImageZoomed ? "Clica para reduzir" : "Clica para ampliar"}
                     >
+                        {/* The source poster has unknown dimensions; preserve its native aspect ratio. */}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img 
                             src={fullscreenImage} 
                             alt="Programa Detalhado" 

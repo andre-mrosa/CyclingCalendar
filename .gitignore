@@ -81,3 +81,5 @@ public/out.css
 
 dev.db
 /.swc
+/.qa-tools/
+/qa-*

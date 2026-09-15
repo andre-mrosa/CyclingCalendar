@@ -1,16 +1,16 @@
 "use client";
-import { useEffect, useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 
 /** Keep keyboard focus inside an open dialog, then return it to its trigger. */
 export function useModalFocus(open, onEscape) {
     const ref = useRef(null);
     const escapeRef = useRef(onEscape);
-    useEffect(() => { escapeRef.current = onEscape; }, [onEscape]);
-    useEffect(() => {
+    useLayoutEffect(() => { escapeRef.current = onEscape; }, [onEscape]);
+    useLayoutEffect(() => {
         if (!open || !ref.current) return;
         const root = ref.current;
         const previousFocus = document.activeElement;
-        const frame = requestAnimationFrame(() => root.focus({ preventScroll: true }));
+        root.focus({ preventScroll: true });
         const handleKey = (event) => {
             if (!root.contains(document.activeElement)) return;
             if (event.key === 'Escape' && escapeRef.current) {
@@ -28,7 +28,6 @@ export function useModalFocus(open, onEscape) {
         };
         root.addEventListener('keydown', handleKey);
         return () => {
-            cancelAnimationFrame(frame);
             root.removeEventListener('keydown', handleKey);
             if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
         };

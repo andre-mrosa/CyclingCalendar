@@ -1,4 +1,4 @@
-export default {
+const messages = {
     "planning_changes": "Changes to favorites",
     "planning_changes_scope": "Since your last visit on this device. Confirm details with the official source.",
     "planning_date": "Date",
@@ -464,3 +464,5 @@ export default {
     detail_docs: "Official Documents",
     detail_presentation: "Event Presentation",
 };
+
+export default messages;

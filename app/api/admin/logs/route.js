@@ -15,9 +15,15 @@ export async function GET(request) {
         const level = searchParams.get('level') || 'ALL';
         const source = searchParams.get('source') || 'ALL';
         const search = searchParams.get('search') || '';
-        const limit = Math.min(parseInt(searchParams.get('limit') || '100', 10), 500);
-        const page = Math.max(parseInt(searchParams.get('page') || '1', 10), 1);
+        const rawLimit = searchParams.get('limit') ?? '100';
+        const rawPage = searchParams.get('page') ?? '1';
+        if (![rawLimit, rawPage].every(value => /^\d+$/.test(value) && Number.isSafeInteger(Number(value)) && Number(value) > 0)) {
+            return Response.json({ success: false, error: 'Paginação inválida.' }, { status: 400 });
+        }
+        const limit = Math.min(Number(rawLimit), 500);
+        const page = Number(rawPage);
         const skip = (page - 1) * limit;
+        if (!Number.isSafeInteger(skip)) return Response.json({ success: false, error: 'Página inválida.' }, { status: 400 });
 
         const where = { id: { not: 'operational-scraper-lease' } };
 
@@ -37,28 +43,18 @@ export async function GET(request) {
             ];
         }
 
-        let logs = [], total = 0, totalErrors = 0, totalWarns = 0, totalInfos = 0;
-        try {
-            const [l, t, e, w, i] = await Promise.all([
+        const [logs, total, totalErrors, totalWarns, totalInfos] = await Promise.all([
                 prisma.systemLog.findMany({
                     where,
                     orderBy: { createdAt: 'desc' },
                     take: limit,
                     skip
-                }).catch(() => []),
-                prisma.systemLog.count({ where }).catch(() => 0),
-                prisma.systemLog.count({ where: { level: 'ERROR' } }).catch(() => 0),
-                prisma.systemLog.count({ where: { level: 'WARN' } }).catch(() => 0),
-                prisma.systemLog.count({ where: { level: 'INFO', id: { not: 'operational-scraper-lease' } } }).catch(() => 0)
+                }),
+                prisma.systemLog.count({ where }),
+                prisma.systemLog.count({ where: { level: 'ERROR', id: { not: 'operational-scraper-lease' } } }),
+                prisma.systemLog.count({ where: { level: 'WARN', id: { not: 'operational-scraper-lease' } } }),
+                prisma.systemLog.count({ where: { level: 'INFO', id: { not: 'operational-scraper-lease' } } })
             ]);
-            logs = l || [];
-            total = t || 0;
-            totalErrors = e || 0;
-            totalWarns = w || 0;
-            totalInfos = i || 0;
-        } catch (err) {
-            console.error('Error in logs Promise.all:', err);
-        }
 
         return Response.json({
             success: true,
@@ -79,7 +75,7 @@ export async function GET(request) {
 
     } catch (error) {
         console.error('Error querying system logs:', error);
-        return Response.json({ success: false, error: error.message }, { status: 500 });
+        return Response.json({ success: false, error: 'Não foi possível consultar os logs. Tenta novamente.' }, { status: 503 });
     }
 }
 
@@ -93,6 +89,12 @@ export async function DELETE(request) {
         const { searchParams } = new URL(request.url);
         const daysParam = searchParams.get('days');
         const clearAll = searchParams.get('all') === 'true';
+        const allParam = searchParams.get('all');
+        if ((allParam !== null && !['true', 'false'].includes(allParam)) ||
+            (clearAll && daysParam !== null) ||
+            (daysParam !== null && (!/^\d+$/.test(daysParam) || !Number.isSafeInteger(Number(daysParam)) || Number(daysParam) < 1 || Number(daysParam) > 36500))) {
+            return Response.json({ success: false, error: 'Período de retenção inválido. Indica entre 1 e 36500 dias ou a eliminação total.' }, { status: 400 });
+        }
 
         let count = 0;
         if (clearAll) {

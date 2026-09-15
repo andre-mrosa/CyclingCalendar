@@ -4,6 +4,7 @@ import { ThemeProvider } from "./components/ThemeProvider";
 import ThemeClerkProvider from "./components/ThemeClerkProvider";
 import CalendarShell from "./components/CalendarShell";
 import ColorPaletteManager from "./components/ColorPaletteManager";
+import ServiceWorkerRegistration from "./components/ServiceWorkerRegistration";
 import { paletteCSS, paletteBootstrap } from "./lib/colorPalettes";
 
 const geistSans = Geist({
@@ -35,6 +36,7 @@ export default function RootLayout({ children }) {
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem={true}>
           <ThemeClerkProvider>
             <ColorPaletteManager />
+            <ServiceWorkerRegistration />
             <CalendarShell>{children}</CalendarShell>
           </ThemeClerkProvider>
         </ThemeProvider>

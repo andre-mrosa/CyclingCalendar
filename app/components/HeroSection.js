@@ -1,5 +1,6 @@
 "use client";
 
+import Image from 'next/image';
 import { Calendar, Filter, LayoutGrid, List, Search, X } from 'lucide-react';
 import { useTranslation } from '../i18n/useTranslation';
 import { formatMonthAbbr } from '../i18n/formatters';
@@ -86,7 +87,7 @@ export default function HeroSection({
                 {/* Right Column: Cyclists Photograph (Exact Mockup Photo) */}
                 <div className="lg:col-span-5 w-full">
                     <div className="relative w-full aspect-[16/10] rounded-3xl overflow-hidden shadow-2xl border border-slate-800/80 group">
-                        <img 
+                        <Image fill sizes="(max-width: 1024px) 100vw, 50vw"
                             src="/hero-banner.jpg" 
                             alt="Pelotão de ciclistas em estrada" 
                             className="w-full h-full object-cover object-center transform group-hover:scale-105 transition-transform duration-700 ease-out"
@@ -232,7 +233,7 @@ export default function HeroSection({
                         >
                             {/* Background image overlay */}
                             <div className="absolute inset-0 z-0">
-                                <img 
+                                <Image fill sizes="(max-width: 1024px) 100vw, 50vw"
                                     src="/hero-banner.jpg" 
                                     alt="" 
                                     className="w-full h-full object-cover object-center opacity-20 group-hover:opacity-30 group-hover:scale-105 transition-all duration-500 filter brightness-75"

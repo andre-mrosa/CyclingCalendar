@@ -1,22 +1,13 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
+import useSWR from 'swr';
 import ElevationProfileChart from './ElevationProfileChart';
-
+const fetchProfile = async url => { const response = await fetch(url); if (!response.ok) throw new Error('Profile unavailable'); return response.json(); };
 export default function EventRouteProfile({ event, documents }) {
-    const [profile, setProfile] = useState(null);
+    const stored = useMemo(() => { try { return typeof event.gpxData === 'string' ? JSON.parse(event.gpxData) : event.gpxData; } catch { return null; } }, [event.gpxData]);
     const gpxUrl = documents.find(doc => doc.format === 'GPX')?.link;
-    useEffect(() => {
-        let stored = event.gpxData;
-        if (typeof stored === 'string') { try { stored = JSON.parse(stored); } catch { stored = null; } }
-        setProfile(stored || null);
-        if (stored || !gpxUrl) return;
-        const controller = new AbortController();
-        fetch(`/api/gpx?url=${encodeURIComponent(gpxUrl)}`, { signal: controller.signal })
-            .then(res => res.ok ? res.json() : null)
-            .then(data => { if (!controller.signal.aborted && data && !data.error) setProfile(data); })
-            .catch(() => {});
-        return () => controller.abort();
-    }, [event.id, event.gpxData, gpxUrl]);
+    const { data } = useSWR(!stored && gpxUrl ? '/api/gpx?url=' + encodeURIComponent(gpxUrl) : null, fetchProfile);
+    const profile = stored || data;
     if (!profile?.profile?.length) return null;
     return <ElevationProfileChart gpxData={profile} gpxUrl={gpxUrl} title={event.title} />;
 }

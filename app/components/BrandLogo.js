@@ -1,3 +1,5 @@
+import Image from 'next/image';
+import brandImage from '../../public/brand-final.png';
 import React from 'react';
 
 /**
@@ -66,8 +68,8 @@ export default function BrandLogo({
   );
 
   const finalIcon = (
-    <img
-      src="/brand-final.png"
+    <Image
+      src={brandImage}
       alt=""
       aria-hidden="true"
       className="w-full h-full object-contain"

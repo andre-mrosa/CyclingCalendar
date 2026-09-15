@@ -2,6 +2,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTheme } from 'next-themes';
 
+// Source logos require native sizing and may come from arbitrary organizer hosts.
+/* eslint-disable @next/next/no-img-element */
 export default function SmartLogo({ src, alt, style, className }) {
     const { resolvedTheme } = useTheme();
     const isDark = resolvedTheme === 'dark';

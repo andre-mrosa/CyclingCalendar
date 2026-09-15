@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import useSWR from 'swr';
 import { Cloud, Sun, CloudRain, CloudSun, CloudLightning, CloudDrizzle, CloudFog, Wind, Droplets, Thermometer, Sparkles, Calendar, Info, RefreshCw, MapPin } from 'lucide-react';
 import { useTranslation } from '../i18n/useTranslation';
 import WeatherAdvice from './WeatherAdvice';
@@ -32,55 +32,16 @@ function getWeatherIcon(iconType, className = "w-6 h-6") {
 
 export default function WeatherWidget({ location, distrito, date, variant = 'default' }) {
     const { t, language } = useTranslation();
-    const [weatherData, setWeatherData] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
-
-    useEffect(() => {
-        if (!date) {
-            setIsLoading(false);
-            return;
-        }
-
-        let isCancelled = false;
-        setIsLoading(true);
-        setError(null);
-
-        const fetchWeather = async () => {
-            try {
-                const params = new URLSearchParams();
-                if (location) params.set('location', location);
-                if (distrito) params.set('distrito', distrito);
-                params.set('date', date);
-
-                const res = await fetch(`/api/weather?${params.toString()}`);
-                const data = await res.json();
-
-                if (!isCancelled) {
-                    if (data.success) {
-                        setWeatherData(data);
-                    } else {
-                        setError(data.error || 'Não foi possível carregar a meteorologia');
-                    }
-                }
-            } catch (err) {
-                if (!isCancelled) {
-                    console.error('Weather fetch error:', err);
-                    setError('Erro ao contactar serviço meteorológico');
-                }
-            } finally {
-                if (!isCancelled) {
-                    setIsLoading(false);
-                }
-            }
-        };
-
-        fetchWeather();
-
-        return () => {
-            isCancelled = true;
-        };
-    }, [location, distrito, date]);
+    const params = new URLSearchParams();
+    if (location) params.set('location', location);
+    if (distrito) params.set('distrito', distrito);
+    if (date) params.set('date', date);
+    const { data: weatherData, error, isLoading } = useSWR(date ? '/api/weather?' + params.toString() : null, async url => {
+        const response = await fetch(url);
+        const data = await response.json();
+        if (!response.ok || !data.success) throw new Error('Weather unavailable');
+        return data;
+    }, { revalidateOnFocus: false });
 
     if (isLoading) {
         if (variant === 'header') {

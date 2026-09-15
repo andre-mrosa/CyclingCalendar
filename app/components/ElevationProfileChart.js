@@ -3,11 +3,13 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { Mountain, ArrowUpRight, Download, Navigation } from 'lucide-react';
 
+const EMPTY_PROFILE = [];
+
 export default function ElevationProfileChart({ gpxData, gpxUrl, title }) {
     const [hoverIndex, setHoverIndex] = useState(null);
     const svgRef = useRef(null);
 
-    const profile = gpxData?.profile || [];
+    const profile = gpxData?.profile || EMPTY_PROFILE;
     const totalKm = gpxData?.totalKm || 0;
     const minAlt = gpxData?.minAltitude || 0;
     const maxAlt = gpxData?.maxAltitude || 100;

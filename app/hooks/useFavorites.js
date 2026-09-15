@@ -1,154 +1,41 @@
-"use client";
-
+'use client';
 import { useUser } from '@clerk/nextjs';
-import { useState, useEffect, useCallback, useMemo } from 'react';
-
-const getCacheKey = (userId) => userId ? `cycling_favorites_${userId}` : 'cycling_favorites_guest';
-
+import { useCallback, useEffect, useMemo } from 'react';
+import { readStored, writeStored, useStoredString, useOnline } from './useBrowserState';
+import { favoriteCacheKey as keyFor, favoritePendingKey as pendingFor, parseFavorites as parse, createFavoriteSynchronizer } from '../utils/favoriteSync';
+const sync = createFavoriteSynchronizer({ read: readStored, write: writeStored, online: () => navigator.onLine });
 export function useFavorites() {
     const { user, isLoaded, isSignedIn } = useUser();
-    const userId = isSignedIn && user ? user.id : null;
-    
-    // Inicialização segura baseada no utilizador atual
-    const [favorites, setFavorites] = useState([]);
-
-    // Sincronização ao carregar ou trocar de utilizador
+    const online = useOnline();
+    // Offline cold starts cannot load Clerk. Only the separate guest store is
+    // available until an authenticated identity has actually been resolved.
+    const ready = isLoaded || !online;
+    const userId = isSignedIn ? user?.id : null;
+    const key = keyFor(userId);
+    const raw = useStoredString(key, '[]');
+    const favorites = useMemo(() => ready ? parse(raw) : [], [raw, ready]);
     useEffect(() => {
         if (!isLoaded) return;
-
-        // Limpeza de cache legado global não segmentado por utilizador
-        if (typeof window !== 'undefined') {
-            try {
-                localStorage.removeItem('cycling-favorites-cache');
-            } catch (e) {}
-        }
-
-        if (!isSignedIn || !user) {
-            try {
-                const saved = JSON.parse(localStorage.getItem(getCacheKey(null)) || localStorage.getItem('cycling_favorites') || '[]');
-                setFavorites(Array.isArray(saved) ? saved : []);
-            } catch { setFavorites([]); }
+        if (!userId) {
+            if (readStored(key) === null) writeStored(key, JSON.stringify(parse(readStored('cycling_favorites', '[]'))));
             return;
         }
-
-        const cacheKey = getCacheKey(user.id);
-        const pendingKey = `cycling_pending_favs_sync_${user.id}`;
-        const hasPendingSync = typeof window !== 'undefined' && localStorage.getItem(pendingKey) === 'true';
-
-        if (hasPendingSync) {
-            try {
-                const cached = localStorage.getItem(cacheKey);
-                if (cached) {
-                    const parsed = JSON.parse(cached);
-                    if (Array.isArray(parsed)) {
-                        setFavorites(parsed);
-                        user.update({
-                            unsafeMetadata: {
-                                ...user.unsafeMetadata,
-                                favorites: parsed
-                            }
-                        }).then(() => {
-                            localStorage.removeItem(pendingKey);
-                        }).catch(() => {});
-                        return;
-                    }
-                }
-            } catch (e) {}
-        }
-
-        // Ler diretamente dos metadados do utilizador autenticado no Clerk
-        if (user.unsafeMetadata?.favorites && Array.isArray(user.unsafeMetadata.favorites)) {
-            setFavorites(user.unsafeMetadata.favorites);
-            try {
-                localStorage.setItem(cacheKey, JSON.stringify(user.unsafeMetadata.favorites));
-            } catch (e) {}
-        } else {
-            // Utilizador novo sem favoritos
-            setFavorites([]);
-            try {
-                localStorage.setItem(cacheKey, JSON.stringify([]));
-            } catch (e) {}
-        }
-    }, [user, isLoaded, isSignedIn]);
-
-    // Listener para quando a internet volta: sincroniza automaticamente
+        if (readStored(pendingFor(userId)) === 'true') sync(user);
+        else writeStored(key, JSON.stringify(Array.isArray(user.unsafeMetadata?.favorites) ? user.unsafeMetadata.favorites : []));
+    }, [isLoaded, userId, user, key]);
     useEffect(() => {
-        const handleOnline = () => {
-            if (isLoaded && isSignedIn && user) {
-                const cacheKey = getCacheKey(user.id);
-                const pendingKey = `cycling_pending_favs_sync_${user.id}`;
-                if (localStorage.getItem(pendingKey) === 'true') {
-                    try {
-                        const cached = localStorage.getItem(cacheKey);
-                        if (cached) {
-                            const parsed = JSON.parse(cached);
-                            user.update({
-                                unsafeMetadata: {
-                                    ...user.unsafeMetadata,
-                                    favorites: parsed
-                                }
-                            }).then(() => {
-                                localStorage.removeItem(pendingKey);
-                            }).catch(() => {});
-                        }
-                    } catch (e) {}
-                }
-            }
-        };
-
-        window.addEventListener('online', handleOnline);
-        return () => window.removeEventListener('online', handleOnline);
-    }, [user, isLoaded, isSignedIn]);
-
-    const toggleFavorite = useCallback(async (eventId) => {
-        if (!eventId) return;
-
-        setFavorites(currentFavs => {
-            const isFavorited = currentFavs.includes(eventId);
-            const newFavorites = isFavorited 
-                ? currentFavs.filter(id => id !== eventId)
-                : [...currentFavs, eventId];
-
-            if (!isSignedIn) {
-                try { localStorage.setItem(getCacheKey(null), JSON.stringify(newFavorites)); } catch {}
-            }
-
-            if (isSignedIn && user) {
-                const cacheKey = getCacheKey(user.id);
-                const pendingKey = `cycling_pending_favs_sync_${user.id}`;
-                
-                try {
-                    localStorage.setItem(cacheKey, JSON.stringify(newFavorites));
-                } catch (e) {}
-
-                if (typeof navigator !== 'undefined' && !navigator.onLine) {
-                    try {
-                        localStorage.setItem(pendingKey, 'true');
-                    } catch (e) {}
-                } else {
-                    user.update({
-                        unsafeMetadata: {
-                            ...user.unsafeMetadata,
-                            favorites: newFavorites
-                        }
-                    }).then(() => {
-                        localStorage.removeItem(pendingKey);
-                    }).catch(() => {
-                        try {
-                            localStorage.setItem(pendingKey, 'true');
-                        } catch (e) {}
-                    });
-                }
-            }
-
-            return newFavorites;
-        });
-    }, [isSignedIn, user]);
-
-    return {
-        favorites,
-        toggleFavorite,
-        isLoaded,
-        isSignedIn
-    };
+        if (!userId) return;
+        const reconnect = () => sync(user);
+        window.addEventListener('online', reconnect);
+        return () => window.removeEventListener('online', reconnect);
+    }, [userId, user]);
+    const toggleFavorite = useCallback(eventId => {
+        if (!ready || !eventId) return;
+        const current = parse(readStored(key, '[]'));
+        const next = current.includes(eventId) ? current.filter(id => id !== eventId) : [...current, eventId];
+        if (userId) writeStored(pendingFor(userId), 'true');
+        writeStored(key, JSON.stringify(next));
+        if (userId) sync(user);
+    }, [ready, key, userId, user]);
+    return { favorites, toggleFavorite, isLoaded: ready, isSignedIn };
 }

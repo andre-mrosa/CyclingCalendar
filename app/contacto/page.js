@@ -1,21 +1,23 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useClientReady } from '../hooks/useBrowserState';
 import { Mail } from 'lucide-react';
 import { useTranslation } from '../i18n/useTranslation';
 import PageHeading from '../components/PageHeading';
 import styles from '../components/site.module.css';
 
 export default function ContactoPage() {
+    const ready = useClientReady();
+    const params = ready ? new URLSearchParams(window.location.search) : new URLSearchParams();
+    const id = params.get('event');
+    const initialMessage = id ? (params.get('title') || 'Prova') + '\nhttps://cyclingcalendar.pt/events/' + encodeURIComponent(id) + '\n\n' : '';
+    return <ContactForm key={initialMessage} initialMessage={initialMessage} />;
+}
+function ContactForm({ initialMessage }) {
     const { t } = useTranslation();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitStatus, setSubmitStatus] = useState(null);
-    const [formData, setFormData] = useState({ name: '', email: '', message: '' });
-
-    useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const id = params.get('event');
-        if (id) setFormData(previous => ({ ...previous, message: (params.get('title') || 'Prova') + '\nhttps://cyclingcalendar.pt/events/' + encodeURIComponent(id) + '\n\n' }));
-    }, []);
+    const [formData, setFormData] = useState({ name: '', email: '', message: initialMessage });
 
     const handleContactSubmit = async (e) => {
         e.preventDefault();

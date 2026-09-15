@@ -8,13 +8,13 @@ export async function GET() {
         
         if (!adminCheck.authorized) {
             return Response.json({
-                success: true,
-                isSignedIn: false,
+                success: adminCheck.status < 500,
+                isSignedIn: !!adminCheck.userId,
                 isAdmin: false,
                 isMaster: false,
-                role: 'guest',
+                role: adminCheck.userId ? 'user' : 'guest',
                 error: adminCheck.error
-            });
+            }, { status: adminCheck.status >= 500 ? adminCheck.status : 200 });
         }
 
         return Response.json({

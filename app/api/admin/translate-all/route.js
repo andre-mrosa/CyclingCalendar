@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/app/lib/auth-helpers';
 import { NextResponse } from 'next/server';
 import { translateAllPendingEvents } from '@/app/lib/translationService';
 import { prisma } from '@/app/lib/db';
@@ -6,6 +7,9 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
 export async function POST(request) {
+    const admin = await requireAdmin();
+    if (!admin.authorized) return Response.json({ success: false, error: admin.error }, { status: admin.status });
+
     try {
         const { searchParams } = new URL(request.url);
         const lang = searchParams.get('lang') || 'en';
@@ -28,6 +32,9 @@ export async function POST(request) {
 }
 
 export async function GET(request) {
+    const admin = await requireAdmin();
+    if (!admin.authorized) return Response.json({ success: false, error: admin.error }, { status: admin.status });
+
     try {
         const totalEvents = await prisma.event.count();
         const totalEnTranslations = await prisma.eventTranslation.count({

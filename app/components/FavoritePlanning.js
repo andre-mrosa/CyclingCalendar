@@ -1,6 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
+import Link from 'next/link';
+import useSWR from 'swr';
+import { useStoredString, writeStored } from '../hooks/useBrowserState';
 import { useUser } from '@clerk/nextjs';
 import { favoriteSnapshot, compareFavoriteSnapshots } from '../utils/favoriteChanges';
 import { useTranslation } from '../i18n/useTranslation';
@@ -9,34 +12,32 @@ import styles from './favoritePlanning.module.css';
 export function FavoriteChanges({ events, favorites, ready, onSelect }) {
     const { user, isLoaded } = useUser();
     const { t } = useTranslation();
-    const [changes, setChanges] = useState([]);
     const key = `cycling_favorite_changes_v1_${user?.id || 'guest'}`;
-    useEffect(() => {
-        if (!ready || !isLoaded) { setChanges([]); return; }
+    const raw = useStoredString(key, '{}');
+    const { changes, baseline } = useMemo(() => {
+        if (!ready || !isLoaded) return { changes: [], baseline: null };
         try {
-            const before = JSON.parse(localStorage.getItem(key) || '{}');
+            const before = JSON.parse(raw);
             const next = {};
-            const found = [];
+            const changes = [];
             for (const event of events) {
                 const id = [event.id, ...(event._allIds || [])].find(id => favorites.includes(id));
                 if (!id) continue;
                 const snapshot = favoriteSnapshot(event);
                 const differences = compareFavoriteSnapshots(before[id], snapshot);
                 next[id] = differences.length ? before[id] : snapshot;
-                if (differences.length) found.push({ id, event, snapshot, differences });
+                if (differences.length) changes.push({ id, event, snapshot, differences });
             }
-            // Keep baselines for favorites absent from this source-filtered response.
             for (const id of favorites) if (!next[id] && before[id]) next[id] = before[id];
-            localStorage.setItem(key, JSON.stringify(next));
-            setChanges(found);
-        } catch { setChanges([]); }
-    }, [events, favorites, ready, isLoaded, key]);
+            return { changes, baseline: JSON.stringify(next) };
+        } catch { return { changes: [], baseline: '{}' }; }
+    }, [events, favorites, ready, isLoaded, raw]);
+    useEffect(() => { if (baseline !== null && baseline !== raw) writeStored(key, baseline); }, [baseline, key, raw]);
     function acknowledge() {
         try {
             const saved = JSON.parse(localStorage.getItem(key) || '{}');
             for (const change of changes) saved[change.id] = change.snapshot;
-            localStorage.setItem(key, JSON.stringify(saved));
-            setChanges([]);
+            writeStored(key, JSON.stringify(saved));
         } catch { /* Keep notices visible if acknowledgment could not be saved. */ }
     }
     function value(field, raw) {
@@ -66,28 +67,27 @@ export function FavoriteChanges({ events, favorites, ready, onSelect }) {
 
 export function FavoriteSubscription() {
     const { user, isLoaded, isSignedIn } = useUser();
+    if (!isLoaded) return null;
+    return <Subscription key={user?.id || 'guest'} userId={user?.id} isSignedIn={isSignedIn} />;
+}
+function Subscription({ userId, isSignedIn }) {
     const { t } = useTranslation();
-    const [url, setUrl] = useState(null);
     const [busy, setBusy] = useState(false);
     const [message, setMessage] = useState('');
-    const [ready, setReady] = useState(false);
-    useEffect(() => {
-        let active = true;
-        setUrl(null); setReady(false); setMessage('');
-        if (isSignedIn) fetch('/api/calendar/subscription', { cache: 'no-store' }).then(async response => {
-            const data = await response.json();
-            if (!response.ok) throw new Error();
-            if (active) { setUrl(data.url); setReady(true); }
-        }).catch(() => { if (active) setMessage(t('planning_error')); });
-        return () => { active = false; };
-    }, [user?.id, isSignedIn]);
+    const { data, error, mutate } = useSWR(isSignedIn ? ['/api/calendar/subscription', userId] : null, async ([url]) => {
+        const response = await fetch(url, { cache: 'no-store' });
+        if (!response.ok) throw new Error('Subscription unavailable');
+        return response.json();
+    }, { revalidateOnFocus: false });
+    const url = data?.url;
+    const ready = !!data;
     async function manage(method) {
         setBusy(true); setMessage('');
         try {
             const response = await fetch('/api/calendar/subscription', { method, cache: 'no-store' });
             const data = await response.json();
             if (!response.ok) throw new Error();
-            setUrl(data.url);
+            await mutate(data, false);
         } catch { setMessage(t('planning_error')); }
         finally { setBusy(false); }
     }
@@ -95,10 +95,9 @@ export function FavoriteSubscription() {
         try { await navigator.clipboard.writeText(url); setMessage(t('planning_copied')); }
         catch { setMessage(t('planning_select_link')); }
     }
-    if (!isLoaded) return null;
     return <section className={styles.panel} aria-label={t('planning_subscribe')}>
         <h2>{t('planning_subscribe')}</h2><p>{t('planning_subscription_description')}</p>
-        {!isSignedIn ? <a href="/sign-in?redirect_url=%2Ffavoritos">{t('planning_sign_in')}</a> : <>
+        {!isSignedIn ? <Link href="/sign-in?redirect_url=%2Ffavoritos">{t('planning_sign_in')}</Link> : <>
             <p>{t('planning_private_link')}</p>
             {url ? <>
                 <label className={styles.link}>{t('planning_link')}<input readOnly value={url} onFocus={event => event.target.select()} /></label>
@@ -107,7 +106,7 @@ export function FavoriteSubscription() {
                 <p>{t('planning_refresh')}</p>
                 <p>{t('planning_revoke_note')}</p>
             </> : <button disabled={busy || !ready} onClick={() => manage('POST')}>{t('planning_enable')}</button>}
-            {message && <p role="status">{message}</p>}
+            {(message || error) && <p role="status">{message || t('planning_error')}</p>}
         </>}
     </section>;
 }

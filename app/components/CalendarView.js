@@ -1,4 +1,5 @@
 "use client";
+import { useClientReady, useOnline, useStoredString, writeStored } from '../hooks/useBrowserState';
 import { FavoriteChanges, FavoriteSubscription } from './FavoritePlanning';
 import { eventDateDisplay } from "../utils/eventDateDisplay";
 import { useState, useEffect, useRef, useMemo, Fragment } from 'react';
@@ -74,7 +75,6 @@ export default function CalendarView({
         selectedSources 
     } = useSettingsStore();
     
-    const [filteredEvents, setFilteredEvents] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [viewMode, setViewMode] = useState('grid');
     const [showEscalaoHelp, setShowEscalaoHelp] = useState(false);
@@ -84,11 +84,7 @@ export default function CalendarView({
     const [selectedRegiao, setSelectedRegiao] = useState('Todas');
     const [selectedDistrito, setSelectedDistrito] = useState('Todos');
     const currentYear = new Date().getFullYear();
-    const [selectedYears, setSelectedYears] = useState([
-        currentYear.toString(),
-        (currentYear + 1).toString()
-    ]);
-    const hasInitializedYearsRef = useRef(false);
+    const [explicitYears, setSelectedYears] = useState(null);
     const [monthFrom, setMonthFrom] = useState(1);
     const [monthTo, setMonthTo] = useState(12);
     const [selectedTags, setSelectedTags] = useState([]);
@@ -97,42 +93,23 @@ export default function CalendarView({
     const [selectedType, setSelectedType] = useState('Todos');
     const defaultPastEventsFilter = forceAmbito === 'Campeonato Nacional' ? 'todos' : 'futuros';
     const [pastEventsFilter, setPastEventsFilter] = useState(defaultPastEventsFilter);
-    const [visibleCount, setVisibleCount] = useState(100);
-    const [selectedEvent, setSelectedEvent] = useState(null);
-    const [isOffline, setIsOffline] = useState(false);
+    const [pagination, setPagination] = useState({ list: null, count: 100 });
+    const [eventSelection, setSelectedEvent] = useState(undefined);
+    const isOffline = !useOnline();
 
     const { favorites, toggleFavorite, isSignedIn } = useFavorites();
     const { markedSet, isMarked, getDateConflict } = useCalendarEvents();
 
-    // Offline detection
-    useEffect(() => {
-        setIsOffline(typeof navigator !== 'undefined' ? !navigator.onLine : false);
-        const handleOnline = () => setIsOffline(false);
-        const handleOffline = () => setIsOffline(true);
-        window.addEventListener('online', handleOnline);
-        window.addEventListener('offline', handleOffline);
-        return () => {
-            window.removeEventListener('online', handleOnline);
-            window.removeEventListener('offline', handleOffline);
-        };
-    }, []);
-
-    // Sync settings on mount
-    useEffect(() => {
-        if (forceEscalao) setSelectedEscaloes([forceEscalao]);
-        else if (defaultEscalao && defaultEscalao !== 'Todos') setSelectedEscaloes([defaultEscalao]);
-        else setSelectedEscaloes([]);
-
-        if (forceAmbito) setSelectedAmbito(forceAmbito);
-        else setSelectedAmbito('Todos');
-
-        if (forceLicenca) setSelectedLicenca(forceLicenca);
-        else setSelectedLicenca('Todas');
-
-        if (defaultRegiao && applyDefaultRegiao) {
-            setSelectedRegiao(defaultRegiao);
-        }
-    }, [defaultEscalao, defaultRegiao, forceEscalao, forceAmbito, forceLicenca, applyDefaultRegiao]);
+    // Reset editable defaults only when their source settings actually change.
+    const defaultsKey = JSON.stringify([defaultEscalao, defaultRegiao, forceEscalao, forceAmbito, forceLicenca, applyDefaultRegiao]);
+    const [previousDefaults, setPreviousDefaults] = useState(null);
+    if (previousDefaults !== defaultsKey) {
+        setPreviousDefaults(defaultsKey);
+        setSelectedEscaloes(forceEscalao ? [forceEscalao] : defaultEscalao && defaultEscalao !== 'Todos' ? [defaultEscalao] : []);
+        setSelectedAmbito(forceAmbito || 'Todos');
+        setSelectedLicenca(forceLicenca || 'Todas');
+        setSelectedRegiao(applyDefaultRegiao ? defaultRegiao || 'Todas' : 'Todas');
+    }
 
     const effectiveSources = (selectedSources && selectedSources.length > 0) ? selectedSources : ['FPC', 'Cabreira', 'Stop and Go'];
     const eventsUrl = `/api/events?view=list-v2&years=all&sources=${effectiveSources.join(',')}`;
@@ -147,22 +124,13 @@ export default function CalendarView({
         }
     );
 
-    const [mounted, setMounted] = useState(false);
-    const [localCachedEvents, setLocalCachedEvents] = useState([]);
-
-    // Cached data is a fallback only, never a partial online result.
+    const mounted = useClientReady();
+    const cachedRaw = useStoredString(eventsCacheKey, '[]');
+    const localCachedEvents = useMemo(() => {
+        try { const parsed = JSON.parse(cachedRaw); return Array.isArray(parsed) ? parsed : []; } catch { return []; }
+    }, [cachedRaw]);
     useEffect(() => {
-        setMounted(true);
-        try {
-            const cached = JSON.parse(localStorage.getItem(eventsCacheKey) || '[]');
-            setLocalCachedEvents(Array.isArray(cached) ? cached : []);
-        } catch { setLocalCachedEvents([]); }
-    }, [eventsCacheKey]);
-
-    useEffect(() => {
-        if (Array.isArray(fetchedEvents)) {
-            try { localStorage.setItem(eventsCacheKey, JSON.stringify(fetchedEvents)); } catch {}
-        }
+        if (Array.isArray(fetchedEvents)) writeStored(eventsCacheKey, JSON.stringify(fetchedEvents));
     }, [fetchedEvents, eventsCacheKey]);
 
     const events = useMemo(() => {
@@ -170,21 +138,13 @@ export default function CalendarView({
         return records.length ? mergeEvents(records.map(toCalendarListEvent)) : EMPTY_EVENTS;
     }, [fetchedEvents, localCachedEvents, isOffline, error]);
 
-    // Deep linking: Auto-open modal if ?event=ID is present in URL
-    useEffect(() => {
-        if (typeof window !== 'undefined' && events && events.length > 0) {
-            try {
-                const urlParams = new URLSearchParams(window.location.search);
-                const eventId = urlParams.get('event');
-                if (eventId && !selectedEvent) {
-                    const target = events.find(e => String(e.id) === String(eventId) || (e._allIds && e._allIds.map(String).includes(String(eventId))));
-                    if (target) {
-                        setSelectedEvent(target);
-                    }
-                }
-            } catch (e) {}
-        }
-    }, [events, selectedEvent]);
+    const selectedYears = useMemo(() => explicitYears || Array.from(new Set([
+        String(currentYear), String(currentYear + 1),
+        ...events.map(event => event.sortDate?.slice(0, 4)).filter(year => Number(year) >= currentYear),
+    ])).sort(), [explicitYears, currentYear, events]);
+    const linkedId = mounted ? new URLSearchParams(window.location.search).get('event') : null;
+    const linkedEvent = linkedId ? events.find(event => String(event.id) === linkedId || event._allIds?.some(id => String(id) === linkedId)) : null;
+    const selectedEvent = eventSelection === undefined ? linkedEvent : eventSelection;
 
     const isInitialLoading = !mounted || (loading && events.length === 0);
 
@@ -200,7 +160,7 @@ export default function CalendarView({
         return () => clearTimeout(timer);
     }, [searchTerm]);
 
-    useEffect(() => {
+    const filteredEvents = useMemo(() => {
         let filtered = filterEvents(events, {
             filterByFavorites, favorites,
             filterByAgenda, markedSet,
@@ -244,9 +204,11 @@ export default function CalendarView({
         }
 
         filtered = filtered.filter(event => matchesPeriod(event, quickPeriod));
-        setFilteredEvents(sortCalendarEvents(filtered, favorites));
-        setVisibleCount(100); // Reset visible count on filter change
+        return sortCalendarEvents(filtered, favorites);
     }, [events, searchTerm, selectedYears, selectedEscaloes, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, filterByFavorites, filterByAgenda, markedSet, favorites, forceEscalao, forceAmbito, forceLicenca, quickPeriod]);
+
+    const visibleCount = pagination.list === filteredEvents ? pagination.count : 100;
+    const setVisibleCount = count => setPagination({ list: filteredEvents, count: typeof count === 'function' ? count(visibleCount) : count });
 
     const uniqueEscaloes = ['Elite', 'Elite Amador', 'Sub-23', 'Sub-19 (Juniores)', 'Sub-17 (Cadetes)', 'Sub-15 (Juvenis)', 'Masters / Veteranos', 'Femininas', 'Escolas', 'Profissional (UCI)', 'Todos (Aberto)', 'Geral / Vários'];
     const uniqueAmbitos = ['Todos', ...new Set(events.map(e => e.ambito))];
@@ -290,14 +252,6 @@ export default function CalendarView({
             : [currYr.toString(), (currYr + 1).toString()];
     };
 
-    // Auto-select current year and all available upcoming years once events load
-    useEffect(() => {
-        if (!hasInitializedYearsRef.current && events && events.length > 0) {
-            setSelectedYears(getDefaultSelectedYears(eventYears));
-            hasInitializedYearsRef.current = true;
-        }
-    }, [events, eventYears]);
-
     const onSearchChange = (e) => setSearchTerm(e.target.value);
     const onYearToggle = (y) => {
         const newYears = selectedYears.includes(y) 
@@ -312,10 +266,6 @@ export default function CalendarView({
         if (monthTo < val) setMonthTo(val);
     };
 
-    const handleFilterChange = (key, value) => {
-        setFilters(prev => ({ ...prev, [key]: value }));
-        setVisibleCount(100);
-    };
     
     const onMonthToChange = (e) => {
         const val = parseInt(e.target.value);

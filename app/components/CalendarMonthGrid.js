@@ -9,7 +9,7 @@ const WEEKDAYS = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM'];
 
 export default function CalendarMonthGrid({ events = [], onSelectEvent, initialYear, initialMonth }) {
     const { t, language } = useTranslation();
-    const today = new Date();
+    const [today] = useState(() => new Date());
     const [currentYear, setCurrentYear] = useState(initialYear || today.getFullYear());
     const [currentMonth, setCurrentMonth] = useState(initialMonth !== undefined ? initialMonth : today.getMonth());
     const [selectedDayEvents, setSelectedDayEvents] = useState(null);

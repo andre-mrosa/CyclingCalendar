@@ -2,9 +2,10 @@
 import { findCalendarConflict } from "../utils/calendarEntries";
 import useSWR from 'swr';
 import { useUser } from '@clerk/nextjs';
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useEffect } from 'react';
+import { useOnline, useStoredString, writeStored } from './useBrowserState';
 
-const fetcher = (url) => fetch(url).then(res => res.json());
+const fetcher = ([url]) => fetch(url).then(res => res.json());
 
 export function useCalendarEvents() {
     const { isSignedIn, user } = useUser();
@@ -12,7 +13,7 @@ export function useCalendarEvents() {
     const cacheKey = userId ? `cycling_agenda_${userId}` : null;
 
     const { data: remoteData, mutate, isLoading } = useSWR(
-        isSignedIn ? '/api/calendar/events' : null,
+        userId ? ['/api/calendar/events', userId] : null,
         fetcher,
         {
             revalidateOnFocus: true,
@@ -22,24 +23,19 @@ export function useCalendarEvents() {
         }
     );
 
+    const online = useOnline();
+    const cached = useStoredString(cacheKey || 'cycling_agenda_guest', '{}');
+    useEffect(() => {
+        if (cacheKey && remoteData?.success) writeStored(cacheKey, JSON.stringify(remoteData));
+    }, [cacheKey, remoteData]);
     const data = useMemo(() => {
-        if (!isSignedIn || !userId) {
-            return { markedEventIds: [], markedDates: {} };
-        }
-        if (remoteData && remoteData.success) {
-            try {
-                localStorage.setItem(cacheKey, JSON.stringify(remoteData));
-            } catch (e) {}
-            return remoteData;
-        }
-        if (typeof window !== 'undefined' && cacheKey) {
-            try {
-                const cached = localStorage.getItem(cacheKey);
-                if (cached) return JSON.parse(cached);
-            } catch (e) {}
+        if (!userId) return { markedEventIds: [], markedDates: {} };
+        if (remoteData?.success) return remoteData;
+        if (!online) {
+            try { return JSON.parse(cached); } catch {}
         }
         return remoteData || { markedEventIds: [], markedDates: {} };
-    }, [remoteData, isSignedIn, userId, cacheKey]);
+    }, [remoteData, userId, online, cached]);
 
     const markedSet = useMemo(() => {
         return new Set(data?.markedEventIds || []);

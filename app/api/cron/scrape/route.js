@@ -4,7 +4,8 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
 export async function GET(request) {
-    if (process.env.CRON_SECRET && request.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
+    if (!process.env.CRON_SECRET) return Response.json({ success: false, error: 'Autenticação da tarefa agendada indisponível.' }, { status: 503 });
+    if (request.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
         return Response.json({ success: false, error: 'Não autorizado' }, { status: 401 });
     }
     const { searchParams } = new URL(request.url);

@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { Shield, ArrowLeft, Lock, AlertTriangle, Users, FileText, Activity, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Lock, AlertTriangle, Activity, RefreshCw } from 'lucide-react';
 import { useUser, useAuth } from '@clerk/nextjs';
 
 export default function AdminLayout({ children }) {
@@ -11,7 +11,9 @@ export default function AdminLayout({ children }) {
     const [adminData, setAdminData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    // 1. Verificação abrangente e instantânea no lado do cliente
+    const verificationId = useRef(0);
+
+    // Account details are for display; only the server grants access.
     const userEmails = [
         user?.primaryEmailAddress?.emailAddress,
         user?.email,
@@ -20,17 +22,10 @@ export default function AdminLayout({ children }) {
     ].filter(Boolean).map(e => String(e).toLowerCase().trim());
 
     const primaryEmail = userEmails[0] || '';
-    const masterList = ['andre.rosa1603@gmail.com', 'andremrosa@gmail.com', 'andre_rosa', 'andrerosa', 'user_3HoiHwpGl9suYXrYx0QFhDMXHWD'];
-    
-    const isMaster = !!user && (
-        masterList.includes(user.id) ||
-        userEmails.some(e => masterList.some(m => e === m || e.includes(m) || m.includes(e))) ||
-        (user.username && masterList.some(m => user.username.toLowerCase().includes(m)))
-    );
-    const hasAdminRole = user?.publicMetadata?.role === 'admin';
-    const isLocalAdmin = isMaster || hasAdminRole;
-
-    const verifyAdmin = async () => {
+    const verifyAdmin = useCallback(async () => {
+        const requestId = ++verificationId.current;
+        const checkedUserId = user?.id;
+        setAdminData(null);
         setIsLoading(true);
         try {
             const token = await getToken().catch(() => null);
@@ -41,34 +36,32 @@ export default function AdminLayout({ children }) {
                 }
             });
             const data = await res.json();
-            if (data.success) {
-                setAdminData(data);
+            if (res.ok && data.success && requestId === verificationId.current) {
+                setAdminData({ ...data, checkedUserId });
             }
         } catch (e) {
             console.error('Error verifying admin access:', e);
         } finally {
-            setIsLoading(false);
+            if (requestId === verificationId.current) setIsLoading(false);
         }
-    };
+    }, [getToken, user?.id]);
 
     useEffect(() => {
         if (!isLoaded) return;
         
-        if (!isSignedIn) {
-            setIsLoading(false);
-            return;
-        }
+        let cancelled = false;
+        const verification = verificationId;
+        Promise.resolve().then(() => {
+            if (cancelled) return;
+            if (isSignedIn) verifyAdmin();
+            else { setAdminData(null); setIsLoading(false); }
+        });
+        return () => { cancelled = true; verification.current++; };
+    }, [isLoaded, isSignedIn, verifyAdmin]);
 
-        verifyAdmin();
-    }, [isLoaded, isSignedIn]);
+    const isAuthorized = adminData?.checkedUserId === user?.id && adminData?.isAdmin;
 
-    const isAuthorized = isLocalAdmin || adminData?.isAdmin;
-    const displayIsMaster = isMaster || adminData?.isMaster;
-    const displayName = adminData?.user?.name || user?.fullName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Admin';
-    const displayEmail = adminData?.user?.email || primaryEmail;
-
-    // Se já sabemos localmente que é o Master Admin, não bloqueia com spinner nem com erro
-    if (!isLoaded || (isLoading && !isLocalAdmin)) {
+    if (!isLoaded || isLoading) {
         return (
             <div className="min-h-[80vh] flex flex-col items-center justify-center gap-3 text-slate-400">
                 <div className="w-8 h-8 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin"></div>
@@ -112,6 +105,11 @@ export default function AdminLayout({ children }) {
                 )}
 
                 <div className="flex flex-wrap items-center justify-center gap-3">
+                    {!isSignedIn && (
+                        <Link href="/sign-in?redirect_url=%2Fadmin" className="inline-flex items-center px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold !no-underline">
+                            Iniciar sessão
+                        </Link>
+                    )}
                     <button
                         onClick={verifyAdmin}
                         className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-sm transition-all cursor-pointer"

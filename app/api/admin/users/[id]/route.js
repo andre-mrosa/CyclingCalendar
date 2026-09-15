@@ -15,10 +15,14 @@ export async function DELETE(request, { params }) {
         const resolvedParams = await params;
         const targetUserId = resolvedParams.id;
         const { searchParams } = new URL(request.url);
-        const mode = searchParams.get('mode') || 'delete_account'; // 'delete_data' | 'delete_account'
+        const mode = searchParams.get('mode') ?? 'delete_account'; // 'delete_data' | 'delete_account'
 
         if (!targetUserId) {
             return Response.json({ success: false, error: 'ID de utilizador obrigatório.' }, { status: 400 });
+        }
+
+        if (!['delete_data', 'delete_account'].includes(mode)) {
+            return Response.json({ success: false, error: 'Operação de eliminação inválida.' }, { status: 400 });
         }
 
         const client = await clerkClient();
@@ -26,8 +30,13 @@ export async function DELETE(request, { params }) {
         try {
             targetUser = await client.users.getUser(targetUserId);
         } catch (e) {
-            // Utilizador pode já não existir no Clerk
+            if (e.status === 404) {
+                return Response.json({ success: false, error: 'Utilizador não encontrado.' }, { status: 404 });
+            }
+            throw e;
         }
+
+        if (!targetUser) return Response.json({ success: false, error: 'Utilizador não encontrado.' }, { status: 404 });
 
         if (targetUser && isMasterAdmin(targetUser)) {
             return Response.json({

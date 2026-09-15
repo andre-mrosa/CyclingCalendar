@@ -166,7 +166,7 @@ export default function ClerkPrivacyProfilePage() {
                             </span>
                             {deletionRequest.reason && (
                                 <span className="text-[11px] text-amber-700/90 dark:text-amber-300/90 block mt-1 italic">
-                                    Motivo indicado: "{deletionRequest.reason}"
+                                    Motivo indicado: &quot;{deletionRequest.reason}&quot;
                                 </span>
                             )}
                         </div>

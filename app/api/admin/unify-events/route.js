@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/app/lib/auth-helpers';
 import { prisma } from '@/app/lib/db';
 import { isSameEvent } from '@/app/lib/merging/eventMatcher';
 import { mergeEventRecords } from '@/app/lib/merging/eventMerger';
@@ -6,6 +7,9 @@ import { logInfo, logError } from '@/app/lib/logger';
 export const dynamic = 'force-dynamic';
 
 export async function POST(request) {
+    const admin = await requireAdmin();
+    if (!admin.authorized) return Response.json({ success: false, error: admin.error }, { status: admin.status });
+
     try {
         const events = await prisma.event.findMany({
             orderBy: { sortDate: 'asc' }

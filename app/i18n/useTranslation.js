@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useCallback } from 'react';
+import { useClientReady } from '../hooks/useBrowserState';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { translations } from './translations';
 
@@ -12,33 +13,12 @@ import { translations } from './translations';
  */
 export function useTranslation() {
     const { language: storedLanguage, setLanguage: setStoreLanguage } = useSettingsStore();
-    const [activeLang, setActiveLang] = useState('pt');
-    const [mounted, setMounted] = useState(false);
-
-    useEffect(() => {
-        setMounted(true);
-        if (storedLanguage) {
-            setActiveLang(storedLanguage);
-        } else {
-            // Auto-detect from device browser settings
-            const deviceLang = typeof navigator !== 'undefined' 
-                ? (navigator.language || (navigator.languages && navigator.languages[0]) || 'pt').toLowerCase() 
-                : 'pt';
-            
-            let detected = 'en';
-            if (deviceLang.startsWith('pt')) detected = 'pt';
-            else if (deviceLang.startsWith('es')) detected = 'es';
-            else if (deviceLang.startsWith('fr')) detected = 'fr';
-            setActiveLang(detected);
-        }
-    }, [storedLanguage]);
-
-    const setLanguage = (newLang) => {
-        setStoreLanguage(newLang);
-        setActiveLang(newLang);
-    };
-
-    const t = (key, params = {}) => {
+    const mounted = useClientReady();
+    const deviceLang = mounted ? navigator.language.toLowerCase() : 'pt';
+    const detected = ['pt', 'es', 'fr'].find(lang => deviceLang.startsWith(lang)) || 'en';
+    const activeLang = mounted ? (storedLanguage || detected) : 'pt';
+    const setLanguage = setStoreLanguage;
+    const t = useCallback((key, params = {}) => {
         const langDict = translations[activeLang] || translations.pt;
         let text = langDict[key] || translations.pt[key] || key;
         
@@ -49,7 +29,7 @@ export function useTranslation() {
             });
         }
         return text;
-    };
+    }, [activeLang]);
 
     return {
         t,
