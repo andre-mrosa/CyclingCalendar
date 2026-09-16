@@ -1,4 +1,8 @@
 const messages = {
+    nav_account: "A minha conta",
+    gdpr_title: "Privacidade e dados",
+    action_marking: "A adicionar…",
+    action_marked: "No calendário",
     "planning_changes": "Alterações nas favoritas",
     "planning_changes_scope": "Desde a tua última visita neste dispositivo. Confirma os detalhes na fonte oficial.",
     "planning_date": "Data",
@@ -448,20 +452,20 @@ const messages = {
     back_to_calendar: "Voltar ao calendário",
     last_updated: "Última atualização:",
 
-    modal_calendar_exists: "J� no calend�rio",
+    modal_calendar_exists: "Já no calendário",
     modal_calendar_marked: "Marcado",
     modal_calendar_added: "Adicionado com sucesso!",
-    modal_calendar_error: "Erro ao adicionar ao calend�rio",
+    modal_calendar_error: "Erro ao adicionar ao calendário",
     modal_share_title: "Partilhar Prova",
     detail_back: "Voltar",
     detail_share_event: "Partilhar Prova",
     detail_add_fav: "Adicionar aos favoritos",
     detail_rem_fav: "Remover dos favoritos",
-    detail_overview: "Vis�o Geral",
+    detail_overview: "Visão Geral",
     detail_routes: "Percursos & Altimetria",
-    detail_schedule: "Programa & Hor�rios",
+    detail_schedule: "Programa & Horários",
     detail_docs: "Documentos Oficiais",
-    detail_presentation: "Apresenta��o da Prova",
+    detail_presentation: "Apresentação da Prova",
 };
 
 export default messages;

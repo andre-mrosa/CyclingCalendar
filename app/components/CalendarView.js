@@ -322,7 +322,7 @@ export default function CalendarView({
                             onClick={() => setShowFilters(!showFilters)}
                             className={styles.filterButton}
                             aria-expanded={showFilters}
-                            aria-controls="calendar-filters"
+                            aria-controls="calendar-quick-filters calendar-filters"
                         >
                             <Filter size={15} className="shrink-0" />
                             <span className="truncate">{showFilters ? t('filter_button_close') : t('planning_advanced')}</span>
@@ -338,7 +338,7 @@ export default function CalendarView({
                             <option value="passados">{t('filter_past_only')}</option>
                         </select>
                         
-                        {(quickPeriod || selectedEscaloes.length > 0 || selectedDistrito !== 'Todos' || selectedRegiao !== 'Todas' || selectedTags.length > 0 || selectedType !== 'Todos' || monthFrom !== 1 || monthTo !== 12 || searchTerm !== '' || pastEventsFilter !== defaultPastEventsFilter) && (
+                        {(quickPeriod || selectedEscaloes.length > 0 || selectedDistrito !== 'Todos' || selectedRegiao !== 'Todas' || selectedTags.length > 0 || selectedType !== 'Todos' || selectedAmbito !== (forceAmbito || 'Todos') || selectedLicenca !== (forceLicenca || 'Todas') || (explicitYears !== null && JSON.stringify([...selectedYears].sort()) !== JSON.stringify(getDefaultSelectedYears())) || monthFrom !== 1 || monthTo !== 12 || searchTerm !== '' || pastEventsFilter !== defaultPastEventsFilter) && (
                             <button 
                                 onClick={clearAllFilters}
                                 title={t('filter_clear_all')}
@@ -370,7 +370,7 @@ export default function CalendarView({
                 </div>
 
                 {/* Sub-header info: Counter & Bulk Export */}
-                <div className={styles.quickFilters}>
+                <div id="calendar-quick-filters" className={styles.quickFilters} data-expanded={showFilters}>
                     <div className={styles.periods}>
                         {['', 'weekend', 'month', 'open'].map(period => (
                             <button key={period} type="button" aria-pressed={quickPeriod === period} onClick={() => {
@@ -921,7 +921,6 @@ export default function CalendarView({
         </div>
     );
 }
-
 
 
 

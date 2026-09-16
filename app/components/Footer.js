@@ -14,14 +14,14 @@ export default function Footer() {
       <div className={styles.footerInner}>
         <div className={styles.footerTop}>
           <div>
-            <Link href="/" className="flex items-center gap-2 font-bold tracking-tight"><DynamicLogo className="w-8 h-8" />Cycling Calendar</Link>
+            <Link prefetch={false} href="/" className="flex items-center gap-2 font-bold tracking-tight"><DynamicLogo className="w-8 h-8" />Cycling Calendar</Link>
             <p>Estrada · BTT · Gravel · BMX · Pista</p>
           </div>
           <div className={styles.footerLinks}>
-            <Link href="/ajuda">{t('nav_help')}</Link>
-            <Link href="/privacy-policy">{t('footer_privacy')}</Link>
-            <Link href="/terms-of-service">{t('footer_terms')}</Link>
-            <Link href="/contacto" className="inline-flex items-center gap-1">{t('contact_title')}<ArrowUpRight size={14} /></Link>
+            <Link prefetch={false} href="/ajuda">{t('nav_help')}</Link>
+            <Link prefetch={false} href="/privacy-policy">{t('footer_privacy')}</Link>
+            <Link prefetch={false} href="/terms-of-service">{t('footer_terms')}</Link>
+            <Link prefetch={false} href="/contacto" className="inline-flex items-center gap-1">{t('contact_title')}<ArrowUpRight size={14} /></Link>
           </div>
         </div>
         <div className={styles.footerBottom}>

@@ -1,4 +1,8 @@
 const messages = {
+    nav_account: "Mon compte",
+    gdpr_title: "Confidentialité et données",
+    action_marking: "Ajout en cours…",
+    action_marked: "Dans le calendrier",
     "planning_changes": "Modifications des favoris",
     "planning_changes_scope": "Depuis votre dernière visite sur cet appareil. Vérifiez les détails auprès de la source officielle.",
     "planning_date": "Date",
@@ -449,20 +453,20 @@ const messages = {
     back_to_calendar: "Retour au calendrier",
     last_updated: "Dernière mise à jour:",
 
-    modal_calendar_exists: "D�j� dans le calendrier",
-    modal_calendar_marked: "Marqu�",
-    modal_calendar_added: "Ajout� avec succ�s!",
+    modal_calendar_exists: "Déjà dans le calendrier",
+    modal_calendar_marked: "Marqué",
+    modal_calendar_added: "Ajouté avec succès !",
     modal_calendar_error: "Erreur lors de l'ajout au calendrier",
-    modal_share_title: "Partager l'�preuve",
+    modal_share_title: "Partager l’épreuve",
     detail_back: "Retour",
-    detail_share_event: "Partager l'�preuve",
+    detail_share_event: "Partager l’épreuve",
     detail_add_fav: "Ajouter aux favoris",
     detail_rem_fav: "Retirer des favoris",
-    detail_overview: "Aper�u",
-    detail_routes: "Parcours et Altim�trie",
+    detail_overview: "Aperçu",
+    detail_routes: "Parcours et Altimétrie",
     detail_schedule: "Programme",
     detail_docs: "Documents Officiels",
-    detail_presentation: "Pr�sentation de l'�preuve",
+    detail_presentation: "Présentation de l’épreuve",
 };
 
 export default messages;

@@ -9,3 +9,7 @@
 .link { display: flex; flex-direction: column; gap: 6px; font-size: .875rem; }
 .link input { width: 100%; min-width: 0; background: transparent; border: 1px solid currentColor; border-radius: 5px; padding: 10px; font: inherit; color: inherit; }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+@media (max-width: 760px) {
+    .panel button, .panel a { display: inline-flex; align-items: center; min-height: 44px; }
+    .link input { font-size: 16px; min-height: 44px; }
+}

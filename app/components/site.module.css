@@ -174,15 +174,28 @@
 
 @media (max-width: 760px) {
   .page { padding: 18px 14px 60px; }
-  .heading { display: block; margin: 4px 0 16px; padding: 18px 0 16px; }
+  .heading { display: block; margin: 4px 0 16px; padding: 8px 0 14px; }
   .heading h1, .homeHeading h1 { font-size: 32px; }
   .heading p { font-size: 14px; }
   .headingMeta { justify-content: flex-start; margin-top: 16px; }
   .headingMeta span { min-height: 32px; font-size: 11px; }
   .navInner { padding: 0 14px; }
+  .iconButton { width: 44px; height: 44px; flex-shrink: 0; }
+  .primaryButton, .eventFavorite { min-width: 44px; min-height: 44px; }
   .brand strong { font-size: 13px; }
   .calendarWorkspace { display: block; }
   .calendarControls { position: static; margin-bottom: 18px; padding: 10px; }
+  .calendarControls .toolbarActions { grid-template-columns: minmax(124px, .8fr) minmax(0, 1.2fr); }
+  .calendarControls .toolbarActions button, .calendarControls .toolbar select { min-height: 44px; }
+  .calendarControls .toolbar select { font-size: 16px; }
+  .quickFilters { gap: 10px; margin-top: 10px; }
+  .quickFilters[data-expanded='false'] > label { display: none; }
+  .quickFilters select { min-height: 44px; font-size: 16px; }
+  .periods { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .periods button { min-height: 44px; text-align: center; }
+  .calendarControls .results > div { flex-wrap: wrap; }
+  .calendarControls .results > button { min-height: 44px; }
+  .search button { min-width: 44px; min-height: 44px; }
   .calendarControls .filters { margin: 12px -10px -10px; padding: 16px 10px; }
   .toolbar { position: static; flex-direction: column-reverse; align-items: stretch; gap: 8px; padding: 8px; }
   .search { flex: auto; min-width: 0; }
@@ -191,6 +204,9 @@
   .toolbar select { min-width: 0; padding-inline: 7px; font-size: 10px; }
   .filters { padding: 18px; }
   .filters select, .search input, .contactGrid input, .contactGrid textarea { font-size: 16px; }
+  .filters select, .filters button { min-height: 44px; }
+  .settingsControls select { min-height: 44px; font-size: 16px; }
+  .settingsControls button, .drawer button, .mobileEventActions button { min-height: 44px; min-width: 44px; }
   .monthHeading { margin-top: 24px; }
   .eventCard { display: flex; flex-wrap: wrap; gap: 9px; min-height: 0; padding: 10px 2px; }
   .eventCard:hover { padding-inline: 6px; }
@@ -203,7 +219,7 @@
   .eventMeta { gap: 3px 9px; font-size: 11px; }
   .eventBadges { max-width: none; padding-left: 75px; justify-content: flex-start; }
   .eventBadges:empty, .eventArrow { display: none; }
-  .eventTab { padding: 9px 7px; font-size: 10px; }
+  .eventTab { min-height: 44px; padding: 9px 7px; font-size: 12px; }
   .eventTab svg { display: none; }
   .eventSummary { padding: 15px; }
   .contactGrid, .supportGrid { grid-template-columns: minmax(0, 1fr); gap: 22px; }
@@ -217,6 +233,7 @@
 }
 
 @media (max-width: 540px) { .paletteGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 340px) { .calendarControls .toolbarActions { grid-template-columns: minmax(0, 1fr); } }
 
 /* The same event view works as a normal page and as a compact dialog. */
 .eventPage { padding: 20px 0; }

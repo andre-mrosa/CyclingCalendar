@@ -126,7 +126,7 @@ export default function Navigation() {
             : pathname.startsWith(link.href);
 
         return (
-            <Link 
+            <Link prefetch={false}
                 key={link.href}
                 href={link.href} 
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -242,7 +242,7 @@ export default function Navigation() {
                                 ? t('admin_alert_single') 
                                 : t('admin_alert_plural', { count: adminPendingCount })}
                         </span>
-                        <Link 
+                        <Link prefetch={false}
                             href="/admin" 
                             className="inline-flex items-center gap-1 underline font-black text-slate-950 hover:text-white transition-colors ml-2"
                         >
@@ -272,10 +272,10 @@ export default function Navigation() {
                         <Menu size={24} />
                     </button>
 
-                    <Link href="/" className={styles.brand}><DynamicLogo className="w-8 h-8" /><span><strong>Cycling Calendar.</strong><small>{currentPage.label}</small></span></Link>
+                    <Link prefetch={false} href="/" className={styles.brand}><DynamicLogo className="w-8 h-8" /><span><strong>Cycling Calendar.</strong><small>{currentPage.label}</small></span></Link>
                 </div>
 
-                <Link href="/" className={styles.brand} title="Cycling Calendar">
+                <Link prefetch={false} href="/" className={styles.brand} title="Cycling Calendar">
                     <DynamicLogo className="w-9 h-9 rounded-xl" />
                     <span><strong>Cycling Calendar.</strong><small>Portugal · Ride your season</small></span>
                 </Link>
@@ -300,7 +300,7 @@ export default function Navigation() {
                         </Show>
                         <Show when="signed-in">
                             {isAdmin && (
-                                <Link 
+                                <Link prefetch={false}
                                     href="/admin"
                                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-soft hover:brightness-95 text-brand border border-brand text-xs font-bold transition-all !no-underline"
                                     title={t('nav_admin')}
@@ -362,7 +362,7 @@ export default function Navigation() {
                 {/* Mobile specific actions that show only when menu is closed */}
                 <div className={styles.mobileActions}>
                     {isAdmin && (
-                        <Link 
+                        <Link prefetch={false}
                             href="/admin" 
                             className="relative p-1.5 rounded-lg bg-brand-soft text-brand border border-brand flex items-center justify-center transition-colors !no-underline"
                             title={t('nav_admin')}
@@ -476,7 +476,7 @@ export default function Navigation() {
                             </div>
 
                             {isAdmin && (
-                                <Link 
+                                <Link prefetch={false}
                                     href="/admin" 
                                     onClick={() => setIsMobileMenuOpen(false)}
                                     className="flex items-center gap-2.5 py-2.5 px-3 rounded-xl bg-brand-soft hover:brightness-95 text-brand border border-brand text-sm font-bold transition-colors !no-underline"

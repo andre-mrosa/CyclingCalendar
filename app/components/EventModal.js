@@ -696,7 +696,7 @@ function EventModalContent({ selectedEvent, setSelectedEvent, favorites, toggleF
                             </a>
                         )}
                     </div>
-                    <div className="flex items-center gap-1.5">
+                    <div className={`${styles.mobileEventActions} flex items-center gap-1.5`}>
                         <button 
                             onClick={handleShare}
                             className={`flex items-center justify-center gap-1 h-8 px-2 rounded-full transition-all cursor-pointer text-xs font-semibold ${shareCopied ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40' : 'bg-soft border border-line text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#4a433b]'}`}

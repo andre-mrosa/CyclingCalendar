@@ -117,7 +117,7 @@ export default function Conta() {
     };
 
     return (
-        <div className={`${styles.page} ${styles.secondary}`}>
+        <div className={`${styles.page} ${styles.secondary} ${styles.settingsControls}`}>
             <PageHeading title={t('settings_title')} subtitle={t('settings_subtitle')} icon={Settings} />
 
             <main className="flex flex-col gap-6">

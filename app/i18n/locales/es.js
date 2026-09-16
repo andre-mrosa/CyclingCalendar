@@ -1,4 +1,8 @@
 const messages = {
+    nav_account: "Mi cuenta",
+    gdpr_title: "Privacidad y datos",
+    action_marking: "Añadiendo…",
+    action_marked: "En el calendario",
     "planning_changes": "Cambios en favoritas",
     "planning_changes_scope": "Desde tu última visita en este dispositivo. Confirma los detalles en la fuente oficial.",
     "planning_date": "Fecha",
@@ -450,18 +454,18 @@ const messages = {
 
     modal_calendar_exists: "Ya en el calendario",
     modal_calendar_marked: "Marcado",
-    modal_calendar_added: "A�adido con �xito!",
-    modal_calendar_error: "Error al a�adir al calendario",
+    modal_calendar_added: "¡Añadido con éxito!",
+    modal_calendar_error: "Error al añadir al calendario",
     modal_share_title: "Compartir Prueba",
     detail_back: "Volver",
     detail_share_event: "Compartir Prueba",
-    detail_add_fav: "A�adir a favoritos",
+    detail_add_fav: "Añadir a favoritos",
     detail_rem_fav: "Quitar de favoritos",
     detail_overview: "Vista General",
-    detail_routes: "Rutas y Altimetr�a",
+    detail_routes: "Rutas y Altimetría",
     detail_schedule: "Programa y Horarios",
     detail_docs: "Documentos Oficiales",
-    detail_presentation: "Presentaci�n de la Prueba",
+    detail_presentation: "Presentación de la Prueba",
 };
 
 export default messages;

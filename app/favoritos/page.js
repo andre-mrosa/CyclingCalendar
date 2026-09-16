@@ -1,7 +1,6 @@
 "use client";
 
 import CalendarView from "../components/CalendarView";
-import { useUser } from '@clerk/nextjs';
 import { useFavorites } from '../hooks/useFavorites';
 import { useTranslation } from '../i18n/useTranslation';
 import { FavoriteSubscription } from '../components/FavoritePlanning';
@@ -9,8 +8,7 @@ import CalendarEmptyState from '../components/CalendarEmptyState';
 
 export default function Favoritos() {
     const { t } = useTranslation();
-    const { isSignedIn, isLoaded } = useUser();
-    const { favorites } = useFavorites();
+    const { favorites, isLoaded } = useFavorites();
 
     if (!isLoaded) {
         return (

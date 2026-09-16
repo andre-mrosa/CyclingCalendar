@@ -97,7 +97,7 @@ function Subscription({ userId, isSignedIn }) {
     }
     return <section className={styles.panel} aria-label={t('planning_subscribe')}>
         <h2>{t('planning_subscribe')}</h2><p>{t('planning_subscription_description')}</p>
-        {!isSignedIn ? <Link href="/sign-in?redirect_url=%2Ffavoritos">{t('planning_sign_in')}</Link> : <>
+        {!isSignedIn ? <Link prefetch={false} href="/sign-in?redirect_url=%2Ffavoritos">{t('planning_sign_in')}</Link> : <>
             <p>{t('planning_private_link')}</p>
             {url ? <>
                 <label className={styles.link}>{t('planning_link')}<input readOnly value={url} onFocus={event => event.target.select()} /></label>

@@ -1,4 +1,8 @@
 const messages = {
+    nav_account: "My account",
+    gdpr_title: "Privacy and data",
+    action_marking: "Adding…",
+    action_marked: "In calendar",
     "planning_changes": "Changes to favorites",
     "planning_changes_scope": "Since your last visit on this device. Confirm details with the official source.",
     "planning_date": "Date",
