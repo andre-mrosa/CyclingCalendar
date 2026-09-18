@@ -785,16 +785,16 @@ export default function CalendarView({
                                     <div className={styles.eventBadges}>
                                             {isCancelled(event) && <span className={styles.cancelledBadge}><AlertTriangle size={12} />{t('planning_cancelled')}</span>}
                                             {isEventMarked && (
-                                                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-brand-soft text-brand border border-brand flex items-center gap-1 shrink-0">
-                                                    <Check size={11} className="stroke-[3]" /> {t('card_on_agenda')}
+                                                <span className={styles.eventStatus}>
+                                                    <Check size={13} /> {t('card_on_agenda')}
                                                 </span>
                                             )}
                                             {dateConflict.hasConflict && !isEventMarked && (
                                                 <span 
-                                                    className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-orange-500/15 text-orange-600 dark:text-orange-400 border border-orange-500/30 flex items-center gap-1 shrink-0"
+                                                    className={`${styles.eventStatus} ${styles.eventConflict}`}
                                                     title={t('card_conflict_tooltip')}
                                                 >
-                                                    <AlertTriangle size={11} className="stroke-[2.5] text-orange-500" /> {t('card_same_day')}
+                                                    <AlertTriangle size={13} /> {t('card_same_day')}
                                                 </span>
                                             )}
 

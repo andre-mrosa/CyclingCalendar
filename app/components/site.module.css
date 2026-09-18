@@ -94,9 +94,6 @@
 :global(.dark) .eventCard:hover { background: var(--site-soft); box-shadow: none; }
 .eventCard:has(.eventTitle:focus-visible) { outline: 2px solid var(--site-accent); outline-offset: -2px; }
 .eventTitle:focus-visible { outline: 0; }
-.eventCard[data-state='marked'] { box-shadow: inset 3px 0 0 var(--site-agenda); }
-.eventCard[data-state='conflict'] { box-shadow: inset 3px 0 0 #d87724; }
-.eventCard[data-state='favorite'] { box-shadow: none; }
 .eventMain { display: flex; align-items: flex-start; gap: 20px; min-width: 0; }
 .date { display: flex; flex-direction: column; justify-content: flex-start; gap: 5px; width: 62px; min-height: 62px; flex: 0 0 auto; padding: 3px 12px 3px 0; color: var(--foreground); background: transparent; border: 0; border-right: 1px solid var(--site-line); border-radius: 0; text-align: left; }
 .dateMonth { display: none; }
@@ -109,12 +106,16 @@
 .eventTitle::after { content: ''; position: absolute; inset: 0; z-index: 1; }
 .eventFavorite { position: relative; z-index: 3; display: inline-grid; place-items: center; flex-shrink: 0; min-width: 40px; min-height: 40px; border-radius: 5px; color: var(--site-muted); cursor: pointer; }
 .eventFavorite:hover { background: var(--site-soft); }
-.eventFavorite[aria-pressed='true'] { background: var(--site-accent-soft); color: var(--site-accent); }
+.eventFavorite[aria-pressed='true'] { color: var(--site-accent); }
 .eventMeta { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; margin-top: 4px; color: var(--site-muted); font-size: 12px; line-height: 1.5; }
 .eventMeta > span { display: inline-flex; align-items: center; gap: 5px; min-width: 0; }
 .eventBadges { position: relative; z-index: 3; display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 5px; max-width: 135px; }
 .eventBadges > span { padding: 4px 8px; border-radius: 5px; font-size: 10px; font-weight: 500; text-transform: none; letter-spacing: 0; }
 .eventBadges > span:not(:has(svg)) { color: var(--site-muted); background: var(--site-soft); border-color: transparent; font-size: 11px; }
+.eventBadges > .eventStatus { display: inline-flex; align-items: center; gap: 5px; padding: 3px 0; border: 0; background: transparent; color: var(--site-accent); font-size: 11px; line-height: 1.4; }
+.eventBadges > .eventConflict { color: #9a541b; }
+:global(.dark) .eventBadges > .eventConflict { color: #e5ad76; }
+.eventStatus svg { flex-shrink: 0; }
 .eventArrow { color: var(--site-muted); }
 
 .empty { max-width: 680px; margin: 32px auto; padding: 48px 30px; text-align: center; background: var(--site-surface); border: 1px solid var(--site-line); border-radius: 18px; }
