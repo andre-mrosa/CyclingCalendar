@@ -22,7 +22,7 @@ import { isStageRace, getEventDiscipline } from '../utils/eventClassifier';
 import { usePathname } from 'next/navigation';
 import PageHeading from './PageHeading';
 import MonthCalendar from './MonthCalendar';
-import { eventsInPeriod, shiftMonth, groupConsecutiveDates, formatEventTitle } from '../utils/calendarPresentation';
+import { eventsInPeriod, shiftMonth, groupEventsByDate, formatEventTitle } from '../utils/calendarPresentation';
 import AgendaOverview from './AgendaOverview';
 import styles from './site.module.css';
 import { matchesPeriod, isCancelled, conciseEscaloes, registrationDaysUntil } from '../utils/planning';
@@ -694,7 +694,7 @@ export default function CalendarView({
                 {!isInitialLoading && filteredEvents.length > 0 && viewMode === 'list' && (
                     <>
                         <div className={styles.eventList}>
-                            {groupConsecutiveDates(filteredEvents.slice(0, visibleCount)).map((group, idx, groups) => {
+                            {groupEventsByDate(filteredEvents.slice(0, visibleCount)).map((group, idx, groups) => {
                                 const currentMY = getMonthYearInfo(group[0]);
                                 const prevMY = idx > 0 ? getMonthYearInfo(groups[idx - 1][0]) : null;
                                 const isNewMonth = !prevMY || currentMY.key !== prevMY.key;

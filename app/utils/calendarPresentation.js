@@ -53,11 +53,19 @@ export function sameDateGroup(first, second) {
     return Boolean(a.start && a.start === b.start && a.end === b.end);
 }
 
-export function groupConsecutiveDates(events) {
-    return events.reduce((groups, event) => {
-        const previous = groups.at(-1);
-        if (previous && sameDateGroup(event, previous[0])) previous.push(event);
-        else groups.push([event]);
-        return groups;
-    }, []);
+export function groupEventsByDate(events) {
+    const dated = new Map();
+    const unknown = [];
+    for (const event of events) {
+        const { start, end } = eventDateDisplay(event);
+        if (!start) {
+            unknown.push([event]);
+            continue;
+        }
+        const key = `${start}/${end}`;
+        if (!dated.has(key)) dated.set(key, []);
+        dated.get(key).push(event);
+    }
+    // ISO dates put single-day events before longer ranges with the same start.
+    return [...Array.from(dated.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([, group]) => group), ...unknown];
 }
