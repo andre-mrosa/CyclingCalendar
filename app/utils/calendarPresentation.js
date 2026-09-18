@@ -52,3 +52,12 @@ export function sameDateGroup(first, second) {
     const a = eventDateDisplay(first), b = eventDateDisplay(second);
     return Boolean(a.start && a.start === b.start && a.end === b.end);
 }
+
+export function groupConsecutiveDates(events) {
+    return events.reduce((groups, event) => {
+        const previous = groups.at(-1);
+        if (previous && sameDateGroup(event, previous[0])) previous.push(event);
+        else groups.push([event]);
+        return groups;
+    }, []);
+}

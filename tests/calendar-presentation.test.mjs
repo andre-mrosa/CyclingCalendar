@@ -1,6 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { monthDays, shiftMonth, eventOccursOn, eventsInPeriod, sameDateGroup, formatEventTitle } from '../app/utils/calendarPresentation.js';
+import { monthDays, shiftMonth, eventOccursOn, eventsInPeriod, sameDateGroup, groupConsecutiveDates, formatEventTitle } from '../app/utils/calendarPresentation.js';
+
+test('shared date columns preserve order and keep different ranges and unknown dates separate', () => {
+    const a = { id: 'a', date: '19 SET 2026' };
+    const b = { id: 'b', date: '19 SET 2026' };
+    const c = { id: 'c', date: '19 a 20 SET 2026' };
+    const d = { id: 'd', date: 'A definir' };
+    const e = { id: 'e', date: 'A definir' };
+    const events = [a, b, c, a, d, e];
+    assert.deepEqual(groupConsecutiveDates(events), [[a, b], [c], [a], [d], [e]]);
+    assert.deepEqual(groupConsecutiveDates([]), []);
+    assert.equal(events.length, 6);
+});
 
 test('list titles soften source capitals without changing mixed-case names or race acronyms', () => {
     assert.equal(formatEventTitle('À CONQUISTA DA TORRE'), 'À Conquista da Torre');

@@ -320,9 +320,19 @@
 .viewSwitch button { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; padding: 0 12px; font-size: 12px; cursor: pointer; color: var(--site-muted); }
 .viewSwitch button[aria-pressed='true'] { background: var(--site-accent-soft); color: var(--site-accent); }
 .eventList { display: flex; flex-direction: column; }
-.eventCard[data-date-continuation='true'] { border-top: 0; }
-.eventCard[data-date-continuation='true']::before { content: ''; position: absolute; top: 0; left: 102px; right: 16px; height: 1px; background: var(--site-line); }
-.eventCard[data-date-continuation='true'] .date > * { visibility: hidden; }
+.dateGroup { display: grid; grid-template-columns: 78px minmax(0, 1fr); border-top: 1px solid var(--site-line); padding: 12px 0; }
+.groupDateColumn { display: flex; justify-content: center; align-items: center; padding: 12px 0; border-right: 1px solid var(--site-line); background: var(--site-soft); border-radius: 5px 0 0 5px; }
+.groupDateColumn .date { position: sticky; top: 100px; bottom: 20px; width: auto; min-height: 0; padding: 0 8px; border: 0; text-align: center; }
+.groupDateColumn .dateRange { align-items: center; }
+.groupDateColumn .dateConnector { margin-left: 0; }
+.groupEvents { min-width: 0; }
+.groupEvents .eventCard { border-top: 0; }
+.groupEvents .eventCard + .eventCard { border-top: 1px solid var(--site-line); }
+@media (max-width: 760px) {
+  .dateGroup { grid-template-columns: 56px minmax(0, 1fr); padding: 8px 0; }
+  .groupEvents .eventBadges { padding-left: 0; }
+  .groupDateColumn .dateDay { font-size: 26px; }
+}
 .date[data-cross-month='true'] .dateMonth { display: block; font-size: 9px; letter-spacing: 0; color: var(--site-muted); }
 .calendarFeed .eventCard .eventBadges > span:not(:has(svg)) { color: var(--site-muted); background: var(--site-soft); border-color: transparent; }
 .calendarAside { position: sticky; top: 104px; padding: 8px 0 16px 28px; border-left: 1px solid var(--site-line); min-width: 0; }
@@ -396,7 +406,6 @@
   .mobileFilterButton { display: none; }
   .mobileFilterButton[aria-expanded='true'] { background: var(--site-accent-soft); border-color: var(--site-accent); }
   .eventCard { gap: 3px; padding: 13px 12px; }
-  .eventCard[data-date-continuation='true']::before { left: 72px; right: 12px; }
   .eventHeadingRow h3 { padding-top: 0; }
   .eventMeta { font-size: 12px; }
   .eventFavorite { margin-top: -7px; margin-right: -7px; }

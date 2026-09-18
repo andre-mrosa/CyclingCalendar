@@ -22,7 +22,7 @@ import { isStageRace, getEventDiscipline } from '../utils/eventClassifier';
 import { usePathname } from 'next/navigation';
 import PageHeading from './PageHeading';
 import MonthCalendar from './MonthCalendar';
-import { eventsInPeriod, shiftMonth, sameDateGroup, formatEventTitle } from '../utils/calendarPresentation';
+import { eventsInPeriod, shiftMonth, groupConsecutiveDates, formatEventTitle } from '../utils/calendarPresentation';
 import AgendaOverview from './AgendaOverview';
 import styles from './site.module.css';
 import { matchesPeriod, isCancelled, conciseEscaloes, registrationDaysUntil } from '../utils/planning';
@@ -694,42 +694,17 @@ export default function CalendarView({
                 {!isInitialLoading && filteredEvents.length > 0 && viewMode === 'list' && (
                     <>
                         <div className={styles.eventList}>
-                            {filteredEvents.slice(0, visibleCount).map((event, idx, currentArray) => {
-                                const currentMY = getMonthYearInfo(event);
-                                const prevMY = idx > 0 ? getMonthYearInfo(currentArray[idx - 1]) : null;
+                            {groupConsecutiveDates(filteredEvents.slice(0, visibleCount)).map((group, idx, groups) => {
+                                const currentMY = getMonthYearInfo(group[0]);
+                                const prevMY = idx > 0 ? getMonthYearInfo(groups[idx - 1][0]) : null;
                                 const isNewMonth = !prevMY || currentMY.key !== prevMY.key;
                                 const monthHeading = currentMY.key === 'unknown' ? t('planning_date_unconfirmed') : isNewMonth ? formatMonthHeading(currentMY.year, currentMY.monthIdx, language) : '';
-
-                                const rawDate = event.date || '';
-                                const isStage = isStageRace(event);
-                                const discipline = getEventDiscipline(event);
                                 const { day, month, singleDay, start, end } = currentMY;
-
-                                const allIds = [event.id, ...(event._allIds || [])];
-                                const isEventMarked = isMarked(event.id, 'event', allIds);
-                                const dateConflict = getDateConflict(event);
-                                const isEventFavorited = favorites.includes(event.id) || (event._allIds && event._allIds.some(id => favorites.includes(id)));
-
-                                const translation = event.translations?.find(t => t.language === language) 
-                                    || (language !== 'pt' ? event.translations?.find(t => t.language === 'en') : null);
-                                const displayTitle = formatEventTitle(language === 'pt' ? event.title : (translation?.title || event.title));
-                                const displayDetails = (language === 'pt' ? event.details : (translation?.details || event.details));
-                                const location = (displayDetails || '').split('|')[0]?.trim() || event.distrito || 'Portugal';
-
-                                return (
-                                <Fragment key={event.id}>
-                                    {isNewMonth && (idx > 0 || currentMY.key === 'unknown') && (
-                                        <div className={styles.monthHeading}>
-                                            <h2>{monthHeading}{' '}<span>{currentMY.year}</span></h2>
-                                        </div>
-                                    )}
-                                    <div 
-                                        className={styles.eventCard}
-                                        data-date-continuation={sameDateGroup(event, currentArray[idx - 1])}
-                                        data-state={isCancelled(event) ? 'cancelled' : isEventMarked ? 'marked' : dateConflict.hasConflict ? 'conflict' : isEventFavorited ? 'favorite' : undefined}
-                                    >
-                                    <div className={styles.eventMain}>
-                                        <div className={styles.date} data-cross-month={month.includes('/')} aria-hidden={sameDateGroup(event, currentArray[idx - 1]) || undefined}>
+                                return <Fragment key={group[0].id}>
+                                    {isNewMonth && (idx > 0 || currentMY.key === 'unknown') && <div className={styles.monthHeading}><h2>{monthHeading}{' '}<span>{currentMY.year}</span></h2></div>}
+                                    <section className={styles.dateGroup} aria-label={start ? new Intl.DateTimeFormat(language, { dateStyle: 'long', timeZone: 'UTC' }).formatRange(new Date(start + 'T00:00:00Z'), new Date(end + 'T00:00:00Z')) : t('planning_date_unconfirmed')}>
+                                        <div className={styles.groupDateColumn}>
+                                        <div className={styles.date} data-cross-month={month.includes('/')}>
                                             <div className={`${styles.dateDay} ${start && !singleDay ? styles.dateRange : ''}`}>
                                                 {start && !singleDay ? <>
                                                     <span className="sr-only">{new Intl.DateTimeFormat(language, { dateStyle: 'long', timeZone: 'UTC' }).formatRange(new Date(start + 'T00:00:00Z'), new Date(end + 'T00:00:00Z'))}</span>
@@ -745,6 +720,32 @@ export default function CalendarView({
                                             </div>
                                         </div>
 
+
+                                        </div>
+                                        <div className={styles.groupEvents}>
+                                            {group.map(event => {
+                                const rawDate = event.date || '';
+                                const isStage = isStageRace(event);
+                                const discipline = getEventDiscipline(event);
+
+                                const allIds = [event.id, ...(event._allIds || [])];
+                                const isEventMarked = isMarked(event.id, 'event', allIds);
+                                const dateConflict = getDateConflict(event);
+                                const isEventFavorited = favorites.includes(event.id) || (event._allIds && event._allIds.some(id => favorites.includes(id)));
+
+                                const translation = event.translations?.find(t => t.language === language) 
+                                    || (language !== 'pt' ? event.translations?.find(t => t.language === 'en') : null);
+                                const displayTitle = formatEventTitle(language === 'pt' ? event.title : (translation?.title || event.title));
+                                const displayDetails = (language === 'pt' ? event.details : (translation?.details || event.details));
+                                const location = (displayDetails || '').split('|')[0]?.trim() || event.distrito || 'Portugal';
+
+
+                                                return (
+                                    <div 
+                                        key={event.id} className={styles.eventCard}
+                                        data-state={isCancelled(event) ? 'cancelled' : isEventMarked ? 'marked' : dateConflict.hasConflict ? 'conflict' : isEventFavorited ? 'favorite' : undefined}
+                                    >
+                                    <div className={styles.eventMain}>
                                         <div className="flex flex-col justify-center min-w-0 flex-1">
                                             <div className={styles.eventHeadingRow}>
                                                 <h3>
@@ -872,11 +873,15 @@ export default function CalendarView({
                                     </div>
                                     <ChevronRight size={17} className={styles.eventArrow} aria-hidden="true" />
                                 </div>
-                                </Fragment>
-                                );
+
+                                                );
+                                            })}
+                                        </div>
+                                    </section>
+                                </Fragment>;
                             })}
                         </div>
-                        
+
                         {filteredEvents.length > visibleCount && (
                             <div className="flex justify-center py-6">
                                 <button type="button" className={styles.filterButton} onClick={() => setVisibleCount(count => count + 100)}>{t('planning_load_more')}</button>
