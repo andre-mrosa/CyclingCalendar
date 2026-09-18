@@ -124,7 +124,7 @@ export default function Conta() {
                 {isAdmin && (
                     <section className="bg-brand-soft border border-brand rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in">
                         <div className="flex items-center gap-3.5">
-                            <div className="w-11 h-11 rounded-xl bg-brand text-white flex items-center justify-center shrink-0">
+                            <div className="w-11 h-11 rounded-xl bg-brand-strong text-white flex items-center justify-center shrink-0">
                                 <Shield size={22} />
                             </div>
                             <div>

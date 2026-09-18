@@ -1,22 +1,16 @@
-import { eventDateDisplay } from '../utils/eventDateDisplay';
 import { getEventDocuments } from '../utils/eventDocuments';
-import EventRouteProfile from './EventRouteProfile';
+import EventDetailBody from './EventDetailBody';
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { Calendar, Star, X, CalendarPlus, Check, Bike, FileText, CreditCard, Trophy, Shield, Users, Globe, Clock, MapPin, ExternalLink, ChevronDown, Bell, Sparkles, Trash2, Info, Tag, Share2, Flag } from 'lucide-react';
-import { useTheme } from 'next-themes';
-import SmartLogo from './SmartLogo';
+import { Calendar, X, CalendarPlus, Check, Clock, ChevronDown, Bell, Trash2 } from 'lucide-react';
 import { parsePrograma } from '../utils/parsePrograma';
 import { useCalendarEvents } from '../hooks/useCalendarEvents';
-import WeatherWidget from './WeatherWidget';
 import { useTranslation } from '../i18n/useTranslation';
-import { formatMonthAbbr, translateDateString, translateEscalao, translateAmbito, translateLicenca, translateTag } from '../i18n/formatters';
-import { getEventDiscipline, getEventCategories } from '../utils/eventClassifier';
-import { formatEventLocation, extractEventTown } from '../utils/eventLocation';
+import { translateDateString } from '../i18n/formatters';
+import { getEventCategories } from '../utils/eventClassifier';
 import { downloadIcsFile, generateGoogleCalendarUrl, getGoogleCalendarDatePayload } from '../utils/calendarExport';
 import styles from './site.module.css';
 import { useModalFocus } from '../hooks/useModalFocus';
-import { withRegistrationDates, registrationPriceSummary } from '../utils/registrationDates';
-import { isCancelled, registrationDaysUntil } from '../utils/planning';
+import { withRegistrationDates } from '../utils/registrationDates';
 
 import useSWR from 'swr';
 const fetchDetail = async url => { const response = await fetch(url); const data = await response.json(); if (!response.ok || !data.success) throw new Error('Event unavailable'); return data.event; };
@@ -26,7 +20,6 @@ export default function EventModal(props) {
 }
 function EventModalContent({ selectedEvent, setSelectedEvent, favorites, toggleFavorite, isSignedIn, standalone = false }) {
     const dialogRef = useModalFocus(!!selectedEvent && !standalone);
-    const { resolvedTheme } = useTheme();
     const { t, language } = useTranslation();
     const { isMarked, refreshCalendar, getCalendarEntry } = useCalendarEvents();
     const [fullscreenImage, setFullscreenImage] = useState(null);
@@ -46,15 +39,8 @@ function EventModalContent({ selectedEvent, setSelectedEvent, favorites, toggleF
     const [showCalMenu, setShowCalMenu] = useState(false);
     const [shareCopied, setShareCopied] = useState(false);
     const calMenuRef = useRef(null);
-    const [tabChoice, setActiveTab] = useState('info');
     const [isClosing, setIsClosing] = useState(false);
     const [isOpenAnimated, setIsOpenAnimated] = useState(false);
-    const [dragY, setDragY] = useState(0);
-    const [isDragging, setIsDragging] = useState(false);
-    const [isExpanded, setIsExpanded] = useState(false);
-    const touchStartY = useRef(0);
-    const currentDragY = useRef(0);
-
     const handleShare = async () => {
         if (!selectedEvent) return;
         if (typeof navigator !== 'undefined' && navigator.vibrate) {
@@ -99,53 +85,23 @@ function EventModalContent({ selectedEvent, setSelectedEvent, favorites, toggleF
         setTimeout(() => {
             setSelectedEvent(null);
             setIsClosing(false);
-            setDragY(0);
-            setIsDragging(false);
-            setIsExpanded(false);
         }, 260);
     }, [standalone, setSelectedEvent]);
-
-    const handleTouchStart = (e) => {
-        touchStartY.current = e.touches[0].clientY;
-        currentDragY.current = 0;
-        setIsDragging(true);
-    };
-
-    const handleTouchMove = (e) => {
-        const currentY = e.touches[0].clientY;
-        const diff = currentY - touchStartY.current;
-        if (diff > 0) {
-            currentDragY.current = diff;
-            setDragY(diff);
-        } else if (diff < 0 && !isExpanded) {
-            currentDragY.current = diff;
-            setDragY(diff * 0.25);
-        }
-    };
-
-    const handleTouchEnd = () => {
-        setIsDragging(false);
-        if (currentDragY.current > 75) {
-            closeModal();
-        } else if (currentDragY.current < -50) {
-            setIsExpanded(true);
-            setDragY(0);
-            currentDragY.current = 0;
-        } else {
-            setDragY(0);
-            currentDragY.current = 0;
-        }
-    };
 
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (e.key === 'Escape') {
-                closeModal();
+                if (fullscreenImage) {
+                    setFullscreenImage(null);
+                    setIsImageZoomed(false);
+                } else {
+                    closeModal();
+                }
             }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [closeModal]);
+    }, [closeModal, fullscreenImage]);
 
     const { data: fetchedDetail, isLoading: isLoadingFullEvent } = useSWR(
         selectedEvent._hasFullDetails ? null : '/api/events/' + encodeURIComponent(selectedEvent.id), fetchDetail,
@@ -467,19 +423,6 @@ function EventModalContent({ selectedEvent, setSelectedEvent, favorites, toggleF
         };
     }, [programaData.additionalLinks, activeEvent, t]);
 
-    // Calcula as tabs ativas baseadas nos dados reais do evento
-    const availableTabs = useMemo(() => {
-        if (!selectedEvent) return [];
-        const tabs = ['info'];
-        // Categories are visible in the summary.
-        if (activeEvent.gpxData || documents.length || (programaCleanHtml && programaCleanHtml.trim().length > 0 && programaCleanHtml !== 'Não disponível')) tabs.push('programa');
-        if (activeEvent.prices || activeEvent.registrationOpensAt || activeEvent.registrationClosesAt) tabs.push('inscricao');
-        if (activeEvent.prizes || activeEvent.insurance) tabs.push('premios');
-        if (activeEvent.details && activeEvent.details !== 'A definir') tabs.push('localizacao');
-        return tabs;
-    }, [activeEvent, programaCleanHtml, documents, selectedEvent]);
-
-    const activeTab = availableTabs.includes(tabChoice) ? tabChoice : availableTabs[0];
 
     // Fechar menu do calendário ao clicar fora
     useEffect(() => {
@@ -619,8 +562,6 @@ function EventModalContent({ selectedEvent, setSelectedEvent, favorites, toggleF
 
     if (!selectedEvent) return null;
 
-    const EventTitle = standalone ? "h1" : "h2";
-    const { day, month, start: weatherDate } = eventDateDisplay(activeEvent);
     const savedEntry = getCalendarEntry(activeEvent.id, activeEvent._allIds);
     const expectedDates = getGoogleCalendarDatePayload(activeEvent);
     const savedDatesChanged = savedEntry && expectedDates && (savedEntry.start?.slice(0, 10) !== expectedDates.start.date || savedEntry.end?.slice(0, 10) !== expectedDates.end.date || !savedEntry.allDay);
@@ -632,9 +573,6 @@ function EventModalContent({ selectedEvent, setSelectedEvent, favorites, toggleF
             className={standalone ? styles.eventPage : `${styles.overlay} fixed inset-0 z-[9000] flex items-end sm:items-center justify-center p-0 pt-8 sm:p-4 overflow-hidden transition-opacity duration-300 ${
                 isClosing || !isOpenAnimated ? 'opacity-0 pointer-events-none' : 'opacity-100'
             }`} 
-            style={{
-                opacity: isDragging && dragY > 0 ? Math.max(0.2, 1 - (dragY / 400)) : undefined
-            }}
             onClick={standalone ? undefined : closeModal}
         >
             <div 
@@ -643,883 +581,28 @@ function EventModalContent({ selectedEvent, setSelectedEvent, favorites, toggleF
                 tabIndex={-1}
                 aria-modal={standalone ? undefined : true}
                 aria-label={activeEvent.title}
-                className={`${styles.eventDialog} ${standalone ? styles.standaloneEvent : ""} border-t sm:border rounded-t-3xl sm:rounded-3xl w-full max-w-5xl ${
-                    standalone ? '' : isExpanded ? 'h-[96dvh] max-h-[96dvh]' : 'h-auto max-h-[calc(100dvh-2rem)] sm:max-h-[88vh]'
-                } flex flex-col shadow-2xl overflow-hidden relative ${
-                    isDragging ? 'transition-none' : 'transition-all duration-300 ease-out'
-                } transform ${
+                className={`${styles.eventDialog} ${standalone ? styles.standaloneEvent : ""} border-t sm:border w-full max-w-5xl ${
+                    standalone ? '' : 'h-auto max-h-[calc(100dvh-2rem)] sm:max-h-[92vh]'
+                } flex flex-col shadow-2xl overflow-y-auto relative transition-all duration-300 ease-out transform ${
                     isClosing || !isOpenAnimated 
                         ? 'translate-y-full sm:translate-y-6 sm:scale-95 sm:opacity-0' 
                         : 'translate-y-0 sm:scale-100 sm:opacity-100'
                 }`} 
-                style={{
-                    transform: isDragging ? `translateY(${Math.max(-40, dragY)}px)` : undefined
-                }}
                 onClick={(e) => e.stopPropagation()}
             >
                 
-                {/* Mobile Drag / Dismiss Handle */}
-                <div 
-                    style={{ display: standalone ? 'none' : undefined }}
-                    onTouchStart={handleTouchStart}
-                    onTouchMove={handleTouchMove}
-                    onTouchEnd={handleTouchEnd}
-                    onClick={() => {
-                        if (isExpanded) setIsExpanded(false);
-                        else closeModal();
-                    }}
-                    className="w-full pt-3 pb-2 flex items-center justify-center sm:hidden shrink-0 group cursor-grab active:cursor-grabbing touch-none select-none"
-                    title="Arrastar para baixo para fechar ou para cima para expandir"
-                >
-                    <div className="w-12 h-1.5 bg-slate-300 dark:bg-[#4a433b] group-hover:bg-slate-400 dark:group-hover:bg-slate-500 rounded-full transition-colors" />
-                </div>
-
-                {/* Mobile Top Bar (sm:hidden) */}
-                <div className="sm:hidden flex items-center justify-between px-4 pt-1 pb-1 shrink-0">
-                    <div className="flex items-center gap-2.5">
-                        <div className="flex flex-col shrink-0 w-[42px] h-[42px] bg-slate-100 dark:bg-canvas rounded-xl overflow-hidden border border-line">
-                            <div className="bg-brand-soft text-brand text-[8px] font-bold uppercase tracking-wider text-center py-0.5">
-                                {formatMonthAbbr(month, language)}
-                            </div>
-                            <div className={`flex-1 flex items-center justify-center text-ink font-bold ${day.length > 2 ? 'text-[11px] tracking-tight' : 'text-sm'}`}>
-                                {day}
-                            </div>
-                        </div>
-                        {activeEvent.logo && (
-                            <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="flex shrink-0" title="Abrir página do evento">
-                                <SmartLogo 
-                                    src={activeEvent.logo} 
-                                    alt={`Logo ${activeEvent.title}`} 
-                                    className="h-7 w-auto object-contain" 
-                                    style={{ height: '28px', width: 'auto', objectFit: 'contain' }}
-                                />
-                            </a>
-                        )}
-                    </div>
-                    <div className={`${styles.mobileEventActions} flex items-center gap-1.5`}>
-                        <button 
-                            onClick={handleShare}
-                            className={`flex items-center justify-center gap-1 h-8 px-2 rounded-full transition-all cursor-pointer text-xs font-semibold ${shareCopied ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40' : 'bg-soft border border-line text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#4a433b]'}`}
-                            title={t('action_share')}
-                        >
-                            <Share2 size={13} />
-                            {shareCopied && <span className="text-[10px]">{t('action_copied')}</span>}
-                        </button>
-                        {(() => {
-                            const isEventFavorited = favorites.includes(activeEvent.id) || (activeEvent._allIds && activeEvent._allIds.some(id => favorites.includes(id)));
-                            return (
-                                <button 
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        toggleFavorite(activeEvent.id);
-                                    }}
-                                    className={`flex items-center justify-center w-8 h-8 rounded-full transition-all cursor-pointer ${isEventFavorited ? 'bg-amber-400/15 border border-amber-500/40 text-amber-400' : 'bg-soft border border-line text-slate-600 dark:text-slate-400'}`}
-                                    title={isEventFavorited ? t('card_remove_favorite') : t('card_add_favorite')}
-                                >
-                                    <Star 
-                                        size={15} 
-                                        fill={isEventFavorited ? "#fbbf24" : "none"}
-                                    />
-                                </button>
-                            );
-                        })()}
-                        <button 
-                            className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors p-1.5 rounded-full bg-soft border border-line cursor-pointer"
-                            onClick={standalone ? undefined : closeModal}
-                            title={t('action_close')} style={{ display: standalone ? 'none' : undefined }}
-                        >
-                            <X size={17} />
-                        </button>
-                    </div>
-                </div>
-
-                {/* Mobile Title & Date & Weather Badge (sm:hidden) */}
-                <div className="sm:hidden px-4 pt-1 pb-2 shrink-0 flex items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                        {(() => {
-                            const translation = activeEvent.translations?.find(t => t.language === language)
-                                || (language !== 'pt' ? activeEvent.translations?.find(t => t.language === 'en') : null);
-                            const modalTitle = language === 'pt' ? activeEvent.title : (translation?.title || activeEvent.title);
-                            return (
-                                <EventTitle className="text-base font-bold text-ink m-0 leading-snug line-clamp-2">
-                                    {activeEvent.logo ? (
-                                        <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="text-inherit no-underline hover:text-brand transition-colors">
-                                            {modalTitle}
-                                        </a>
-                                    ) : (
-                                        <span>{modalTitle}</span>
-                                    )}
-                                </EventTitle>
-                            );
-                        })()}
-                    </div>
-                    <WeatherWidget 
-                        location={extractEventTown(activeEvent) || activeEvent.distrito} 
-                        distrito={activeEvent.distrito} 
-                        date={weatherDate}
-                        variant="mobile-badge"
-                    />
-                </div>
-
-                {/* Desktop Header (hidden sm:flex) */}
-                <div className="hidden sm:flex items-center justify-between gap-3.5 pr-14 p-5 pb-2 min-w-0 shrink-0">
-                    <button className="absolute top-4 right-4 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors z-10 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-soft cursor-pointer" onClick={standalone ? undefined : closeModal} title={t('action_close')} style={{ display: standalone ? 'none' : undefined }}>
-                        <X size={20} />
-                    </button>
-                    
-                    <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                        <div className="flex flex-col shrink-0 w-[54px] h-[54px] bg-slate-100 dark:bg-canvas rounded-xl overflow-hidden border border-line">
-                            <div className="bg-brand-soft text-brand text-[10px] font-bold uppercase tracking-wider text-center py-0.5">
-                                {formatMonthAbbr(month, language)}
-                            </div>
-                            <div className={`flex-1 flex items-center justify-center text-ink font-bold ${day.length > 2 ? 'text-xs sm:text-sm tracking-tight' : 'text-lg'}`}>
-                                {day}
-                            </div>
-                        </div>
-                        {activeEvent.logo && (
-                            <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="flex shrink-0" title={t('action_official_site')}>
-                                <SmartLogo 
-                                    src={activeEvent.logo} 
-                                    alt={`Logo ${activeEvent.title}`} 
-                                    className="h-8 w-auto object-contain" 
-                                    style={{ height: '32px', width: 'auto', objectFit: 'contain' }}
-                                />
-                            </a>
-                        )}
-                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                            {(() => {
-                                const translation = activeEvent.translations?.find(t => t.language === language)
-                                    || (language !== 'pt' ? activeEvent.translations?.find(t => t.language === 'en') : null);
-                                const modalTitle = language === 'pt' ? activeEvent.title : (translation?.title || activeEvent.title);
-                                return (
-                                    <EventTitle className="text-xl font-bold text-ink m-0 truncate">
-                                        {activeEvent.logo ? (
-                                            <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="text-inherit no-underline hover:text-brand transition-colors truncate">
-                                                {modalTitle}
-                                            </a>
-                                        ) : (
-                                            <span className="text-ink truncate">{modalTitle}</span>
-                                        )}
-                                    </EventTitle>
-                                );
-                            })()}
-                            <button 
-                                onClick={handleShare}
-                                className={`flex shrink-0 items-center justify-center gap-1.5 h-7 px-2.5 rounded-full transition-all cursor-pointer text-xs font-semibold ${shareCopied ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40' : 'bg-soft border border-line text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#4a433b]'}`}
-                                title={t('action_share')}
-                            >
-                                <Share2 size={13} />
-                                <span className="text-[11px]">{shareCopied ? t('action_copied') : t('action_share')}</span>
-                            </button>
-                            {(() => {
-                                const isEventFavorited = favorites.includes(activeEvent.id) || (activeEvent._allIds && activeEvent._allIds.some(id => favorites.includes(id)));
-                                return (
-                                    <button 
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            toggleFavorite(activeEvent.id);
-                                        }}
-                                        className={`flex shrink-0 items-center justify-center w-7 h-7 rounded-full transition-all cursor-pointer ${isEventFavorited ? 'bg-amber-400/15 border border-amber-500/40 text-amber-400' : 'bg-soft border border-line text-slate-600 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#4a433b]'}`}
-                                        title={isEventFavorited ? t('card_remove_favorite') : t('card_add_favorite')}
-                                    >
-                                        <Star 
-                                            size={14} 
-                                            className="transition-transform"
-                                            fill={isEventFavorited ? "#fbbf24" : "none"}
-                                        />
-                                    </button>
-                                );
-                            })()}
-                        </div>
-                    </div>
-
-                    {/* Weather in Header (Top Right box) */}
-                    <WeatherWidget 
-                        location={extractEventTown(activeEvent) || activeEvent.distrito} 
-                        distrito={activeEvent.distrito} 
-                        date={weatherDate}
-                        variant="header"
-                    />
-                </div>
-                
-                {/* Tabs Navigation */}
-                {availableTabs.length > 0 ? (
-                    <div className="px-3 sm:px-5 pb-2 pt-1 border-b border-line shrink-0">
-                        <div className={styles.eventTabs}>
-                            {availableTabs.map(tab => {
-                                const tabIcons = {
-                                    info: <Info size={13} className="shrink-0" />,
-                                    escaloes: <Users size={13} className="shrink-0" />,
-                                    programa: <Clock size={13} className="shrink-0" />,
-                                    inscricao: <Tag size={13} className="shrink-0" />,
-                                    premios: <Trophy size={13} className="shrink-0" />,
-                                    localizacao: <MapPin size={13} className="shrink-0" />
-                                };
-                                const shortLabels = {
-                                    info: 'Info',
-                                    escaloes: t('tab_categories'),
-                                    programa: activeEvent.source === 'FPC' ? 'Docs' : t('tab_schedule'),
-                                    inscricao: t('tab_registration'),
-                                    premios: t('tab_prizes'),
-                                    localizacao: t('tab_location')
-                                };
-                                const fullLabels = {
-                                    info: t('tab_info'),
-                                    escaloes: t('tab_categories'),
-                                    programa: activeEvent.source === 'FPC' ? t('tab_docs') : t('tab_schedule'),
-                                    inscricao: t('tab_registration'),
-                                    premios: t('tab_prizes'),
-                                    localizacao: t('tab_location')
-                                };
-                                const isActive = activeTab === tab;
-                                return (
-                                    <button 
-                                        key={tab} 
-                                        onClick={() => setActiveTab(tab)} 
-                                        className={styles.eventTab}
-                                        aria-pressed={isActive}
-                                    >
-                                        {tabIcons[tab]}
-                                        <span className="sm:hidden leading-none truncate max-w-full">{shortLabels[tab]}</span>
-                                        <span className="hidden sm:inline">{fullLabels[tab]}</span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-                ) : (
-                    <div className="mb-2 pb-2 border-b border-line px-4 sm:px-5 shrink-0">
-                        <p className="text-muted text-xs">
-                            {t('summary_no_description')}
-                        </p>
-                    </div>
-                )}
-
-                {weatherDate && <p className="px-5 m-0 pb-1 text-[10px] text-muted">{t('planning_weather_day')}: {new Intl.DateTimeFormat(language, { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(weatherDate + 'T00:00:00Z'))}</p>}
-                {/* Tab content area */}
-                <div className="flex-grow overflow-hidden flex flex-col px-4 sm:px-5 min-h-0 pt-2">
-                {isCancelled(activeEvent) && <p className={styles.cancelledBadge}><Info size={14} />{t('planning_cancelled')}</p>}
-                <p className="text-[11px] text-muted pb-2 shrink-0">
-                    {t('planning_sources')}: {(activeEvent._mergedSources || [activeEvent.source]).filter(Boolean).join(' · ')}
-                    {activeEvent.updatedAt && <> · {t('planning_updated')} {new Intl.DateTimeFormat(language, { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Europe/Lisbon' }).format(new Date(activeEvent.updatedAt))}</>}
-                </p>
-                
-                {availableTabs.length === 0 && (
-                    <div className="flex flex-col items-center justify-center h-full gap-4 p-6 animate-fade-in">
-                        <FileText size={40} className="text-slate-600" />
-                        <h3 className="m-0 text-slate-800 dark:text-slate-200 text-center text-lg font-semibold">{t('summary_no_description')}</h3>
-                        <a 
-                            href={activeEvent.link} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            className="bg-brand text-slate-900 dark:text-white no-underline px-6 py-2.5 rounded-xl font-semibold inline-block shadow-lg hover:brightness-110 transition-colors text-sm"
-                        >
-                            {t('action_official_site')}
-                        </a>
-                    </div>
-                )}
-
-                {/* Tab: INFO */}
-                {activeTab === 'info' && (
-                    <div className="flex flex-col h-full animate-fade-in min-h-0">
-                        {/* Registration Alert Banner */}
-                        {(() => {
-                            if (!activeEvent.registrationClosesAt && !activeEvent.registrationOpensAt) return null;
-                            const now = new Date();
-                            const locale = language === 'en' ? 'en-GB' : language === 'es' ? 'es-ES' : language === 'fr' ? 'fr-FR' : 'pt-PT';
-                            if (activeEvent.registrationClosesAt) {
-                                const closes = new Date(activeEvent.registrationClosesAt);
-                                const diffDays = registrationDaysUntil(activeEvent.registrationClosesAt, now);
-                                if (diffDays >= 0 && diffDays <= 7) {
-                                    const closesLabel = diffDays === 0
-                                        ? t('card_last_day')
-                                        : `${t('reg_close_title')}: ${t('card_days_to_close').replace('{days}', diffDays)} (${closes.toLocaleDateString(locale, { timeZone: 'UTC' })})`;
-                                    return (
-                                        <div className="mb-2.5 px-3.5 py-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-between gap-2 text-rose-600 dark:text-rose-400 text-xs font-semibold shrink-0">
-                                            <div className="flex items-center gap-2">
-                                                <Clock size={15} className="shrink-0 animate-pulse text-rose-500" />
-                                                <span>{closesLabel}</span>
-                                            </div>
-                                            {activeEvent.link && (
-                                                <a href={activeEvent.link} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-slate-900 dark:text-white text-[11px] font-bold no-underline transition-colors shrink-0">
-                                                    {t(activeEvent.registrationClosesAt && registrationDaysUntil(activeEvent.registrationClosesAt) < 0 ? 'planning_registration_page' : 'action_register')}
-                                                </a>
-                                            )}
-                                        </div>
-                                    );
-                                }
-                            }
-                            if (activeEvent.registrationOpensAt) {
-                                const opens = new Date(activeEvent.registrationOpensAt);
-                                const diffDays = registrationDaysUntil(activeEvent.registrationOpensAt, now);
-                                if (diffDays > 0 && diffDays <= 14) {
-                                    return (
-                                        <div className="mb-2.5 px-3.5 py-2.5 rounded-xl bg-lime-500/10 border border-lime-500/30 flex items-center gap-2 text-lime-700 dark:text-lime-400 text-xs font-semibold shrink-0">
-                                            <Clock size={15} className="shrink-0 text-lime-500" />
-                                            <span>{t('reg_open_title')}: {diffDays}d ({opens.toLocaleDateString(locale, { timeZone: 'UTC' })})</span>
-                                        </div>
-                                    );
-                                }
-                            }
-                            return null;
-                        })()}
-
-                        <div className="flex-1 overflow-y-auto min-h-0 pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent overscroll-contain touch-pan-y">
-                            {/* Native Universal Resumo da Prova Card */}
-                            {(() => {
-                                return (
-                                <div className={styles.eventSummary}>
-                                    <div className="flex items-center justify-between gap-2 mb-2.5 pb-2 border-b border-slate-200/80 dark:border-line">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-6 h-6 rounded-lg bg-brand-soft text-brand flex items-center justify-center shrink-0">
-                                                <Sparkles size={13} />
-                                            </div>
-                                            <h4 className="text-xs sm:text-sm font-bold text-ink m-0 tracking-tight">
-                                                {t('summary_title')}
-                                            </h4>
-                                        </div>
-
-                                    </div>
-
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                                        {/* Data */}
-                                        <div className="flex items-start gap-2 text-ink">
-                                            <Calendar size={14} className="text-brand shrink-0 mt-0.5" />
-                                            <div className="min-w-0">
-                                                <span className="text-[10px] text-muted block font-semibold uppercase leading-tight">{t('summary_date')}</span>
-                                                <span className="font-semibold text-ink truncate block">{expectedDates ? translateDateString(activeEvent.date, language) : t('planning_date_unconfirmed')}</span>
-
-                                            </div>
-                                        </div>
-
-                                        {/* Localização */}
-                                        <div className="flex items-start gap-2 text-ink">
-                                            <MapPin size={14} className="text-rose-500 shrink-0 mt-0.5" />
-                                            <div className="min-w-0">
-                                                <span className="text-[10px] text-muted block font-semibold uppercase leading-tight">{t('summary_location')}</span>
-                                                <span className="font-semibold text-ink truncate block">
-                                                    {formatEventLocation(activeEvent) || t('summary_location_tbd')}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        {/* Modalidade */}
-                                        <div className="flex items-start gap-2 text-ink">
-                                            <Bike size={14} className="text-amber-500 shrink-0 mt-0.5" />
-                                            <div className="min-w-0">
-                                                <span className="text-[10px] text-muted block font-semibold uppercase leading-tight">{t('summary_discipline')}</span>
-                                                <span className="font-semibold text-ink truncate block">{translateTag(getEventDiscipline(activeEvent), language) || t('summary_cycling')}</span>
-                                            </div>
-                                        </div>
-
-                                        {/* Âmbito & Licença */}
-                                        <div className="flex items-start gap-2 text-ink">
-                                            <Shield size={14} className="text-emerald-500 shrink-0 mt-0.5" />
-                                            <div className="min-w-0">
-                                                <span className="text-[10px] text-muted block font-semibold uppercase leading-tight">{t('summary_scope_license')}</span>
-                                                <span className="font-semibold text-ink truncate block">
-                                                    {translateAmbito(activeEvent.ambito, language)} {activeEvent.licenca ? `• ${translateLicenca(activeEvent.licenca, language)}` : ''}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {activeEvent.escaloes?.length > 0 && (
-                                        <div className="mt-3 pt-3 border-t border-line text-xs">
-                                            <span className="text-muted block mb-1">{t('tab_categories')}</span>
-                                            <span className="font-semibold">{activeEvent.escaloes.map(esc => translateEscalao(esc, language)).join(' · ')}</span>
-                                        </div>
-                                    )}
-                                    {activeEvent.organizador && <p className="text-xs mt-3 mb-0"><span className="text-muted">{t('summary_organizer')}: </span>{activeEvent.organizador}</p>}
-
-                                    {(activeEvent.registrationOpensAt || activeEvent.registrationClosesAt) && <div className="mt-3 pt-3 border-t border-line text-xs grid gap-1">
-                                        {activeEvent.registrationOpensAt && <p className="m-0"><span className="text-muted">{t('reg_open_title')}: </span>{formatRegDate(activeEvent.registrationOpensAt)}</p>}
-                                        {activeEvent.registrationClosesAt && <p className="m-0"><span className="text-muted">{t('reg_close_title')}: </span>{formatRegDate(activeEvent.registrationClosesAt)}{registrationDaysUntil(activeEvent.registrationClosesAt) < 0 && <strong className="text-brand"> · {t('planning_registration_closed')}</strong>}</p>}
-                                    </div>}
-                                    {/* Percursos & Distâncias */}
-                                    {percursosSummary && percursosSummary.length > 0 && (
-                                        <div className="mt-2.5 pt-2 border-t border-slate-200/80 dark:border-line">
-                                            <span className="text-[10px] text-muted font-semibold uppercase block mb-1.5">
-                                                <Bike size={16} className="inline-block align-middle shrink-0 mr-1" aria-hidden="true" />{t('summary_routes_distances')}
-                                            </span>
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                                                {percursosSummary.map((p, idx) => {
-                                                    const parts = p.split(/:\s*/);
-                                                    const title = parts.length > 1 ? parts[0] : null;
-                                                    const metrics = parts.length > 1 ? parts.slice(1).join(': ') : p;
-                                                    return (
-                                                        <div key={idx} className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-brand-soft dark:bg-brand-soft border border-brand text-xs shadow-sm">
-                                                            <div className="w-5 h-5 rounded-lg bg-brand-soft text-brand flex items-center justify-center shrink-0">
-                                                                <Bike size={12} />
-                                                            </div>
-                                                            <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                                                                {title && (
-                                                                    <span className="font-bold text-ink">{title}:</span>
-                                                                )}
-                                                                <span className="font-semibold text-brand">{metrics}</span>
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                                );
-                            })()}
-
-                            {isLoadingFullEvent && (
-                                <div className="w-full h-32 rounded-xl bg-slate-200 dark:bg-soft/30 border border-slate-300 dark:border-line animate-pulse flex flex-col items-center justify-center gap-2 mb-2 text-slate-500">
-                                    <div className="w-5 h-5 border-2 border-slate-600 border-t-blue-400 rounded-full animate-spin"></div>
-                                    <span className="text-xs font-medium">{t('action_loading_data')}</span>
-                                </div>
-                            )}
-
-                            {fpcBannerHtml && !isLoadingFullEvent && (
-                                <div className="mb-2 text-center" dangerouslySetInnerHTML={{ __html: fpcBannerHtml }} onClick={handleHtmlClick} />
-                            )}
-                            {cleanDescriptionHtml && <details className="my-3 border border-line rounded p-3">
-                                <summary className="text-sm font-semibold text-ink cursor-pointer">{t('planning_description')}</summary>
-                                <div className="mt-3 text-ink text-xs sm:text-sm leading-relaxed prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: cleanDescriptionHtml }} />
-                            </details>}
-
-                            {/* Recursos e Documentos Úteis da Prova */}
-                            {parsedLinks.resources.length > 0 && !isLoadingFullEvent && (
-                                <div className="mt-3.5 mb-1 p-3.5 bg-soft rounded-2xl border border-line">
-                                    <h5 className="text-[11px] uppercase tracking-wider font-bold text-muted mb-2.5 flex items-center gap-1.5">
-                                        <ExternalLink size={12} className="text-brand" /> {t('resources_title')}
-                                    </h5>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                        {parsedLinks.resources.map((res, idx) => (
-                                            <a 
-                                                key={`res-${idx}`} 
-                                                href={res.link} 
-                                                target="_blank" 
-                                                rel="noopener noreferrer" 
-                                                className="flex items-center gap-2.5 p-2 rounded-xl bg-surface border border-line hover:border-brand dark:hover:border-line text-ink hover:text-brand dark:hover:text-white transition-colors text-xs font-semibold shadow-2xs group"
-                                            >
-                                                <span className="p-1 rounded-lg bg-soft group-hover:bg-brand-soft transition-colors shrink-0">
-                                                    {res.icon === 'track' && <MapPin size={13} className="text-emerald-500" />}
-                                                    {res.icon === 'users' && <Users size={13} className="text-brand" />}
-                                                    {res.icon === 'trophy' && <Trophy size={13} className="text-amber-500" />}
-                                                    {res.icon === 'file' && <FileText size={13} className="text-indigo-500" />}
-                                                    {res.icon === 'shield' && <Shield size={13} className="text-purple-500" />}
-                                                    {res.icon === 'fpc' && <Globe size={13} className="text-slate-600 dark:text-slate-400" />}
-                                                </span>
-                                                <span className="truncate flex-1">{res.label}</span>
-                                                <ExternalLink size={11} className="text-slate-600 dark:text-slate-400 group-hover:text-brand transition-colors shrink-0" />
-                                            </a>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                        
-
-                    </div>
-                )}
-
-                {/* Tab: ESCALOES */}
-                {activeTab === 'escaloes' && (
-                    <div className="flex flex-col h-full animate-fade-in min-h-0">
-                        {(!activeEvent.escaloes || activeEvent.escaloes.length === 0) ? (
-                            <p className="text-muted text-xs sm:text-sm">{t('summary_no_description')}</p>
-                        ) : (
-                            <div className="flex-1 overflow-y-auto min-h-0 pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent pb-2 overscroll-contain touch-pan-y">
-                                <h4 className="mb-2.5 text-ink flex items-center gap-2 text-sm font-semibold">
-                                    <Bike size={16} className="text-brand" />
-                                    {t('tab_categories')}
-                                </h4>
-                                <div className="flex flex-wrap gap-2">
-                                    {activeEvent.escaloes.map((esc, idx) => (
-                                        <div key={`esc-${idx}`} className="inline-flex items-center px-3 py-1.5 rounded-lg bg-brand-soft border border-brand text-brand text-xs font-semibold shadow-sm cursor-default">
-                                            <span>{translateEscalao(esc, language)}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* Tab: PROGRAMA */}
-                {activeTab === 'programa' && (
-                    <div className="flex flex-col h-full animate-fade-in min-h-0">
-                        <div className="flex-1 overflow-y-auto min-h-0 pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent overscroll-contain touch-pan-y">
-                            <EventRouteProfile event={activeEvent} documents={documents} />
-                            {documents.length > 0 && (
-                                <div className="grid gap-2 mb-4">
-                                    {documents.map(doc => <a key={doc.link} href={doc.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded border border-line bg-soft text-ink hover:text-brand">
-                                        <FileText size={16} className="text-brand shrink-0" /><span className="text-sm">{doc.label}</span><ExternalLink size={13} className="ml-auto shrink-0" />
-                                    </a>)}
-                                </div>
-                            )}
-                            {parsedSchedule && parsedSchedule.type === 'timeline' ? (
-                                <div className="space-y-4 pb-3">
-                                    {parsedSchedule.days.map((day, dIdx) => (
-                                        <div key={`day-${dIdx}`} className="bg-soft border border-line rounded-2xl p-3.5 sm:p-4 shadow-sm">
-                                            {/* Day Header */}
-                                            <div className="flex items-center gap-2.5 mb-3.5 pb-2.5 border-b border-line">
-                                                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-brand-soft border border-brand flex items-center justify-center text-brand shrink-0">
-                                                    <Calendar size={15} />
-                                                </div>
-                                                <h3 className="text-xs sm:text-sm font-bold text-ink m-0">
-                                                    {day.dayTitle}
-                                                </h3>
-                                            </div>
-
-                                            {/* Timeline items */}
-                                            <div className="relative pl-3.5 sm:pl-5 space-y-3 before:absolute before:left-[17px] sm:before:left-[23px] before:top-2.5 before:bottom-2.5 before:w-[2px] before:bg-slate-200 dark:before:bg-slate-200 dark:bg-soft">
-                                                {day.activities.map((act, aIdx) => {
-                                                    const isStartOrFinish = /partida|chegada|início/i.test(act.title);
-                                                    const isPodium = /pódio|podio|prémio|premio/i.test(act.title);
-                                                    const isSecretariado = /secretariado|frontais/i.test(act.title);
-                                                    const isLunch = /almoço|almoco|reforço/i.test(act.title);
-
-                                                    return (
-                                                        <div key={`act-${aIdx}`} className="relative flex items-start gap-3 group">
-                                                            {/* Dot on timeline */}
-                                                            <div className={`relative z-10 w-3 h-3 rounded-full mt-1.5 shrink-0 border-2 transition-transform group-hover:scale-125 ${
-                                                                isStartOrFinish 
-                                                                    ? 'bg-rose-500 border-rose-400 shadow-[0_0_8px_rgba(244,63,94,0.5)]'
-                                                                    : isPodium 
-                                                                    ? 'bg-amber-400 border-amber-300 shadow-[0_0_8px_rgba(251,191,36,0.5)]'
-                                                                    : isSecretariado
-                                                                    ? 'bg-brand border-brand'
-                                                                    : isLunch
-                                                                    ? 'bg-orange-500 border-orange-400'
-                                                                    : 'bg-slate-400 dark:bg-[#4a433b] border-slate-300 dark:border-slate-500'
-                                                            }`} />
-
-                                                            {/* Activity Card */}
-                                                            <div className="flex-1 bg-surface border border-line rounded-xl p-3 hover:border-slate-300 dark:hover:border-slate-700 transition-colors shadow-sm">
-                                                                <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
-                                                                    <h4 className="text-xs sm:text-sm font-bold text-ink m-0 flex items-center gap-1.5">
-                                                                        {act.title}
-                                                                    </h4>
-                                                                    {act.time && (
-                                                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-brand-soft border border-brand text-brand text-[11px] font-semibold tracking-wide">
-                                                                            <Clock size={11} />
-                                                                            {act.time}
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-
-                                                                {act.desc && (
-                                                                    <p className="text-xs text-slate-600 dark:text-slate-300 m-0 mb-1.5 leading-relaxed">
-                                                                        {act.desc}
-                                                                    </p>
-                                                                )}
-
-                                                                {act.location && (
-                                                                    <div className="pt-1.5 border-t border-slate-100 dark:border-line/60 mt-1.5 flex items-center justify-between">
-                                                                        {act.locationUrl ? (
-                                                                            <a 
-                                                                                href={act.locationUrl} 
-                                                                                target="_blank" 
-                                                                                rel="noopener noreferrer"
-                                                                                className="inline-flex items-center gap-1.5 text-[11px] text-muted hover:text-brand transition-colors group/link"
-                                                                                title="Abrir no Google Maps"
-                                                                            >
-                                                                                <MapPin size={12} className="text-rose-500 dark:text-rose-400 shrink-0" />
-                                                                                <span className="truncate">{act.location}</span>
-                                                                                <ExternalLink size={10} className="opacity-60 group-hover/link:opacity-100 shrink-0" />
-                                                                            </a>
-                                                                        ) : (
-                                                                            <span className="inline-flex items-center gap-1.5 text-[11px] text-muted">
-                                                                                <MapPin size={12} className="text-rose-500 dark:text-rose-400 shrink-0" />
-                                                                                <span className="truncate">{act.location}</span>
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : programaCleanHtml && !(documents.length && activeEvent.source?.includes("FPC")) ? (
-                                <div className="prose dark:prose-invert max-w-none text-xs sm:text-sm leading-relaxed text-ink" dangerouslySetInnerHTML={{ __html: programaCleanHtml }} onClick={handleHtmlClick} />
-                            ) : null}
-                        </div>
-                    </div>
-                )}
-
-                {/* Tab: INSCRIÇÃO & PREÇOS */}
-                {activeTab === 'inscricao' && (
-                    <div className="flex flex-col h-full animate-fade-in min-h-0 overflow-y-auto">
-                        <div className="shrink-0 grid grid-cols-1 sm:grid-cols-2 gap-2 pb-1">
-                            <div className="bg-soft p-3 rounded-xl border border-line flex flex-col justify-between">
-                                <div className="flex items-start justify-between gap-2">
-                                    <div>
-                                        <h4 className="mb-1 text-slate-500 text-[10px] uppercase tracking-wider font-semibold">{t('reg_open_title')}</h4>
-                                        <p className="text-ink text-xs sm:text-sm font-semibold">
-                                            {activeEvent.registrationOpensAt ? formatRegDate(activeEvent.registrationOpensAt) : t('summary_to_be_defined')}
-                                        </p>
-                                    </div>
-                                    {activeEvent.registrationOpensAt && isSignedIn && (() => {
-                                        const isRegOpenMarked = regOpenCalStatus === 'success' || regOpenCalStatus === 'exists';
-                                        return (
-                                            <button 
-                                                onClick={() => {
-                                                    if (isRegOpenMarked) {
-                                                        setDeleteConfirmation({ target: 'registration_open', label: t('cal_menu_mark_reg_open') });
-                                                    } else {
-                                                        handleAddToCalendar('registration_open');
-                                                    }
-                                                }}
-                                                disabled={regOpenCalStatus === 'loading'}
-                                                className={`group shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-                                                    isRegOpenMarked
-                                                        ? 'bg-emerald-500/10 hover:bg-rose-500/10 text-emerald-600 hover:text-rose-600 dark:text-emerald-400 dark:hover:text-rose-400 border border-emerald-500/20 hover:border-rose-500/30'
-                                                        : regOpenCalStatus === 'error'
-                                                        ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30'
-                                                        : 'bg-white hover:bg-slate-100 dark:bg-surface dark:hover:bg-soft text-brand border border-line shadow-sm'
-                                                } ${regOpenCalStatus === 'loading' ? 'opacity-70 cursor-default' : ''}`}
-                                                title={isRegOpenMarked ? t('action_remove_confirm') : regOpenCalMsg || t('reg_reminder_alert')}
-                                            >
-                                                {regOpenCalStatus === 'loading' ? (
-                                                    <>
-                                                        <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                                                        <span>{t('action_marking')}</span>
-                                                    </>
-                                                ) : isRegOpenMarked ? (
-                                                    <>
-                                                        <span className="flex items-center gap-1.5 group-hover:hidden">
-                                                            <Check size={13} />
-                                                            <span>{t('action_marked')}</span>
-                                                        </span>
-                                                        <span className="hidden group-hover:flex items-center gap-1.5">
-                                                            <Trash2 size={13} />
-                                                            <span>{t('action_remove_confirm')}</span>
-                                                        </span>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <CalendarPlus size={13} />
-                                                        <span>{regOpenCalStatus === 'error' ? (regOpenCalMsg || 'Erro!') : t('reg_remind_open')}</span>
-                                                    </>
-                                                )}
-                                            </button>
-                                        );
-                                    })()}
-                                </div>
-                                {activeEvent.registrationOpensAt && (
-                                    <span className="text-[10px] text-muted mt-1 flex items-center gap-1">
-                                        <Clock size={10} className="text-brand" /> {t('reg_reminder_alert')}
-                                    </span>
-                                )}
-                            </div>
-
-                            <div className="bg-soft p-3 rounded-xl border border-line flex flex-col justify-between">
-                                <div className="flex items-start justify-between gap-2">
-                                    <div>
-                                        <h4 className="mb-1 text-slate-500 text-[10px] uppercase tracking-wider font-semibold">{t('reg_close_title')}</h4>
-                                        <p className="text-ink text-xs sm:text-sm font-semibold">
-                                            {activeEvent.registrationClosesAt ? formatRegDate(activeEvent.registrationClosesAt) : t('summary_to_be_defined')}
-                                        </p>
-                                    </div>
-                                    {activeEvent.registrationClosesAt && isSignedIn && (() => {
-                                        const isRegCloseMarked = regCloseCalStatus === 'success' || regCloseCalStatus === 'exists';
-                                        return (
-                                            <button 
-                                                onClick={() => {
-                                                    if (isRegCloseMarked) {
-                                                        setDeleteConfirmation({ target: 'registration_close', label: t('cal_menu_mark_reg_close') });
-                                                    } else {
-                                                        handleAddToCalendar('registration_close');
-                                                    }
-                                                }}
-                                                disabled={regCloseCalStatus === 'loading'}
-                                                className={`group shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-                                                    isRegCloseMarked
-                                                        ? 'bg-emerald-500/10 hover:bg-rose-500/10 text-emerald-600 hover:text-rose-600 dark:text-emerald-400 dark:hover:text-rose-400 border border-emerald-500/20 hover:border-rose-500/30'
-                                                        : regCloseCalStatus === 'error'
-                                                        ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30'
-                                                        : 'bg-white hover:bg-slate-100 dark:bg-surface dark:hover:bg-soft text-brand border border-line shadow-sm'
-                                                } ${regCloseCalStatus === 'loading' ? 'opacity-70 cursor-default' : ''}`}
-                                                title={isRegCloseMarked ? t('action_remove_confirm') : regCloseCalMsg || t('reg_reminder_alert')}
-                                            >
-                                                {regCloseCalStatus === 'loading' ? (
-                                                    <>
-                                                        <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                                                        <span>{t('action_marking')}</span>
-                                                    </>
-                                                ) : isRegCloseMarked ? (
-                                                    <>
-                                                        <span className="flex items-center gap-1.5 group-hover:hidden">
-                                                            <Check size={13} />
-                                                            <span>{t('action_marked')}</span>
-                                                        </span>
-                                                        <span className="hidden group-hover:flex items-center gap-1.5">
-                                                            <Trash2 size={13} />
-                                                            <span>{t('action_remove_confirm')}</span>
-                                                        </span>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <CalendarPlus size={13} />
-                                                        <span>{regCloseCalStatus === 'error' ? (regCloseCalMsg || 'Erro!') : t('reg_remind_close')}</span>
-                                                    </>
-                                                )}
-                                            </button>
-                                        );
-                                    })()}
-                                </div>
-                                {activeEvent.registrationClosesAt && (
-                                    <span className="text-[10px] text-muted mt-1 flex items-center gap-1">
-                                        <Clock size={10} className="text-amber-500" /> {t('reg_reminder_alert')}
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                        {registrationPriceSummary(activeEvent.prices) && <div className="mt-3 p-3 border border-line rounded-lg text-sm whitespace-pre-line shrink-0">{registrationPriceSummary(activeEvent.prices)}</div>}
-                        {activeEvent.prices && <details className="mt-3 border border-line rounded-lg p-3 shrink-0">
-                            <summary className="cursor-pointer text-sm font-semibold text-ink">{t('planning_registration_details')}</summary>
-                            <div className="mt-3 text-ink text-xs sm:text-sm prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: activeEvent.prices || '' }} />
-                        </details>}
-                    </div>
-                )}
-
-                {/* Tab: PREMIOS E SEGURO */}
-                {activeTab === 'premios' && (
-                    <div className="flex flex-col h-full animate-fade-in min-h-0">
-                        <div className="flex-1 overflow-y-auto min-h-0 pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent grid grid-cols-1 md:grid-cols-2 gap-3 pb-2 overscroll-contain touch-pan-y">
-                            <div className="bg-soft p-3.5 rounded-xl border border-line">
-                                <h4 className="mb-2 text-ink flex items-center gap-2 text-sm font-semibold">
-                                    <Trophy size={15} className="text-amber-500 dark:text-amber-400" /> {t('summary_prizes')}
-                                </h4>
-                                {activeEvent.prizes ? (
-                                    <div className="text-ink text-xs sm:text-sm prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: activeEvent.prizes }} />
-                                ) : (
-                                    <p className="text-muted text-xs">{t('summary_no_description')}</p>
-                                )}
-                            </div>
-                            <div className="bg-soft p-3.5 rounded-xl border border-line">
-                                <h4 className="mb-2 text-ink flex items-center gap-2 text-sm font-semibold">
-                                    <Shield size={15} className="text-emerald-500 dark:text-emerald-400" /> {t('summary_insurance')}
-                                </h4>
-                                {activeEvent.insurance ? (
-                                    <div className="text-ink text-xs sm:text-sm prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: activeEvent.insurance }} />
-                                ) : (
-                                    <p className="text-muted text-xs">{t('summary_no_description')}</p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Tab: LOCALIZACAO */}
-                {activeTab === 'localizacao' && (
-                    <div className="flex flex-col h-full animate-fade-in pb-2 min-h-0 overflow-hidden pr-1">
-                        <p className="text-xs text-muted mb-3">{t('planning_map_approx')}</p>
-                        {activeEvent.details && activeEvent.details !== 'A definir' ? (
-                            <div className="w-full h-full min-h-[300px] flex-1 rounded-xl overflow-hidden border border-line shadow-sm relative">
-                                <iframe 
-                                    className="w-full h-full border-0 dark:[filter:invert(90%)_hue-rotate(180deg)] transition-all duration-300 min-h-[300px]"
-                                    loading="lazy" 
-                                    allowFullScreen 
-                                    src={`https://maps.google.com/maps?q=${encodeURIComponent(activeEvent.details.split('|')[0] + ', Portugal')}&output=embed`}
-                                ></iframe>
-                            </div>
-                        ) : (
-                            <p className="text-muted text-xs sm:text-sm">{t('summary_location_tbd')}</p>
-                        )}
-                    </div>
-                )}
-
-                </div> {/* end flex-grow tab area */}
-
-                {/* Action footer */}
-                <div className="flex gap-2 flex-wrap items-center justify-between p-2.5 sm:px-5 sm:py-3 bg-soft border-t border-line shrink-0 transition-colors duration-200">
-                    {programaData.loading ? (
-                        <div className="px-3 py-1.5 flex items-center gap-2 text-slate-600 dark:text-slate-400 text-xs">
-                            <div className="w-3.5 h-3.5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
-                            <span>{t('action_loading_data')}</span>
-                        </div>
-                    ) : (
-                        <div className="flex items-center gap-2 flex-wrap">
-                            {/* 1. Classificações / Resultados da Prova (Destaque quando existem) */}
-                            {parsedLinks.primaryResults && (
-                                <a 
-                                    href={parsedLinks.primaryResults.link} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer" 
-                                    className="px-3.5 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30 rounded-xl text-xs sm:text-sm font-semibold transition-colors flex items-center gap-1.5 shadow-sm"
-                                >
-                                    <Trophy size={14} className="text-amber-500 shrink-0" />
-                                    <span>{t('action_results')}</span>
-                                </a>
-                            )}
-
-                            {/* 2. Regulamento Oficial Único */}
-                            {parsedLinks.primaryRules && (
-                                <a 
-                                    href={parsedLinks.primaryRules.link} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer" 
-                                    className="px-3.5 py-2 bg-soft hover:bg-slate-200 dark:hover:bg-[#4a433b] text-ink rounded-xl text-xs sm:text-sm font-semibold transition-colors border border-line flex items-center gap-1.5"
-                                >
-                                    <FileText size={14} className="text-muted shrink-0" />
-                                    <span>{t('action_rules')}</span>
-                                </a>
-                            )}
-
-                            {/* 3. Site Oficial / Organização */}
-                            {parsedLinks.officialSite && (
-                                <a 
-                                    href={parsedLinks.officialSite.link} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer" 
-                                    className="px-3.5 py-2 bg-soft hover:bg-slate-200 dark:hover:bg-[#4a433b] text-ink rounded-xl text-xs sm:text-sm font-semibold transition-colors border border-line flex items-center gap-1.5"
-                                >
-                                    <Globe size={14} className="text-muted shrink-0" />
-                                    <span>{parsedLinks.officialSite.label}</span>
-                                </a>
-                            )}
-
-                            {/* 4. Botão Principal de Inscrição */}
-                            {parsedLinks.registrationList.length === 1 && (
-                                <a 
-                                    href={parsedLinks.registrationList[0].link} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer" 
-                                    className="px-4 py-2 bg-brand hover:brightness-110 text-surface rounded-xl text-xs sm:text-sm font-semibold transition-colors shadow-sm flex items-center justify-center"
-                                >
-                                    {t(activeEvent.registrationClosesAt && registrationDaysUntil(activeEvent.registrationClosesAt) < 0 ? 'planning_registration_page' : 'action_register')}
-                                </a>
-                            )}
-                            
-                            {parsedLinks.registrationList.length > 1 && (
-                                <div className="relative group">
-                                    <button className="px-4 py-2 bg-brand hover:brightness-110 text-surface rounded-xl text-xs sm:text-sm font-semibold transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer">
-                                        <span>{t(activeEvent.registrationClosesAt && registrationDaysUntil(activeEvent.registrationClosesAt) < 0 ? 'planning_registration_page' : 'action_register')}</span>
-                                        <ChevronDown size={13} className="shrink-0" />
-                                    </button>
-                                    <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block w-48 bg-surface border border-line rounded-xl shadow-2xl overflow-hidden z-50 animate-fade-in">
-                                        <div className="flex flex-col">
-                                            {parsedLinks.registrationList.map((src, idx) => (
-                                                <a 
-                                                    key={`inscr-${idx}`} 
-                                                    href={src.link} 
-                                                    target="_blank" 
-                                                    rel="noopener noreferrer" 
-                                                    className="px-3.5 py-2.5 hover:bg-slate-100 dark:hover:bg-soft text-ink text-xs transition-colors border-b border-slate-100 dark:border-line last:border-0 font-medium flex items-center justify-between"
-                                                >
-                                                    <span>{t(activeEvent.registrationClosesAt && registrationDaysUntil(activeEvent.registrationClosesAt) < 0 ? 'planning_registration_page' : 'action_register')}</span>
-                                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand-soft text-brand font-semibold">{src._plat}</span>
-                                                </a>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
+                <EventDetailBody event={activeEvent} t={t} language={language} standalone={standalone}
+                    closeModal={closeModal} favorite={favorites.includes(activeEvent.id) || activeEvent._allIds?.some(id => favorites.includes(id))}
+                    toggleFavorite={toggleFavorite} handleShare={handleShare} shareCopied={shareCopied}
+                    routes={percursosSummary} documents={documents} links={parsedLinks} schedule={parsedSchedule}
+                    programHtml={programaCleanHtml} descriptionHtml={cleanDescriptionHtml} bannerHtml={fpcBannerHtml}
+                    handleHtmlClick={handleHtmlClick} loading={isLoadingFullEvent} formatRegDate={formatRegDate} isSignedIn={isSignedIn}
+                    reminders={{ open: { status: regOpenCalStatus, message: regOpenCalMsg }, close: { status: regCloseCalStatus, message: regCloseCalMsg } }}
+                    onReminder={(kind, marked) => {
+                        const target = kind === 'open' ? 'registration_open' : 'registration_close';
+                        if (marked) setDeleteConfirmation({ target, label: t(kind === 'open' ? 'cal_menu_mark_reg_open' : 'cal_menu_mark_reg_close') });
+                        else handleAddToCalendar(target);
+                    }}>
                     <div className="w-full">
                         <button type="button" onClick={() => setShowCalendarOptions(value => !value)} disabled={!googleCalendarUrl && !activeEvent.registrationOpensAt && !activeEvent.registrationClosesAt} aria-expanded={showCalendarOptions} className="px-4 py-2 rounded border border-brand text-brand font-semibold text-sm flex items-center gap-2">
                             <CalendarPlus size={16} />{t('action_add_calendar')}<ChevronDown size={14} />
@@ -1712,7 +795,7 @@ function EventModalContent({ selectedEvent, setSelectedEvent, favorites, toggleF
                     })()}
                         </div>}
                     </div>
-                </div>
+                </EventDetailBody>
             </div>
 
             {/* Modal de Confirmação de Remoção do Google Calendar */}
@@ -1757,7 +840,7 @@ function EventModalContent({ selectedEvent, setSelectedEvent, favorites, toggleF
                             <button
                                 disabled={isDeletingFromCalendar}
                                 onClick={() => handleRemoveFromCalendar(deleteConfirmation.target)}
-                                className="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-rose-600 hover:bg-rose-700 text-slate-900 dark:text-white transition-colors flex items-center gap-2 cursor-pointer shadow-sm shadow-rose-600/30"
+                                className="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-rose-600 hover:bg-rose-700 text-white transition-colors flex items-center gap-2 cursor-pointer shadow-sm shadow-rose-600/30"
                             >
                                 {isDeletingFromCalendar ? (
                                     <>
@@ -1792,7 +875,7 @@ function EventModalContent({ selectedEvent, setSelectedEvent, favorites, toggleF
                             setFullscreenImage(null);
                             setIsImageZoomed(false);
                         }}
-                        title={t('action_close')} style={{ display: standalone ? 'none' : undefined }}
+                        title={t('action_close')}
                     >
                         <X size={20} />
                     </button>

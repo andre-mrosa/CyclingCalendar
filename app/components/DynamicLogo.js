@@ -1,4 +1,5 @@
-import Image from 'next/image';
+import { Bike } from 'lucide-react';
+
 export default function DynamicLogo({ className = 'w-8 h-8' }) {
-    return <Image src="/brand-final.png" width={64} height={64} className={`shrink-0 ${className}`} alt="" aria-hidden="true" />;
+    return <Bike className={`shrink-0 text-brand ${className}`} strokeWidth={1.5} aria-hidden="true" />;
 }

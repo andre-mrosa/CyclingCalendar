@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect, useCallback } from 'react';
 import { useTheme } from 'next-themes';
 import { SignInButton, Show, UserButton, useUser, useAuth } from '@clerk/nextjs';
-import { Home, Trophy, MapPin, Bike, HelpCircle, Settings, Menu, X, Moon, Sun, Flag, Star, Globe, LogIn, CalendarCheck, Shield, Trash2, RotateCcw, ChevronDown, Award, Check } from 'lucide-react';
+import { Home, Trophy, MapPin, Bike, HelpCircle, Settings, Menu, X, Moon, Sun, Flag, Star, Globe, LogIn, CalendarCheck, Shield, Trash2, RotateCcw, ChevronDown, Award, Check, UserRound, Search } from 'lucide-react';
 import SettingsPage from '../definicoes/page';
 import HelpPage from '../ajuda/page';
 import { useSettingsStore } from '../store/useSettingsStore';
@@ -129,12 +129,12 @@ export default function Navigation() {
             <Link prefetch={false}
                 key={link.href}
                 href={link.href} 
-                onClick={() => setIsMobileMenuOpen(false)}
+                onClick={event => { setIsMobileMenuOpen(false); event.currentTarget.closest('details')?.removeAttribute('open'); }}
                 className={`${styles.navLink} ${isActive ? styles.activeLink : ''}`}
                 aria-current={isActive ? 'page' : undefined}
             >
                 {link.icon}
-                {link.label}
+                {link.href === '/' ? t('ui_explore') : link.label}
             </Link>
         );
     };
@@ -163,7 +163,7 @@ export default function Navigation() {
             <button 
                 type="button"
                 onClick={() => setIsLangDropdownOpen(!isLangDropdownOpen)}
-                className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-100/90 hover:bg-slate-200/90 dark:bg-soft dark:hover:bg-[#4a433b] border border-line text-xs font-semibold text-slate-700 dark:text-slate-200 transition-all cursor-pointer shadow-xs"
+                className={styles.languageButton}
                 title="Escolher Idioma / Choose Language"
             >
                 <FlagIcon code={currentLangObj.code} />
@@ -272,17 +272,21 @@ export default function Navigation() {
                         <Menu size={24} />
                     </button>
 
-                    <Link prefetch={false} href="/" className={styles.brand}><DynamicLogo className="w-8 h-8" /><span><strong>Cycling Calendar.</strong><small>{currentPage.label}</small></span></Link>
+                    <Link prefetch={false} href="/" className={styles.brand}><DynamicLogo className="w-8 h-8" /><span><strong>Cycling Calendar</strong><small>{currentPage.label}</small></span></Link>
                 </div>
 
                 <Link prefetch={false} href="/" className={styles.brand} title="Cycling Calendar">
                     <DynamicLogo className="w-9 h-9 rounded-xl" />
-                    <span><strong>Cycling Calendar.</strong><small>Portugal · Ride your season</small></span>
+                    <span><strong>Cycling Calendar</strong></span>
                 </Link>
 
                 <div className={styles.desktopNav}>
                     <div className={styles.navLinks}>
-                        {links.map(renderLink)}
+                        {links.filter(link => ['/', '/agenda', '/favoritos'].includes(link.href)).map(renderLink)}
+                        <details className={styles.moreNav} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) event.currentTarget.removeAttribute('open'); }} onKeyDown={event => { if (event.key === 'Escape') { event.currentTarget.removeAttribute('open'); event.currentTarget.querySelector('summary')?.focus(); } }}>
+                            <summary>{t('ui_more_races')}<ChevronDown size={14} /></summary>
+                            <div>{links.filter(link => !['/', '/agenda', '/favoritos'].includes(link.href)).map(renderLink)}</div>
+                        </details>
                     </div>
                     
                     <div className={styles.navActions}>
@@ -379,6 +383,12 @@ export default function Navigation() {
                 </div>
               </div>
             </nav>
+            <nav className={styles.bottomNav} aria-label={t('ui_mobile_navigation')}>
+                {links.filter(link => ['/', '/agenda', '/favoritos'].includes(link.href)).map(link => <Link key={link.href} prefetch={false} href={link.href} aria-current={pathname === link.href ? 'page' : undefined}>
+                    {link.href === '/' ? <Search size={21} /> : link.icon}<span>{link.href === '/' ? t('ui_explore') : link.href === '/agenda' ? t('ui_agenda') : link.label}</span>
+                </Link>)}
+                <button type="button" onClick={() => setIsMobileMenuOpen(true)} aria-expanded={isMobileMenuOpen} aria-controls="site-mobile-menu"><UserRound size={21} /><span>{t('ui_account')}</span></button>
+            </nav>
 
             {/* Mobile Navigation Drawer */}
             <div 
@@ -401,9 +411,9 @@ export default function Navigation() {
                     </button>
                 </div>
                 
-                <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-4 flex flex-col gap-3.5 pb-10 scrollbar-thin">
+                <div className={styles.drawerLinks}>
                     {links.map(renderLink)}
-                    <div className="mt-3 pt-3 border-t border-line flex flex-col gap-3.5">
+                    <div className={styles.drawerUtilities}>
                         <Show when="signed-out">
                             {rightLinks.map(renderLink)}
                             <div className="mt-2">

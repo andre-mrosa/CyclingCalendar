@@ -16,6 +16,7 @@ module.exports = {
         ink: 'var(--foreground)',
         muted: 'var(--site-muted)',
         brand: 'var(--site-accent)',
+        'brand-strong': 'var(--site-accent-strong)',
         'brand-soft': 'var(--site-accent-soft)',
       },
     },

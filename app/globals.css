@@ -4,20 +4,20 @@
 
 @layer base {
   :root {
-    --background: #f5f2eb;
-    --foreground: #292621;
-    --site-surface: #fffdf8;
-    --site-soft: #ece7dc;
-    --site-line: #d7cfc1;
-    --site-line-strong: #a99f90;
-    --site-muted: #6b655c;
-    --site-accent: #b33f20;
-    --site-accent-strong: #8e2f18;
-    --site-accent-soft: #f6dfd5;
-    --site-mark: #ef7650;
-    --site-logo-bg: #3a312b;
-    --site-nav: #faf7f0;
-    --site-agenda: #765985;
+    --background: #fafaf8;
+    --foreground: #232a27;
+    --site-surface: #ffffff;
+    --site-soft: #f0f2ee;
+    --site-line: #e3e7e2;
+    --site-line-strong: #a8b1aa;
+    --site-muted: #626b65;
+    --site-accent: #35634e;
+    --site-accent-strong: #2d5543;
+    --site-accent-soft: #edf3ee;
+    --site-mark: #a8ceb8;
+    --site-logo-bg: #194d3b;
+    --site-nav: #ffffff;
+    --site-agenda: #35634e;
     --site-shadow-xs: 0 1px 0 #30282010;
     --site-shadow-sm: 0 8px 22px #3028200d;
     --site-shadow-md: 0 14px 32px #30282018;
@@ -25,19 +25,19 @@
   }
 
   .dark {
-    --background: #151513;
-    --site-nav: #1b1a17;
-    --foreground: #fffaf0;
-    --site-surface: #22201c;
-    --site-soft: #302c26;
-    --site-line: #474139;
-    --site-line-strong: #756b5e;
-    --site-muted: #c8beb0;
-    --site-accent: #ff7448;
-    --site-accent-strong: #db4d27;
-    --site-accent-soft: #4a291f;
-    --site-logo-bg: #0e0e0d;
-    --site-agenda: #c7a2d5;
+    --background: #191b1a;
+    --site-nav: #202321;
+    --foreground: #edf0ed;
+    --site-surface: #202321;
+    --site-soft: #292f2b;
+    --site-line: #383f39;
+    --site-line-strong: #78867c;
+    --site-muted: #a7b1aa;
+    --site-accent: #a8ceb8;
+    --site-accent-strong: #35634e;
+    --site-accent-soft: #293b30;
+    --site-logo-bg: #11151c;
+    --site-agenda: #a8ceb8;
     --site-shadow-xs: 0 1px 2px #0008;
     --site-shadow-sm: 0 10px 28px #0007;
     --site-shadow-md: 0 16px 38px #0009;
@@ -55,12 +55,14 @@
 
   :focus-visible { outline: 2px solid var(--site-accent); outline-offset: 4px; }
   ::selection { background: var(--site-mark); color: var(--site-logo-bg); }
-  html { scroll-padding-top: 96px; }
+  html { scroll-padding-top: 90px; }
   button, input, select, textarea { font: inherit; }
 }
 
 @layer utilities {
-  .rounded-xl, .rounded-2xl, .rounded-3xl { border-radius: 0.375rem; }
+  .rounded-xl { border-radius: .75rem; }
+  .rounded-2xl { border-radius: 1rem; }
+  .rounded-3xl { border-radius: 1.25rem; }
   .custom-scrollbar::-webkit-scrollbar { width: 6px; }
   .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 4px; }
   .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
