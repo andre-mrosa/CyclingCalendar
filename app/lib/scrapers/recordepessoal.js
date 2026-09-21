@@ -13,29 +13,36 @@ export async function scrapeRecordePessoal(options = {}) {
     logInfo('SCRAPER', 'Início da sincronização Recorde Pessoal');
     
     try {
-        const res = await fetch(`${BASE_URL}/eventos`, {
-            headers: { 'User-Agent': 'Mozilla/5.0' }
-        });
+        const categories = ['btt', 'ciclismo-de-estrada'];
+        const eventLinks = new Set();
         
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        
-        const html = await res.text();
-        const $ = cheerio.load(html);
-        
-        const eventLinks = [];
-        $('.evento').each((i, el) => {
-            const title = $(el).find('.titulo').first().text().trim();
-            const rawLink = $(el).attr('data-evento');
-            if (rawLink && isCyclingEvent(title)) {
-                // Notice that rawLink has a trailing double quote due to bad HTML: "/evento/4passeiobttbidopedestres""
-                const cleanLink = rawLink.replace(/"/g, '');
-                eventLinks.push(BASE_URL + cleanLink);
+        for (const cat of categories) {
+            const res = await fetch(`${BASE_URL}/eventos?cat=${cat}&pagina=-1`, {
+                headers: { 'User-Agent': 'Mozilla/5.0' }
+            });
+            
+            if (!res.ok) {
+                logError('SCRAPER', `Falha ao aceder à categoria ${cat} (HTTP ${res.status})`);
+                continue;
             }
-        });
+            
+            const html = await res.text();
+            const $ = cheerio.load(html);
+            
+            $('.evento').each((i, el) => {
+                const title = $(el).find('.titulo').first().text().trim();
+                const rawLink = $(el).attr('data-evento');
+                if (rawLink && isCyclingEvent(title, cat)) {
+                    const cleanLink = rawLink.replace(/"/g, '');
+                    eventLinks.add(BASE_URL + cleanLink);
+                }
+            });
+        }
         
-        logInfo('SCRAPER', `Encontrados ${eventLinks.length} eventos de Ciclismo na página principal da Recorde Pessoal`);
+        const eventLinksArray = Array.from(eventLinks);
+        logInfo('SCRAPER', `Encontrados ${eventLinksArray.length} eventos de Ciclismo na Recorde Pessoal`);
         
-        for (const link of eventLinks) {
+        for (const link of eventLinksArray) {
             try {
                 // Throttle
                 await new Promise(r => setTimeout(r, 1000));
@@ -103,8 +110,14 @@ export async function scrapeRecordePessoal(options = {}) {
     }
 }
 
-function isCyclingEvent(title) {
+function isCyclingEvent(title, cat) {
     const t = title.toLowerCase();
+    
+    // Se o site diz que é ciclismo de estrada, e não diz explicitamente trail/corrida no titulo, aceitamos
+    if (cat === 'ciclismo-de-estrada' && !t.includes('trail') && !t.includes('corrida')) {
+        return true;
+    }
+
     if (t.includes('trail') || t.includes('maratona') || t.includes('silvestre') || t.includes('caminhada') || t.includes('corrida') || t.includes('run')) {
         if (!t.includes('btt') && !t.includes('ciclismo')) {
             return false;
