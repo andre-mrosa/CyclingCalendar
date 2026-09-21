@@ -90,7 +90,6 @@ export default function CalendarView({
     const [viewMode, setViewMode] = useState('list');
     const [selectedMonth, setSelectedMonth] = useState(null); // formato 'YYYY-MM'
     const [selectedDay, setSelectedDay] = useState(null); // formato 'YYYY-MM-DD'
-    const [quickPeriod, setQuickPeriod] = useState(''); // 'hoje', 'amanha', 'fimdesemana', 'proximaSemana'
     const [showCustomDistance, setShowCustomDistance] = useState(false);
     const [showEscalaoHelp, setShowEscalaoHelp] = useState(false);
     const [selectedEscaloes, setSelectedEscaloes] = useState(forceEscalao ? [forceEscalao] : []);
