@@ -1,5 +1,6 @@
 "use client";
 import { useClientReady, useOnline, useStoredString, writeStored } from '../hooks/useBrowserState';
+import { useToday } from '../hooks/useToday';
 import { FavoriteChanges, FavoriteSubscription } from './FavoritePlanning';
 import { eventDateDisplay } from "../utils/eventDateDisplay";
 import { useState, useEffect, useRef, useMemo, Fragment } from 'react';
@@ -11,7 +12,7 @@ import { useFavorites } from '../hooks/useFavorites';
 import { useCalendarEvents } from '../hooks/useCalendarEvents';
 import { filterEvents } from '../utils/filterEvents';
 import { mergeEvents } from '../utils/mergeEvents';
-import { chooseCalendarEvents, toCalendarListEvent, sortCalendarEvents } from '../utils/calendarList';
+import { chooseCalendarEvents, toCalendarListEvent, sortCalendarEvents, filterCalendarByDate } from '../utils/calendarList';
 import { exportEventsToICS } from '../utils/exportCalendar';
 import EventModal from './EventModal';
 import EscalaoAssistant from './EscalaoAssistant';
@@ -87,7 +88,8 @@ export default function CalendarView({
     const [selectedLicenca, setSelectedLicenca] = useState(forceLicenca || 'Todas');
     const [selectedRegiao, setSelectedRegiao] = useState('Todas');
     const [selectedDistrito, setSelectedDistrito] = useState('Todos');
-    const currentYear = new Date().getFullYear();
+    const today = useToday();
+    const currentYear = Number(today.slice(0, 4)) || new Date().getFullYear();
     const [explicitYears, setSelectedYears] = useState(null);
     const [monthFrom, setMonthFrom] = useState(1);
     const [monthTo, setMonthTo] = useState(12);
@@ -95,7 +97,7 @@ export default function CalendarView({
     const [showFilters, setShowFilters] = useState(false);
     const [quickPeriod, setQuickPeriod] = useState('');
     const [selectedType, setSelectedType] = useState('Todos');
-    const defaultPastEventsFilter = forceAmbito === 'Campeonato Nacional' ? 'todos' : 'futuros';
+    const defaultPastEventsFilter = 'futuros';
     const [pastEventsFilter, setPastEventsFilter] = useState(defaultPastEventsFilter);
     const [pagination, setPagination] = useState({ list: null, count: 100 });
     const [eventSelection, setSelectedEvent] = useState(undefined);
@@ -181,35 +183,11 @@ export default function CalendarView({
             selectedType
         });
 
-        if (pastEventsFilter === 'futuros') {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            filtered = filtered.filter(e => {
-                const evYear = e.sortDate ? new Date(e.sortDate).getFullYear().toString() : null;
-                // Se o utilizador selecionou explicitamente um ano anterior ao ano corrente (ex: 2024, 2025),
-                // não devemos apagar os eventos desse ano só porque a data já passou!
-                if (evYear && selectedYears.includes(evYear) && parseInt(evYear) < today.getFullYear()) {
-                    return true;
-                }
-                let end = eventDateDisplay(e).end;
-                if (!end && e.sortDate) {
-                    end = String(e.sortDate).slice(0, 10);
-                }
-                return !end || new Date(end + 'T23:59:59Z') >= today;
-            });
-        } else if (pastEventsFilter === 'passados') {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            filtered = filtered.filter(e => { 
-                let end = eventDateDisplay(e).end; 
-                if (!end && e.sortDate) end = String(e.sortDate).slice(0, 10);
-                return end && new Date(end + 'T23:59:59Z') < today; 
-            });
-        }
+        filtered = filterCalendarByDate(filtered, pastEventsFilter, today, selectedYears);
 
         filtered = filtered.filter(event => matchesPeriod(event, quickPeriod));
         return sortCalendarEvents(filtered, favorites);
-    }, [events, searchTerm, selectedYears, selectedEscaloes, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, filterByFavorites, filterByAgenda, markedSet, favorites, forceEscalao, forceAmbito, forceLicenca, quickPeriod]);
+    }, [events, searchTerm, selectedYears, selectedEscaloes, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, filterByFavorites, filterByAgenda, markedSet, favorites, forceEscalao, forceAmbito, forceLicenca, quickPeriod, today]);
 
     const filteredEvents = useMemo(() => eventsInPeriod(matchingEvents, selectedMonth, selectedDay), [matchingEvents, selectedMonth, selectedDay]);
     const calendarMonth = selectedMonth || matchingEvents.map(event => eventDateDisplay(event).start).find(Boolean)?.slice(0, 7) || new Date().toISOString().slice(0, 7);
