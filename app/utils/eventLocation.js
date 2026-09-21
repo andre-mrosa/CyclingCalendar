@@ -1,5 +1,3 @@
-import geoCoordinates from './geoCoordinates.json';
-
 export const normalizeLocation = value => String(value || '').normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 
@@ -48,28 +46,6 @@ export function resolveEventLocation(event = {}, schedule = null) {
 
 export const getEventLocation = event => event?.locationInfo || resolveEventLocation(event || {});
 export const extractEventTown = event => getEventLocation(event).locality || '';
-
-export function getEventCoordinates(event) {
-    const { locality, district } = getEventLocation(event);
-    const coordsDict = geoCoordinates || {};
-
-    const normLoc = normalizeLocation(locality || '');
-    const normDist = normalizeLocation(district || '');
-    
-    // Check if any part of locality matches a municipality
-    if (normLoc) {
-        const parts = normLoc.split(' ');
-        for (let i = 0; i < parts.length; i++) {
-            for (let j = i + 1; j <= parts.length; j++) {
-                const subLoc = parts.slice(i, j).join(' ');
-                if (coordsDict[subLoc]) return coordsDict[subLoc];
-            }
-        }
-    }
-    
-    if (normDist && coordsDict[normDist]) return coordsDict[normDist];
-    return null;
-}
 
 export function formatEventLocation(event) {
     const { label, locality, district } = getEventLocation(event);

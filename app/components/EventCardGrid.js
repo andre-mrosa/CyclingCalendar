@@ -4,7 +4,7 @@ import { Star, MapPin, Bike, Calendar, Check, AlertTriangle, Clock, ChevronRight
 import { useTranslation } from '../i18n/useTranslation';
 import { formatMonthAbbr, translateEscalao, translateTag, translateAmbito } from '../i18n/formatters';
 import { isStageRace, getEventDiscipline } from '../utils/eventClassifier';
-import { formatEventLocation, getEventCoordinates } from '../utils/eventLocation';
+import { formatEventLocation } from '../utils/eventLocation';
 import { calculateDistance } from '../utils/distance';
 import { useSettingsStore } from '../store/useSettingsStore';
 import FlagIcon from './FlagIcon';
@@ -62,12 +62,9 @@ export default function EventCardGrid({
 
                 let distanceText = null;
                 let distanceValue = null;
-                if (homeLocation && homeLocation.lat && homeLocation.lng) {
-                    const coords = getEventCoordinates(event);
-                    if (coords) {
-                        distanceValue = calculateDistance(homeLocation.lat, homeLocation.lng, coords.lat, coords.lng);
-                        if (distanceValue !== null) distanceText = `${distanceValue} km`;
-                    }
+                if (homeLocation && homeLocation.lat && homeLocation.lng && event.lat && event.lng) {
+                    distanceValue = calculateDistance(homeLocation.lat, homeLocation.lng, event.lat, event.lng);
+                    if (distanceValue !== null) distanceText = `${distanceValue} km`;
                 }
 
                 return (

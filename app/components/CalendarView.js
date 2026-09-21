@@ -1,5 +1,5 @@
 "use client";
-import { formatEventLocation, getEventCoordinates } from '../utils/eventLocation';
+import { formatEventLocation } from '../utils/eventLocation';
 import { calculateDistance } from '../utils/distance';
 import { useClientReady, useOnline, useStoredString, writeStored } from '../hooks/useBrowserState';
 import { useToday } from '../hooks/useToday';
@@ -194,9 +194,8 @@ export default function CalendarView({
 
         if (homeLocation && homeLocation.lat && homeLocation.lng && maxDistanceFilter) {
             filtered = filtered.filter(event => {
-                const coords = getEventCoordinates(event);
-                if (!coords) return true; // Se não sabemos onde é, mantemos para não esconder provas validas
-                const dist = calculateDistance(homeLocation.lat, homeLocation.lng, coords.lat, coords.lng);
+                if (!event.lat || !event.lng) return true; // Se não sabemos onde é, mantemos
+                const dist = calculateDistance(homeLocation.lat, homeLocation.lng, event.lat, event.lng);
                 if (dist === null) return true;
                 return dist <= maxDistanceFilter;
             });
@@ -733,12 +732,9 @@ export default function CalendarView({
                                 const location = formatEventLocation(event) || t('summary_location_tbd');
 
                                 let distanceText = null;
-                                if (homeLocation && homeLocation.lat && homeLocation.lng) {
-                                    const coords = getEventCoordinates(event);
-                                    if (coords) {
-                                        const distanceValue = calculateDistance(homeLocation.lat, homeLocation.lng, coords.lat, coords.lng);
-                                        if (distanceValue !== null) distanceText = `${distanceValue} km`;
-                                    }
+                                if (homeLocation && homeLocation.lat && homeLocation.lng && event.lat && event.lng) {
+                                    const distanceValue = calculateDistance(homeLocation.lat, homeLocation.lng, event.lat, event.lng);
+                                    if (distanceValue !== null) distanceText = `${distanceValue} km`;
                                 }
 
                                                 return (

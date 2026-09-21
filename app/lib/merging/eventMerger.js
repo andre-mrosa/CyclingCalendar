@@ -232,8 +232,71 @@ export function mergeEventRecords(existing, incoming) {
 /**
  * Salva um novo evento ou faz merge inteligente se a prova já existir na base de dados
  */
+let municipalitiesCache = null;
+
+export const normalizeLocation = value => String(value || '').normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+
+async function assignEventCoordinates(prisma, event) {
+    if (!municipalitiesCache) {
+        const rows = await prisma.municipality.findMany();
+        municipalitiesCache = {};
+        for (const row of rows) {
+            municipalitiesCache[row.name] = { lat: row.lat, lng: row.lng };
+        }
+    }
+
+    let loc = event.regiao || '';
+    if (!loc && event.details) {
+        const lines = event.details.split('\n');
+        for (const line of lines) {
+            if (line.toLowerCase().includes('local:')) {
+                loc = line.replace(/.*local:/i, '').trim();
+            }
+        }
+    }
+    const normLoc = normalizeLocation(loc || '');
+    const title = normalizeLocation(event?.title || '');
+    const details = normalizeLocation(event?.details || '');
+
+    // Check if any part of locality matches a municipality
+    if (normLoc) {
+        const parts = normLoc.split(' ');
+        for (let i = 0; i < parts.length; i++) {
+            for (let j = i + 1; j <= parts.length; j++) {
+                const subLoc = parts.slice(i, j).join(' ');
+                if (municipalitiesCache[subLoc]) {
+                    event.lat = municipalitiesCache[subLoc].lat;
+                    event.lng = municipalitiesCache[subLoc].lng;
+                    return;
+                }
+            }
+        }
+    }
+    
+    const scope = normalizeLocation(event?.ambito || '');
+    for (const key of Object.keys(municipalitiesCache)) {
+        if (scope.includes(key) || title.includes(key)) {
+            event.lat = municipalitiesCache[key].lat;
+            event.lng = municipalitiesCache[key].lng;
+            return;
+        }
+    }
+
+    if (details) {
+        for (const key of Object.keys(municipalitiesCache)) {
+            if (details.includes(key)) {
+                event.lat = municipalitiesCache[key].lat;
+                event.lng = municipalitiesCache[key].lng;
+                return;
+            }
+        }
+    }
+}
+
 export async function saveOrMergeEvent(prisma, eventData, options = {}) {
     if (!eventData || !eventData.id) return null;
+    await assignEventCoordinates(prisma, eventData);
     // Report only settled database outcomes; telemetry must never turn a saved
     // event into a failed save or trigger a retry of that write.
     const report = async (result) => {
