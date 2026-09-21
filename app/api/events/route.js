@@ -69,6 +69,8 @@ export async function GET(request) {
                 registrationClosesAt: true,
                 prices: true,
                 programa: true,
+                lat: true,
+                lng: true,
                 translations: {
                     select: {
                         language: true,
