@@ -88,8 +88,10 @@ export default function CalendarView({
     
     const [searchTerm, setSearchTerm] = useState('');
     const [viewMode, setViewMode] = useState('list');
-    const [selectedMonth, setSelectedMonth] = useState(null);
-    const [selectedDay, setSelectedDay] = useState(null);
+    const [selectedMonth, setSelectedMonth] = useState(null); // formato 'YYYY-MM'
+    const [selectedDay, setSelectedDay] = useState(null); // formato 'YYYY-MM-DD'
+    const [quickPeriod, setQuickPeriod] = useState(''); // 'hoje', 'amanha', 'fimdesemana', 'proximaSemana'
+    const [showCustomDistance, setShowCustomDistance] = useState(false);
     const [showEscalaoHelp, setShowEscalaoHelp] = useState(false);
     const [selectedEscaloes, setSelectedEscaloes] = useState(forceEscalao ? [forceEscalao] : []);
     const [selectedAmbito, setSelectedAmbito] = useState(forceAmbito || 'Todos');
@@ -598,17 +600,44 @@ export default function CalendarView({
                                 </label>
                                 {homeLocation ? (
                                     <div className="flex items-center gap-2">
-                                        <select 
-                                            className="w-full h-9 px-3 text-sm rounded-lg border border-line bg-soft text-ink outline-none focus:border-brand transition-colors"
-                                            value={maxDistanceFilter || ''} 
-                                            onChange={(e) => setMaxDistanceFilter(e.target.value ? Number(e.target.value) : null)} 
-                                        >
-                                            <option value="">Todas as Distâncias</option>
-                                            <option value="50">Até 50 km</option>
-                                            <option value="100">Até 100 km</option>
-                                            <option value="150">Até 150 km</option>
-                                            <option value="200">Até 200 km</option>
-                                        </select>
+                                        {showCustomDistance ? (
+                                            <div className="flex items-center gap-1 w-full">
+                                                <input 
+                                                    type="number" 
+                                                    className="w-full h-9 px-3 text-sm rounded-lg border border-line bg-soft text-ink outline-none focus:border-brand transition-colors"
+                                                    placeholder="Km"
+                                                    value={maxDistanceFilter || ''}
+                                                    onChange={(e) => setMaxDistanceFilter(e.target.value ? Number(e.target.value) : null)}
+                                                    autoFocus
+                                                />
+                                                <button onClick={() => setShowCustomDistance(false)} className="h-9 px-2 text-muted hover:text-ink">
+                                                    <X size={16} />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <select 
+                                                className="w-full h-9 px-3 text-sm rounded-lg border border-line bg-soft text-ink outline-none focus:border-brand transition-colors"
+                                                value={[50, 100, 150, 200, 250, null, ''].includes(maxDistanceFilter) ? (maxDistanceFilter || '') : 'custom'} 
+                                                onChange={(e) => {
+                                                    if (e.target.value === 'custom') {
+                                                        setShowCustomDistance(true);
+                                                    } else {
+                                                        setMaxDistanceFilter(e.target.value ? Number(e.target.value) : null);
+                                                    }
+                                                }} 
+                                            >
+                                                <option value="">Todas as Distâncias</option>
+                                                <option value="50">Até 50 km</option>
+                                                <option value="100">Até 100 km</option>
+                                                <option value="150">Até 150 km</option>
+                                                <option value="200">Até 200 km</option>
+                                                <option value="250">Até 250 km</option>
+                                                {!['', 50, 100, 150, 200, 250].includes(maxDistanceFilter) && maxDistanceFilter && (
+                                                    <option value={maxDistanceFilter}>Até {maxDistanceFilter} km</option>
+                                                )}
+                                                <option value="custom">Outro...</option>
+                                            </select>
+                                        )}
                                     </div>
                                 ) : (
                                     <button 
