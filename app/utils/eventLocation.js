@@ -26,6 +26,16 @@ export function resolveEventLocation(event = {}, schedule = null) {
     if (unique.length === 1) {
         return { ...unique[0], locality, district, precision: 'start', source: 'programme' };
     }
+    
+    if (event.programa) {
+        const text = String(event.programa).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+        const locMatch = text.match(/(?:Partida|Concentração|Local da partida|Local de partida)(?:[^.:]*?)?\b(?:na|em|no)\s+([^.,;!?]+(?:\s*,\s*[^.,;!?]+)*)/i);
+        if (locMatch && locMatch[1].trim().length > 3 && locMatch[1].trim().length < 60) {
+            const label = cleanLocation(locMatch[1]);
+            return { label, mapUrl: null, locality, district, precision: 'start', source: 'programme' };
+        }
+    }
+
     return {
         label: locality || district, locality, district,
         precision: locality ? 'locality' : district ? 'district' : 'unknown',

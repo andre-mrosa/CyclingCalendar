@@ -5,6 +5,23 @@ import { extractGeoAndDevice } from '@/app/lib/analytics';
 
 export const dynamic = 'force-dynamic';
 
+// Rate Limiter Básico em Memória (protege isolates individuais)
+const rateLimit = globalThis._analyticsRateLimit || new Map();
+globalThis._analyticsRateLimit = rateLimit;
+
+function isRateLimited(ip) {
+    if (!ip) return false;
+    const now = Date.now();
+    const entry = rateLimit.get(ip);
+    if (!entry || now - entry.timestamp > 60000) {
+        rateLimit.set(ip, { count: 1, timestamp: now });
+        return false;
+    }
+    if (entry.count > 30) return true; // Máx 30 requests por minuto por IP por isolate
+    entry.count++;
+    return false;
+}
+
 export async function POST(request) {
     try {
         let body = {};
@@ -32,6 +49,13 @@ export async function POST(request) {
         }
 
         const reqHeaders = await headers();
+        
+        // Proteção Rate Limiting
+        const ip = reqHeaders.get('x-forwarded-for') || reqHeaders.get('x-real-ip') || 'unknown';
+        if (isRateLimited(ip)) {
+            return Response.json({ success: false, error: 'Too many requests' }, { status: 429 });
+        }
+
         const cookieHeader = reqHeaders.get('cookie') || '';
         const geoAndDevice = extractGeoAndDevice(reqHeaders);
 

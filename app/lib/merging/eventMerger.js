@@ -152,7 +152,16 @@ export function mergeEventRecords(existing, incoming) {
     if (incoming.source === 'FPC' || (incoming.source === 'Stop and Go' && existing.source === 'Stop and Go')) {
         date = incoming.date;
         sortDate = incoming.sortDate;
-        details = incoming.details || details;
+        
+        if (incoming.details && details && details.length > incoming.details.length) {
+            const normIncomingLoc = String(incoming.details).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().split('|')[0].trim();
+            const normExistingLoc = String(details).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().split('|')[0].trim();
+            if (!normExistingLoc.includes(normIncomingLoc)) {
+                details = incoming.details;
+            }
+        } else {
+            details = incoming.details || details;
+        }
     }
 
     // Programa e Documentos: se ambos tiverem conteúdo útil, combina sem perda

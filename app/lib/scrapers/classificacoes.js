@@ -244,12 +244,16 @@ export async function scrapeClassificacoes(options = {}) {
                     let existingExtraLinks = [];
                     try {
                         if (matchedEvent.extraLinks) existingExtraLinks = JSON.parse(matchedEvent.extraLinks);
-                    } catch (e) {}
+                    } catch (e) {
+                        logError('SCRAPER', `Falha ao fazer parse de extraLinks existentes do evento ${matchedEvent.id}: ${e.message}`);
+                    }
 
                     const newExtraLinks = [];
                     try {
                         if (item.extraLinks) newExtraLinks.push(...JSON.parse(item.extraLinks));
-                    } catch (e) {}
+                    } catch (e) {
+                        logError('SCRAPER', `Falha ao fazer parse de extraLinks novos de Classificacoes.net: ${e.message}`);
+                    }
 
                     let linksChanged = false;
                     for (const nl of newExtraLinks) {

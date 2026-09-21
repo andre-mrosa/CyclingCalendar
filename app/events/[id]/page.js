@@ -64,7 +64,17 @@ export default async function EventPage({ params }) {
         notFound();
     }
 
-    // Formatação de propriedades
+    // Formatação de propriedades com segurança contra JSON inválido
+    let parsedExtraLinks = [];
+    try {
+        parsedExtraLinks = event.extraLinks ? (typeof event.extraLinks === 'string' ? JSON.parse(event.extraLinks) : event.extraLinks) : [];
+    } catch { parsedExtraLinks = []; }
+
+    let parsedGpxData = null;
+    try {
+        parsedGpxData = event.gpxData ? (typeof event.gpxData === 'string' ? JSON.parse(event.gpxData) : event.gpxData) : null;
+    } catch { parsedGpxData = null; }
+
     const formattedEvent = {
         ...withEventLocation(event),
         sortDate: event.sortDate ? event.sortDate.toISOString() : null,
@@ -74,9 +84,9 @@ export default async function EventPage({ params }) {
         updatedAt: event.updatedAt ? event.updatedAt.toISOString() : null,
         tag: getEventDiscipline(event),
         escaloes: getEventCategories(event),
-        extraLinks: event.extraLinks ? (typeof event.extraLinks === 'string' ? JSON.parse(event.extraLinks) : event.extraLinks) : [],
+        extraLinks: parsedExtraLinks,
         parsedSchedule: parseScheduleServer(event.programa),
-        gpxData: event.gpxData ? (typeof event.gpxData === 'string' ? JSON.parse(event.gpxData) : event.gpxData) : null
+        gpxData: parsedGpxData
     };
 
     return <EventDetailClient event={formattedEvent} />;

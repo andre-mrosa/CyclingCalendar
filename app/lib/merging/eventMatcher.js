@@ -32,6 +32,8 @@ export function calculateTokenSimilarity(str1, str2) {
 
     const tokens1 = new Set(norm1.split(' ').filter(t => t.length > 2));
     const tokens2 = new Set(norm2.split(' ').filter(t => t.length > 2));
+    
+    const originalSize = tokens1.size + tokens2.size;
 
     if (tokens1.size === 0 || tokens2.size === 0) return 0;
 
@@ -39,19 +41,21 @@ export function calculateTokenSimilarity(str1, str2) {
     for (const t of tokens1) {
         if (tokens2.has(t)) {
             intersectionCount++;
+            tokens2.delete(t);
         } else {
             // Verificar sub-palavras ou radicais (ex: "geres" e "geres")
             for (const t2 of tokens2) {
                 if (t.includes(t2) || t2.includes(t)) {
                     intersectionCount += 0.8;
+                    tokens2.delete(t2);
                     break;
                 }
             }
         }
     }
 
-    const similarity = (2 * intersectionCount) / (tokens1.size + tokens2.size);
-    return Math.min(1, similarity);
+    const similarity = (2 * intersectionCount) / originalSize;
+    return Math.min(1, Math.max(0, similarity));
 }
 
 /**
@@ -133,8 +137,9 @@ export function isSameEvent(existingEvent, candidateEvent) {
         }
 
         // Verificação por Localidade + Similaridade Moderada (>= 0.45)
-        const loc1 = normalizeText(existingEvent.details || existingEvent.distrito || '');
-        const loc2 = normalizeText(candidateEvent.details || candidateEvent.distrito || '');
+        const stripDiscipline = loc => loc.replace(/\b(xco|xce|xcc|xcm|xcr|estrada|gravel|pista|btt|enduro|dh|downhill)\b/g, '').replace(/\s+/g, ' ').trim();
+        const loc1 = stripDiscipline(normalizeText(existingEvent.details || existingEvent.distrito || ''));
+        const loc2 = stripDiscipline(normalizeText(candidateEvent.details || candidateEvent.distrito || ''));
         if (loc1 && loc2 && (loc1.includes(loc2) || loc2.includes(loc1)) && simScore >= 0.45) {
             return true;
         }

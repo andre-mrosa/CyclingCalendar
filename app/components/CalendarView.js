@@ -30,7 +30,9 @@ import styles from './site.module.css';
 import { matchesPeriod, isCancelled, conciseEscaloes, registrationDaysUntil } from '../utils/planning';
 
 const fetcher = async (url) => {
-    const response = await fetch(url, { signal: AbortSignal.timeout(15000) });
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), 15000);
+    const response = await fetch(url, { signal: controller.signal }).finally(() => clearTimeout(id));
     const data = await response.json().catch(() => null);
 
     if (!response.ok || !data?.success) {

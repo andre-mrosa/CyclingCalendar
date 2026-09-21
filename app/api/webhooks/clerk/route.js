@@ -65,6 +65,12 @@ export async function POST(req) {
                 where: { userId },
                 data: { status: 'PROCESSED', updatedAt: new Date() }
             });
+
+            // RGPD: Anonimizar histórico de cliques e visualizações
+            await prisma.analyticsSession.updateMany({
+                where: { userId },
+                data: { userId: null, userEmail: null }
+            });
         }
 
         return Response.json({ success: true, message: 'Webhook processado' });

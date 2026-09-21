@@ -155,6 +155,17 @@ export function parseStopAndGoEvent(html, url, options = {}) {
 
         const id = 'sg_' + slug.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 32);
 
+        let programaHtml = null;
+        const mainContent = $('main').html() || $('body').html();
+        if (mainContent) {
+            const $body = cheerio.load(mainContent);
+            $body('nav, header, footer, script, style, svg, img, form, iframe, button').remove();
+            const textContent = $body.text().replace(/\s+/g, ' ').trim();
+            if (textContent.length > 50) {
+                programaHtml = `<div class="sg-description">${sanitizeHtml($body.html())}</div>`;
+            }
+        }
+
         return {
             id,
             title: toTitleCase(title),
@@ -170,7 +181,7 @@ export function parseStopAndGoEvent(html, url, options = {}) {
             link: registrationLink || url,
             image: posterUrl,
             logo: null,
-            programa: null,
+            programa: programaHtml,
             extraLinks: JSON.stringify(extraLinks),
             escaloes: JSON.stringify(['Geral / Aberto']),
             prices: null
