@@ -165,3 +165,10 @@ model Municipality {
   lat  Float
   lng  Float
 }
+
+model LocationCache {
+  query     String   @id
+  lat       Float
+  lng       Float
+  createdAt DateTime @default(now())
+}

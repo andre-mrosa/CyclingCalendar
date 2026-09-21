@@ -226,6 +226,8 @@ export function mergeEventRecords(existing, incoming) {
         logo: existing.logo || incoming.logo,
         image: existing.image || incoming.image,
         gpxData: incoming.gpxData || existing.gpxData,
+        lat: incoming.lat || existing.lat,
+        lng: incoming.lng || existing.lng
     };
 }
 
@@ -291,6 +293,60 @@ async function assignEventCoordinates(prisma, event) {
                 return;
             }
         }
+    }
+
+    // 2. Geocoding Fallback (if no municipality matched)
+    let geocodeQuery = '';
+    if (event.regiao) {
+        geocodeQuery = event.regiao.split('|')[0].trim();
+    } else if (event.details) {
+        // e.g. "Gafanha de Áquem | CPT - Prova Aberta"
+        geocodeQuery = event.details.split('|')[0].replace(/local:/i, '').trim();
+    } else {
+        geocodeQuery = event.title.replace(/\b(de|da|do|ciclismo|btt|passeio|prova|aberta|rota|trilhos|grande|prémio|premio|troféu|trofeu)\b/gi, '').trim();
+    }
+    
+    // Remove year numbers
+    geocodeQuery = geocodeQuery.replace(/\b20\d{2}\b/g, '').trim();
+
+    if (!geocodeQuery || geocodeQuery.length < 3) return;
+    const queryStr = geocodeQuery.toLowerCase();
+
+    try {
+        const cacheHit = await prisma.locationCache.findUnique({ where: { query: queryStr } });
+        if (cacheHit) {
+            if (cacheHit.lat !== 0) {
+                event.lat = cacheHit.lat;
+                event.lng = cacheHit.lng;
+            }
+            return;
+        }
+
+        const fetchUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(geocodeQuery + ', Portugal')}&format=json&limit=1`;
+        const res = await fetch(fetchUrl, {
+            headers: { 'User-Agent': 'CyclingCalendar.pt (+https://cyclingcalendar.pt)' }
+        });
+        
+        if (res.ok) {
+            const data = await res.json();
+            // Respect Nominatim usage policy (1 request per second max)
+            await new Promise(r => setTimeout(r, 1500));
+
+            let lat = 0;
+            let lng = 0;
+            if (data && data.length > 0) {
+                lat = parseFloat(data[0].lat);
+                lng = parseFloat(data[0].lon); // nominatim uses lon
+                event.lat = lat;
+                event.lng = lng;
+            }
+            
+            await prisma.locationCache.create({
+                data: { query: queryStr, lat, lng }
+            });
+        }
+    } catch (e) {
+        // Silently fail on network/DB errors and don't block the scraper
     }
 }
 
