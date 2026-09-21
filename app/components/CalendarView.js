@@ -81,6 +81,7 @@ export default function CalendarView({
         defaultRegiao,
         selectedSources,
         homeLocation,
+        setHomeLocation,
         maxDistanceFilter,
         setMaxDistanceFilter
     } = useSettingsStore();
@@ -297,6 +298,25 @@ export default function CalendarView({
             ? selectedEscaloes.filter(e => e !== esc)
             : [...selectedEscaloes, esc];
         setSelectedEscaloes(newEsc);
+    };
+
+    const handleGetLocation = () => {
+        if (!navigator.geolocation) {
+            alert(t('error_geolocation_not_supported') || 'A geolocalização não é suportada por este browser.');
+            return;
+        }
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                setHomeLocation({
+                    lat: pos.coords.latitude,
+                    lng: pos.coords.longitude,
+                    label: 'A minha localização'
+                });
+            },
+            () => {
+                alert(t('error_geolocation_permission') || 'Não foi possível obter a localização. Permite o acesso nas definições do browser.');
+            }
+        );
     };
 
     const clearAllFilters = () => {
@@ -572,22 +592,35 @@ export default function CalendarView({
                                 </div>
                             )}
 
-                            {homeLocation && (
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-xs text-muted uppercase tracking-wider font-bold ml-1">Distância</label>
-                                    <select 
-                                        className="w-full h-9 px-3 text-sm rounded-lg border border-line bg-soft text-ink outline-none focus:border-brand transition-colors"
-                                        value={maxDistanceFilter || ''} 
-                                        onChange={(e) => setMaxDistanceFilter(e.target.value ? Number(e.target.value) : null)} 
+                            <div className="flex flex-col gap-2">
+                                <label className="text-xs text-muted uppercase tracking-wider font-bold ml-1">
+                                    Distância
+                                </label>
+                                {homeLocation ? (
+                                    <div className="flex items-center gap-2">
+                                        <select 
+                                            className="w-full h-9 px-3 text-sm rounded-lg border border-line bg-soft text-ink outline-none focus:border-brand transition-colors"
+                                            value={maxDistanceFilter || ''} 
+                                            onChange={(e) => setMaxDistanceFilter(e.target.value ? Number(e.target.value) : null)} 
+                                        >
+                                            <option value="">Todas as Distâncias</option>
+                                            <option value="50">Até 50 km</option>
+                                            <option value="100">Até 100 km</option>
+                                            <option value="150">Até 150 km</option>
+                                            <option value="200">Até 200 km</option>
+                                        </select>
+                                    </div>
+                                ) : (
+                                    <button 
+                                        type="button"
+                                        onClick={handleGetLocation}
+                                        className="w-full h-9 px-3 text-sm rounded-lg border border-line bg-soft text-ink hover:bg-emerald-50 dark:hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-200 transition-colors flex items-center justify-center gap-1.5 font-medium"
                                     >
-                                        <option value="">Todas as Distâncias</option>
-                                        <option value="50">Até 50 km</option>
-                                        <option value="100">Até 100 km</option>
-                                        <option value="150">Até 150 km</option>
-                                        <option value="200">Até 200 km</option>
-                                    </select>
-                                </div>
-                            )}
+                                        <MapPin size={14} />
+                                        Ativar GPS
+                                    </button>
+                                )}
+                            </div>
                             
                         </div>
                         
