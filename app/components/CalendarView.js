@@ -196,9 +196,9 @@ export default function CalendarView({
 
         if (homeLocation && homeLocation.lat && homeLocation.lng && maxDistanceFilter) {
             filtered = filtered.filter(event => {
-                if (!event.lat || !event.lng) return true; // Se não sabemos onde é, mantemos
+                if (!event.lat || !event.lng) return false; // Hide events with unknown locations
                 const dist = calculateDistance(homeLocation.lat, homeLocation.lng, event.lat, event.lng);
-                if (dist === null) return true;
+                if (dist === null) return false;
                 return dist <= maxDistanceFilter;
             });
         }
