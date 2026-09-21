@@ -126,7 +126,7 @@ export default function CalendarView({
         setSelectedRegiao(applyDefaultRegiao ? defaultRegiao || 'Todas' : 'Todas');
     }
 
-    const effectiveSources = (selectedSources && selectedSources.length > 0) ? selectedSources : ['FPC', 'Cabreira', 'Stop and Go'];
+    const effectiveSources = (selectedSources && selectedSources.length > 0) ? selectedSources : ['FPC', 'Cabreira', 'Stop and Go', 'Recorde Pessoal'];
     const eventsUrl = `/api/events?view=list-v2&years=all&sources=${effectiveSources.join(',')}`;
     const eventsCacheKey = `cycling_calendar_list_v2_${[...effectiveSources].sort().join(',')}`;
     const { data: fetchedEvents, error, isLoading: loading, mutate } = useSWR(

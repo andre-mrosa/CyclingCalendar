@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { scrapeFPC, incrementalDeepScrapeFPC } from './fpc.js';
 import { scrapeCabreira } from './cabreira.js';
 import { scrapeStopAndGo } from './stopandgo.js';
+import { scrapeRecordePessoal } from './recordepessoal.js';
 import { scrapeClassificacoes } from './classificacoes.js';
 import { prisma } from '../db.js';
 import { isSameEvent } from '../merging/eventMatcher.js';
@@ -14,9 +15,9 @@ const VALID_SCOPES = new Set(['daily', 'weekly', 'manual']);
 
 export function getPipelineStages(scope, years) {
     const fpcStages = years.map(year => `fpc-${year}`);
-    if (scope === 'daily') return ['cabreira', 'stopandgo', 'classificacoes', 'finalize'];
+    if (scope === 'daily') return ['cabreira', 'stopandgo', 'recordepessoal', 'classificacoes', 'finalize'];
     if (scope === 'weekly') return [...fpcStages, 'deepScrape', 'finalize'];
-    return [...fpcStages, 'cabreira', 'stopandgo', 'classificacoes', 'deepScrape', 'finalize'];
+    return [...fpcStages, 'cabreira', 'stopandgo', 'recordepessoal', 'classificacoes', 'deepScrape', 'finalize'];
 }
 
 // Acquire the lease before logging a start. Callback/lock errors reach the route.
@@ -114,6 +115,9 @@ async function runPipeline(triggeredBy, options) {
                     break;
                 case 'stopandgo':
                     await stage('stopandgo', 'Stop and Go', true, saveOptions => scrapeStopAndGo({ years, ...saveOptions }));
+                    break;
+                case 'recordepessoal':
+                    await stage('recordepessoal', 'Recorde Pessoal', true, saveOptions => scrapeRecordePessoal({ years, ...saveOptions }));
                     break;
                 case 'classificacoes':
                     await stage('classificacoes', 'Classificações.net', false, () => scrapeClassificacoes({ years }));
