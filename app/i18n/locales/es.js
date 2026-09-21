@@ -1,4 +1,9 @@
 const messages = {
+    location_start: "Salida indicada en el programa oficial; consulta el mapa de la organización.",
+    location_locality: "Localidad publicada; salida exacta por confirmar.",
+    location_district: "Solo se conoce el distrito; lugar de la prueba por confirmar.",
+    location_unknown: "Lugar por confirmar.",
+    location_official_map: "Mapa de la organización",
     detail_organization_documents: 'Organización y documentos',
     detail_prizes_insurance: 'Premios y seguro',
     ui_view_favorites: "Ver favoritas",

@@ -1,3 +1,4 @@
+import { normalizeLocation } from '../../utils/eventLocation.js';
 import * as cheerio from 'cheerio';
 
 import sharp from 'sharp';
@@ -170,7 +171,6 @@ export const getRegiao = (name, det = '') => {
 };
 
 export const getDistrito = (name, det = '') => {
-    const full = (name + ' ' + det).toLowerCase();
     
     const distritos = {
         'Aveiro': ['aveiro', 'águeda', 'agueda', 'albergaria', 'anadia', 'arouca', 'castelo de paiva', 'espinho', 'estarreja', 'ílhavo', 'ilhavo', 'mealhada', 'ventosa do bairro', 'murtosa', 'oliveira de azeméis', 'azemeis', 'oliveira do bairro', 'ovar', 'santa maria da feira', 'são miguel de souto', 'são joão da madeira', 'sao joao da madeira', 'sever do vouga', 'vagos', 'vale de cambra', 'sanguedo'],
@@ -205,12 +205,15 @@ export const getDistrito = (name, det = '') => {
     }
     allEntries.sort((a, b) => b.keyword.length - a.keyword.length);
 
-    const paddedFull = ' ' + full.replace(/[^\w\s\u00C0-\u017F]/g, ' ') + ' ';
-    for (const entry of allEntries) {
-        const paddedKeyword = ' ' + entry.keyword + ' ';
-        if (paddedFull.includes(paddedKeyword)) {
-            return entry.distrito;
-        }
+    // The published locality takes priority over places mentioned in the title.
+    // Equal names in different districts require more context, never a first-match guess.
+    for (const text of [det, name]) {
+        const padded = ' ' + normalizeLocation(text) + ' ';
+        const matches = allEntries.filter(entry => padded.includes(' ' + normalizeLocation(entry.keyword) + ' '));
+        if (!matches.length) continue;
+        const longest = Math.max(...matches.map(entry => normalizeLocation(entry.keyword).length));
+        const districts = new Set(matches.filter(entry => normalizeLocation(entry.keyword).length === longest).map(entry => entry.distrito));
+        return districts.size === 1 ? [...districts][0] : '';
     }
     return '';
 };

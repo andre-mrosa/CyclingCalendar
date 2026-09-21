@@ -1,3 +1,4 @@
+import { withEventLocation } from '@/app/lib/eventLocation';
 import { prisma } from '@/app/lib/db';
 import { getEventDiscipline, getEventCategories } from '@/app/utils/eventClassifier';
 import { parseScheduleServer } from '@/app/utils/scheduleParserServer';
@@ -65,7 +66,7 @@ export default async function EventPage({ params }) {
 
     // Formatação de propriedades
     const formattedEvent = {
-        ...event,
+        ...withEventLocation(event),
         sortDate: event.sortDate ? event.sortDate.toISOString() : null,
         registrationOpensAt: event.registrationOpensAt ? event.registrationOpensAt.toISOString() : null,
         registrationClosesAt: event.registrationClosesAt ? event.registrationClosesAt.toISOString() : null,

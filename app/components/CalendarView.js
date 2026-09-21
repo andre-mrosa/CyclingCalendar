@@ -1,4 +1,5 @@
 "use client";
+import { formatEventLocation } from '../utils/eventLocation';
 import { useClientReady, useOnline, useStoredString, writeStored } from '../hooks/useBrowserState';
 import { useToday } from '../hooks/useToday';
 import { FavoriteChanges, FavoriteSubscription } from './FavoritePlanning';
@@ -714,8 +715,7 @@ export default function CalendarView({
                                 const translation = event.translations?.find(t => t.language === language) 
                                     || (language !== 'pt' ? event.translations?.find(t => t.language === 'en') : null);
                                 const displayTitle = formatEventTitle(language === 'pt' ? event.title : (translation?.title || event.title));
-                                const displayDetails = (language === 'pt' ? event.details : (translation?.details || event.details));
-                                const location = (displayDetails || '').split('|')[0]?.trim() || event.distrito || 'Portugal';
+                                const location = formatEventLocation(event) || t('summary_location_tbd');
 
 
                                                 return (

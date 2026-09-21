@@ -242,9 +242,6 @@ export const parseFPCCalendar = (html, year) => {
                 const extraText = $(cols[2]).text().trim();
                 const organizadorText = cols.length > 3 ? $(cols[3]).text().trim() : null;
                 
-                if ((/arlu/i.test(nameText) || /arlu/i.test(organizadorText || '')) && locText.toLowerCase() === 'leiria') {
-                    locText = 'Azabuxo, Leiria';
-                }
                 
                 if (nameText && /^\d{2}-\d{2}-\d{4}$/.test(dateText)) {
                     const parts = dateText.split('-');

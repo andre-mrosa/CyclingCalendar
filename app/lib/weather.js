@@ -1,3 +1,4 @@
+import { cleanLocation, normalizeLocation } from '../utils/eventLocation.js';
 /**
  * Coordenadas geográficas dos distritos e principais polos de ciclismo em Portugal
  */
@@ -153,54 +154,29 @@ export function getCyclingAdvice({ tempMax, tempMin, rainProb, windSpeed }) {
  * Procura coordenadas na base de dados de cidades portuguesas ou via Open-Meteo Geocoding
  */
 export async function resolveCoordinates(locationStr, distritoStr) {
-    const normalize = (s) => (s || '').toLowerCase()
-        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-        .trim();
-
-    const locNorm = normalize(locationStr);
-    const distNorm = normalize(distritoStr);
-
-    // 1. Procurar em correspondência direta no dicionário local
-    for (const [key, coords] of Object.entries(PORTUGAL_COORDINATES)) {
-        const keyNorm = normalize(key);
-        if (locNorm.includes(keyNorm) || keyNorm.includes(locNorm)) {
-            return coords;
-        }
+    const location = cleanLocation(locationStr);
+    const district = cleanLocation(distritoStr);
+    // Never replace an unresolved village with the district capital.
+    if (!location) return null;
+    const [name, ...qualifiers] = location.split(',').map(value => value.trim());
+    try {
+        const response = await fetch('https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(name) + '&countryCode=PT&count=100&language=pt', {
+            headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(3500),
+        });
+        if (!response.ok) return null;
+        const data = await response.json();
+        const constraints = [...qualifiers, district].filter(value => value && normalizeLocation(value) !== 'portugal');
+        const candidates = (data.results || []).filter(result => {
+            const admins = [result.admin1, result.admin2, result.admin3, result.admin4].map(normalizeLocation);
+            return result.country_code === 'PT' && normalizeLocation(result.name) === normalizeLocation(name) &&
+                Number.isFinite(result.latitude) && Number.isFinite(result.longitude) &&
+                constraints.every(value => admins.includes(normalizeLocation(value)));
+        });
+        if (candidates.length !== 1) return null;
+        const match = candidates[0];
+        return { lat: match.latitude, lon: match.longitude,
+            name: [match.name, match.admin1].filter(Boolean).join(', '), precision: 'locality' };
+    } catch {
+        return null;
     }
-
-    if (distNorm) {
-        for (const [key, coords] of Object.entries(PORTUGAL_COORDINATES)) {
-            const keyNorm = normalize(key);
-            if (distNorm.includes(keyNorm) || keyNorm.includes(distNorm)) {
-                return coords;
-            }
-        }
-    }
-
-    // 2. Geocoding dinâmico na API do Open-Meteo
-    const query = locationStr && locationStr !== 'A definir' ? locationStr : distritoStr;
-    if (query && query !== 'A definir' && query !== 'Nacional') {
-        try {
-            const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&country=PT&count=1&language=pt`, {
-                headers: { 'Accept': 'application/json' },
-                signal: AbortSignal.timeout(3500)
-            });
-            if (geoRes.ok) {
-                const geoData = await geoRes.json();
-                if (geoData?.results && geoData.results.length > 0) {
-                    const first = geoData.results[0];
-                    return {
-                        lat: first.latitude,
-                        lon: first.longitude,
-                        name: `${first.name}${first.admin1 ? ', ' + first.admin1 : ''}`
-                    };
-                }
-            }
-        } catch (e) {
-            console.warn('Geocoding fallback failed:', e);
-        }
-    }
-
-    // Default: Coordenadas centrais de Portugal (Coimbra / Centro)
-    return { lat: 40.2033, lon: -8.4103, name: 'Portugal Continental' };
 }

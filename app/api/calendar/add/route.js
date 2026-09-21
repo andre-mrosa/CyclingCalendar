@@ -1,3 +1,5 @@
+import { withEventLocation } from '@/app/lib/eventLocation';
+import { formatEventLocation } from '@/app/utils/eventLocation';
 import { auth, getAuth, verifyToken, clerkClient } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/db';
@@ -196,12 +198,7 @@ export async function POST(req) {
         // 1. Obter ou criar o calendário dedicado "Cycling Calendar"
         const targetCalendarId = await getTargetCalendarId(token);
 
-        let location = 'Portugal';
-        if (fullEvent.details && fullEvent.details !== 'A definir') {
-            location = fullEvent.details.split('|')[0] + ', Portugal';
-        } else if (fullEvent.location && fullEvent.location !== 'A definir') {
-            location = fullEvent.location + ', Portugal';
-        }
+        const location = formatEventLocation(withEventLocation(fullEvent));
 
         // Helper para criar ou verificar evento
         const createOrCheckEvent = async (gEvent, eventIdentifier) => {

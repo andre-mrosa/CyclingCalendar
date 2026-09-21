@@ -4,7 +4,7 @@ import EventRouteProfile from './EventRouteProfile';
 import WeatherWidget from './WeatherWidget';
 import { eventDateDisplay } from '../utils/eventDateDisplay';
 import { formatEventTitle } from '../utils/calendarPresentation';
-import { formatEventLocation, extractEventTown } from '../utils/eventLocation';
+import { formatEventLocation, extractEventTown, getEventLocation } from '../utils/eventLocation';
 import { getEventDiscipline } from '../utils/eventClassifier';
 import { translateTag, translateDateString, translateEscalao, translateAmbito, translateLicenca } from '../i18n/formatters';
 import { registrationPriceSummary } from '../utils/registrationDates';
@@ -23,6 +23,7 @@ export default function EventDetailBody({ event, t, language, standalone, closeM
     const closed = event.registrationClosesAt && registrationDaysUntil(event.registrationClosesAt) < 0;
     const cancelled = isCancelled(event);
     const location = formatEventLocation(event);
+    const locationInfo = getEventLocation(event);
     const resourceLinks = [...documents, ...links.resources, links.primaryRules && { ...links.primaryRules, label: t('action_rules') }, links.primaryResults && { ...links.primaryResults, label: t('action_results') }, links.officialSite].filter(Boolean).filter((item, index, all) => all.findIndex(other => other.link === item.link) === index);
     return <div className={styles.body}>
         {!standalone && <button className={styles.close} onClick={closeModal} aria-label={t('action_close')}><X size={20} /></button>}
@@ -79,8 +80,8 @@ export default function EventDetailBody({ event, t, language, standalone, closeM
             </div>
         </details>}
         {location && <details className={styles.section}>
-            <summary>{t('tab_location')}</summary><div className={styles.content}><p>{location}</p><p className={styles.muted}>{t('planning_map_approx')}</p><iframe className={styles.map} title={t('tab_location')} loading="lazy" allowFullScreen src={`https://maps.google.com/maps?q=${encodeURIComponent(location + ', Portugal')}&output=embed`} />
-                {dates.start && <div className={styles.weather}><WeatherWidget location={extractEventTown(event) || event.distrito} distrito={event.distrito} date={dates.start} variant="header" /><p className={styles.muted}>{t('planning_weather_day')}: {new Intl.DateTimeFormat(language, { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(dates.start + 'T00:00:00Z'))}</p></div>}
+            <summary>{t('tab_location')}</summary><div className={styles.content}><p>{location}</p><p className={styles.muted}>{t(`location_${locationInfo.precision}`)}</p>{locationInfo.mapUrl && <a href={locationInfo.mapUrl} target="_blank" rel="noopener noreferrer">{t('location_official_map')}<ArrowUpRight size={14} /></a>}<p className={styles.muted}>{t('planning_map_approx')}</p><iframe className={styles.map} title={t('tab_location')} loading="lazy" allowFullScreen src={`https://maps.google.com/maps?q=${encodeURIComponent(location + ', Portugal')}&output=embed`} />
+                {dates.start && locationInfo.locality && <div className={styles.weather}><WeatherWidget location={extractEventTown(event)} distrito={event.distrito} date={dates.start} variant="header" /><p className={styles.muted}>{t('planning_weather_day')}: {new Intl.DateTimeFormat(language, { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(dates.start + 'T00:00:00Z'))}</p></div>}
             </div>
         </details>}
         {(event.organizador || resourceLinks.length > 0 || event.escaloes?.length > 0 || event.ambito || event.licenca) && <details className={styles.section}>

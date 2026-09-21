@@ -1,63 +1,57 @@
-/**
- * Utilitário centralizado para formatar a localização exata de provas de ciclismo.
- * Garante que a Localidade / Concelho (ex: Lousã, Azabuxo, Paredes) seja sempre
- * apresentada em destaque, acompanhada do respetivo Distrito (ex: Lousã, Coimbra).
- */
+export const normalizeLocation = value => String(value || '').normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 
-export function extractEventTown(event) {
-    if (!event) return '';
-
-    const title = (event.title || '').trim();
-    const details = (event.details || '').trim();
-    const organizador = (event.organizador || '').trim();
-    const link = (event.link || '').trim();
-
-    // 1. Casos específicos conhecidos por nome de clube / freguesia
-    if (/arlu/i.test(title) || /azabuxo/i.test(organizador) || /azabuxo/i.test(link)) {
-        return 'Azabuxo';
-    }
-
-    // 2. Extrair a primeira parte de details (antes do pipe '|')
-    let rawLoc = details ? details.split('|')[0].trim() : '';
-
-    if (rawLoc && !/^a definir$/i.test(rawLoc) && rawLoc !== 'DATA A DEFINIR') {
-        // Limpar pontuação residual no início ou fim
-        rawLoc = rawLoc.replace(/^[-–—,;\s]+/, '').replace(/[-–—,;\s]+$/, '').trim();
-        if (rawLoc) return rawLoc;
-    }
-
-    // 3. Fallback: procurar no título da prova por concelhos ou localidades óbvias
-    if (/lousã|lousa/i.test(title)) return 'Lousã';
-    if (/paredes de coura/i.test(title)) return 'Paredes de Coura';
-    if (/\bparedes\b/i.test(title) && !/coura/i.test(title)) return 'Paredes';
-
-    return event.distrito || '';
+export function cleanLocation(value) {
+    const text = String(value || '').replace(/\s+/g, ' ').replace(/^[-–—,;\s]+|[-–—,;\s]+$/g, '').trim();
+    return /^(a definir|a indicar|a anunciar|por confirmar|local a definir|data a definir|nacional|portugal|todos|todas|tbd|n\/a|-)$/i.test(text) ? '' : text;
 }
 
-/**
- * Retorna a localização amigável completa para apresentação ao utilizador:
- * - "Lousã, Coimbra"
- * - "Azabuxo, Leiria"
- * - "Paredes, Porto"
- * - "Leiria" (quando a localidade já é a capital de distrito)
- */
-export function formatEventLocation(event) {
-    if (!event) return 'Portugal';
+function safeMapUrl(value) {
+    try {
+        const url = new URL(value);
+        return url.protocol === 'https:' && ['maps.app.goo.gl', 'maps.google.com', 'www.google.com', 'goo.gl'].includes(url.hostname) ? url.href : null;
+    } catch { return null; }
+}
 
-    const town = extractEventTown(event);
-    const distrito = (event.distrito || '').trim();
-
-    if (!town && !distrito) return 'Portugal';
-    if (town && !distrito) return town;
-    if (!town && distrito) return distrito;
-
-    // Normalização para evitar repetições redundantes (ex: "Leiria, Leiria" -> "Leiria")
-    const cleanTown = town.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
-    const cleanDistrito = distrito.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
-
-    if (cleanTown === cleanDistrito || cleanTown.includes(cleanDistrito)) {
-        return town;
+// Only an explicitly named start in the programme can refine the published locality.
+// Never infer the venue from the organiser, race title, finish or first GPX point.
+export function resolveEventLocation(event = {}, schedule = null) {
+    const district = cleanLocation(event.distrito);
+    const locality = cleanLocation(event.details?.split('|')[0]);
+    const starts = (schedule?.days || []).flatMap(day => day.activities || [])
+        .filter(activity => /^(partida|inicio da prova|start)(\b|\s)/.test(normalizeLocation(activity.title)))
+        .map(activity => ({ label: cleanLocation(activity.location), mapUrl: safeMapUrl(activity.locationUrl) }))
+        .filter(activity => activity.label && !/^(local|mapa|ver mapa|aqui|google maps)$/i.test(activity.label));
+    const unique = [...new Map(starts.map(start => [normalizeLocation(start.label), start])).values()];
+    if (unique.length === 1) {
+        return { ...unique[0], locality, district, precision: 'start', source: 'programme' };
     }
+    return {
+        label: locality || district, locality, district,
+        precision: locality ? 'locality' : district ? 'district' : 'unknown',
+        source: locality ? 'published' : district ? 'district' : null,
+        mapUrl: null,
+    };
+}
 
-    return `${town}, ${distrito}`;
+export const getEventLocation = event => event?.locationInfo || resolveEventLocation(event || {});
+export const extractEventTown = event => getEventLocation(event).locality || '';
+
+export function formatEventLocation(event) {
+    const { label, locality, district } = getEventLocation(event);
+    if (!label) return '';
+    let result = label;
+    if (locality && normalizeLocation(label) !== normalizeLocation(locality)) {
+        const parts = label.split(',').map(part => part.trim());
+        const withoutLocality = parts.filter(part => normalizeLocation(part) !== normalizeLocation(locality));
+        const alreadyIncluded = label.split(/[,;–()]/).some(part => normalizeLocation(part) === normalizeLocation(locality));
+        if (withoutLocality.length < parts.length) {
+            result = `${withoutLocality.join(', ')} (${locality})`;
+        } else if (!alreadyIncluded) {
+            result = `${label} (${locality})`;
+        }
+    }
+    const parts = result.split(/[,;–()]/).map(normalizeLocation);
+    if (district && !parts.includes(normalizeLocation(district))) result += `, ${district}`;
+    return result;
 }

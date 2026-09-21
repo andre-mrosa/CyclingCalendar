@@ -1,4 +1,9 @@
 const messages = {
+    location_start: "Start listed in the official programme; check the organiser’s map.",
+    location_locality: "Published locality; exact start still to be confirmed.",
+    location_district: "Only the district is known; race venue still to be confirmed.",
+    location_unknown: "Location to be confirmed.",
+    location_official_map: "Organiser’s map",
     detail_organization_documents: 'Organizer and documents',
     detail_prizes_insurance: 'Prizes and insurance',
     ui_view_favorites: "View favourites",

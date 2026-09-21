@@ -1,3 +1,4 @@
+import { withEventLocation } from '@/app/lib/eventLocation';
 import { prisma } from '@/app/lib/db';
 import { getEventDiscipline, getEventCategories } from '@/app/utils/eventClassifier';
 import { toCalendarListEvent } from '@/app/utils/calendarList';
@@ -67,6 +68,7 @@ export async function GET(request) {
                 registrationOpensAt: true,
                 registrationClosesAt: true,
                 prices: true,
+                programa: true,
                 translations: {
                     select: {
                         language: true,
@@ -82,7 +84,7 @@ export async function GET(request) {
 
         // Convert stringified arrays back to arrays and assign accurate discipline tag
         const formattedEvents = events.map(e => ({
-            ...toCalendarListEvent(e),
+            ...toCalendarListEvent(withEventLocation(e)),
             tag: getEventDiscipline(e),
             escaloes: getEventCategories(e)
         }));

@@ -88,6 +88,9 @@ export async function GET(request) {
 
         // 3. Prova nos próximos 14 dias -> Consultar Open-Meteo
         const coords = await resolveCoordinates(location, distrito);
+        if (!coords) {
+            return Response.json({ success: true, isAvailable: false, message: 'Localização insuficiente para uma previsão fiável.' });
+        }
         const openMeteoUrl = `https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,windspeed_10m_max,winddirection_10m_dominant&timezone=Europe%2FLisbon&start_date=${targetDateStr}&end_date=${targetDateStr}`;
 
         const res = await fetch(openMeteoUrl, {

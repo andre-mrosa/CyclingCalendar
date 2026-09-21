@@ -1,3 +1,4 @@
+import { withEventLocation } from './eventLocation.js';
 import { timingSafeEqual } from 'node:crypto';
 import { buildIcsContent } from '../utils/calendarExport.js';
 import { isCancelled } from '../utils/planning.js';
@@ -10,7 +11,7 @@ export function validSubscriptionToken(received, stored) {
 
 export function subscriptionIcs(events, origin) {
     const entries = events.map(event => {
-        let content = buildIcsContent(event, origin);
+        let content = buildIcsContent(withEventLocation(event), origin);
         if (!content) return '';
         if (isCancelled(event)) content = content.replace('STATUS:CONFIRMED', 'STATUS:CANCELLED')
             .replace(/BEGIN:VALARM[\s\S]*?END:VALARM\r\n/, '');
