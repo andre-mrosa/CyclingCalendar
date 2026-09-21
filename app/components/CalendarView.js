@@ -1,5 +1,6 @@
 "use client";
-import { formatEventLocation } from '../utils/eventLocation';
+import { formatEventLocation, getEventCoordinates } from '../utils/eventLocation';
+import { calculateDistance } from '../utils/distance';
 import { useClientReady, useOnline, useStoredString, writeStored } from '../hooks/useBrowserState';
 import { useToday } from '../hooks/useToday';
 import { FavoriteChanges, FavoriteSubscription } from './FavoritePlanning';
@@ -78,7 +79,9 @@ export default function CalendarView({
     const { 
         defaultEscalao, 
         defaultRegiao,
-        selectedSources 
+        selectedSources,
+        homeLocation,
+        maxDistanceFilter
     } = useSettingsStore();
     
     const [searchTerm, setSearchTerm] = useState('');
@@ -187,10 +190,20 @@ export default function CalendarView({
         });
 
         filtered = filterCalendarByDate(filtered, pastEventsFilter, today, selectedYears);
-
         filtered = filtered.filter(event => matchesPeriod(event, quickPeriod));
+
+        if (homeLocation && homeLocation.lat && homeLocation.lng && maxDistanceFilter) {
+            filtered = filtered.filter(event => {
+                const coords = getEventCoordinates(event);
+                if (!coords) return true; // Se não sabemos onde é, mantemos para não esconder provas validas
+                const dist = calculateDistance(homeLocation.lat, homeLocation.lng, coords.lat, coords.lng);
+                if (dist === null) return true;
+                return dist <= maxDistanceFilter;
+            });
+        }
+
         return sortCalendarEvents(filtered, favorites);
-    }, [events, searchTerm, selectedYears, selectedEscaloes, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, filterByFavorites, filterByAgenda, markedSet, favorites, forceEscalao, forceAmbito, forceLicenca, quickPeriod, today]);
+    }, [events, searchTerm, selectedYears, selectedEscaloes, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, filterByFavorites, filterByAgenda, markedSet, favorites, forceEscalao, forceAmbito, forceLicenca, quickPeriod, today, homeLocation, maxDistanceFilter]);
 
     const filteredEvents = useMemo(() => eventsInPeriod(matchingEvents, selectedMonth, selectedDay), [matchingEvents, selectedMonth, selectedDay]);
     const calendarMonth = selectedMonth || matchingEvents.map(event => eventDateDisplay(event).start).find(Boolean)?.slice(0, 7) || new Date().toISOString().slice(0, 7);
@@ -719,6 +732,14 @@ export default function CalendarView({
                                 const displayTitle = formatEventTitle(language === 'pt' ? event.title : (translation?.title || event.title));
                                 const location = formatEventLocation(event) || t('summary_location_tbd');
 
+                                let distanceText = null;
+                                if (homeLocation && homeLocation.lat && homeLocation.lng) {
+                                    const coords = getEventCoordinates(event);
+                                    if (coords) {
+                                        const distanceValue = calculateDistance(homeLocation.lat, homeLocation.lng, coords.lat, coords.lng);
+                                        if (distanceValue !== null) distanceText = `${distanceValue} km`;
+                                    }
+                                }
 
                                                 return (
                                     <div 
@@ -743,21 +764,27 @@ export default function CalendarView({
                                                             targetTitle: event.title
                                                         });
                                                     }}
-                                                    className={styles.eventFavorite}
-                                                    aria-pressed={!!isEventFavorited}
-                                                    title={isEventFavorited ? t('card_remove_favorite') : t('card_add_favorite')}
+                                                    className={styles.favoriteButton} 
+                                                    aria-label={isEventFavorited ? t('btn_remove_favorites') : t('btn_add_favorites')}
+                                                    data-active={isEventFavorited}
+                                                    title={isEventFavorited ? t('btn_remove_favorites') : t('btn_add_favorites')}
                                                 >
                                                     <Star size={18} fill={isEventFavorited ? "currentColor" : "none"} />
                                                 </button>
                                             </div>
                                             <div className={styles.eventMeta}>
-                                                <span>
-                                                    <MapPin size={12} className="shrink-0" />
+                                                <span className="flex items-center flex-wrap">
+                                                    <MapPin size={12} className="shrink-0 mr-1" />
                                                     <span>{location}</span>
+                                                    {distanceText && (
+                                                        <span className="ml-2 inline-flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded text-[10px]" title={t('distancia_estimada')}>
+                                                            {distanceText}
+                                                        </span>
+                                                    )}
                                                 </span>
                                                 <span>
                                                     <Bike size={12} className="text-slate-400 dark:text-slate-500 shrink-0" />
-                                                    <span>{discipline ? translateTag(discipline, language) : conciseEscaloes(event.escaloes).map(esc => translateEscalao(esc, language)).join(' · ')}</span>
+                                                    <span>{discipline ? translateTag(discipline, language) : conciseEscaloes(event.escaloes).map(esc => translateEscalao(esc, language)).join(' • ')}</span>
                                                 </span>
                                             </div>
                                         </div>

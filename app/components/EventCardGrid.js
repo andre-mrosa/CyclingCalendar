@@ -4,7 +4,9 @@ import { Star, MapPin, Bike, Calendar, Check, AlertTriangle, Clock, ChevronRight
 import { useTranslation } from '../i18n/useTranslation';
 import { formatMonthAbbr, translateEscalao, translateTag, translateAmbito } from '../i18n/formatters';
 import { isStageRace, getEventDiscipline } from '../utils/eventClassifier';
-import { formatEventLocation } from '../utils/eventLocation';
+import { formatEventLocation, getEventCoordinates } from '../utils/eventLocation';
+import { calculateDistance } from '../utils/distance';
+import { useSettingsStore } from '../store/useSettingsStore';
 import FlagIcon from './FlagIcon';
 
 export default function EventCardGrid({ 
@@ -16,6 +18,7 @@ export default function EventCardGrid({
     getDateConflict 
 }) {
     const { t, language } = useTranslation();
+    const { homeLocation } = useSettingsStore();
 
     const getEventDateParts = (ev) => {
         const rawDate = ev.date || '';
@@ -56,6 +59,16 @@ export default function EventCardGrid({
                 const displayTitle = (language === 'pt' ? event.title : (translation?.title || event.title));
                 const displayDetails = (language === 'pt' ? event.details : (translation?.details || event.details));
                 const location = formatEventLocation(event);
+
+                let distanceText = null;
+                let distanceValue = null;
+                if (homeLocation && homeLocation.lat && homeLocation.lng) {
+                    const coords = getEventCoordinates(event);
+                    if (coords) {
+                        distanceValue = calculateDistance(homeLocation.lat, homeLocation.lng, coords.lat, coords.lng);
+                        if (distanceValue !== null) distanceText = `${distanceValue} km`;
+                    }
+                }
 
                 return (
                     <div
@@ -129,9 +142,15 @@ export default function EventCardGrid({
                             </div>
 
                             {/* Location */}
-                            <div className="flex items-center gap-1.5 text-xs text-muted mb-4">
+                            <div className="flex items-center gap-1.5 text-xs text-muted mb-4 flex-wrap">
                                 <FlagIcon code="pt" className="w-3.5 h-2.5 rounded-[2px]" />
                                 <span className="truncate">{location}</span>
+                                {distanceText && (
+                                    <span className="ml-auto inline-flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded-md text-[10px]" title={t('distancia_estimada')}>
+                                        <MapPin size={10} />
+                                        {distanceText}
+                                    </span>
+                                )}
                             </div>
                         </div>
 

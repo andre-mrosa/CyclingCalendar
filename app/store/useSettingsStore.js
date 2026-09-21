@@ -18,11 +18,15 @@ export const useSettingsStore = create(
             selectedSources: DEFAULT_SOURCES,
             hiddenTabs: [],
             tabsOrder: DEFAULT_TABS,
+            homeLocation: null, // { lat, lng, label }
+            maxDistanceFilter: null, // number in km, e.g., 50, 100
 
             setDefaultPage: (val) => set({ defaultPage: val }),
             setDefaultEscalao: (val) => set({ defaultEscalao: val }),
             setDefaultRegiao: (val) => set({ defaultRegiao: val }),
             setLanguage: (val) => set({ language: val }),
+            setHomeLocation: (val) => set({ homeLocation: val }),
+            setMaxDistanceFilter: (val) => set({ maxDistanceFilter: val }),
             
             toggleSource: (source) => set((state) => {
                 const current = state.selectedSources || [];

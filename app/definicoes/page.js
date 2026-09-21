@@ -7,7 +7,7 @@ import { useTheme } from 'next-themes';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { useTranslation } from '../i18n/useTranslation';
 import { translateEscalao } from '../i18n/formatters';
-import { HelpCircle, Settings, ChevronUp, ChevronDown, RotateCcw, Shield, Trash2, AlertTriangle, CheckCircle2, Clock, Globe, Moon } from 'lucide-react';
+import { HelpCircle, Settings, ChevronUp, ChevronDown, RotateCcw, Shield, Trash2, AlertTriangle, CheckCircle2, Clock, Globe, Moon, MapPin } from 'lucide-react';
 import RegionAssistant from '../components/RegionAssistant';
 import EscalaoAssistant from '../components/EscalaoAssistant';
 import FlagIcon from '../components/FlagIcon';
@@ -24,7 +24,8 @@ export default function Conta() {
         defaultRegiao, setDefaultRegiao,
         selectedSources, toggleSource,
         hiddenTabs, toggleHiddenTab,
-        tabsOrder, moveTab, resetTabsOrder
+        tabsOrder, moveTab, resetTabsOrder,
+        homeLocation, setHomeLocation
     } = useSettingsStore();
 
     const { isLoaded, isSignedIn, user } = useUser();
@@ -59,6 +60,25 @@ export default function Conta() {
 
         checkDeletionStatus();
     }, [isLoaded, isSignedIn]);
+
+    const handleGetLocation = () => {
+        if (!navigator.geolocation) {
+            alert('A geolocalização não é suportada por este browser.');
+            return;
+        }
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                setHomeLocation({
+                    lat: pos.coords.latitude,
+                    lng: pos.coords.longitude,
+                    label: 'A minha localização'
+                });
+            },
+            () => {
+                alert('Não foi possível obter a localização. Permite o acesso nas definições do browser.');
+            }
+        );
+    };
 
     const handleConfirmDeletionRequest = async () => {
         setIsDeletingAccount(true);
@@ -176,6 +196,54 @@ export default function Conta() {
                                     </button>
                                 );
                             })}
+                        </div>
+                    </div>
+
+                    {/* Localização e Distância */}
+                    <div className="flex flex-col md:flex-row md:items-center justify-between py-6 border-b border-slate-100 dark:border-slate-800/60 gap-4">
+                        <div>
+                            <h3 className="font-semibold text-ink flex items-center mb-1 text-base gap-2">
+                                <MapPin size={16} className="text-emerald-500" />
+                                Localização e Distância
+                            </h3>
+                            <p className="text-sm text-muted">
+                                {homeLocation?.label 
+                                    ? `Ativo. As provas mostram a distância à tua localização.` 
+                                    : 'Define a tua localização para veres a distância às provas.'}
+                            </p>
+                        </div>
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            {homeLocation && (
+                                <select 
+                                    className="h-10 px-3.5 text-sm rounded-xl border border-line bg-soft text-ink outline-none focus:border-brand transition-colors font-medium cursor-pointer"
+                                    value={maxDistanceFilter || ''} 
+                                    onChange={(e) => setMaxDistanceFilter(e.target.value ? Number(e.target.value) : null)}
+                                >
+                                    <option value="">Todas as distâncias</option>
+                                    <option value="50">Até 50 km</option>
+                                    <option value="100">Até 100 km</option>
+                                    <option value="150">Até 150 km</option>
+                                    <option value="200">Até 200 km</option>
+                                </select>
+                            )}
+                            <button 
+                                onClick={handleGetLocation}
+                                className="h-10 px-4 text-sm rounded-xl border border-line bg-soft text-ink hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-medium cursor-pointer flex items-center justify-center gap-2"
+                            >
+                                <MapPin size={16} />
+                                {homeLocation ? 'Atualizar' : 'Obter Localização GPS'}
+                            </button>
+                            {homeLocation && (
+                                <button 
+                                    onClick={() => {
+                                        setHomeLocation(null);
+                                        setMaxDistanceFilter(null);
+                                    }}
+                                    className="h-10 px-3 text-sm rounded-xl border border-line text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors cursor-pointer flex items-center justify-center"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            )}
                         </div>
                     </div>
 
