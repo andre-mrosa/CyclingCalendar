@@ -83,3 +83,5 @@ dev.db
 /.swc
 /.qa-tools/
 /qa-*
+
+!app/utils/geoCoordinates.json
