@@ -152,12 +152,31 @@ export function mergeEventRecords(existing, incoming) {
     if (incoming.source === 'FPC' || (incoming.source === 'Stop and Go' && existing.source === 'Stop and Go')) {
         date = incoming.date;
         sortDate = incoming.sortDate;
-        
-        if (incoming.details && details && details.length > incoming.details.length) {
-            const normIncomingLoc = String(incoming.details).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().split('|')[0].trim();
-            const normExistingLoc = String(details).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().split('|')[0].trim();
-            if (!normExistingLoc.includes(normIncomingLoc)) {
+        if (incoming.details && details) {
+            const incomingParts = incoming.details.split('|');
+            const existingParts = String(details).split('|');
+            const incomingLocRaw = incomingParts[0].trim();
+            const existingLocRaw = existingParts[0].trim();
+            
+            const normIncomingLoc = incomingLocRaw.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+            const normExistingLoc = existingLocRaw.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+            
+            if (normExistingLoc === 'portugal' || normExistingLoc === 'portugal continental') {
                 details = incoming.details;
+            } else if (!normExistingLoc.includes(normIncomingLoc) && normIncomingLoc !== 'portugal') {
+                // Se as localidades não coincidem, não descartamos nenhuma. Combinamos!
+                // Assim mantemos "Azabuxo" quando a FPC envia apenas "Leiria".
+                const incomingTag = incomingParts.length > 1 ? ` | ${incomingParts.slice(1).join('|').trim()}` : '';
+                const existingTag = existingParts.length > 1 ? ` | ${existingParts.slice(1).join('|').trim()}` : '';
+                const finalTag = incomingTag || existingTag;
+                
+                // Coloca a localidade específica primeiro, seguida do município
+                details = existingLocRaw.length > incomingLocRaw.length 
+                    ? `${existingLocRaw}, ${incomingLocRaw}${finalTag}`
+                    : `${incomingLocRaw}, ${existingLocRaw}${finalTag}`;
+            } else {
+                // Se um inclui o outro (ex: "Azabuxo, Leiria" inclui "Leiria"), guarda a string mais completa.
+                details = existingLocRaw.length >= incomingLocRaw.length ? details : incoming.details;
             }
         } else {
             details = incoming.details || details;
