@@ -8,7 +8,7 @@ const source = Buffer.from(brandSVG());
 const rounded = size => sharp(source).resize(size,size).composite([{ input: Buffer.from(`<svg width="${size}" height="${size}"><rect width="${size}" height="${size}" rx="${size * .16}" fill="white"/></svg>`), blend: 'dest-in' }]);
 for (const name of ['brand.svg', 'brand-final.svg', 'logo-symbol.svg']) await writeFile(target('public/' + name), brandSVG());
 for (const [path, size] of [
- ['public/brand-final.png',512], ['public/logo-google.png',120],
+ ['public/brand-final.png',512], ['public/logo-google.png',512],
  ['app/icon.png',192], ['app/apple-icon.png',180],
  ['public/icon-192x192.png',192], ['public/icon-512x512.png',512],
  ['public/logo.jpg',512], ['public/icon.jpg',192],
@@ -17,7 +17,7 @@ for (const [path, size] of [
  const output = path.endsWith('.png') ? rounded(size) : sharp(source).resize(size,size);
  await output.toFile(target(path));
 }
-await sharp({create:{width:512,height:512,channels:3,background:'#194d3b'}})
+await sharp({create:{width:512,height:512,channels:3,background:'#ffffff'}})
  .composite([{input:await sharp(source).resize(360,360).png().toBuffer(),gravity:'centre'}])
  .png().toFile(target('public/brand-maskable.png'));
 const png = await rounded(32).png().toBuffer();

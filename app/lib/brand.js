@@ -1,3 +1,11 @@
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { Bike } from 'lucide-react';
+
+// Same bicycle as the site header, with its name in a square composition.
 export function brandSVG() {
-    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="512" height="512" fill="none"><rect width="40" height="40" rx="11" fill="#194d3b"/><path d="M10 11h20M14 8v6m12-6v6" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".7"/><circle cx="12" cy="27" r="5" stroke="#fff" stroke-width="1.6"/><circle cx="29" cy="27" r="5" stroke="#fff" stroke-width="1.6"/><path d="m12 27 7-10 6 10H12Zm7-10h-4m10 10 3-12h3" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>\n';
+    const bicycle = renderToStaticMarkup(React.createElement(Bike, {
+        width: 184, height: 184, strokeWidth: 1.5, color: '#35634e',
+    }));
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512"><rect width="512" height="512" fill="#ffffff"/><g transform="translate(164 72)">${bicycle}</g><g fill="#17191d" font-family="Arial, sans-serif" font-weight="600" text-anchor="middle"><text x="256" y="322" font-size="58">Cycling</text><text x="256" y="384" font-size="58">Calendar</text></g></svg>\n`;
 }
