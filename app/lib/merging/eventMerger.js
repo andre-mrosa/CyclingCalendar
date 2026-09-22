@@ -89,7 +89,7 @@ export function mergeEventRecords(existing, incoming) {
 
     if (existing.link && incoming.link && existing.link.toLowerCase() !== incoming.link.toLowerCase()) {
         const isExistingFpc = existing.link.includes('fpciclismo.pt');
-        const isIncomingOrg = incoming.link.includes('cabreirasolutions.com') || incoming.link.includes('stopandgo.net') || incoming.link.includes('recordepessoal.pt');
+        const isIncomingOrg = incoming.link.includes('cabreirasolutions.com') || incoming.link.includes('stopandgo.net') || incoming.link.includes('recordepessoal.pt') || incoming.link.includes('apedalar.pt');
 
         if (isExistingFpc && isIncomingOrg) {
             if (!extraLinksList.some(l => l.link?.toLowerCase() === existing.link.toLowerCase())) {
@@ -103,10 +103,11 @@ export function mergeEventRecords(existing, incoming) {
                     ? 'Inscrições Stop & Go'
                     : incoming.source?.includes('Recorde Pessoal')
                         ? 'Inscrições Recorde Pessoal'
-                        : incoming.source?.includes('Classificações')
-                            ? 'Classificações e Resultados'
-                            : 'Página da Organização';
-
+                        : incoming.source?.includes('Apedalar')
+                            ? 'Inscrições Apedalar'
+                            : incoming.source?.includes('Classificações')
+                                ? 'Classificações e Resultados'
+                                : 'Página da Organização';
             if (!extraLinksList.some(l => l.link?.toLowerCase() === incoming.link.toLowerCase())) {
                 extraLinksList.push({ label: incomingLabel, link: incoming.link });
             }

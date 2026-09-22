@@ -428,6 +428,7 @@ export default function Conta() {
                             { id: 'Cabreira', name: 'Cabreira Solutions', desc: 'Granfondos, eventos de lazer e turismo desportivo.' },
                             { id: 'Stop and Go', name: 'Stop and Go', desc: 'Provas de BTT, Ciclismo, Granfondos e cronometragens oficiais.' },
                             { id: 'Recorde Pessoal', name: 'Recorde Pessoal', desc: 'Inscrições, Passeios BTT, Maratonas e eventos desportivos.' },
+                            { id: 'Apedalar', name: 'Apedalar', desc: 'Inscrições, Gestão de eventos, Cronometragem.' },
                             { id: 'Classificações.net', name: 'Classificações.net', desc: 'Volta a Portugal, GPs, 24h BTT, Taças e classificações oficiais.' }
                         ].map(source => {
                             const isSelected = selectedSources.includes(source.id);

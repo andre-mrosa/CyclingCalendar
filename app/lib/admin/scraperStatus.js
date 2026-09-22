@@ -131,6 +131,7 @@ export function parseScraperStatus({ startLog = null, completionLog = null, logs
             cabreira: /(\d+) provas (?:atualizadas|processadas)/i,
             stopandgo: /(?:concluída\s*\((\d+)\s*provas|(\d+)\s*provas de ciclismo)/i,
             recordepessoal: /(?:concluída\s*\((\d+)\s*provas|(\d+)\s*provas de ciclismo|concluído em)/i,
+            apedalar: /(?:concluída\s*\((\d+)\s*provas|(\d+)\s*provas de ciclismo|encontrados\s*(\d+)\s*eventos)/i,
             classificacoes: /(?:concluída\s*\((\d+)\s*provas|(\d+)\s*(?:já sincronizadas|provas oficiais enriquecidas))/i,
             deepScrape: /(\d+)\s*programas/i,
             unification: /(\d+)\s*provas fundidas/i,
