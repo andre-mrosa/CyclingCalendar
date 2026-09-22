@@ -49,6 +49,7 @@ export default function EventDetailBody({ event, t, language, standalone, closeM
             <button className={styles.button} onClick={handleShare}><Share2 size={16} />{t(shareCopied ? 'action_copied' : 'action_share')}</button>
         </div>
         {loading && <p className={styles.muted} role="status">{t('action_loading_data')}</p>}
+        {(descriptionHtml || bannerHtml) && <details className={styles.section} open><summary>{t('planning_description')}</summary><div className={`${styles.content} ${styles.richText}`} onClick={handleHtmlClick} dangerouslySetInnerHTML={{ __html: bannerHtml + descriptionHtml }} /></details>}
         {hasRoutes && <section className={styles.section}>
             <h3>{t('summary_routes_distances')}</h3>
             <div className={styles.routes}>{routes.map((route, index) => <div className={styles.route} key={index}>{route}</div>)}</div>
@@ -94,7 +95,6 @@ export default function EventDetailBody({ event, t, language, standalone, closeM
             </div>
         </details>}
         {(event.prizes || event.insurance) && <details className={styles.section}><summary>{t('detail_prizes_insurance')}</summary><div className={styles.content}>{[['prizes', 'summary_prizes'], ['insurance', 'summary_insurance']].filter(([key]) => event[key]).map(([key, label]) => <section key={key}><h4>{t(label)}</h4><div className={styles.richText} dangerouslySetInnerHTML={{ __html: event[key] }} /></section>)}</div></details>}
-        {(descriptionHtml || bannerHtml) && <details className={styles.section}><summary>{t('planning_description')}</summary><div className={`${styles.content} ${styles.richText}`} onClick={handleHtmlClick} dangerouslySetInnerHTML={{ __html: bannerHtml + descriptionHtml }} /></details>}
         <div className={styles.calendar}>{children}</div>
         <footer className={styles.sources}>{t('planning_sources')}: {(event._mergedSources || [event.source]).filter(Boolean).join(' · ')}{event.updatedAt && <> · {t('planning_updated')} {new Intl.DateTimeFormat(language, { dateStyle: 'medium' }).format(new Date(event.updatedAt))}</>}</footer>
     </div>;
