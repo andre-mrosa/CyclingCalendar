@@ -2,6 +2,7 @@ import { withEventLocation } from '@/app/lib/eventLocation';
 import { prisma } from '@/app/lib/db';
 import { getEventDiscipline, getEventCategories } from '@/app/utils/eventClassifier';
 import { withRegistrationDates } from '@/app/utils/registrationDates';
+import { sanitizeEventHtml } from '@/app/lib/sanitizeHtml';
 
 export async function GET(request, { params }) {
     try {
@@ -19,13 +20,13 @@ export async function GET(request, { params }) {
             }
         });
 
-        if (!event) {
+        if (!event || event.source?.includes('Quarentena')) {
             return Response.json({ success: false, error: 'Event not found' }, { status: 404 });
         }
 
         // Convert stringified arrays back to arrays for frontend
         const formattedEvent = {
-            ...withRegistrationDates(withEventLocation(event)),
+            ...sanitizeEventHtml(withRegistrationDates(withEventLocation(event))),
             tag: getEventDiscipline(event),
             escaloes: getEventCategories(event),
             extraLinks: event.extraLinks ? (typeof event.extraLinks === 'string' ? JSON.parse(event.extraLinks) : event.extraLinks) : []

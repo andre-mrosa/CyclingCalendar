@@ -2,7 +2,8 @@ const SOURCE_DEFS = {
     fpc: ['FPCiclismo', 'Calendários FPC — eventos processados, não novos'],
     cabreira: ['Cabreira Solutions', 'Granfondos & Provas — eventos processados, não novos'],
     stopandgo: ['Stop & Go', 'Sitemap Ciclismo/BTT — eventos processados, não novos'],
-    recordepessoal: ['Recorde Pessoal', 'Eventos e inscrições de Ciclismo/BTT — processados, não novos']
+    recordepessoal: ['Recorde Pessoal', 'Eventos e inscrições de Ciclismo/BTT — processados, não novos'],
+    apedalar: ['Apedalar', 'Eventos de ciclismo — processados, não novos']
 };
 const STEP_DEFS = {
     classificacoes: ['Resultados & PDFs', 'Classificações.net'],
@@ -37,6 +38,7 @@ function entityId(message) {
     if (/cabreira/i.test(message)) return 'cabreira';
     if (/stop\s*(and|&)\s*go|stopandgo/i.test(message)) return 'stopandgo';
     if (/recorde\s*pessoal/i.test(message)) return 'recordepessoal';
+    if (/apedalar/i.test(message)) return 'apedalar';
     return null;
 }
 
@@ -138,7 +140,7 @@ export function parseScraperStatus({ startLog = null, completionLog = null, logs
             translation: /(\d+)\s*eventos traduzidos/i
         };
         const count = patterns[id] && message.match(patterns[id]);
-        if (count) target.count = Number(count[1] ?? count[2]);
+        if (count && (count[1] ?? count[2] ?? count[3]) !== undefined) target.count = Number(count[1] ?? count[2] ?? count[3]);
         if (id !== 'fpc' && /concluída|com sucesso|já sincronizadas|deep scraping fpc:.*atualizados/i.test(message) && log.level !== 'ERROR') target.status = 'done';
     }
 

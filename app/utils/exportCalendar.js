@@ -10,6 +10,7 @@ export function exportEventsToICS(events, filename = 'cycling_calendar.ics') {
     document.body.appendChild(link);
     link.click();
     link.remove();
-    URL.revokeObjectURL(url);
+    // WebKit may start reading the blob after click() returns.
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
     return true;
 }

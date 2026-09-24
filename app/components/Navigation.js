@@ -52,7 +52,7 @@ export default function Navigation() {
         let cancelled = false;
         let authorized = false;
         const fetchNotifications = async () => {
-            if (!authorized || cancelled) return;
+            if (!authorized || cancelled || document.visibilityState !== 'visible') return;
             try {
                 const response = await fetch('/api/admin/notifications');
                 const data = await response.json();
@@ -72,7 +72,7 @@ export default function Navigation() {
             } catch { if (!cancelled) setAdminIdentity(null); }
         };
         verify();
-        const timer = setInterval(fetchNotifications, 15000);
+        const timer = setInterval(fetchNotifications, 60000);
         window.addEventListener('admin-notif-update', fetchNotifications);
         return () => { cancelled = true; clearInterval(timer); window.removeEventListener('admin-notif-update', fetchNotifications); };
     }, [isLoaded, isSignedIn, user?.id, getToken, pathname]);

@@ -1,46 +1,16 @@
-import { NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/db';
-import { deepScrapeFPC } from '@/app/lib/scrapers/fpc';
-import { deepScrapeCabreira } from '@/app/lib/scrapers/cabreira';
-
+import { sanitizeRichHtml } from '@/app/lib/sanitizeHtml';
+// Public reads never scrape a caller-selected URL or write to an event.
 export async function GET(request) {
-    const { searchParams } = new URL(request.url);
-    const targetUrl = searchParams.get('url');
-    const eventId = searchParams.get('id'); // Passado pelo EventModal
-
-    if (!targetUrl) {
-        return NextResponse.json({ error: 'Missing url parameter' }, { status: 400 });
-    }
-
+    const params = new URL(request.url).searchParams;
+    const id = params.get('id'), url = params.get('url');
+    if (!id && !url) return Response.json({ error: 'ID ou URL obrigatório' }, { status: 400 });
     try {
-        let programaHtml = null;
-
-        if (targetUrl.includes('fpciclismo.pt')) {
-            programaHtml = await deepScrapeFPC(targetUrl);
-        } else if (targetUrl.includes('cabreirasolutions.com')) {
-            programaHtml = await deepScrapeCabreira(targetUrl);
-        }
-
-        // Se encontrou dados e nos enviaram um ID, guardamos na BD para a próxima ser instantâneo!
-        if (eventId && programaHtml) {
-            try {
-                await prisma.event.update({
-                    where: { id: eventId },
-                    data: { programa: programaHtml }
-                });
-            } catch (dbErr) {
-                console.error('Falha ao guardar cache do programa na BD:', dbErr);
-            }
-        }
-
-        return NextResponse.json({ 
-            success: true, 
-            programa: programaHtml,
-            additionalLinks: [] // Links agora vão formatados diretamente no HTML
+        const event = await prisma.event.findFirst({
+            where: { ...(id ? { id } : { link: url }), NOT: { source: { contains: 'Quarentena' } } },
+            select: { programa: true },
         });
-
-    } catch (error) {
-        console.error('Error extracting programa:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
-    }
+        if (!event) return Response.json({ error: 'Prova não encontrada' }, { status: 404 });
+        return Response.json({ success: true, programa: sanitizeRichHtml(event.programa), additionalLinks: [] });
+    } catch { return Response.json({ error: 'Programa temporariamente indisponível' }, { status: 503 }); }
 }

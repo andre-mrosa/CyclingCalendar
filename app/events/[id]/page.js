@@ -4,6 +4,10 @@ import { getEventDiscipline, getEventCategories } from '@/app/utils/eventClassif
 import { parseScheduleServer } from '@/app/utils/scheduleParserServer';
 import EventDetailClient from './EventDetailClient';
 import { notFound } from 'next/navigation';
+import { cache } from 'react';
+import { sanitizeEventHtml } from '@/app/lib/sanitizeHtml';
+
+const loadEvent = cache(async id => sanitizeEventHtml(await prisma.event.findUnique({ where: { id }, include: { translations: true } })));
 
 export async function generateMetadata({ params }) {
     const resolvedParams = await params;
@@ -12,11 +16,9 @@ export async function generateMetadata({ params }) {
     
     if (!id) return { title: 'Prova de Ciclismo | Cycling Calendar' };
 
-    const event = await prisma.event.findUnique({
-        where: { id }
-    });
+    const event = await loadEvent(id);
 
-    if (!event) {
+    if (!event || event.source?.includes('Quarentena')) {
         return {
             title: 'Prova Não Encontrada | Cycling Calendar Portugal',
             description: 'A prova solicitada não foi encontrada no calendário oficial de ciclismo.'
@@ -53,14 +55,9 @@ export default async function EventPage({ params }) {
         notFound();
     }
 
-    const event = await prisma.event.findUnique({
-        where: { id },
-        include: {
-            translations: true
-        }
-    });
+    const event = await loadEvent(id);
 
-    if (!event) {
+    if (!event || event.source?.includes('Quarentena')) {
         notFound();
     }
 

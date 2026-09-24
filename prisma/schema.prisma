@@ -39,6 +39,7 @@ model Event {
   gpxData              String?
   lat                  Float?
   lng                  Float?
+  listSummary          Json?
   
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt

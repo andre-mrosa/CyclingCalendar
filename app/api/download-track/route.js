@@ -1,84 +1,20 @@
-import fs from 'fs';
-import path from 'path';
-
+import { readLocalGpx } from '../../lib/localGpx.js';
+import { readPublicResource } from '../../lib/safeRemote.js';
 export async function GET(request) {
-    const { searchParams } = new URL(request.url);
-    const eventId = searchParams.get('eventId');
-    const url = searchParams.get('url');
-    const title = searchParams.get('title') || 'track';
-
-    const safeTitle = title
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-z0-9_-]/g, '_')
-        .replace(/_+/g, '_')
-        .replace(/^_|_$/g, '');
-
-    const downloadFilename = `${safeTitle || 'track'}.gpx`;
-
-    // 1. Tentar ler ficheiro local existente no servidor por eventId
-    if (eventId) {
-        const cleanEventId = eventId.replace(/[^a-zA-Z0-9_-]/g, '_');
-        const localPath = path.join(process.cwd(), 'public', 'media', 'events', cleanEventId, 'track.gpx');
-        if (fs.existsSync(localPath)) {
-            const fileBuffer = fs.readFileSync(localPath);
-            return new Response(fileBuffer, {
-                status: 200,
-                headers: {
-                    'Content-Type': 'application/gpx+xml; charset=utf-8',
-                    'Content-Disposition': `attachment; filename="${downloadFilename}"`,
-                    'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800'
-                }
-            });
+    const params = new URL(request.url).searchParams;
+    const id = params.get('eventId'), url = params.get('url');
+    const title = (params.get('title') || 'track').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 100) || 'track';
+    try {
+        let buffer = null;
+        if (id && /^[a-zA-Z0-9_-]+$/.test(id)) buffer = await readLocalGpx('/media/events/' + id + '/track.gpx');
+        if (!buffer && url?.startsWith('/')) buffer = await readLocalGpx(url);
+        if (!buffer && url && !url.startsWith('/')) {
+            const remote = new URL(url);
+            if (!remote.pathname.toLowerCase().endsWith('.gpx')) return new Response('URL GPX inválida', { status: 400 });
+            buffer = (await readPublicResource(url)).buffer;
         }
-    }
-
-    // 2. Se for um caminho local direto (/media/events/...)
-    if (url && url.startsWith('/media/events/')) {
-        const relativePath = url.replace(/^\//, '');
-        const localPath = path.join(process.cwd(), 'public', relativePath);
-        if (fs.existsSync(localPath)) {
-            const fileBuffer = fs.readFileSync(localPath);
-            return new Response(fileBuffer, {
-                status: 200,
-                headers: {
-                    'Content-Type': 'application/gpx+xml; charset=utf-8',
-                    'Content-Disposition': `attachment; filename="${downloadFilename}"`,
-                    'Cache-Control': 'public, max-age=86400'
-                }
-            });
-        }
-    }
-
-    // 3. Se for uma URL remota real (.gpx)
-    if (url && url.startsWith('http') && /\.gpx/i.test(url)) {
-        try {
-            const res = await fetch(url, {
-                headers: {
-                    'User-Agent': 'CyclingCalendar/2.0 (GPX Downloader)'
-                },
-                signal: AbortSignal.timeout(15000)
-            });
-
-            if (res.ok) {
-                const arrayBuffer = await res.arrayBuffer();
-                return new Response(arrayBuffer, {
-                    status: 200,
-                    headers: {
-                        'Content-Type': 'application/gpx+xml; charset=utf-8',
-                        'Content-Disposition': `attachment; filename="${downloadFilename}"`,
-                        'Cache-Control': 'public, max-age=86400'
-                    }
-                });
-            }
-        } catch (e) {
-            console.error('[download-track] Error fetching remote GPX:', e.message);
-        }
-    }
-
-    return new Response('Track GPX não disponível para download imediato.', {
-        status: 404,
-        headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-    });
+        if (!buffer) return new Response('Track GPX não disponível', { status: 404 });
+        if (!/<gpx[\s>]/i.test(buffer.subarray(0, 4096).toString())) return new Response('Ficheiro GPX inválido', { status: 415 });
+        return new Response(buffer, { headers: { 'Content-Type': 'application/gpx+xml; charset=utf-8', 'Content-Disposition': 'attachment; filename="' + title + '.gpx"', 'X-Content-Type-Options': 'nosniff', 'Cache-Control': 'public, max-age=86400' } });
+    } catch { return new Response('URL ou ficheiro não permitido', { status: 400 }); }
 }

@@ -32,7 +32,8 @@ async function translateSingle(text, sourceLang = 'pt', targetLang = 'en') {
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
             },
-            next: { revalidate: 86400 } // Cache 24h
+            next: { revalidate: 86400 }, // Cache 24h
+            signal: AbortSignal.timeout(8000)
         });
 
         if (!res.ok) {
@@ -57,8 +58,11 @@ async function translateSingle(text, sourceLang = 'pt', targetLang = 'en') {
 
 export async function POST(request) {
     try {
-        const body = await request.json();
+        let body;
+        try { body = await request.json(); } catch { return NextResponse.json({ success: false, error: 'Invalid JSON' }, { status: 400 }); }
+        if (!body || typeof body !== 'object' || Array.isArray(body)) return NextResponse.json({ success: false, error: 'Invalid payload' }, { status: 400 });
         const { text, texts, sourceLang = 'pt', targetLang = 'en' } = body;
+        if (![sourceLang, targetLang].every(lang => ['pt', 'en', 'es', 'fr'].includes(lang)) || (texts && (!Array.isArray(texts) || texts.length > 25)) || [text, ...(Array.isArray(texts) ? texts : [])].some(value => value !== undefined && (typeof value !== 'string' || value.length > 10000))) return NextResponse.json({ success: false, error: 'Invalid payload' }, { status: 400 });
 
         if (Array.isArray(texts)) {
             const results = await Promise.all(

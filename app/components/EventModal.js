@@ -156,7 +156,8 @@ function EventModalContent({ selectedEvent, setSelectedEvent, favorites, toggleF
             programaCleanHtml = programaContentFull.replace(bannerMatch[0], '');
         }
     } else if (activeEvent?.image) {
-        fpcBannerHtml = `<div class="fpc-banner mb-6"><img src="${activeEvent.image}" title="Clica para ampliar o cartaz" class="max-h-[440px] sm:max-h-[480px] w-auto max-w-full rounded-xl mx-auto object-contain shadow-lg border border-slate-300 dark:border-line cursor-zoom-in hover:scale-[1.01] transition-transform" alt="Cartaz Oficial" /></div>`;
+        const imageAttribute = String(activeEvent.image).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        fpcBannerHtml = `<div class="fpc-banner mb-6"><img src="${imageAttribute}" title="Clica para ampliar o cartaz" class="max-h-[440px] sm:max-h-[480px] w-auto max-w-full rounded-xl mx-auto object-contain shadow-lg border border-slate-300 dark:border-line cursor-zoom-in hover:scale-[1.01] transition-transform" alt="Cartaz Oficial" /></div>`;
     }
 
     if (activeEvent?.source === 'FPC') {

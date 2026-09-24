@@ -105,7 +105,8 @@ test('structured completion alone restores stages, metrics and partial outcomes'
     const result = parse(start('a'), [finish(100, {
         runId: 'a', status: 'partial', yearsScraped: ['2026', '2027'], fpcEvents: { 2026: 375, 2027: 0 },
         sources: { fpc: { status: 'done', count: 375, duration: '70s', metrics: fpcMetrics },
-            cabreira: { status: 'error', count: 3, message: 'HTTP 503' }, stopandgo: { status: 'done', count: 20 } },
+            cabreira: { status: 'error', count: 3, message: 'HTTP 503' }, stopandgo: { status: 'done', count: 20 },
+            recordepessoal: { status: 'done', count: 0 }, apedalar: { status: 'done', count: 0 } },
         steps: { translation: { status: 'error', count: null, message: 'offline' } },
         errors: ['Cabreira: HTTP 503', 'Translation error: offline']
     })]);
@@ -270,7 +271,7 @@ test('save metrics report every outcome once and never report rejected writes', 
     for (const action of ['created', 'updated', 'merged', 'quarantined']) {
         const outcomes = [];
         const existing = { ...event, id: action === 'merged' ? 'other' : 'new', source: action === 'quarantined' ? 'Quarentena' : 'FPC' };
-        const db = { event: {
+        const db = { municipality: { findMany: async () => [] }, locationCache: { findUnique: async () => ({ lat: 0 }) }, event: {
             findUnique: async () => ['updated', 'quarantined'].includes(action) ? existing : null,
             findMany: async () => action === 'merged' ? [existing] : [],
             update: async ({ data }) => ({ ...existing, ...data }),
@@ -280,7 +281,7 @@ test('save metrics report every outcome once and never report rejected writes', 
         assert.deepEqual(outcomes, [action]);
     }
     let reported = false;
-    const db = { event: { findUnique: async () => null, findMany: async () => [], create: async () => { throw new Error('write failed'); } } };
+    const db = { municipality: { findMany: async () => [] }, locationCache: { findUnique: async () => ({ lat: 0 }) }, event: { findUnique: async () => null, findMany: async () => [], create: async () => { throw new Error('write failed'); } } };
     await assert.rejects(saveOrMergeEvent(db, event, { onResult: () => { reported = true; } }), /write failed/);
     assert.equal(reported, false);
     db.event.create = async ({ data }) => data;
@@ -294,6 +295,7 @@ async function pipelineFixture(overrides = {}) {
         scrapeFPC: async (_year, { onResult }) => { await onResult({ action: 'updated' }); return 1; },
         scrapeCabreira: async (_year, { onResult }) => { await onResult({ action: 'created' }); return 1; },
         scrapeStopAndGo: async ({ onResult }) => { await onResult({ action: 'quarantined' }); return 1; },
+        scrapeRecordePessoal: async () => 0, scrapeApedalar: async () => 0,
         scrapeClassificacoes: async () => 0, incrementalDeepScrapeFPC: async () => 0,
         translateAllPendingEvents: async () => ({ success: true, translatedCount: 0 }),
         prisma: { event: { findMany: async () => [] } },
@@ -321,7 +323,7 @@ async function runPipelinePlan(pipeline, options = {}) {
 
 test('daily and weekly plans isolate FPC into one bounded stage per season', async () => {
     const pipeline = await pipelineFixture();
-    assert.deepEqual(pipeline.getPipelineStages('daily', ['2026', '2027']), ['cabreira', 'stopandgo', 'classificacoes', 'finalize']);
+    assert.deepEqual(pipeline.getPipelineStages('daily', ['2026', '2027']), ['cabreira', 'stopandgo', 'recordepessoal', 'apedalar', 'classificacoes', 'finalize']);
     assert.deepEqual(pipeline.getPipelineStages('weekly', ['2026', '2027']), ['fpc-2026', 'fpc-2027', 'deepScrape', 'finalize']);
 });
 
@@ -332,7 +334,7 @@ test('pipeline leases every bounded stage and publishes complete metrics', async
     let locks = 0;
     const pipeline = await pipelineFixture({ withScraperLock: async work => { locks++; if (locks === 1) assert.equal(logs.length, 0); return work(); } });
     const result = await runPipelinePlan(pipeline);
-    assert.equal(locks, 7);
+    assert.equal(locks, 9);
     assert.equal(result.success, true);
     const summary = readLogDetails(logs.at(-1));
     assert.equal(summary.status, 'success');

@@ -1,10 +1,33 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildIcsContent, generateGoogleCalendarUrl, getCalendarDates } from '../app/utils/calendarExport.js';
+import { buildIcsContent, generateGoogleCalendarUrl, getCalendarDates, downloadIcsFile } from '../app/utils/calendarExport.js';
+import { exportEventsToICS } from '../app/utils/exportCalendar.js';
 import { buildEventsIcsContent, getGoogleCalendarDatePayload } from '../app/utils/calendarExport.js';
 import { detectRaceDate } from '../app/utils/detectRaceDate.js';
 
 const event = { id: 'prova/1', title: 'Prova de ciclismo', date: '20 SET 2026', sortDate: '2026-09-20T00:00:00.000Z' };
+
+test('ICS downloads keep the blob available while the browser starts reading it', t => {
+    const callbacks = [];
+    const urls = [];
+    const revoked = [];
+    let clicks = 0;
+    globalThis.window = { location: { origin: 'https://calendar.test' } };
+    globalThis.document = {
+        createElement: () => ({ setAttribute() {}, click() { clicks++; }, remove() {} }),
+        body: { appendChild() {}, removeChild() {} },
+    };
+    t.after(() => { delete globalThis.window; delete globalThis.document; });
+    t.mock.method(URL, 'createObjectURL', () => { const url = `blob:test-${urls.length}`; urls.push(url); return url; });
+    t.mock.method(URL, 'revokeObjectURL', url => revoked.push(url));
+    t.mock.method(globalThis, 'setTimeout', (callback, delay) => { assert.ok(delay >= 1000); callbacks.push(callback); });
+    assert.equal(downloadIcsFile(event), true);
+    assert.equal(exportEventsToICS([event]), true);
+    assert.equal(clicks, 2);
+    assert.deepEqual(revoked, []);
+    callbacks.forEach(callback => callback());
+    assert.deepEqual(revoked, urls);
+});
 
 test('Alves Barbosa and ordinary weekends preserve every published day in all exports', () => {
     for (const title of ['Grande Prémio Alves Barbosa', 'Taça de Portugal XCO']) {

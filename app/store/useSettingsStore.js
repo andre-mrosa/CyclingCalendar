@@ -1,10 +1,11 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { DEFAULT_PALETTE, SETTINGS_STORAGE_KEY, normalizePalette } from '../lib/colorPalettes.js';
+import { CALENDAR_SOURCES } from '../lib/calendarSources.js';
 
 export const DEFAULT_TABS = ['Geral', 'Minha Agenda', 'Nacionais', 'Internacionais', 'Taças', 'Regionais', 'Lazer', 'Favoritos'];
 
-export const DEFAULT_SOURCES = ['FPC', 'Cabreira', 'Stop and Go', 'Classificações.net'];
+export const DEFAULT_SOURCES = CALENDAR_SOURCES;
 
 export const useSettingsStore = create(
     persist(
@@ -62,15 +63,12 @@ export const useSettingsStore = create(
         }),
         {
             name: SETTINGS_STORAGE_KEY,
-            onRehydrateStorage: () => (state) => {
-                if (state && Array.isArray(state.selectedSources)) {
-                    if (!state.selectedSources.includes('Stop and Go')) {
-                        state.selectedSources = [...state.selectedSources, 'Stop and Go'];
-                    }
-                    if (!state.selectedSources.includes('Classificações.net')) {
-                        state.selectedSources = [...state.selectedSources, 'Classificações.net'];
-                    }
-                }
+            version: 1,
+            migrate: (state) => {
+                const previousDefault = ['FPC', 'Cabreira', 'Stop and Go', 'Classificações.net'];
+                const selected = state.selectedSources;
+                // Upgrade the old default once, preserving deliberately selected subsets.
+                return { ...state, selectedSources: !selected || (selected.length === previousDefault.length && previousDefault.every(source => selected.includes(source))) ? CALENDAR_SOURCES : selected };
             }
         }
     )

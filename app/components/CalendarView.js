@@ -126,7 +126,7 @@ export default function CalendarView({
         setSelectedRegiao(applyDefaultRegiao ? defaultRegiao || 'Todas' : 'Todas');
     }
 
-    const effectiveSources = (selectedSources && selectedSources.length > 0) ? selectedSources : ['FPC', 'Cabreira', 'Stop and Go', 'Recorde Pessoal', 'Apedalar'];
+    const effectiveSources = [...((selectedSources && selectedSources.length > 0) ? selectedSources : ['FPC', 'Cabreira', 'Stop and Go', 'Classificações.net', 'Recorde Pessoal', 'Apedalar'])].sort();
     const eventsUrl = `/api/events?view=list-v2&years=all&sources=${effectiveSources.join(',')}`;
     const eventsCacheKey = `cycling_calendar_list_v2_${[...effectiveSources].sort().join(',')}`;
     const { data: fetchedEvents, error, isLoading: loading, mutate } = useSWR(
@@ -839,10 +839,11 @@ export default function CalendarView({
                                                             targetTitle: event.title
                                                         });
                                                     }}
-                                                    className={styles.favoriteButton} 
-                                                    aria-label={isEventFavorited ? t('btn_remove_favorites') : t('btn_add_favorites')}
+                                                    className={styles.eventFavorite}
+                                                    aria-pressed={isEventFavorited}
+                                                    aria-label={isEventFavorited ? t('card_remove_favorite') : t('card_add_favorite')}
                                                     data-active={isEventFavorited}
-                                                    title={isEventFavorited ? t('btn_remove_favorites') : t('btn_add_favorites')}
+                                                    title={isEventFavorited ? t('card_remove_favorite') : t('card_add_favorite')}
                                                 >
                                                     <Star size={18} fill={isEventFavorited ? "currentColor" : "none"} />
                                                 </button>

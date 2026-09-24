@@ -1,122 +1,25 @@
-import { withEventLocation } from '@/app/lib/eventLocation';
+import { unstable_cache } from 'next/cache';
 import { prisma } from '@/app/lib/db';
-import { getEventDiscipline, getEventCategories } from '@/app/utils/eventClassifier';
-import { toCalendarListEvent } from '@/app/utils/calendarList';
+import { CALENDAR_SOURCES, normalizeCalendarSources } from '@/app/lib/calendarSources';
+import { parseListQuery, queryCalendarList } from '@/app/lib/calendarListQuery';
 export const dynamic = 'force-dynamic';
-
+const load = unstable_cache((years, sources) => queryCalendarList(prisma, years, sources), ['calendar-list-summary-v1'], { revalidate: 60, tags: ['calendar-events'] });
 export async function GET(request) {
+    const params = new URL(request.url).searchParams;
+    let years, sources;
     try {
-        const { searchParams } = new URL(request.url);
-        const yearsParam = searchParams.get('years') || searchParams.get('year') || new Date().getFullYear().toString();
-        const isAllYears = yearsParam === 'all';
-        const years = isAllYears ? [] : yearsParam.split(',').filter(Boolean).map(y => y.trim());
-        
-        const sourcesParam = searchParams.get('sources') || 'FPC,Cabreira,Stop and Go,Classificações.net';
-        const activeSources = sourcesParam.split(',').map(s => s.trim()).filter(Boolean);
-
-        const andConditions = [{ NOT: { source: { contains: 'Quarentena' } } }];
-
-        if (activeSources.length > 0) {
-            andConditions.push({
-                OR: activeSources.map(src => ({
-                    source: {
-                        contains: src,
-                        mode: 'insensitive'
-                    }
-                }))
-            });
-        }
-
-        if (!isAllYears && years.length > 0) {
-            andConditions.push({
-                OR: years.map(year => {
-                    const y = parseInt(year, 10);
-                    if (isNaN(y)) {
-                        return { date: { contains: year } };
-                    }
-                    const startOfYear = new Date(`${y}-01-01T00:00:00.000Z`);
-                    const endOfYear = new Date(`${y}-12-31T23:59:59.999Z`);
-                    return {
-                        OR: [
-                            { date: { contains: year } },
-                            { sortDate: { gte: startOfYear, lte: endOfYear } }
-                        ]
-                    };
-                })
-            });
-        }
-
-        const events = await prisma.event.findMany({
-            where: {
-                AND: andConditions
-            },
-            select: {
-                id: true,
-                title: true,
-                date: true,
-                sortDate: true,
-                details: true,
-                tag: true,
-                ambito: true,
-                escaloes: true,
-                licenca: true,
-                regiao: true,
-                distrito: true,
-                source: true,
-                link: true,
-                organizador: true,
-                registrationOpensAt: true,
-                registrationClosesAt: true,
-                prices: true,
-                programa: true,
-                lat: true,
-                lng: true,
-                translations: {
-                    select: {
-                        language: true,
-                        title: true,
-                        details: true
-                    }
-                }
-            },
-            orderBy: {
-                sortDate: 'asc'
-            }
-        });
-
-        // Convert stringified arrays back to arrays and assign accurate discipline tag
-        const formattedEvents = events.map(e => ({
-            ...toCalendarListEvent(withEventLocation(e)),
-            tag: getEventDiscipline(e),
-            escaloes: getEventCategories(e)
-        }));
-
-        return Response.json(
-            { success: true, events: formattedEvents },
-            {
-                headers: {
-                    'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60'
-                }
-            }
-        );
-
+        years = parseListQuery(params);
+        const requested = params.has('sources') ? params.get('sources').split(',').map(s => s.trim()).filter(Boolean) : CALENDAR_SOURCES;
+        sources = normalizeCalendarSources(requested);
+        if (!sources.length || requested.some(s => !CALENDAR_SOURCES.includes(s))) throw new Error('Fonte inválida');
+    } catch {
+        return Response.json({ success: false, error: 'Filtros inválidos' }, { status: 400, headers: { 'Cache-Control': 'no-store' } });
+    }
+    try {
+        const events = await load(years, sources);
+        return Response.json({ success: true, events }, { headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60' } });
     } catch (error) {
-        console.error('Error in API:', error);
-        const databaseUnavailable =
-            ['P1001', 'P1002', 'P2024'].includes(error?.code) ||
-            ['ECONNREFUSED', 'ENOTFOUND', 'ETIMEDOUT'].includes(error?.cause?.code) ||
-            error?.name === 'PrismaClientInitializationError';
-
-        return Response.json(
-            {
-                success: false,
-                code: 'EVENTS_UNAVAILABLE',
-                error: 'Events temporarily unavailable'
-            },
-            {
-                status: databaseUnavailable ? 503 : 500,
-                headers: { 'Cache-Control': 'no-store' }
-            }
-        );
+        console.error('Calendar unavailable:', error?.code || error?.name);
+        return Response.json({ success: false, code: 'EVENTS_UNAVAILABLE', error: 'Events temporarily unavailable' }, { status: 503, headers: { 'Cache-Control': 'no-store' } });
     }
 }

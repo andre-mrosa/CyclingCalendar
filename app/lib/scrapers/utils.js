@@ -2,6 +2,7 @@ import { normalizeLocation } from '../../utils/eventLocation.js';
 import * as cheerio from 'cheerio';
 
 import sharp from 'sharp';
+import sanitize from 'sanitize-html';
 
 export const fetchImageAsBase64 = async (url) => {
     if (!url) return null;
@@ -298,6 +299,7 @@ export const parsePTDateToISO = (dateStr) => {
 
 export const sanitizeHtml = (htmlString) => {
     if (!htmlString || typeof htmlString !== 'string') return '';
+    htmlString = sanitize(htmlString, { allowedTags: sanitize.defaults.allowedTags, allowedAttributes: { a: ['href', 'title', 'target', 'rel'] }, allowedSchemes: ['http', 'https', 'mailto', 'tel'], allowProtocolRelative: false });
     try {
         const $c = cheerio.load(htmlString);
         // Remove dangerous tags completely
@@ -322,7 +324,7 @@ export const sanitizeHtml = (htmlString) => {
         $c('*').removeAttr('style').removeAttr('class').removeAttr('id').removeAttr('dir').removeAttr('align');
         $c('span').each(function() { $c(this).replaceWith($c(this).html()); });
         $c('img, svg, i').remove();
-        return $c('body').html() || htmlString;
+        return $c('body').html() || '';
     } catch {
         return '';
     }

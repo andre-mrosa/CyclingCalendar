@@ -15,6 +15,19 @@ do cabeçalho da própria prova, com pedidos espaçados e erro explícito em HTT
 
 Testes: `npm test` (ou `node --test tests/*.test.mjs`).
 
+### Base de dados e listagem leve
+
+O histórico de migrações é PostgreSQL. A preparação de uma base nova, o baseline
+de instalações existentes e o preenchimento dos resumos estão documentados em
+[`maintenance/DATABASE.md`](maintenance/DATABASE.md). Executar as migrações antes
+de publicar esta versão. A listagem lê `Event.listSummary`, em vez dos programas
+HTML completos; um trigger invalida o resumo quando os dados relevantes mudam.
+O cache da origem tem 60 segundos e o do CDN 300 segundos.
+
+As dependências incluem overrides de segurança para dependências transitivas de
+Prisma, Workflow e Workbox. Manter estes overrides até as dependências diretas
+incorporarem versões corrigidas, verificando com `npm audit`, build e testes.
+
 ### Painel de administração e contagens
 
 O inventário distingue provas únicas publicadas, todos os registos guardados

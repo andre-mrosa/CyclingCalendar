@@ -1,4 +1,7 @@
 const messages = {
+    error_geolocation_not_supported: "Ce navigateur ne prend pas en charge la géolocalisation.",
+    error_geolocation_permission: "Impossible d’obtenir votre position. Vérifiez les autorisations du navigateur.",
+    distancia_estimada: "Distance estimée à vol d’oiseau",
     location_start: "Départ indiqué dans le programme officiel ; consultez le plan de l’organisation.",
     location_locality: "Localité publiée ; lieu de départ exact à confirmer.",
     location_district: "Seul le district est connu ; lieu de l’épreuve à confirmer.",

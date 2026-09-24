@@ -61,7 +61,7 @@ export default function AdminDashboardPage() {
     const [stats, setStats] = useState(null);
     const [isLoadingStats, setIsLoadingStats] = useState(true);
     const [isLiveRefreshing, setIsLiveRefreshing] = useState(false);
-    const [autoRefreshStats, setAutoRefreshStats] = useState(true);
+    const [autoRefreshStats, setAutoRefreshStats] = useState(false);
     const [analyticsTimeframe, setAnalyticsTimeframe] = useState('7d');
     const statsRequest = useRef(0);
 
@@ -313,7 +313,7 @@ export default function AdminDashboardPage() {
         if (!isSignedIn || !autoRefreshStats || activeTab !== 'stats') return;
         const timer = setInterval(() => {
             if (document.visibilityState === 'visible') loadStats(true);
-        }, 15000);
+        }, 60000);
         return () => clearInterval(timer);
     }, [isSignedIn, autoRefreshStats, activeTab, loadStats]);
     useEffect(() => {

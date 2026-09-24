@@ -1,4 +1,7 @@
 const messages = {
+    error_geolocation_not_supported: "A geolocalização não é suportada por este navegador.",
+    error_geolocation_permission: "Não foi possível obter a localização. Verifica as permissões do navegador.",
+    distancia_estimada: "Distância estimada em linha reta",
     location_start: "Partida indicada no programa oficial; confirma o ponto no mapa da organização.",
     location_locality: "Localidade publicada; ponto de partida por confirmar.",
     location_district: "Apenas o distrito está identificado; local da prova por confirmar.",

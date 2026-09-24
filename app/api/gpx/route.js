@@ -1,69 +1,19 @@
-import { NextResponse } from 'next/server';
 import { parseGpxElevation } from '../../utils/gpxParser.js';
-
-// Cache simples em memória para evitar re-descarregar ficheiros GPX frequentemente
-const gpxCache = new Map();
-const MAX_CACHE_SIZE = 100;
-
+import { readPublicResource } from '../../lib/safeRemote.js';
+import { readLocalGpx } from '../../lib/localGpx.js';
+const cache = new Map();
 export async function GET(request) {
+    const url = new URL(request.url).searchParams.get('url');
+    if (!url) return Response.json({ error: 'URL do GPX é obrigatória' }, { status: 400 });
     try {
-        const { searchParams } = new URL(request.url);
-        const gpxUrl = searchParams.get('url');
-
-        if (!gpxUrl) {
-            return NextResponse.json({ error: 'URL do GPX é obrigatória' }, { status: 400 });
-        }
-
-        // Validação de segurança: apenas permitir URLs HTTP/HTTPS válidas
-        let parsedUrl;
-        try {
-            parsedUrl = new URL(gpxUrl);
-            if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
-                throw new Error('Protocolo inválido');
-            }
-        } catch (e) {
-            return NextResponse.json({ error: 'URL inválida' }, { status: 400 });
-        }
-
-        // Verificar cache
-        if (gpxCache.has(gpxUrl)) {
-            return NextResponse.json(gpxCache.get(gpxUrl), {
-                headers: {
-                    'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800'
-                }
-            });
-        }
-
-        // Fetch do GPX
-        const response = await fetch(gpxUrl, {
-            headers: { 'User-Agent': 'CyclingCalendar/2.0 (GPX Elevation Parser)' },
-            signal: AbortSignal.timeout(10000)
-        });
-
-        if (!response.ok) {
-            return NextResponse.json({ error: `Falha ao transferir GPX (HTTP ${response.status})` }, { status: 502 });
-        }
-
-        const xmlText = await response.text();
-        const data = parseGpxElevation(xmlText);
-
-        if (!data) {
-            return NextResponse.json({ error: 'Ficheiro GPX sem pontos de elevação válidos' }, { status: 422 });
-        }
-
-        // Guardar em cache
-        if (gpxCache.size >= MAX_CACHE_SIZE) {
-            const firstKey = gpxCache.keys().next().value;
-            gpxCache.delete(firstKey);
-        }
-        gpxCache.set(gpxUrl, data);
-
-        return NextResponse.json(data, {
-            headers: {
-                'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800'
-            }
-        });
-    } catch (err) {
-        return NextResponse.json({ error: 'Erro ao processar ficheiro GPX: ' + err.message }, { status: 500 });
-    }
+        const cached = cache.get(url);
+        if (cached && cached.expires > Date.now()) return Response.json(cached.data);
+        const buffer = url.startsWith('/') ? await readLocalGpx(url) : (await readPublicResource(url)).buffer;
+        if (!buffer) return Response.json({ error: 'GPX não encontrado' }, { status: 404 });
+        const data = parseGpxElevation(buffer.toString('utf8'));
+        if (!data) return Response.json({ error: 'GPX sem pontos de elevação válidos' }, { status: 422 });
+        if (cache.size >= 100) cache.delete(cache.keys().next().value);
+        cache.set(url, { data, expires: Date.now() + 3600000 });
+        return Response.json(data, { headers: { 'Cache-Control': 'public, max-age=3600' } });
+    } catch { return Response.json({ error: 'URL ou GPX não permitido' }, { status: 400 }); }
 }

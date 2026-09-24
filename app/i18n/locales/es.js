@@ -1,4 +1,7 @@
 const messages = {
+    error_geolocation_not_supported: "Este navegador no admite geolocalización.",
+    error_geolocation_permission: "No se pudo obtener tu ubicación. Revisa los permisos del navegador.",
+    distancia_estimada: "Distancia estimada en línea recta",
     location_start: "Salida indicada en el programa oficial; consulta el mapa de la organización.",
     location_locality: "Localidad publicada; salida exacta por confirmar.",
     location_district: "Solo se conoce el distrito; lugar de la prueba por confirmar.",

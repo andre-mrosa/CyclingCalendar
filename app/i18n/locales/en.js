@@ -1,4 +1,7 @@
 const messages = {
+    error_geolocation_not_supported: "Geolocation is not supported by this browser.",
+    error_geolocation_permission: "Unable to get your location. Check your browser permissions.",
+    distancia_estimada: "Estimated straight-line distance",
     location_start: "Start listed in the official programme; check the organiser’s map.",
     location_locality: "Published locality; exact start still to be confirmed.",
     location_district: "Only the district is known; race venue still to be confirmed.",

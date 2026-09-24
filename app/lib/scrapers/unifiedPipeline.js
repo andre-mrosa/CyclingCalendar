@@ -53,8 +53,8 @@ async function runPipeline(triggeredBy, options) {
         pipelineStage,
         scope,
         sourcesScraped: scope === 'daily'
-            ? ['Cabreira', 'Stop and Go', 'Classificações.net']
-            : scope === 'weekly' ? ['FPC'] : ['FPC', 'Cabreira', 'Stop and Go', 'Classificações.net'],
+              ? ['Cabreira', 'Stop and Go', 'Recorde Pessoal', 'Apedalar', 'Classificações.net']
+              : scope === 'weekly' ? ['FPC'] : ['FPC', 'Cabreira', 'Stop and Go', 'Recorde Pessoal', 'Apedalar', 'Classificações.net'],
         yearsScraped: years, fpcEvents: {}, deepScrapedFpc: null, mergedEvents: null,
         sources: {}, steps: {}, errors: []
     };
