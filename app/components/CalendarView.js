@@ -1,6 +1,8 @@
 "use client";
 import { formatEventLocation } from '../utils/eventLocation';
-import { calculateDistance } from '../utils/distance';
+import { calculateDistance, validCoordinates } from '../utils/distance';
+import { useRoadDistances } from '../hooks/useRoadDistances';
+import { cachedRoadDistance } from '../utils/roadDistanceCache';
 import { useClientReady, useOnline, useStoredString, writeStored } from '../hooks/useBrowserState';
 import { useToday } from '../hooks/useToday';
 import { FavoriteChanges, FavoriteSubscription } from './FavoritePlanning';
@@ -75,6 +77,7 @@ export default function CalendarView({
     applyDefaultRegiao = false
 }) {
     const { t, language } = useTranslation();
+    const roadDistances = useRoadDistances();
     const pathname = usePathname();
     const { 
         defaultEscalao, 
@@ -195,9 +198,9 @@ export default function CalendarView({
         filtered = filterCalendarByDate(filtered, pastEventsFilter, today, selectedYears);
         filtered = filtered.filter(event => matchesPeriod(event, quickPeriod));
 
-        if (homeLocation && homeLocation.lat && homeLocation.lng && maxDistanceFilter) {
+        if (validCoordinates(homeLocation) && maxDistanceFilter) {
             filtered = filtered.filter(event => {
-                if (!event.lat || !event.lng) return false; // Hide events with unknown locations
+                if (!validCoordinates(event)) return false; // Hide events with unknown locations
                 const dist = calculateDistance(homeLocation.lat, homeLocation.lng, event.lat, event.lng);
                 if (dist === null) return false;
                 return dist <= maxDistanceFilter;
@@ -595,7 +598,7 @@ export default function CalendarView({
 
                             <div className="flex flex-col gap-2">
                                 <label className="text-xs text-muted uppercase tracking-wider font-bold ml-1">
-                                    Distância
+                                    {t('distance_filter_straight')}
                                 </label>
                                 {homeLocation ? (
                                     <div className="flex items-center gap-2">
@@ -811,9 +814,11 @@ export default function CalendarView({
                                 const location = formatEventLocation(event) || t('summary_location_tbd');
 
                                 let distanceText = null;
-                                if (homeLocation && homeLocation.lat && homeLocation.lng && event.lat && event.lng) {
+                                const roadMeters = cachedRoadDistance(roadDistances, homeLocation, event);
+                                if (validCoordinates(homeLocation) && validCoordinates(event)) {
                                     const distanceValue = calculateDistance(homeLocation.lat, homeLocation.lng, event.lat, event.lng);
-                                    if (distanceValue !== null) distanceText = `${distanceValue} km`;
+                                    if (roadMeters !== null) distanceText = t('road_distance', { km: new Intl.NumberFormat(language, { maximumFractionDigits: 1 }).format(roadMeters / 1000) });
+                                    else if (distanceValue !== null) distanceText = t('distance_straight', { km: distanceValue });
                                 }
 
                                                 return (
@@ -853,7 +858,7 @@ export default function CalendarView({
                                                     <MapPin size={12} className="shrink-0 mr-1" />
                                                     <span>{location}</span>
                                                     {distanceText && (
-                                                        <span className="ml-2 inline-flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded text-[10px]" title={t('distancia_estimada')}>
+                                                        <span className="ml-2 inline-flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded text-[10px]" title={t(roadMeters !== null ? 'road_destination_note' : 'distancia_estimada')}>
                                                             {distanceText}
                                                         </span>
                                                     )}

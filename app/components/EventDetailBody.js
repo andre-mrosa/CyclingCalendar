@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { ArrowUpRight, Bookmark, Share2, X, CalendarPlus } from 'lucide-react';
 import EventRouteProfile from './EventRouteProfile';
+import RoadDistance from './RoadDistance';
 import WeatherWidget from './WeatherWidget';
 import { eventDateDisplay } from '../utils/eventDateDisplay';
 import { formatEventTitle } from '../utils/calendarPresentation';
@@ -50,6 +51,7 @@ export default function EventDetailBody({ event, t, language, standalone, closeM
         </div>
         {loading && <p className={styles.muted} role="status">{t('action_loading_data')}</p>}
         {(descriptionHtml || bannerHtml) && <details className={styles.section} open><summary>{t('planning_description')}</summary><div className={`${styles.content} ${styles.richText}`} onClick={handleHtmlClick} dangerouslySetInnerHTML={{ __html: bannerHtml + descriptionHtml }} /></details>}
+        <RoadDistance event={event} />
         {hasRoutes && <section className={styles.section}>
             <h3>{t('summary_routes_distances')}</h3>
             <div className={styles.routes}>{routes.map((route, index) => <div className={styles.route} key={index}>{route}</div>)}</div>

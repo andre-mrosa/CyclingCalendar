@@ -208,15 +208,16 @@ export default function Conta() {
                             </h3>
                             <p className="text-sm text-muted">
                                 {homeLocation?.label 
-                                    ? `Ativo. As provas mostram a distância à tua localização.` 
-                                    : 'Define a tua localização para veres a distância às provas.'}
+                                      ? 'Ativo. O filtro usa a distância em linha reta; podes consultar o percurso no detalhe da prova.'
+                                      : 'Define a tua localização para veres a distância em linha reta às provas.'}
                             </p>
                         </div>
                         <div className="flex flex-col sm:flex-row gap-3">
                             {homeLocation && (
                                 <select 
                                     className="h-10 px-3.5 text-sm rounded-xl border border-line bg-soft text-ink outline-none focus:border-brand transition-colors font-medium cursor-pointer"
-                                    value={maxDistanceFilter || ''} 
+                                      aria-label={t('distance_filter_straight')}
+                                      value={maxDistanceFilter || ''} 
                                     onChange={(e) => setMaxDistanceFilter(e.target.value ? Number(e.target.value) : null)}
                                 >
                                     <option value="">Todas as distâncias</option>

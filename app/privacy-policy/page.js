@@ -49,7 +49,7 @@ export default function PrivacyPolicy() {
       icon: Globe,
       title: '3. Partilha de Dados',
       content: (
-        <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">O Cycling Calendar <strong className="text-emerald-400">nunca vende, aluga ou partilha</strong> os teus dados pessoais com terceiros para fins de marketing. Os únicos serviços externos envolvidos no processo são a <strong>Vercel</strong> (alojamento), o <strong>Clerk</strong> (gestão de autenticação segura) e a <strong>Supabase</strong> (base de dados), operando todos sob estritas normas de segurança e privacidade.</p>
+        <div className="space-y-3 text-slate-600 dark:text-slate-400 text-sm leading-relaxed"><p>O Cycling Calendar não vende, aluga ou partilha os teus dados pessoais com terceiros para fins de marketing. Utiliza a Vercel para alojamento, o Clerk para autenticação e a Supabase para base de dados.</p><p>Quando disponível, o cálculo de distância de carro só é efetuado quando o solicitas. As coordenadas da tua localização e da prova são enviadas ao OpenRouteService através do nosso servidor. O resultado e as coordenadas ficam guardados no teu navegador por até 7 dias e podem ser reutilizados na memória do servidor durante até 24 horas; este cálculo não é guardado na base de dados. Ao abrires o percurso no Google Maps, as coordenadas incluídas no link são partilhadas com a Google. Os mapas incorporados também utilizam serviços da Google.</p></div>
       ),
     },
     {
