@@ -13,3 +13,13 @@
     .panel button, .panel a { display: inline-flex; align-items: center; min-height: 44px; }
     .link input { font-size: 16px; min-height: 44px; }
 }
+
+.panel summary { cursor: pointer; min-height: 44px; display: list-item; align-content: center; }
+.panel { min-width: 0; overflow-wrap: anywhere; }
+.actions > * { min-width: 0; max-width: 100%; }
+.actions label { min-height: 44px; display: flex; align-items: center; gap: 8px; }
+.actions .link { flex-direction: column; align-items: stretch; }
+@media (max-width: 760px) { .actions .link { width: 100%; } }
+
+.searchPanel { padding: 4px 14px; margin: 12px 0; }
+.searchPanel[open] { padding-bottom: 14px; }

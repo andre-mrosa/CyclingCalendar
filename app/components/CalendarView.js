@@ -18,6 +18,9 @@ import { filterEvents } from '../utils/filterEvents';
 import { mergeEvents } from '../utils/mergeEvents';
 import { chooseCalendarEvents, toCalendarListEvent, sortCalendarEvents, filterCalendarByDate } from '../utils/calendarList';
 import { exportEventsToICS } from '../utils/exportCalendar';
+import SavedSearches from './SavedSearches';
+import AlertPreferences from './AlertPreferences';
+import { decodeSearch, normalizeSearch, searchUrl } from '../utils/savedSearches';
 import EventModal from './EventModal';
 import EscalaoAssistant from './EscalaoAssistant';
 import { trackEvent } from './AnalyticsTracker';
@@ -83,12 +86,17 @@ export default function CalendarView({
         defaultEscalao, 
         defaultRegiao,
         selectedSources,
-        homeLocation,
+        homeLocation: defaultHomeLocation,
         setHomeLocation,
-        maxDistanceFilter,
-        setMaxDistanceFilter
+        maxDistanceFilter: defaultMaxDistance
     } = useSettingsStore();
     
+    const [searchOrigin, setSearchOrigin] = useState(undefined);
+    const homeLocation = searchOrigin === undefined ? defaultHomeLocation : searchOrigin;
+    const [distanceOverride, setMaxDistanceFilter] = useState(undefined);
+    const maxDistanceFilter = distanceOverride === undefined ? defaultMaxDistance : distanceOverride;
+    const [searchSources, setSearchSources] = useState(null);
+    const [urlReady, setUrlReady] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [viewMode, setViewMode] = useState('list');
     const [selectedMonth, setSelectedMonth] = useState(null); // formato 'YYYY-MM'
@@ -123,13 +131,15 @@ export default function CalendarView({
     const [previousDefaults, setPreviousDefaults] = useState(null);
     if (previousDefaults !== defaultsKey) {
         setPreviousDefaults(defaultsKey);
-        setSelectedEscaloes(forceEscalao ? [forceEscalao] : defaultEscalao && defaultEscalao !== 'Todos' ? [defaultEscalao] : []);
-        setSelectedAmbito(forceAmbito || 'Todos');
-        setSelectedLicenca(forceLicenca || 'Todas');
-        setSelectedRegiao(applyDefaultRegiao ? defaultRegiao || 'Todas' : 'Todas');
+        if (!(typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('filters'))) {
+            setSelectedEscaloes(forceEscalao ? [forceEscalao] : defaultEscalao && defaultEscalao !== 'Todos' ? [defaultEscalao] : []);
+            setSelectedAmbito(forceAmbito || 'Todos');
+            setSelectedLicenca(forceLicenca || 'Todas');
+            setSelectedRegiao(applyDefaultRegiao ? defaultRegiao || 'Todas' : 'Todas');
+        }
     }
 
-    const effectiveSources = [...((selectedSources && selectedSources.length > 0) ? selectedSources : ['FPC', 'Cabreira', 'Stop and Go', 'Classificações.net', 'Recorde Pessoal', 'Apedalar'])].sort();
+    const effectiveSources = [...((searchSources?.length ? searchSources : selectedSources)?.length > 0 ? (searchSources || selectedSources) : ['FPC', 'Cabreira', 'Stop and Go', 'Classificações.net', 'Recorde Pessoal', 'Apedalar'])].sort();
     const eventsUrl = `/api/events?view=list-v2&years=all&sources=${effectiveSources.join(',')}`;
     const eventsCacheKey = `cycling_calendar_list_v2_${[...effectiveSources].sort().join(',')}`;
     const { data: fetchedEvents, error, isLoading: loading, mutate } = useSWR(
@@ -160,6 +170,45 @@ export default function CalendarView({
         String(currentYear), String(currentYear + 1),
         ...events.map(event => event.sortDate?.slice(0, 4)).filter(year => Number(year) >= currentYear),
     ])).sort(), [explicitYears, currentYear, events]);
+    const searchFilters = { searchTerm, selectedYears: explicitYears, selectedEscaloes, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, quickPeriod, selectedMonth, selectedDay, viewMode, maxDistanceFilter, sources: effectiveSources, ...(maxDistanceFilter && homeLocation ? { origin: { lat: homeLocation.lat, lng: homeLocation.lng } } : {}) };
+    function applySearch(raw) {
+        const value = normalizeSearch(raw);
+        if (!value) return;
+        setSearchTerm(value.searchTerm || ''); setSelectedYears(value.selectedYears?.length ? value.selectedYears : null);
+        setSelectedEscaloes(forceEscalao ? [forceEscalao] : value.selectedEscaloes || []);
+        setSelectedAmbito(forceAmbito || value.selectedAmbito || 'Todos'); setSelectedLicenca(forceLicenca || value.selectedLicenca || 'Todas');
+        setSelectedRegiao(value.selectedRegiao || 'Todas'); setSelectedDistrito(value.selectedDistrito || 'Todos');
+        setMonthFrom(value.monthFrom || 1); setMonthTo(value.monthTo || 12); setSelectedTags(value.selectedTags || []);
+        setSelectedType(value.selectedType || 'Todos'); setPastEventsFilter(value.pastEventsFilter || 'futuros'); setQuickPeriod(value.quickPeriod || '');
+        setSelectedMonth(value.selectedMonth || null); setSelectedDay(value.selectedDay || null); setViewMode(value.viewMode || 'list');
+        setSearchOrigin(value.origin || null); setMaxDistanceFilter(value.maxDistanceFilter); setSearchSources(value.sources?.length ? value.sources : null);
+    }
+    const urlReadyRef = useRef(false);
+    const applySearchRef = useRef(applySearch);
+    useEffect(() => { applySearchRef.current = applySearch; });
+    useEffect(() => {
+        const restore = () => {
+            const value = decodeSearch(new URLSearchParams(window.location.search).get('filters'));
+            if (value) applySearchRef.current(value);
+            else if (urlReadyRef.current) applySearchRef.current({});
+            urlReadyRef.current = true;
+            setUrlReady(true);
+        };
+        restore();
+        window.addEventListener('popstate', restore);
+        return () => window.removeEventListener('popstate', restore);
+    }, []);
+    const serializedSearch = JSON.stringify(searchFilters);
+    useEffect(() => {
+        if (!urlReady) return;
+        const timer = setTimeout(() => {
+            const url = new URL(searchUrl(window.location.href, JSON.parse(serializedSearch)));
+            const event = new URLSearchParams(window.location.search).get('event');
+            if (event) url.searchParams.set('event', event);
+            window.history.replaceState(window.history.state, '', url);
+        }, 350);
+        return () => clearTimeout(timer);
+    }, [serializedSearch, urlReady]);
     const linkedId = mounted ? new URLSearchParams(window.location.search).get('event') : null;
     const linkedEvent = linkedId ? events.find(event => String(event.id) === linkedId || event._allIds?.some(id => String(id) === linkedId)) : null;
     const selectedEvent = eventSelection === undefined ? linkedEvent : eventSelection;
@@ -311,6 +360,7 @@ export default function CalendarView({
         }
         navigator.geolocation.getCurrentPosition(
             (pos) => {
+                setSearchOrigin(undefined);
                 setHomeLocation({
                     lat: pos.coords.latitude,
                     lng: pos.coords.longitude,
@@ -339,6 +389,7 @@ export default function CalendarView({
         setSelectedType('Todos');
         setPastEventsFilter(defaultPastEventsFilter);
         setSearchTerm('');
+        setMaxDistanceFilter(null); setSearchOrigin(undefined); setSearchSources(null);
     };
 
 
@@ -395,7 +446,7 @@ export default function CalendarView({
                             <option value="passados">{t('filter_past_only')}</option>
                         </select>
                         
-                        {(selectedMonth || selectedDay || quickPeriod || selectedEscaloes.length > 0 || selectedDistrito !== 'Todos' || selectedRegiao !== 'Todas' || selectedTags.length > 0 || selectedType !== 'Todos' || selectedAmbito !== (forceAmbito || 'Todos') || selectedLicenca !== (forceLicenca || 'Todas') || (explicitYears !== null && JSON.stringify([...selectedYears].sort()) !== JSON.stringify(getDefaultSelectedYears())) || monthFrom !== 1 || monthTo !== 12 || searchTerm !== '' || pastEventsFilter !== defaultPastEventsFilter) && (
+                        {(maxDistanceFilter || selectedMonth || selectedDay || quickPeriod || selectedEscaloes.length > 0 || selectedDistrito !== 'Todos' || selectedRegiao !== 'Todas' || selectedTags.length > 0 || selectedType !== 'Todos' || selectedAmbito !== (forceAmbito || 'Todos') || selectedLicenca !== (forceLicenca || 'Todas') || (explicitYears !== null && JSON.stringify([...selectedYears].sort()) !== JSON.stringify(getDefaultSelectedYears())) || monthFrom !== 1 || monthTo !== 12 || searchTerm !== '' || pastEventsFilter !== defaultPastEventsFilter) && (
                             <button 
                                 onClick={clearAllFilters}
                                 title={t('filter_clear_all')}
@@ -407,6 +458,7 @@ export default function CalendarView({
                     </div>
                     
                 </div>
+                <SavedSearches filters={searchFilters} apply={applySearch} />
                 {/* Expanded controls preserve every existing filter. */}
                 <div id="calendar-quick-filters" className={styles.quickFilters} data-expanded={showFilters}>
                     <div className={styles.periods}>
@@ -694,7 +746,7 @@ export default function CalendarView({
                 {selectedDay && <div className={styles.daySelection}><span>{new Intl.DateTimeFormat(language, { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(selectedDay + 'T12:00:00Z'))}</span><button type="button" onClick={() => setSelectedDay(null)}>{t('ui_clear_day')}<X size={14} /></button></div>}
                 {viewMode === 'calendar' && <MonthCalendar expanded month={calendarMonth} events={matchingEvents} selectedDay={selectedDay} onDay={chooseDay} onMonth={browseMonth} />}
                 <FavoriteChanges events={events} favorites={favorites} ready={Array.isArray(fetchedEvents) && !error && !isOffline} onSelect={setSelectedEvent} />
-                {filterByFavorites && <FavoriteSubscription />}
+                {filterByFavorites && <><AlertPreferences /><FavoriteSubscription /></>}
                 {(filterByAgenda || filterByFavorites) && !isInitialLoading && <AgendaOverview mode={filterByAgenda ? "agenda" : "favorites"} events={events.filter(event => filterByAgenda ? isMarked(event.id, 'event', event._allIds || []) : favorites.includes(event.id) || event._allIds?.some(id => favorites.includes(id)))} onSelect={setSelectedEvent} />}
                 {isInitialLoading && (
                     <div className="flex flex-col items-center justify-center py-16 text-slate-400">

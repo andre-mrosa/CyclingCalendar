@@ -93,7 +93,7 @@ export async function scrapeRecordePessoal(options = {}) {
                 };
                 
                 if (years.includes(new Date(sortDateStr).getFullYear().toString())) {
-                    await saveOrMergeEvent(prisma, eventObj, options);
+                    await saveOrMergeEvent(prisma, eventObj, { ...options, verifiedSource: 'Recorde Pessoal' });
                     allEvents.push(eventObj);
                 }
                 

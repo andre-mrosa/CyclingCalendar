@@ -54,6 +54,8 @@ não ciclísticos confirmados passam para a fonte `Quarentena`, preservando IDs
 e dados para recuperação. Falhas HTTP e dados ambíguos ficam sem alteração.
 Os ficheiros de recuperação são locais e estão excluídos do Git.
 
+Pesquisas guardadas, alertas por email e consultas às fontes: configuração e validação em [maintenance/SEARCH-ALERTS.md](maintenance/SEARCH-ALERTS.md).
+
 ## Getting Started
 
 First, run the development server:

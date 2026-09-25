@@ -47,6 +47,8 @@ export async function DELETE(request, { params }) {
 
         const targetEmail = targetUser?.emailAddresses?.find(e => e.id === targetUser?.primaryEmailAddressId)?.emailAddress || targetUser?.emailAddresses?.[0]?.emailAddress || 'Desconhecido';
 
+        await prisma.favoriteAlert.deleteMany({ where: { userId: targetUserId } });
+
         if (mode === 'delete_data') {
             // 1. Limpar apenas dados (favoritos e metadados)
             if (targetUser) {

@@ -52,6 +52,7 @@ export async function POST(req) {
     try {
         if (eventType === 'user.deleted') {
             const userId = data.id;
+            await prisma.favoriteAlert.deleteMany({ where: { userId } });
 
             // Tentar obter o email a partir de pedidos de eliminação registados
             const existingReq = await prisma.accountDeletionRequest.findUnique({

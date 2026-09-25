@@ -87,7 +87,7 @@ export async function scrapeApedalar(prisma, year, options = {}) {
                 // Prevent non-cycling events if possible (though apedalar is almost 100% cycling, they might have trails)
                 if (!isCyclingEvent(title, true)) continue;
                 
-                await saveOrMergeEvent(prisma, eventObj, options);
+                await saveOrMergeEvent(prisma, eventObj, { ...options, verifiedSource: 'Apedalar' });
                 
             } catch (err) {
                 logError('SCRAPER', `Erro a processar Apedalar ${url}: ${err.message}`);

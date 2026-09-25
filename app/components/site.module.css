@@ -420,3 +420,8 @@
   .expandedCalendar .dayEvents { display: none; }
   .monthGrid > button { min-height: 44px; }
 }
+
+@media (max-width: 360px) {
+  .primaryFilters { grid-template-columns: minmax(0, 1fr); }
+  .calendarControls .toolbarActions { grid-template-columns: minmax(0, 1fr); }
+}

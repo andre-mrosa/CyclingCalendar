@@ -341,7 +341,7 @@ export const scrapeFPC = async (year, options = {}) => {
     try {
         await logInfo('SCRAPER', `FPC ${year}: a recolher janeiro a dezembro (incluindo provas passadas)`);
         const events = await fetchFPCCalendar(year);
-        for (const event of events) await saveOrMergeEvent(prisma, event, options);
+        for (const event of events) await saveOrMergeEvent(prisma, event, { ...options, verifiedSource: 'FPC' });
         await logInfo('SCRAPER', `Sincronização FPC ${year} concluída (${events.length} eventos processados)`);
         return events.length;
     } catch (e) {
@@ -373,7 +373,7 @@ export const incrementalDeepScrapeFPC = async (limit = 25) => {
                     const programaHtml = await deepScrapeFPCWithRetry(ev.link);
                     await prisma.event.update({
                         where: { id: ev.id },
-                        data: { programa: programaHtml }
+                        data: { programa: programaHtml, lastVerifiedAt: new Date(), lastVerifiedSource: 'FPC' }
                     });
                     processedCount++;
                 } catch (err) {

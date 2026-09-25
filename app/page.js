@@ -13,7 +13,7 @@ export default function Home() {
     useEffect(() => {
         if (typeof window !== 'undefined') {
             const hasRedirected = sessionStorage.getItem('initial_home_redirect_done');
-            if (!hasRedirected && defaultPage && defaultPage !== '/') {
+            if (!new URLSearchParams(window.location.search).has('filters') && !new URLSearchParams(window.location.search).has('event') && !hasRedirected && defaultPage && defaultPage !== '/') {
                 sessionStorage.setItem('initial_home_redirect_done', 'true');
                 router.replace(defaultPage);
             }

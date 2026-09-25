@@ -204,7 +204,9 @@ export function mergeEventRecords(existing, incoming) {
     });
     const finalAmbito = getAmbito(finalTitle, official?.details || details || '', finalTag, sources);
 
+    const verified = [existing, incoming].filter(event => event.lastVerifiedAt && Number.isFinite(new Date(event.lastVerifiedAt).getTime())).sort((a, b) => new Date(b.lastVerifiedAt) - new Date(a.lastVerifiedAt))[0];
     return {
+        ...(verified ? { lastVerifiedAt: verified.lastVerifiedAt, lastVerifiedSource: verified.lastVerifiedSource } : {}),
         title: finalTitle,
         date: date,
         sortDate: sortDate,
@@ -355,6 +357,7 @@ async function assignEventCoordinates(prisma, event) {
 
 export async function saveOrMergeEvent(prisma, eventData, options = {}) {
     if (!eventData || !eventData.id) return null;
+    const verification = options.verifiedSource ? { lastVerifiedAt: new Date(), lastVerifiedSource: options.verifiedSource } : {};
     await assignEventCoordinates(prisma, eventData);
     // Report only settled database outcomes; telemetry must never turn a saved
     // event into a failed save or trigger a retry of that write.
@@ -373,7 +376,7 @@ export async function saveOrMergeEvent(prisma, eventData, options = {}) {
         const mergedData = mergeEventRecords(existingById, eventData);
         const updated = await prisma.event.update({
             where: { id: existingById.id },
-            data: mergedData
+            data: { ...mergedData, ...verification }
         });
         return report({ action: 'updated', event: updated });
     }
@@ -399,7 +402,7 @@ export async function saveOrMergeEvent(prisma, eventData, options = {}) {
                 const mergedData = mergeEventRecords(candidate, eventData);
                 const updated = await prisma.event.update({
                     where: { id: candidate.id },
-                    data: mergedData
+                    data: { ...mergedData, ...verification }
                 });
                 return report({ action: 'merged', matchedWith: candidate.id, event: updated });
             }
@@ -408,7 +411,7 @@ export async function saveOrMergeEvent(prisma, eventData, options = {}) {
 
     // 3. Se não houver correspondência, cria novo registo
     const created = await prisma.event.create({
-        data: eventData
+        data: { ...eventData, ...verification }
     });
     return report({ action: 'created', event: created });
 }

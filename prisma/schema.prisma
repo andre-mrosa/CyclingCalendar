@@ -40,6 +40,8 @@ model Event {
   lat                  Float?
   lng                  Float?
   listSummary          Json?
+  lastVerifiedAt       DateTime?
+  lastVerifiedSource   String?
   
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
@@ -172,4 +174,20 @@ model LocationCache {
   lat       Float
   lng       Float
   createdAt DateTime @default(now())
+}
+
+model FavoriteAlert {
+  userId       String   @id
+  enabled      Boolean  @default(false)
+  changes      Boolean  @default(true)
+  deadlines    Boolean  @default(true)
+  language     String   @default("pt")
+  snapshot     Json
+  pending      Json?
+  lastSentAt   DateTime?
+  checkedAt    DateTime @default(now())
+  leaseUntil   DateTime?
+  updatedAt    DateTime @updatedAt
+
+  @@index([enabled, checkedAt])
 }

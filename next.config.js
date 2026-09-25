@@ -61,7 +61,7 @@ const withPWA = withPWAInit({
       },
       {
         // Account calendar responses must not be reused across sessions.
-          urlPattern: /\/api\/calendar\//i,
+          urlPattern: /\/api\/(?:calendar|alerts)\//i,
         handler: "NetworkOnly",
       },
     ],

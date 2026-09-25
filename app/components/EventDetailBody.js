@@ -1,3 +1,4 @@
+import { registrationStatus } from '../utils/eventFreshness';
 import { useRef } from 'react';
 import { ArrowUpRight, Bookmark, Share2, X, CalendarPlus } from 'lucide-react';
 import EventRouteProfile from './EventRouteProfile';
@@ -21,7 +22,7 @@ export default function EventDetailBody({ event, t, language, standalone, closeM
     const hasRegistration = links.registrationList.length > 0 || event.prices || event.registrationOpensAt || event.registrationClosesAt;
     const hasRoutes = routes.length > 0 || event.gpxData || documents.some(doc => doc.format === 'GPX');
     const hasProgram = schedule?.type === 'timeline' || (programHtml && !(documents.length && event.source?.includes('FPC')));
-    const closed = event.registrationClosesAt && registrationDaysUntil(event.registrationClosesAt) < 0;
+    const status = registrationStatus(event);
     const cancelled = isCancelled(event);
     const location = formatEventLocation(event);
     const locationInfo = getEventLocation(event);
@@ -43,6 +44,7 @@ export default function EventDetailBody({ event, t, language, standalone, closeM
                 <p className={styles.muted}>{dates.start ? translateDateString(event.date, language) : t('planning_date_unconfirmed')}</p>
             </div>
         </header>
+        <p className={styles.muted}>{t(`fresh_registration_${status}`)}</p>
         {cancelled && <p className={styles.notice} role="status">{t('planning_cancelled')}</p>}
         <div className={styles.actions}>
             {hasRegistration && <button className={styles.primary} onClick={() => { registrationRef.current.open = true; registrationRef.current.scrollIntoView({ block: 'start', behavior: 'smooth' }); }}>{t('tab_registration')}<ArrowUpRight size={16} /></button>}
@@ -69,7 +71,7 @@ export default function EventDetailBody({ event, t, language, standalone, closeM
         {hasRegistration && <details className={styles.section} ref={registrationRef}>
             <summary>{t('tab_registration')}</summary>
             <div className={styles.content}>
-                {closed && <p className={styles.notice}>{t('planning_registration_closed')}</p>}
+                <p className={styles.notice}>{t(`fresh_registration_${status}`)}</p>
                 <div className={styles.registrationDates}>{['open', 'close'].map(kind => {
                     const value = kind === 'open' ? event.registrationOpensAt : event.registrationClosesAt;
                     if (!value) return null;
@@ -98,6 +100,6 @@ export default function EventDetailBody({ event, t, language, standalone, closeM
         </details>}
         {(event.prizes || event.insurance) && <details className={styles.section}><summary>{t('detail_prizes_insurance')}</summary><div className={styles.content}>{[['prizes', 'summary_prizes'], ['insurance', 'summary_insurance']].filter(([key]) => event[key]).map(([key, label]) => <section key={key}><h4>{t(label)}</h4><div className={styles.richText} dangerouslySetInnerHTML={{ __html: event[key] }} /></section>)}</div></details>}
         <div className={styles.calendar}>{children}</div>
-        <footer className={styles.sources}>{t('planning_sources')}: {(event._mergedSources || [event.source]).filter(Boolean).join(' · ')}{event.updatedAt && <> · {t('planning_updated')} {new Intl.DateTimeFormat(language, { dateStyle: 'medium' }).format(new Date(event.updatedAt))}</>}</footer>
+        <footer className={styles.sources}>{t('planning_sources')}: {(event._mergedSources || [event.source]).filter(Boolean).join(' · ')}<p>{event.lastVerifiedAt && Number.isFinite(new Date(event.lastVerifiedAt).getTime()) ? <>{t('fresh_checked')}: {new Intl.DateTimeFormat(language, { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Lisbon' }).format(new Date(event.lastVerifiedAt))} ({event.lastVerifiedSource || event.source}; Europe/Lisbon)</> : t('fresh_unknown')}</p><p>{t('fresh_scope')}</p></footer>
     </div>;
 }

@@ -308,7 +308,7 @@ export async function scrapeStopAndGo(options = {}) {
             const events = await Promise.all(chunk.map(url => scrapeEventPage(url, 2, { years })));
             for (const ev of events) {
                 if (ev) {
-                    await saveOrMergeEvent(prisma, ev, options);
+                    await saveOrMergeEvent(prisma, ev, { ...options, verifiedSource: 'Stop and Go' });
                     savedOrMergedCount++;
                 }
             }

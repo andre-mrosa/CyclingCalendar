@@ -1,5 +1,6 @@
 "use client";
 
+import AlertPreferences from '../components/AlertPreferences';
 import CalendarView from "../components/CalendarView";
 import { useFavorites } from '../hooks/useFavorites';
 import { useTranslation } from '../i18n/useTranslation';
@@ -20,7 +21,7 @@ export default function Favoritos() {
 
 
 
-    if (favorites.length === 0) return <><CalendarEmptyState /><div className="mx-auto max-w-5xl px-4 pb-8"><FavoriteSubscription /></div></>;
+    if (favorites.length === 0) return <><CalendarEmptyState /><div className="mx-auto max-w-5xl px-4 pb-8"><AlertPreferences /><FavoriteSubscription /></div></>;
 
     return (
         <CalendarView

@@ -415,7 +415,7 @@ export const scrapeCabreira = async (year, options = {}) => {
                         image: image,
                     };
 
-                    await saveOrMergeEvent(prisma, { id: id, ...eventData }, options);
+                    await saveOrMergeEvent(prisma, { id: id, ...eventData }, { ...options, verifiedSource: 'Cabreira' });
                     processedCount++;
                 } catch (err) {
                     await logError('SCRAPER', `Erro ao processar prova Cabreira ${ev.title}: ${err.message}`, err);
