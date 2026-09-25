@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { lisbonWallClock } from '../utils/planning.js';
 import { planFavoriteAlerts, alertEmail, verifiedEmail } from '../utils/favoriteAlerts.js';
 import { favoriteAlertEvents } from './favoriteAlertEvents.js';
 
@@ -28,7 +29,7 @@ export async function deliverFavoriteAlert({ db, users, send, jsonNull, row, now
             pending = null;
         }
         if (!pending) {
-            if (row.lastSentAt && now - row.lastSentAt < 24 * 60 * 60 * 1000) return 'limited';
+            if (row.lastSentAt && lisbonWallClock(now).slice(0, 10) === lisbonWallClock(new Date(row.lastSentAt)).slice(0, 10)) return 'limited';
             const events = await favoriteAlertEvents(db, user);
             const plan = planFavoriteAlerts(events, row.snapshot, row, now);
             if (!plan.notices.length) {

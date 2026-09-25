@@ -5,11 +5,11 @@
 1. Aplicar a migração `20260925000000_search_alert_freshness` pelo procedimento em `maintenance/DATABASE.md`, antes de publicar o código.
 2. Gerar o cliente Prisma e publicar normalmente.
 3. Configurar `RESEND_API_KEY`, `ALERTS_FROM_EMAIL` (remetente num domínio verificado no Resend) e `CRON_SECRET` no alojamento. Não usar o remetente de testes do Resend para destinatários reais.
-4. Confirmar a tarefa de `vercel.json`: `/api/cron/alerts`, de hora a hora. Exige `Authorization: Bearer <CRON_SECRET>`.
+4. Confirmar a tarefa de `vercel.json`: `/api/cron/alerts`, diariamente, às 07:15 UTC (a Vercel pode executar dentro dessa hora). Exige `Authorization: Bearer <CRON_SECRET>`.
 
-Publicar não ativa subscrições. Cada utilizador tem de ativar os alertas em Guardadas. Envia para o email principal verificado da conta Clerk. É possível escolher alterações, prazos ou ambos e desativar o resumo. Há no máximo um resumo por 24 horas, só com novidades. Os prazos entram nos três dias anteriores ao fecho, em hora de Lisboa, uma vez por prazo. Emails em português ou inglês, segundo a preferência de idioma.
+Publicar não ativa subscrições. Cada utilizador tem de ativar os alertas em Guardadas. Envia para o email principal verificado da conta Clerk. É possível escolher alterações, prazos ou ambos e desativar o resumo. Há no máximo um resumo por dia de calendário em Lisboa, só com novidades. Os prazos entram nos três dias anteriores ao fecho, em hora de Lisboa, uma vez por prazo. Emails em português ou inglês, segundo a preferência de idioma.
 
-Usa os favoritos sincronizados com a conta, até 500 por conta. Lotes de 100 contas por execução, começando pelas menos recentemente verificadas. Alterações locais aos favoritos só entram depois da sincronização.
+Usa os favoritos sincronizados com a conta, até 500 por conta. Até 100 contas por execução diária, começando pelas menos recentemente verificadas. Alterações locais aos favoritos só entram depois da sincronização.
 
 ## Falhas de envio
 

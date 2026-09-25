@@ -13,7 +13,7 @@ export async function GET(request) {
     const counts = {};
     const client = await clerkClient();
     const resend = new Resend(process.env.RESEND_API_KEY);
-    // Oldest checked users first; a bounded batch resumes fairly next hour.
+    // Oldest checked users first; a bounded batch resumes fairly next run.
     const rows = await prisma.favoriteAlert.findMany({ where: { enabled: true, checkedAt: { lt: new Date(now.getTime() - 50 * 60 * 1000) } }, orderBy: { checkedAt: 'asc' }, take: 100 });
     for (const row of rows) {
         if (Date.now() - now.getTime() > 240000) break;
