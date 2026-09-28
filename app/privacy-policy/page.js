@@ -1,98 +1,18 @@
+import { PUBLIC_PAGES, pageMetadata } from '../lib/seo';
 import { Shield, Eye, Lock, UserCheck, Database, Globe, Cookie, RefreshCw, Mail, Trash2, KeyRound, Calendar, Ban, Check, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
-export const metadata = {
-  title: 'Política de Privacidade | Cycling Calendar',
-  description: 'Como protegemos e tratamos os seus dados no Cycling Calendar.',
-};
+export const metadata = pageMetadata(...PUBLIC_PAGES.find(page => page[0] === '/privacy-policy'));
 
 export default function PrivacyPolicy() {
   const sections = [
-    {
-      icon: Eye,
-      title: '1. Informação que Recolhemos',
-      content: (
-        <>
-          <p className="mb-4 text-slate-700 dark:text-slate-300">Quando utiliza o Cycling Calendar, recolhemos os seguintes dados essenciais para o funcionamento da plataforma:</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-5 bg-slate-100 dark:bg-slate-900/50 rounded-xl border border-slate-300 dark:border-slate-800/60 shadow-sm">
-              <h4 className="text-slate-900 dark:text-white font-bold text-sm mb-3 flex items-center gap-2"><KeyRound size={16} className="text-emerald-400" />Login (via Clerk & Google)</h4>
-              <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
-                <li className="flex gap-2 items-start"><Check size={14} className="text-emerald-500 mt-0.5 shrink-0" /><span>Nome e endereço de e-mail</span></li>
-                <li className="flex gap-2 items-start"><Check size={14} className="text-emerald-500 mt-0.5 shrink-0" /><span>Foto de perfil pública</span></li>
-                <li className="flex gap-2 items-start"><Check size={14} className="text-emerald-500 mt-0.5 shrink-0" /><span>Identificador único de conta</span></li>
-              </ul>
-            </div>
-            <div className="p-5 bg-slate-100 dark:bg-slate-900/50 rounded-xl border border-slate-300 dark:border-slate-800/60 shadow-sm">
-              <h4 className="text-slate-900 dark:text-white font-bold text-sm mb-3 flex items-center gap-2"><Calendar size={16} className="text-emerald-400" />Integração Google Calendar</h4>
-              <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
-                <li className="flex gap-2 items-start"><Check size={14} className="text-emerald-500 mt-0.5 shrink-0" /><span>Token OAuth (apenas para adicionar provas)</span></li>
-                <li className="flex gap-2 items-start"><Ban size={14} className="text-rose-500 mt-0.5 shrink-0" /><span>Não lemos nem apagamos os teus outros eventos pessoais.</span></li>
-              </ul>
-            </div>
-          </div>
-        </>
-      ),
-    },
-    {
-      icon: Database,
-      title: '2. Utilização dos Dados',
-      content: (
-        <ul className="space-y-3 text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-          <li className="flex gap-3"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0"></div><span><strong className="text-slate-800 dark:text-slate-200 font-semibold">Personalização:</strong> Guardar as tuas provas favoritas e gerir o teu calendário.</span></li>
-          <li className="flex gap-3"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0"></div><span><strong className="text-slate-800 dark:text-slate-200 font-semibold">Comunicação:</strong> Enviar atualizações ou avisos importantes (raramente utilizado).</span></li>
-          <li className="flex gap-3"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0"></div><span><strong className="text-slate-800 dark:text-slate-200 font-semibold">Estatísticas:</strong> Analisar tráfego de forma anónima para melhorar o site.</span></li>
-        </ul>
-      ),
-    },
-    {
-      icon: Globe,
-      title: '3. Partilha de Dados',
-      content: (
-        <div className="space-y-3 text-slate-600 dark:text-slate-400 text-sm leading-relaxed"><p>O Cycling Calendar não vende, aluga ou partilha os teus dados pessoais com terceiros para fins de marketing. Utiliza a Vercel para alojamento, o Clerk para autenticação e a Supabase para base de dados.</p><p>Quando disponível, o cálculo de distância de carro só é efetuado quando o solicitas. As coordenadas da tua localização e da prova são enviadas ao OpenRouteService através do nosso servidor. O resultado e as coordenadas ficam guardados no teu navegador por até 7 dias e podem ser reutilizados na memória do servidor durante até 24 horas; este cálculo não é guardado na base de dados. Ao abrires o percurso no Google Maps, as coordenadas incluídas no link são partilhadas com a Google. Os mapas incorporados também utilizam serviços da Google.</p></div>
-      ),
-    },
-    {
-      icon: Cookie,
-      title: '4. Cookies e Tecnologias Semelhantes',
-      content: (
-        <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">Utilizamos apenas cookies essenciais geridos pelo sistema de autenticação (Clerk) e <code>localStorage</code> para guardar as tuas preferências de interface (filtros, dark mode). Não utilizamos cookies de rastreamento invasivos, pixels do Facebook ou Google Analytics.</p>
-      ),
-    },
-    {
-      icon: Lock,
-      title: '5. Segurança da Informação',
-      content: (
-        <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">Toda a comunicação com os nossos servidores é encriptada via HTTPS. Não armazenamos palavras-passe no nosso servidor (o login é 100% gerido por OAuth). Caso um token de acesso expire ou seja revogado, o sistema perde imediatamente a autorização para aceder aos recursos integrados.</p>
-      ),
-    },
-    {
-      icon: UserCheck,
-      title: '6. Os Teus Direitos (RGPD)',
-      content: (
-        <>
-          <p className="text-slate-600 dark:text-slate-400 text-sm mb-4">Ao abrigo do RGPD, tens controlo total sobre os teus dados. Podes diretamente na plataforma:</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
-            <div className="p-3 bg-slate-100 dark:bg-slate-900/40 rounded-lg border border-slate-300 dark:border-slate-800/40">
-              <span className="block text-emerald-400 font-bold mb-1">Aceder</span>
-              <span className="text-[11px] text-slate-500">Ver o teu perfil</span>
-            </div>
-            <div className="p-3 bg-slate-100 dark:bg-slate-900/40 rounded-lg border border-slate-300 dark:border-slate-800/40">
-              <span className="block text-emerald-400 font-bold mb-1">Retificar</span>
-              <span className="text-[11px] text-slate-500">Alterar dados</span>
-            </div>
-            <div className="p-3 bg-slate-100 dark:bg-slate-900/40 rounded-lg border border-slate-300 dark:border-slate-800/40">
-              <span className="block text-rose-400 font-bold mb-1">Apagar</span>
-              <span className="text-[11px] text-slate-500">Direito ao esquecimento</span>
-            </div>
-            <div className="p-3 bg-slate-100 dark:bg-slate-900/40 rounded-lg border border-slate-300 dark:border-slate-800/40">
-              <span className="block text-emerald-400 font-bold mb-1">Revogar</span>
-              <span className="text-[11px] text-slate-500">Remover acessos Google</span>
-            </div>
-          </div>
-        </>
-      ),
-    },
+    { icon: UserCheck, title: '1. Responsável e contacto', content: <div className="space-y-3 text-slate-600 dark:text-slate-400 text-sm leading-relaxed"><p>O responsável pelo tratamento dos dados deste projeto é André Rosa. Para questões de privacidade e exercício de direitos, utiliza o formulário de contacto do site, indicando um endereço de resposta. O calendário pode ser consultado sem criar conta.</p><p><Link href="/contacto" className="underline">Formulário de contacto e privacidade</Link></p></div> },
+    { icon: Eye, title: '2. Dados e finalidades', content: <div className="space-y-3 text-slate-600 dark:text-slate-400 text-sm leading-relaxed"><p>Quando crias conta, o Clerk trata os dados de identificação e autenticação, como nome, email, fotografia e identificador. As provas favoritas, preferências de conta e integrações permitem personalizar o serviço. O navegador guarda preferências de interface, pesquisas guardadas e, se a definires, a tua localização. Ao enviares o formulário, tratamos a mensagem e os dados de contacto que forneceres para responder. Os alertas opcionais usam o email e a seleção de provas para enviar as notificações pedidas.</p></div> },
+    { icon: Calendar, title: '3. Integrações e permissões', content: <div className="space-y-3 text-slate-600 dark:text-slate-400 text-sm leading-relaxed"><p>A integração Google Calendar depende da tua autorização. Pode consultar os calendários disponíveis para localizar ou criar o calendário Cycling Calendar e gerir os registos criados pelo serviço. A aplicação não utiliza os teus restantes eventos pessoais para publicidade. Podes desligar a integração e revogar as permissões na tua conta Google. Se pedires uma distância por estrada, as coordenadas de origem e destino são enviadas ao OpenRouteService através do servidor; os resultados podem ficar em cache no navegador por sete dias e no servidor por 24 horas. Ao abrires mapas externos ou conteúdos incorporados, o respetivo fornecedor recebe os dados necessários à ligação.</p></div> },
+    { icon: Database, title: '4. Fundamentos e conservação', content: <div className="space-y-3 text-slate-600 dark:text-slate-400 text-sm leading-relaxed"><p>Os dados necessários à conta e às funcionalidades que solicitas são tratados para prestar o serviço. As integrações e notificações opcionais dependem da tua escolha e podem ser desativadas. Os registos estritamente necessários à segurança e à resolução de falhas servem o interesse legítimo de proteger o serviço. Os dados de conta são conservados enquanto forem necessários à conta; pedidos de eliminação são tratados através dos controlos da conta e do formulário de contacto. Mensagens são conservadas enquanto forem necessárias para responder e acompanhar o pedido. Os dados locais permanecem no navegador até serem removidos nas definições do site ou do navegador, salvo os prazos de cache indicados acima.</p></div> },
+    { icon: Globe, title: '5. Fornecedores e partilha', content: <div className="space-y-3 text-slate-600 dark:text-slate-400 text-sm leading-relaxed"><p>Utilizamos Vercel para alojamento, Clerk para autenticação, Neon/PostgreSQL para a base de dados e Resend para os envios de email quando configurados. Google e OpenRouteService intervêm nas funcionalidades descritas acima. Estes serviços podem implicar tratamento fora do Espaço Económico Europeu; podes pedir informações sobre os destinatários e as garantias aplicáveis através do formulário. Não vendemos dados pessoais nem os cedemos para publicidade de terceiros.</p></div> },
+    { icon: Cookie, title: '6. Cookies, armazenamento e estatísticas', content: <div className="space-y-3 text-slate-600 dark:text-slate-400 text-sm leading-relaxed"><p>A autenticação utiliza cookies geridos pelo Clerk. O armazenamento local permite recordar escolhas como idioma, tema, filtros, favoritos locais e localização definida pelo utilizador. A versão atual do site não ativa o módulo de estatísticas detalhadas de navegação. A infraestrutura pode manter registos técnicos de pedidos e falhas. Registos de estatísticas recolhidos por versões anteriores podem incluir identificadores de visitante e sessão, páginas e interações, dispositivo, localização aproximada e associação à conta; não devem ser confundidos com dados totalmente anónimos. Podes pedir acesso ou eliminação dos dados que te digam respeito.</p></div> },
+    { icon: Lock, title: '7. Segurança e direitos', content: <div className="space-y-3 text-slate-600 dark:text-slate-400 text-sm leading-relaxed"><p>As ligações ao site usam HTTPS e a autenticação é gerida pelo Clerk. Podes solicitar acesso, retificação, apagamento, limitação, oposição e portabilidade, quando aplicáveis, e retirar consentimentos sem afetar a licitude do tratamento anterior. Podes também apresentar reclamação à Comissão Nacional de Proteção de Dados (CNPD). O exercício destes direitos pode exigir confirmação da identidade para proteger os teus dados. Não utilizamos decisões automatizadas com efeitos jurídicos sobre os utilizadores.</p><p><a href="https://www.cnpd.pt/" className="underline" rel="noopener noreferrer" target="_blank">Comissão Nacional de Proteção de Dados</a></p></div> }
   ];
 
   return (
@@ -128,10 +48,8 @@ export default function PrivacyPolicy() {
         </div>
 
         <footer className="mt-16 text-center border-t border-slate-300 dark:border-slate-800/60 pt-8">
-          <p className="text-xs text-slate-500 font-mono mb-4">Última atualização: {new Date().toLocaleDateString('pt-PT')}</p>
-          <a href="mailto:andre.mrosa@outlook.com" className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-800 hover:text-white transition-all shadow-sm">
-            <Mail size={16} className="text-emerald-400" /> Contactar o administrador
-          </a>
+          <p className="text-xs text-slate-500 font-mono mb-4">Última atualização: 28 de setembro de 2026</p>
+          <Link href="/contacto" className="inline-flex items-center gap-2 underline text-sm"><Mail size={16} /> Contactar através do formulário</Link>
         </footer>
       </div>
     </div>

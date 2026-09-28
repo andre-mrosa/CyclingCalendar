@@ -1,3 +1,4 @@
+import { pageMetadata, publicImage, eventStructuredData, jsonLd } from '@/app/lib/seo';
 import { withEventLocation } from '@/app/lib/eventLocation';
 import { prisma } from '@/app/lib/db';
 import { getEventDiscipline, getEventCategories } from '@/app/utils/eventClassifier';
@@ -12,7 +13,7 @@ const loadEvent = cache(async id => sanitizeEventHtml(await prisma.event.findUni
 export async function generateMetadata({ params }) {
     const resolvedParams = await params;
     const rawId = resolvedParams.id;
-    const id = rawId ? decodeURIComponent(rawId) : null;
+    const id = rawId || null;
     
     if (!id) return { title: 'Prova de Ciclismo | Cycling Calendar' };
 
@@ -28,28 +29,20 @@ export async function generateMetadata({ params }) {
     const title = `${event.title} (${event.date}) | Cycling Calendar Portugal`;
     const description = `Datas, localização e informação disponível para ${event.title} em ${event.distrito || event.details || 'Portugal'}.`;
 
-    return {
-        title,
-        description,
-        openGraph: {
-            title: `${event.title} — ${event.date}`,
-            description,
-            type: 'website',
-            images: event.image ? [{ url: event.image, width: 1200, height: 630, alt: event.title }] : []
-        },
-        twitter: {
-            card: 'summary_large_image',
-            title: `${event.title} (${event.date})`,
-            description,
-            images: event.image ? [event.image] : []
-        }
-    };
+    const meta = pageMetadata('/events/' + encodeURIComponent(event.id), title, description);
+    const image = publicImage(event.image);
+    if (image) {
+        meta.openGraph.images = [{ url: image, alt: event.title }];
+        meta.twitter.images = [image];
+        meta.twitter.card = 'summary_large_image';
+    }
+    return meta;
 }
 
 export default async function EventPage({ params }) {
     const resolvedParams = await params;
     const rawId = resolvedParams.id;
-    const id = rawId ? decodeURIComponent(rawId) : null;
+    const id = rawId || null;
 
     if (!id) {
         notFound();
@@ -86,5 +79,6 @@ export default async function EventPage({ params }) {
         gpxData: parsedGpxData
     };
 
-    return <EventDetailClient event={formattedEvent} />;
+    const structured = eventStructuredData(event);
+    return <>{structured && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(structured) }} />}<EventDetailClient event={formattedEvent} /></>;
 }

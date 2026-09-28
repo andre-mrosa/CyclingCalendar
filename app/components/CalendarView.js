@@ -882,10 +882,12 @@ export default function CalendarView({
                                         <div className="flex flex-col justify-center min-w-0 flex-1">
                                             <div className={styles.eventHeadingRow}>
                                                 <h3>
-                                                    <button type="button" className={styles.eventTitle} onClick={() => {
+                                                    <a href={`/events/${encodeURIComponent(event.id)}`} className={styles.eventTitle} onClick={(click) => {
+                                                        if (click.ctrlKey || click.metaKey || click.shiftKey || click.altKey) return;
+                                                        click.preventDefault();
                                                         setSelectedEvent(event);
                                                         trackEvent('EVENT_CLICK', { targetId: event.id, targetTitle: event.title, path: pathname });
-                                                    }}>{displayTitle}</button>
+                                                    }}>{displayTitle}</a>
                                                 </h3>
                                                 <button 
                                                     onClick={(e) => {

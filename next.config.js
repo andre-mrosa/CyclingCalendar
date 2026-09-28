@@ -70,6 +70,12 @@ const withPWA = withPWAInit({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async redirects() {
+    return [{ source: '/termos', destination: '/terms-of-service', permanent: true }, { source: '/privacidade', destination: '/privacy-policy', permanent: true }];
+  },
+  async headers() {
+    return [{ source: '/api/:path*', headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }] }];
+  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'fpciclismo.pt' },

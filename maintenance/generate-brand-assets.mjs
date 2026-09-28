@@ -20,9 +20,16 @@ for (const [path, size] of [
 await sharp({create:{width:512,height:512,channels:3,background:'#ffffff'}})
  .composite([{input:await sharp(source).resize(360,360).png().toBuffer(),gravity:'centre'}])
  .png().toFile(target('public/brand-maskable.png'));
-const png = await rounded(32).png().toBuffer();
-const ico = Buffer.alloc(22);
-ico.writeUInt16LE(1,2); ico.writeUInt16LE(1,4);
-ico[6]=32; ico[7]=32; ico.writeUInt16LE(1,10); ico.writeUInt16LE(32,12);
-ico.writeUInt32LE(png.length,14); ico.writeUInt32LE(22,18);
-for(const path of ['public/favicon.ico','app/favicon.ico']) await writeFile(target(path),Buffer.concat([ico,png]));
+const sizes = [16, 32, 48, 64];
+const images = await Promise.all(sizes.map(size => rounded(size).png().toBuffer()));
+const header = Buffer.alloc(6 + 16 * images.length);
+header.writeUInt16LE(1, 2); header.writeUInt16LE(images.length, 4);
+let offset = header.length;
+for (let i = 0; i < images.length; i++) {
+ const entry = 6 + i * 16;
+ header[entry] = sizes[i]; header[entry + 1] = sizes[i];
+ header.writeUInt16LE(1, entry + 4); header.writeUInt16LE(32, entry + 6);
+ header.writeUInt32LE(images[i].length, entry + 8); header.writeUInt32LE(offset, entry + 12);
+ offset += images[i].length;
+}
+for (const path of ['public/favicon.ico', 'app/favicon.ico']) await writeFile(target(path), Buffer.concat([header, ...images]));

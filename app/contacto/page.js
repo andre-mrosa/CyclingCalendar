@@ -1,4 +1,5 @@
 "use client";
+import Link from 'next/link';
 import { useState } from 'react';
 import { useClientReady } from '../hooks/useBrowserState';
 import { Mail } from 'lucide-react';
@@ -50,6 +51,7 @@ function ContactForm({ initialMessage }) {
 
             <div className={styles.panel}>
                 <form onSubmit={handleContactSubmit} className="flex flex-col gap-5">
+                    <p className="text-sm text-muted">Usamos os dados enviados para responder ao teu pedido. Para questões de privacidade, indica o teu email de resposta. <Link href="/privacy-policy" className="underline">Política de privacidade</Link>.</p>
                     {submitStatus === 'success' ? (
                         <div className="p-6 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl text-center border border-emerald-500/20 text-base font-medium">
                             <strong className="font-semibold block mb-1">{t('contact_form_thank_you')}</strong> {t('contact_form_success')}

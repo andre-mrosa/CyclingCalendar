@@ -1,10 +1,8 @@
+import { PUBLIC_PAGES, pageMetadata } from '../lib/seo';
 import { Shield, Scale, AlertTriangle, X, RefreshCw, Info, ArrowLeft, Terminal } from 'lucide-react';
 import Link from 'next/link';
 
-export const metadata = {
-  title: 'Termos de Serviço | Cycling Calendar',
-  description: 'Condições de utilização do Cycling Calendar.',
-};
+export const metadata = pageMetadata(...PUBLIC_PAGES.find(page => page[0] === '/terms-of-service'));
 
 export default function TermsOfService() {
   const sections = [
@@ -110,7 +108,7 @@ export default function TermsOfService() {
         </div>
 
         <footer className="mt-16 text-center border-t border-slate-300 dark:border-slate-800/60 pt-8">
-          <p className="text-xs text-slate-500 font-mono mb-4">Última atualização: {new Date().toLocaleDateString('pt-PT')}</p>
+          <p className="text-xs text-slate-500 font-mono mb-4">Última atualização: 28 de setembro de 2026</p>
         </footer>
       </div>
     </div>
