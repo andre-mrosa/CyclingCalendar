@@ -16,7 +16,7 @@ const VALID_SCOPES = new Set(['daily', 'weekly', 'manual']);
 
 export function getPipelineStages(scope, years) {
     const fpcStages = years.map(year => `fpc-${year}`);
-    if (scope === 'daily') return ['cabreira', 'stopandgo', 'recordepessoal', 'apedalar', 'classificacoes', 'finalize'];
+    if (scope === 'daily') return ['cabreira', 'stopandgo', 'recordepessoal', 'apedalar', 'classificacoes', 'deepScrape', 'finalize'];
     if (scope === 'weekly') return [...fpcStages, 'deepScrape', 'finalize'];
     return [...fpcStages, 'cabreira', 'stopandgo', 'recordepessoal', 'apedalar', 'classificacoes', 'deepScrape', 'finalize'];
 }

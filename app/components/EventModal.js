@@ -103,7 +103,7 @@ function EventModalContent({ selectedEvent, setSelectedEvent, favorites, toggleF
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [closeModal, fullscreenImage]);
 
-    const { data: fetchedDetail, isLoading: isLoadingFullEvent } = useSWR(
+    const { data: fetchedDetail, isLoading: isLoadingFullEvent, error: detailError, mutate: retryDetail } = useSWR(
         selectedEvent._hasFullDetails ? null : '/api/events/' + encodeURIComponent(selectedEvent.id), fetchDetail,
         { revalidateOnFocus: false, dedupingInterval: 120000 }
     );
@@ -143,7 +143,7 @@ function EventModalContent({ selectedEvent, setSelectedEvent, favorites, toggleF
     };
 
     // Separate banner from programa content
-    const programaContentFull = activeEvent?.programa || '';
+    const programaContentFull = activeEvent?.programContent ?? activeEvent?.programa ?? '';
     let fpcBannerHtml = '';
     let programaCleanHtml = programaContentFull;
 
@@ -160,18 +160,7 @@ function EventModalContent({ selectedEvent, setSelectedEvent, favorites, toggleF
         fpcBannerHtml = `<div class="fpc-banner mb-6"><img src="${imageAttribute}" title="Clica para ampliar o cartaz" class="max-h-[440px] sm:max-h-[480px] w-auto max-w-full rounded-xl mx-auto object-contain shadow-lg border border-slate-300 dark:border-line cursor-zoom-in hover:scale-[1.01] transition-transform" alt="Cartaz Oficial" /></div>`;
     }
 
-    if (activeEvent?.source === 'FPC') {
-        let fpcDownloadsHtml = '';
-        const downloadsMatch = programaContentFull.match(/<div class="fpc-downloads"[\s\S]*?<\/div>\s*<\/div>/);
-        if (downloadsMatch) fpcDownloadsHtml = downloadsMatch[0];
-
-        if (fpcDownloadsHtml) {
-            programaCleanHtml = fpcDownloadsHtml;
-        } else {
-            // Se não houver downloads, deixar vazio em vez de mostrar lixo
-            programaCleanHtml = '';
-        }
-    }
+    // Legacy FPC sections are split on the server; preserve the remaining schedule.
 
     // Clean up fpc-downloads layout
     programaCleanHtml = programaCleanHtml.replace(/<div class="fpc-downloads" style="margin-top: 1\.5rem;">/g, '<div class="fpc-downloads">');
@@ -594,6 +583,7 @@ function EventModalContent({ selectedEvent, setSelectedEvent, favorites, toggleF
                 onClick={(e) => e.stopPropagation()}
             >
                 
+                {detailError && <p role="alert" className="p-4 text-sm">{t('detail_load_failed')} <button type="button" className="underline" onClick={() => retryDetail()}>{t('detail_retry')}</button></p>}
                 <EventDetailBody event={activeEvent} t={t} language={language} standalone={standalone}
                     closeModal={closeModal} favorite={favorites.includes(activeEvent.id) || activeEvent._allIds?.some(id => favorites.includes(id))}
                     toggleFavorite={toggleFavorite} handleShare={handleShare} shareCopied={shareCopied}

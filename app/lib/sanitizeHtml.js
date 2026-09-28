@@ -1,3 +1,4 @@
+import { withEventDisplayContent } from './eventDisplayContent.js';
 import sanitize from 'sanitize-html';
 export function safeImageSource(value) {
     if (typeof value !== 'string') return '';
@@ -25,5 +26,5 @@ export function sanitizeEventHtml(event) {
         if (typeof clean[key] === 'string') clean[key] = sanitizeRichHtml(clean[key]);
     }
     if (Array.isArray(clean.translations)) clean.translations = clean.translations.map(sanitizeEventHtml);
-    return clean;
+    return withEventDisplayContent(clean);
 }

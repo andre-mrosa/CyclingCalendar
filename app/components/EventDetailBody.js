@@ -21,7 +21,7 @@ export default function EventDetailBody({ event, t, language, standalone, closeM
     const Heading = standalone ? 'h1' : 'h2';
     const hasRegistration = links.registrationList.length > 0 || event.prices || event.registrationOpensAt || event.registrationClosesAt;
     const hasRoutes = routes.length > 0 || event.gpxData || documents.some(doc => doc.format === 'GPX');
-    const hasProgram = schedule?.type === 'timeline' || (programHtml && !(documents.length && event.source?.includes('FPC')));
+    const hasProgram = schedule?.type === 'timeline' || !!programHtml?.trim();
     const status = registrationStatus(event);
     const cancelled = isCancelled(event);
     const location = formatEventLocation(event);

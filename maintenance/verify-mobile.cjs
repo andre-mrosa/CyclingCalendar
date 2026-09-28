@@ -3,7 +3,8 @@ const { chromium } = require(process.env.PLAYWRIGHT_PACKAGE || 'playwright');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const base = process.env.MOBILE_TEST_URL || 'http://localhost:3100';
-const event = { id: 'mobile-fixture', title: 'Maratona de São João', date: '27 SET 2027', sortDate: '2027-09-27T00:00:00.000Z', tag: 'BTT', ambito: 'Lazer', source: 'FPC', distrito: 'Porto', details: 'Porto', escaloes: ['Todos (Aberto)'], licenca: 'Aberta', link: 'https://example.org/prova', extraLinks: [], translations: [], lat: 41.15, lng: -8.6, lastVerifiedAt: '2026-09-25T09:00:00Z', lastVerifiedSource: 'FPC' };
+const future = new Date(); future.setUTCDate(future.getUTCDate() + 2);
+const event = { description: '<p>Percurso de 60 km com abastecimento.</p>', programContent: '<table><tr><td>09:00</td><td>Partida</td></tr></table>', programa: '<table><tr><td>09:00</td><td>Partida</td></tr></table>', id: 'mobile-fixture', title: 'Maratona de São João', date: `${String(future.getUTCDate()).padStart(2,'0')} ${['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'][future.getUTCMonth()]} ${future.getUTCFullYear()}`, sortDate: future.toISOString(), tag: 'BTT', ambito: 'Lazer', source: 'FPC', distrito: 'Porto', details: 'Porto', escaloes: ['Todos (Aberto)'], licenca: 'Aberta', link: 'https://example.org/prova', extraLinks: [], translations: [], lat: 41.15, lng: -8.6, lastVerifiedAt: '2026-09-25T09:00:00Z', lastVerifiedSource: 'FPC' };
 (async () => {
     const browser = await chromium.launch({ headless: true, channel: 'msedge' });
     const results = [];
@@ -41,6 +42,10 @@ const event = { id: 'mobile-fixture', title: 'Maratona de São João', date: '27
             await page.waitForFunction(() => { const el = document.querySelector('[role=dialog]'); return el && getComputedStyle(el).opacity === '1' && getComputedStyle(el.parentElement).opacity === '1'; });
             await page.getByText(/Última consulta bem-sucedida/).waitFor();
             await page.getByText('Inscrições: prazo desconhecido — consulta a organização.', { exact: true }).waitFor();
+            await page.getByText('Percurso de 60 km com abastecimento.', { exact: true }).first().waitFor();
+            const programHeading = page.getByText('Programa', { exact: true });
+            if (!(await programHeading.evaluate(el => el.closest('details').open))) await programHeading.click();
+            await page.getByText('Partida', { exact: true }).waitFor();
             await checkWidth('race detail');
             assert.equal(await page.getByRole('dialog').evaluate(el => el.scrollWidth <= el.clientWidth + 1), true);
             await page.screenshot({ path: `maintenance/mobile-review/detail-${width}.png`, fullPage: false, animations: 'disabled' });

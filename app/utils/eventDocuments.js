@@ -13,7 +13,16 @@ export function getEventDocuments(event) {
         if (!item || typeof item.link !== 'string') continue;
         const link = item.link.trim();
         if (!/^https?:\/\//i.test(link) && !link.startsWith('/media/')) continue;
-        const format = link.match(/\.(pdf|gpx|kml|tcx|fit|zip)(?:$|[?#])/i)?.[1]?.toUpperCase();
+        let format = link.match(/\.(pdf|gpx|kml|tcx|fit|zip)(?:$|[?#])/i)?.[1]?.toUpperCase();
+        // Some publishers expose a document viewer/download endpoint without an extension.
+        // Keep its actual format unknown instead of claiming it is a PDF or GPX.
+        if (!format && /regulamento|guia técnico|track|percurso/i.test(item.label || '')) {
+            try {
+                const url = new URL(link);
+                if ((url.hostname === 'drive.google.com' && url.pathname.startsWith('/file/d/')) ||
+                    (['apedalar.pt', 'www.apedalar.pt'].includes(url.hostname) && /^\/download\/\d+\/?$/.test(url.pathname))) format = 'LINK';
+            } catch { /* Not a public document URL. */ }
+        }
         if (!format || documents.has(link)) continue;
         let label = item.label || '';
         const key = link.toLowerCase();
@@ -28,7 +37,7 @@ export function getEventDocuments(event) {
     }
     const counts = new Map();
     return [...documents.values()].map(doc => {
-        const key = `${doc.label} (${doc.format})`;
+        const key = doc.format === 'LINK' ? doc.label : `${doc.label} (${doc.format})`;
         const count = (counts.get(key) || 0) + 1;
         counts.set(key, count);
         return { ...doc, label: key + (count > 1 ? ` · ${count}` : '') };

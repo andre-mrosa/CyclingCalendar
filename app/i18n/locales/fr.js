@@ -1,4 +1,6 @@
 const messages = {
+    detail_load_failed: "Impossible de charger tous les détails de l’épreuve.",
+    detail_retry: "Réessayer",
     search_link: "Lien de recherche",
     search_save_share: "Enregistrer et partager la recherche",
     search_local_note: "Recherches enregistrées dans ce navigateur (20 maximum).",

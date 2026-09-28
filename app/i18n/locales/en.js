@@ -1,4 +1,6 @@
 const messages = {
+    detail_load_failed: "Could not load all race details.",
+    detail_retry: "Try again",
     search_link: "Search link",
     search_save_share: "Save and share search",
     search_local_note: "Searches saved in this browser (up to 20).",

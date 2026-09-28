@@ -323,7 +323,7 @@ async function runPipelinePlan(pipeline, options = {}) {
 
 test('daily and weekly plans isolate FPC into one bounded stage per season', async () => {
     const pipeline = await pipelineFixture();
-    assert.deepEqual(pipeline.getPipelineStages('daily', ['2026', '2027']), ['cabreira', 'stopandgo', 'recordepessoal', 'apedalar', 'classificacoes', 'finalize']);
+    assert.deepEqual(pipeline.getPipelineStages('daily', ['2026', '2027']), ['cabreira', 'stopandgo', 'recordepessoal', 'apedalar', 'classificacoes', 'deepScrape', 'finalize']);
     assert.deepEqual(pipeline.getPipelineStages('weekly', ['2026', '2027']), ['fpc-2026', 'fpc-2027', 'deepScrape', 'finalize']);
 });
 

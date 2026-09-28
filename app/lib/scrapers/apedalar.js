@@ -1,3 +1,4 @@
+import { parseApedalarDetails } from './eventDetailParsers.js';
 import * as cheerio from 'cheerio';
 import { logInfo, logError } from '../logger.js';
 import { saveOrMergeEvent } from '../merging/eventMerger.js';
@@ -52,9 +53,10 @@ export async function scrapeApedalar(prisma, year, options = {}) {
                 const yearStr = dateMatches[3];
                 
                 const monthMap = { 'janeiro': '01', 'fevereiro': '02', 'março': '03', 'abril': '04', 'maio': '05', 'junho': '06', 'julho': '07', 'agosto': '08', 'setembro': '09', 'outubro': '10', 'novembro': '11', 'dezembro': '12' };
-                const month = monthMap[monthStr] || '01';
+                const month = monthMap[monthStr];
+                if (!month) continue;
                 const sortDate = `${yearStr}-${month}-${day}T00:00:00Z`;
-                const date = `${day} ${monthStr.charAt(0).toUpperCase() + monthStr.slice(1)} ${yearStr}`;
+                const date = `${day} ${['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'][Number(month)-1]} ${yearStr}`;
                 
                 const local = $('h2:contains("ONDE?")').next('div').text().trim().replace(/\s+/g, ' ');
                 const posterRaw = $('img').toArray().find(el => $(el).attr('src') && $(el).attr('src').includes('/media/'));
@@ -69,7 +71,7 @@ export async function scrapeApedalar(prisma, year, options = {}) {
                     date,
                     sortDate,
                     details: local,
-                    tag: isCyclingEvent(title) ? getTagFromTitle(title) : 'BTT',
+                    tag: getTagFromTitle(title),
                     ambito: 'Regional',
                     escaloes: '["Todos (Aberto)"]',
                     licenca: 'Lazer',
@@ -80,9 +82,12 @@ export async function scrapeApedalar(prisma, year, options = {}) {
                     image: posterUrl
                 };
                 
+                const enrichment = parseApedalarDetails(html, url);
+                Object.assign(eventObj, { ...enrichment, extraLinks: JSON.stringify(enrichment.extraLinks) });
+
                 // Extrair texto de QUANTO? (preços) e REGULAMENTO (para extrair texto se houver info útil)
                 const quantoText = $('h2:contains("QUANTO?")').parent().text().replace(/QUANTO\?/i, '').trim().replace(/\s+/g, ' ');
-                if (quantoText) eventObj.prices = quantoText;
+                if (!eventObj.prices && quantoText && quantoText.includes('€')) eventObj.prices = quantoText;
                 
                 // Prevent non-cycling events if possible (though apedalar is almost 100% cycling, they might have trails)
                 if (!isCyclingEvent(title, true)) continue;

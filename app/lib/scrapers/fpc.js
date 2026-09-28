@@ -7,7 +7,7 @@ import {
 } from './utils.js';
 import { logInfo, logError } from '../logger.js';
 import { saveOrMergeEvent } from '../merging/eventMerger.js';
-import { downloadEventAsset, downloadAndParseGpx } from './assetDownloader.js';
+import { fpcDetailLink, prioritizeDetailChecks, needsFpcDetails } from './detailQueue.js';
 
 export const deepScrapeFPC = async (link, eventId = 'fpc-event') => {
     if (!link) return null;
@@ -21,7 +21,7 @@ export const deepScrapeFPC = async (link, eventId = 'fpc-event') => {
 
         // Extrair texto descritivo e imagens (Cartaz/Banner) usando o body inteiro
         // para garantir que não falhamos se eles criarem múltiplos contentores no site
-        const containerHtml = $('body').html();
+        const containerHtml = ($('.main__middle__container').length ? $('.main__middle__container') : $('body')).html();
         if (containerHtml && !containerHtml.includes('Página não encontrada')) {
             const $tempBody = cheerio.load(containerHtml);
             $tempBody('#navigation, #sub_menu_sobre, footer, script, style, iframe, .navbar, .logo, .menu, .menu_lateral_items, .redes_sociais, #menu, .header, nav, header, .three__blocks, .footer, .footer_bg, #rodape, .patrocinadores, .parceiros, .cyclopnet, .copyright').remove(); // remove lixo
@@ -72,7 +72,7 @@ export const deepScrapeFPC = async (link, eventId = 'fpc-event') => {
             $temp('*').contents().filter(function() { return this.nodeType === 3 && this.nodeValue.includes('Cyclopnet'); }).parent().remove();
             $temp('*').contents().filter(function() { return this.nodeType === 3 && this.nodeValue.includes('FPC ©'); }).parent().remove();
 
-            extractedHtml += buttonsHtml;
+            if (buttonsHtml.includes('<a ')) extractedHtml += buttonsHtml;
 
             if (mainImgUrl) {
                 // Normalize relative URLs to absolute
@@ -92,6 +92,7 @@ export const deepScrapeFPC = async (link, eventId = 'fpc-event') => {
                     extractedHtml += `<div class="fpc-banner" style="margin-bottom: 1.5rem;"><img src="${base64Img}" style="${maxWidth} border-radius: var(--radius-md); box-shadow: var(--shadow-md);" alt="Imagem do Evento" loading="lazy" /></div>`;
                 }
             }
+            $temp('form, input, select, textarea, button, table.dc_table_s20').remove();
             $temp('img').remove(); // remover as restantes imagens para texto limpo
             
             const textContent = $temp.text().replace(/\s+/g, ' ').trim();
@@ -109,7 +110,8 @@ export const deepScrapeFPC = async (link, eventId = 'fpc-event') => {
 
         // Extrair Links (Regulamentos, PDFs, KML)
         const pdfLinks = [];
-        $('a, input[type="button"]').each((i, el) => {
+        const $source = cheerio.load(containerHtml || '');
+        $source('a, input[type="button"]').each((i, el) => {
             let href = $(el).attr('href');
             const onclick = $(el).attr('onclick') || $(el).attr('onClick');
             
@@ -153,9 +155,9 @@ export const deepScrapeFPC = async (link, eventId = 'fpc-event') => {
             extractedHtml += `</div></div>`;
         }
 
-        const table = $('table.table-striped, table.dc_table_s20');
+        const table = $('.main__middle__container table.table-striped, .main__middle__container table.dc_table_s20, body > table.table-striped, body > table.dc_table_s20');
         if (table.length > 0) {
-            extractedHtml += sanitizeHtml('<table class="extracted-table" style="margin-top: 1.5rem;">' + table.first().html() + '</table>');
+            extractedHtml += table.toArray().map(element => sanitizeHtml('<table class="extracted-table">' + $(element).html() + '</table>')).join('');
         }
 
         if (extractedHtml.trim().length > 0) {
@@ -351,46 +353,31 @@ export const scrapeFPC = async (year, options = {}) => {
 }
 
 export const incrementalDeepScrapeFPC = async (limit = 25) => {
-    try {
-        const fpcEventsToUpdate = await prisma.event.findMany({
-            where: { 
-                source: { contains: 'FPC' }, 
-                OR: [
-                    { programa: null },
-                    { programa: { startsWith: '<p>Detalhes de programa indisponíveis' } },
-                    { programa: { startsWith: '<p>Erro ao extrair' } }
-                ],
-                link: { contains: 'fpciclismo.pt' }
-            },
-            orderBy: { sortDate: 'desc' },
-            take: limit
-        });
-        
-        let processedCount = 0;
-        for (const ev of fpcEventsToUpdate) {
-            if (ev.link) {
-                try {
-                    const programaHtml = await deepScrapeFPCWithRetry(ev.link);
-                    await prisma.event.update({
-                        where: { id: ev.id },
-                        data: { programa: programaHtml, lastVerifiedAt: new Date(), lastVerifiedSource: 'FPC' }
-                    });
-                    processedCount++;
-                } catch (err) {
-                    // Não gravar um placeholder: programa continua pendente e a
-                    // próxima execução retoma exatamente esta prova.
-                    await logError('SCRAPER', `FPC ${ev.id}: detalhes continuam pendentes após 3 tentativas: ${err.message}`, err);
-                }
-            }
+    const now = new Date();
+    const events = await prisma.event.findMany({
+        where: {
+            source: { contains: 'FPC', not: { contains: 'Quarentena' } },
+            sortDate: { gte: new Date(now.getTime() - 365 * 86400000) },
+            OR: [{ detailsCheckedAt: null }, { detailsCheckedAt: { lt: new Date(now.getTime() - 7 * 86400000) } }],
+        },
+    });
+    const candidates = prioritizeDetailChecks(events.filter(event => needsFpcDetails(event) && fpcDetailLink(event)), now).slice(0, limit);
+    let processed = 0;
+    const started = Date.now();
+    for (const event of candidates) {
+        if (Date.now() - started > 180000) break;
+        // Record attempts separately from verification, so unavailable pages do not starve other races.
+        await prisma.event.update({ where: { id: event.id }, data: { detailsCheckedAt: new Date() } });
+        try {
+            const programa = await deepScrapeFPCWithRetry(fpcDetailLink(event), event.id, { attempts: 2 });
+            await prisma.event.update({ where: { id: event.id }, data: {
+                programa, lastVerifiedAt: new Date(), lastVerifiedSource: 'FPC',
+            } });
+            processed++;
+        } catch (error) {
+            await logInfo('SCRAPER', 'Detalhes FPC ainda indisponíveis: ' + event.id, { error: error.message });
         }
-        
-        if (processedCount > 0) {
-            await logInfo('SCRAPER', `Deep scraping incremental FPC atualizou ${processedCount} programas de provas`);
-        }
-
-        return processedCount;
-    } catch(e) {
-        await logError('SCRAPER', `Erro no deep scraping incremental FPC: ${e.message}`, e);
-        throw e;
     }
+    await logInfo('SCRAPER', 'Detalhes FPC atualizados: ' + processed);
+    return processed;
 };

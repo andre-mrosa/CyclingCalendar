@@ -1,3 +1,4 @@
+import { parseRecordePessoalDetails } from './eventDetailParsers.js';
 import * as cheerio from 'cheerio';
 import { logInfo, logError } from '../logger.js';
 import { getTag } from './utils.js';
@@ -62,7 +63,7 @@ export async function scrapeRecordePessoal(options = {}) {
                 
                 // Conversão de data PT
                 let cleanDate = dataRaw;
-                const match = dataRaw.match(/(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
+                const match = dataRaw.match(/(\d{1,2})\s+([A-Za-zçÇ]+)\s+(\d{4})/);
                 let sortDateStr = dataRaw;
                 if (match) {
                     const months = { 'janeiro': '01', 'fevereiro': '02', 'março': '03', 'abril': '04', 'maio': '05', 'junho': '06', 'julho': '07', 'agosto': '08', 'setembro': '09', 'outubro': '10', 'novembro': '11', 'dezembro': '12' };
@@ -92,6 +93,9 @@ export async function scrapeRecordePessoal(options = {}) {
                     image: logo
                 };
                 
+                const enrichment = parseRecordePessoalDetails(pageHtml, link);
+                Object.assign(eventObj, { ...enrichment, extraLinks: JSON.stringify(enrichment.extraLinks) });
+
                 if (years.includes(new Date(sortDateStr).getFullYear().toString())) {
                     await saveOrMergeEvent(prisma, eventObj, { ...options, verifiedSource: 'Recorde Pessoal' });
                     allEvents.push(eventObj);

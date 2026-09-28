@@ -82,7 +82,7 @@ export default async function EventPage({ params }) {
         tag: getEventDiscipline(event),
         escaloes: getEventCategories(event),
         extraLinks: parsedExtraLinks,
-        parsedSchedule: parseScheduleServer(event.programa),
+        parsedSchedule: parseScheduleServer(event.programContent ?? event.programa),
         gpxData: parsedGpxData
     };
 

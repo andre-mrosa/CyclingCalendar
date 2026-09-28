@@ -1,4 +1,6 @@
 const messages = {
+    detail_load_failed: "No se pudieron cargar todos los detalles de la prueba.",
+    detail_retry: "Reintentar",
     search_link: "Enlace de la búsqueda",
     search_save_share: "Guardar y compartir búsqueda",
     search_local_note: "Búsquedas guardadas en este navegador (hasta 20).",
