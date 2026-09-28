@@ -4,6 +4,8 @@ import { parseApedalarDetails, parseRecordePessoalDetails, publicLink } from '..
 import { sanitizeEventHtml } from '../app/lib/sanitizeHtml.js';
 import { fpcDetailLink, prioritizeDetailChecks, needsFpcDetails } from '../app/lib/scrapers/detailQueue.js';
 import { getEventDocuments } from '../app/utils/eventDocuments.js';
+import { parsePrograma } from '../app/utils/parsePrograma.js';
+import { parseScheduleServer } from '../app/utils/scheduleParserServer.js';
 import { deepScrapeFPCWithRetry } from '../app/lib/scrapers/fpc.js';
 
 test('FPC descriptions become visible without duplicating documents or losing schedules', () => {
@@ -21,6 +23,12 @@ test('legacy whole-page FPC descriptions expose only the race section', () => {
     const event = sanitizeEventHtml({ source: 'FPC', programa: '<div class="fpc-description"><div>Navigation outside the race</div><section class="main__middle__container"><p>Race information</p></section><footer>Footer</footer></div>' });
     assert.match(event.description, /Race information/);
     assert.doesNotMatch(event.description, /Navigation|Footer/);
+});
+
+test('tabular category schedules retain their columns on server and client', () => {
+    const html = '<table><tr><th>Categoria</th><th>Partida</th><th>Prazo</th></tr><tr><td>Elite</td><td>09:00</td><td>15 outubro</td></tr></table>';
+    assert.deepEqual(parsePrograma(html), { type: 'html', html });
+    assert.deepEqual(parseScheduleServer(html), parsePrograma(html));
 });
 
 test('Apedalar extracts event facts, prices and files, excluding participant data', () => {

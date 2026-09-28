@@ -189,8 +189,8 @@ function EventModalContent({ selectedEvent, setSelectedEvent, favorites, toggleF
 
     // Parse do programa em formato cronológico estruturado
     const parsedSchedule = useMemo(() => {
-        return parsePrograma(programaCleanHtml);
-    }, [programaCleanHtml]);
+        return activeEvent.parsedSchedule ?? parsePrograma(programaCleanHtml);
+    }, [activeEvent.parsedSchedule, programaCleanHtml]);
 
     // Extrai os percursos e distâncias para o cartão de resumo nativo
     const percursosSummary = useMemo(() => {

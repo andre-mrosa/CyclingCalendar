@@ -9,6 +9,9 @@ export function parseScheduleServer(htmlString) {
         return null;
     }
 
+    // Preserve the same category/deadline columns on the server and in the browser.
+    if (/<table\b/i.test(htmlString)) return { type: 'html', html: htmlString };
+
     // FPC PDF downloads
     if (htmlString.includes('fpc-downloads')) {
         return { type: 'fpc', html: htmlString };

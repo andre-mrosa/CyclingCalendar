@@ -23,6 +23,7 @@ export default function EventDetailBody({ event, t, language, standalone, closeM
     const hasRoutes = routes.length > 0 || event.gpxData || documents.some(doc => doc.format === 'GPX');
     const hasProgram = schedule?.type === 'timeline' || !!programHtml?.trim();
     const status = registrationStatus(event);
+    const closed = status === 'closed';
     const cancelled = isCancelled(event);
     const location = formatEventLocation(event);
     const locationInfo = getEventLocation(event);

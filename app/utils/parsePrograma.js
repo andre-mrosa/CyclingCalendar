@@ -6,6 +6,9 @@ export function parsePrograma(htmlString) {
         return null;
     }
 
+    // Multi-column schedules carry category/deadline relationships; do not flatten them.
+    if (/<table\b/i.test(htmlString)) return { type: 'html', html: htmlString };
+
     // FPC PDF downloads
     if (htmlString.includes('fpc-downloads')) {
         return { type: 'fpc', html: htmlString };
