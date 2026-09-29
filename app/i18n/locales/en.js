@@ -457,7 +457,7 @@ const messages = {
     footer_terms: "Terms of Use",
     footer_privacy: "Privacy Policy",
     footer_contact: "Contact & Feedback",
-    footer_rights: "All rights reserved.",
+    footer_project: "Independent event information project.",
 
     // Cookie Banner
     cookie_text: "We use cookies and similar technologies to enhance your browsing experience and save your preferences.",

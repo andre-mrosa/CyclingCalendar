@@ -457,7 +457,7 @@ const messages = {
     footer_terms: "Términos de Uso",
     footer_privacy: "Política de Privacidad",
     footer_contact: "Contacto y Sugerencias",
-    footer_rights: "Todos los derechos reservados.",
+    footer_project: "Proyecto independiente de difusión de pruebas.",
 
     // Cookie Banner
     cookie_text: "Utilizamos cookies y tecnologías similares para mejorar tu experiencia de navegación y guardar tus preferencias.",

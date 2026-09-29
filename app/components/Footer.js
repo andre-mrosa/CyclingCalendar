@@ -25,7 +25,7 @@ export default function Footer() {
           </div>
         </div>
         <div className={styles.footerBottom}>
-          <p>&copy; {new Date().getFullYear()} Cycling Calendar. {t('footer_rights')}</p>
+          <p>Cycling Calendar · {t('footer_project')}</p>
           <span>Portugal · Ride your season</span>
         </div>
       </div>

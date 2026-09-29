@@ -17,11 +17,11 @@ export default function TermsOfService() {
     },
     {
       icon: Scale,
-      title: '2. Propriedade Intelectual',
+      title: '2. Conteúdos e respetivos direitos',
       content: (
         <ul className="space-y-3 text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-          <li className="flex gap-3"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0"></div><span>O código-fonte, o design e a interface da plataforma são protegidos por direitos de autor.</span></li>
-          <li className="flex gap-3"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0"></div><span>Os <strong>dados dos eventos, logótipos e altimetrias</strong> são propriedades intelectuais das respetivas entidades organizadoras (ex: FPC, Cabreira Solutions, Stopandgo) e são apenas apresentados com o intuito de divulgar as provas à comunidade.</span></li>
+          <li className="flex gap-3"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0"></div><span>O Cycling Calendar agrega informação sobre provas e não reivindica a titularidade dos conteúdos de terceiros apresentados no site.</span></li>
+          <li className="flex gap-3"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0"></div><span>Os eventuais direitos sobre <strong>textos, imagens, logótipos e altimetrias</strong> pertencem aos respetivos titulares. A apresentação destes conteúdos não implica afiliação ou aprovação por parte dos organizadores. Para questões de atribuição, correção ou remoção de conteúdos, utilize o <Link href="/contacto" className="underline underline-offset-4">formulário de contacto</Link>.</span></li>
         </ul>
       ),
     },
@@ -108,7 +108,7 @@ export default function TermsOfService() {
         </div>
 
         <footer className="mt-16 text-center border-t border-slate-300 dark:border-slate-800/60 pt-8">
-          <p className="text-xs text-slate-500 font-mono mb-4">Última atualização: 28 de setembro de 2026</p>
+          <p className="text-xs text-slate-500 font-mono mb-4">Última atualização: 29 de setembro de 2026</p>
         </footer>
       </div>
     </div>

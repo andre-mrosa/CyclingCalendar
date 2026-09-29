@@ -457,7 +457,7 @@ const messages = {
     footer_terms: "Conditions d'Utilisation",
     footer_privacy: "Politique de Confidentialité",
     footer_contact: "Contact et Suggestions",
-    footer_rights: "Tous droits réservés.",
+    footer_project: "Projet indépendant d’information sur les épreuves.",
 
     // Cookie Banner
     cookie_text: "Nous utilisons des cookies et technologies similaires pour améliorer votre expérience de navigation et enregistrer vos préférences.",
