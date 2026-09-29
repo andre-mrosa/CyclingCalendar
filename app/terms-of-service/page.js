@@ -51,8 +51,8 @@ export default function TermsOfService() {
               <p className="text-slate-600 dark:text-slate-400">Usar a plataforma apenas para fins pessoais ou informativos.</p>
             </div>
             <div className="p-4 bg-slate-100 dark:bg-slate-900/40 rounded-xl border border-slate-300 dark:border-slate-800/40">
-              <span className="block text-rose-400 font-bold mb-1">Sem Abusos</span>
-              <p className="text-slate-600 dark:text-slate-400">Não sobrecarregar os servidores com bots ou extração agressiva de dados (scraping abusivo).</p>
+              <span className="block text-rose-400 font-bold mb-1">Consulta Automatizada</span>
+              <p className="text-slate-600 dark:text-slate-400">É permitida a consulta automatizada e a extração de dados (scraping), com uma frequência de pedidos que não prejudique a disponibilidade do serviço para os restantes utilizadores. Esta permissão não concede direitos sobre conteúdos de terceiros.</p>
             </div>
             <div className="p-4 bg-slate-100 dark:bg-slate-900/40 rounded-xl border border-slate-300 dark:border-slate-800/40">
               <span className="block text-emerald-400 font-bold mb-1">Identidade</span>
