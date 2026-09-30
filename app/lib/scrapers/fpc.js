@@ -1,22 +1,24 @@
+import { assertSourceApproved } from '../contentReleasePolicy.js';
 import { getEventCategories } from '../../utils/eventClassifier.js';
 import * as cheerio from 'cheerio';
 import { prisma } from '../db.js';
-import { 
+import {
     getAmbito, getTag, getRegiao,
-    getDistrito, toTitleCase, getLicenca, sanitizeHtml, fetchImageAsBase64 
+    getDistrito, toTitleCase, getLicenca, sanitizeHtml, fetchImageAsBase64
 } from './utils.js';
 import { logInfo, logError } from '../logger.js';
 import { saveOrMergeEvent } from '../merging/eventMerger.js';
 import { fpcDetailLink, prioritizeDetailChecks, needsFpcDetails } from './detailQueue.js';
 
 export const deepScrapeFPC = async (link, eventId = 'fpc-event') => {
+    assertSourceApproved("FPC");
     if (!link) return null;
     const response = await fetch(link, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(15000) });
     if (!response.ok) throw new Error(`FPC devolveu HTTP ${response.status}`);
         const arrayBuffer = await response.arrayBuffer();
         const html = Buffer.from(arrayBuffer).toString('latin1');
         const $ = cheerio.load(html);
-        
+
         let extractedHtml = '';
 
         // Extrair texto descritivo e imagens (Cartaz/Banner) usando o body inteiro
@@ -25,7 +27,7 @@ export const deepScrapeFPC = async (link, eventId = 'fpc-event') => {
         if (containerHtml && !containerHtml.includes('Página não encontrada')) {
             const $tempBody = cheerio.load(containerHtml);
             $tempBody('#navigation, #sub_menu_sobre, footer, script, style, iframe, .navbar, .logo, .menu, .menu_lateral_items, .redes_sociais, #menu, .header, nav, header, .three__blocks, .footer, .footer_bg, #rodape, .patrocinadores, .parceiros, .cyclopnet, .copyright').remove(); // remove lixo
-            
+
             // Extract cartaz and other buttons from the full body before isolating main content
             let mainImgUrl = null;
             const bannerImg = $tempBody('img[src*="anexo_banner"]');
@@ -45,7 +47,7 @@ export const deepScrapeFPC = async (link, eventId = 'fpc-event') => {
                 } else if (parentA) {
                     link = parentA;
                 }
-                
+
                 if (val && link) {
                     if (val.toLowerCase() === 'cartaz') {
                         mainImgUrl = link;
@@ -59,7 +61,7 @@ export const deepScrapeFPC = async (link, eventId = 'fpc-event') => {
             // Isolate main content if available, else fallback to body
             const mainContentHtml = $tempBody('.main-content').length > 0 ? $tempBody('.main-content').html() : $tempBody('body').html();
             const $temp = cheerio.load(mainContentHtml);
-            
+
             // Remover painel de noticias da FPC para nao poluir a BD com lixo
             $temp('form[name="nr_pagina"]').parent().remove();
             $temp('a').each(function() {
@@ -67,7 +69,7 @@ export const deepScrapeFPC = async (link, eventId = 'fpc-event') => {
                     $temp(this).parent().parent().remove();
                 }
             });
-            
+
             // Remover nós de texto soltos que sejam lixo
             $temp('*').contents().filter(function() { return this.nodeType === 3 && this.nodeValue.includes('Cyclopnet'); }).parent().remove();
             $temp('*').contents().filter(function() { return this.nodeType === 3 && this.nodeValue.includes('FPC ©'); }).parent().remove();
@@ -77,15 +79,15 @@ export const deepScrapeFPC = async (link, eventId = 'fpc-event') => {
             if (mainImgUrl) {
                 // Normalize relative URLs to absolute
                 if (!mainImgUrl.startsWith('http')) {
-                    mainImgUrl = mainImgUrl.startsWith('/') 
-                        ? `https://www.fpciclismo.pt${mainImgUrl}` 
+                    mainImgUrl = mainImgUrl.startsWith('/')
+                        ? `https://www.fpciclismo.pt${mainImgUrl}`
                         : `https://www.fpciclismo.pt/${mainImgUrl}`;
                 }
                 mainImgUrl = mainImgUrl.replace(/^http:\/\//, 'https://');
 
                 const isCartaz = mainImgUrl.includes('anexo_cartaz') || mainImgUrl.toLowerCase().includes('cartaz');
                 const maxWidth = isCartaz ? 'max-width: 400px; margin: 0 auto; display: block;' : 'width: 100%;';
-                
+
                 // Fetch and store image as base64 in DB (compressed via sharp)
                 const base64Img = await fetchImageAsBase64(mainImgUrl);
                 if (base64Img) {
@@ -94,7 +96,7 @@ export const deepScrapeFPC = async (link, eventId = 'fpc-event') => {
             }
             $temp('form, input, select, textarea, button, table.dc_table_s20').remove();
             $temp('img').remove(); // remover as restantes imagens para texto limpo
-            
+
             const textContent = $temp.text().replace(/\s+/g, ' ').trim();
             if (textContent.length > 50 && !textContent.includes('Regulamentos Filiações')) {
                 // Formatar links úteis que restaram na descrição
@@ -103,7 +105,7 @@ export const deepScrapeFPC = async (link, eventId = 'fpc-event') => {
                     $temp(el).attr('rel', 'noopener noreferrer');
                     $temp(el).attr('style', 'color: var(--accent-primary); text-decoration: underline; font-weight: 500;');
                 });
-                
+
                 extractedHtml += `<div class="fpc-description" style="margin-bottom: 1.5rem; color: var(--text-secondary); line-height: 1.6;">${sanitizeHtml($temp.html())}</div>`;
             }
         }
@@ -114,7 +116,7 @@ export const deepScrapeFPC = async (link, eventId = 'fpc-event') => {
         $source('a, input[type="button"]').each((i, el) => {
             let href = $(el).attr('href');
             const onclick = $(el).attr('onclick') || $(el).attr('onClick');
-            
+
             // Tentar extrair link do onClick (comum no site da FPC para PDFs)
             if (onclick && onclick.includes('window.open')) {
                 const match = onclick.match(/window\.open\s*\(\s*'([^']+)'/);
@@ -139,13 +141,13 @@ export const deepScrapeFPC = async (link, eventId = 'fpc-event') => {
         if (pdfLinks.length > 0) {
             extractedHtml += `<div class="fpc-downloads">
                 <div style="display: flex; flex-direction: column; gap: 0.75rem;">`;
-            
+
             for (const doc of pdfLinks) {
                 const isMap = doc.link.toLowerCase().endsWith('.kml') || doc.link.toLowerCase().endsWith('.gpx');
-                const icon = isMap 
+                const icon = isMap
                     ? `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-secondary);"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg>`
                     : `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-secondary);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`;
-                
+
                 extractedHtml += `
                     <a href="${doc.link}" target="_blank" rel="noopener noreferrer" style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: var(--bg-secondary); border: 1px solid var(--card-border); border-radius: var(--radius-md); text-decoration: none; color: var(--text-primary); transition: all 0.2s ease;">
                         ${icon}
@@ -168,6 +170,7 @@ export const deepScrapeFPC = async (link, eventId = 'fpc-event') => {
 };
 
 export async function deepScrapeFPCWithRetry(link, eventId = 'fpc-event', { attempts = 3, delayMs = 750 } = {}) {
+    assertSourceApproved('FPC');
     let lastError;
     for (let attempt = 1; attempt <= attempts; attempt++) {
         try {
@@ -183,6 +186,7 @@ export async function deepScrapeFPCWithRetry(link, eventId = 'fpc-event', { atte
 }
 
 export const fetchFPCCalendar = async (year) => {
+    assertSourceApproved("FPC");
         year = String(year);
         if (!/^\d{4}$/.test(year)) throw new Error('Época FPC inválida');
         // epoca_site2 is the form's hidden submit marker. Without it the server
@@ -230,7 +234,7 @@ export const parseFPCCalendar = (html, year) => {
             if (Number(year) > new Date().getFullYear() && classes.length && !hasRaceClasses && /<\/html>/i.test(html)) return [];
             throw new Error('Tabela do calendário FPC não encontrada');
         }
-        
+
         const rows = $('table.dc_table_s12 tbody tr').toArray();
         const events = new Map();
         for (const element of rows) {
@@ -243,8 +247,8 @@ export const parseFPCCalendar = (html, year) => {
                 let locText = toTitleCase($(cols[1]).text().trim());
                 const extraText = $(cols[2]).text().trim();
                 const organizadorText = cols.length > 3 ? $(cols[3]).text().trim() : null;
-                
-                
+
+
                 if (nameText && /^\d{2}-\d{2}-\d{4}$/.test(dateText)) {
                     const parts = dateText.split('-');
                     if (parts[2] !== String(year)) throw new Error(`Época incorreta na linha FPC: ${dateText}`);
@@ -252,7 +256,7 @@ export const parseFPCCalendar = (html, year) => {
                     if (Number.isNaN(sortDate.getTime())) throw new Error(`Data FPC inválida: ${dateText}`);
                     const months = {'01':'JAN', '02':'FEV', '03':'MAR', '04':'ABR', '05':'MAI', '06':'JUN', '07':'JUL', '08':'AGO', '09':'SET', '10':'OUT', '11':'NOV', '12':'DEZ'};
                     if (parts.length === 3) dateText = `${parts[0]} ${months[parts[1]] || parts[1]} ${parts[2]}`;
-                    
+
                     if (endDateText && endDateText !== $(ths[0]).text().trim() && endDateText.length > 2) {
                         const eParts = endDateText.split('-');
                         if (eParts.length === 3) {
@@ -265,20 +269,20 @@ export const parseFPCCalendar = (html, year) => {
                     const lowerName = nameText.toLowerCase();
                     const codes = det.match(/\.\d{2}/g) || [];
                     const uciCodes = det.match(/\b([12]\.(1|Pro|HC))\b/i);
-                    
+
                     if (det.toLowerCase().includes('cpt') || lowerName.includes('aberta') || lowerName.includes('amador') || lowerName.includes('passeio') || lowerName.includes('granfondo')) escaloes.push('Todos (Aberto)');
                     if (uciCodes || lowerName.includes('volta a portugal') || lowerName.includes('volta ao algarve') || lowerName.includes('volta ao alentejo')) escaloes.push('Profissional (UCI)');
-                    
+
                     if (codes.includes('.12') || lowerName.includes('elite')) escaloes.push('Elite');
                     if (codes.includes('.13') || lowerName.includes('sub23') || lowerName.includes('sub-23')) escaloes.push('Sub-23');
                     if (codes.includes('.14') || lowerName.includes('sub19') || lowerName.includes('sub-19') || lowerName.includes('juniores')) escaloes.push('Sub-19 (Juniores)');
                     if (codes.includes('.15') || lowerName.includes('sub17') || lowerName.includes('sub-17') || lowerName.includes('cadetes')) escaloes.push('Sub-17 (Cadetes)');
                     if (codes.includes('.16') || lowerName.includes('sub15') || lowerName.includes('sub-15') || lowerName.includes('juvenis')) escaloes.push('Sub-15 (Juvenis)');
-                    
+
                     const hasMasterName = lowerName.includes('master') || lowerName.includes('veterano');
                     const hasYouthName = lowerName.includes('cadete') || lowerName.includes('junior') || lowerName.includes('júnior') || lowerName.includes('juvenil') || lowerName.includes('escola');
                     if ((codes.includes('.17') && (!hasYouthName || hasMasterName)) || hasMasterName) escaloes.push('Masters / Veteranos');
-                    
+
                     if (codes.includes('.18') || lowerName.includes('feminin')) escaloes.push('Femininas');
                     if (det.toLowerCase().includes('escolas') || lowerName.includes('escolas')) escaloes.push('Escolas');
 
@@ -286,7 +290,7 @@ export const parseFPCCalendar = (html, year) => {
                     escaloes = getEventCategories({ source: 'FPC', details: det, escaloes: [...new Set(escaloes)] });
 
                     const ambitoVal = getAmbito(nameText, det, '', 'FPC');
-                    
+
                     let fpcLinks = [];
                     let mainLink = 'https://www.fpciclismo.pt/';
                     let hasProvaInscrever = false;
@@ -313,7 +317,7 @@ export const parseFPCCalendar = (html, year) => {
                     });
 
                     const id = 'fpc-' + nameText.replace(/\s+/g, '-').toLowerCase() + '-' + dateText.replace(/\s+/g, '-');
-                    
+
                     const eventData = {
                         title: nameText,
                         date: dateText,
@@ -340,6 +344,7 @@ export const parseFPCCalendar = (html, year) => {
 };
 
 export const scrapeFPC = async (year, options = {}) => {
+    assertSourceApproved("FPC");
     try {
         await logInfo('SCRAPER', `FPC ${year}: a recolher janeiro a dezembro (incluindo provas passadas)`);
         const events = await fetchFPCCalendar(year);
@@ -353,6 +358,7 @@ export const scrapeFPC = async (year, options = {}) => {
 }
 
 export const incrementalDeepScrapeFPC = async (limit = 25) => {
+    assertSourceApproved("FPC");
     const now = new Date();
     const events = await prisma.event.findMany({
         where: {

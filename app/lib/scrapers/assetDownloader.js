@@ -1,3 +1,4 @@
+import { assertContentProcessingApproved } from '../contentReleasePolicy.js';
 import fs from 'fs';
 import path from 'path';
 import { parseGpxElevation } from '../../utils/gpxParser.js';
@@ -8,6 +9,7 @@ import { parseGpxElevation } from '../../utils/gpxParser.js';
  * Returns the local public URL path: /media/events/[eventId]/[filename]
  */
 export async function downloadEventAsset(url, eventId, preferredFilename = null, customReferer = null) {
+    assertContentProcessingApproved();
     if (!url || typeof url !== 'string' || !url.startsWith('http')) {
         return null;
     }
@@ -15,7 +17,7 @@ export async function downloadEventAsset(url, eventId, preferredFilename = null,
     try {
         const cleanEventId = eventId.replace(/[^a-zA-Z0-9_-]/g, '_');
         const targetDir = path.join(process.cwd(), 'public', 'media', 'events', cleanEventId);
-        
+
         if (!fs.existsSync(targetDir)) {
             fs.mkdirSync(targetDir, { recursive: true });
         }
@@ -26,7 +28,7 @@ export async function downloadEventAsset(url, eventId, preferredFilename = null,
             ext = '.png';
         }
 
-        const filename = preferredFilename 
+        const filename = preferredFilename
             ? (preferredFilename.includes('.') ? preferredFilename : `${preferredFilename}${ext}`)
             : `asset_${Date.now()}${ext}`;
 
@@ -75,6 +77,7 @@ export async function downloadEventAsset(url, eventId, preferredFilename = null,
  * Returns { localGpxUrl, gpxData }
  */
 export async function downloadAndParseGpx(gpxUrl, eventId) {
+    assertContentProcessingApproved();
     if (!gpxUrl || typeof gpxUrl !== 'string' || !gpxUrl.startsWith('http')) {
         return null;
     }
@@ -82,7 +85,7 @@ export async function downloadAndParseGpx(gpxUrl, eventId) {
     try {
         const cleanEventId = eventId.replace(/[^a-zA-Z0-9_-]/g, '_');
         const targetDir = path.join(process.cwd(), 'public', 'media', 'events', cleanEventId);
-        
+
         if (!fs.existsSync(targetDir)) {
             fs.mkdirSync(targetDir, { recursive: true });
         }

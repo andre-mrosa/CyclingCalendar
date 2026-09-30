@@ -3,7 +3,7 @@ import { formatEventLocation } from '../utils/eventLocation.js';
 
 export const SITE_URL = 'https://www.cyclingcalendar.pt';
 export const SITE_TITLE = 'Cycling Calendar — Provas de ciclismo em Portugal';
-export const SITE_DESCRIPTION = 'Calendário de provas de ciclismo em Portugal: estrada, BTT, gravel, BMX e cicloturismo. Consulta datas, programas, percursos e inscrições.';
+export const SITE_DESCRIPTION = 'Calendário de provas de ciclismo em Portugal: estrada, BTT, gravel, BMX e cicloturismo. Consulta datas, locais e ligações para as páginas originais das provas.';
 export const PUBLIC_PAGES = [
     ['/', SITE_TITLE, SITE_DESCRIPTION],
     ['/nacionais', 'Campeonatos nacionais de ciclismo | Cycling Calendar', 'Datas e informação dos campeonatos nacionais de ciclismo em Portugal.'],
@@ -24,18 +24,18 @@ export function pageMetadata(path, title, description) {
     };
 }
 export function publicImage(value) {
-    if (typeof value !== 'string' || !value) return null;
+    if (typeof value !== 'string' || !value || value.includes('/media/events/')) return null;
     try { const url = new URL(value, SITE_URL); return /^https?:$/.test(url.protocol) && !url.username && !url.password ? url.href : null; } catch { return null; }
 }
 export function eventStructuredData(event) {
     const dates = eventDateDisplay(event);
     if (!dates.start) return null;
     const location = formatEventLocation(event);
-    const image = publicImage(event.image);
+
     return { '@context': 'https://schema.org', '@type': 'SportsEvent', name: event.title,
         url: SITE_URL + '/events/' + encodeURIComponent(event.id), startDate: dates.start, endDate: dates.end,
         ...(location ? { location: { '@type': 'Place', name: location } } : {}),
-        ...(image ? { image: [image] } : {}),
+
     };
 }
 export const jsonLd = value => JSON.stringify(value).replace(/</g, '\\u003c');

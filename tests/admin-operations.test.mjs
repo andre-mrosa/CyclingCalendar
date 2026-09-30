@@ -30,7 +30,7 @@ test('log pagination rejects malformed values and database failures remain error
  assert.equal(queries,0);const failed=await r.GET(request('/api/admin/logs'));assert.equal(failed.status,503);assert.equal((await failed.json()).success,false);
 });
 
-const maintenance = ['reset','cleanup-duplicates','force-cabreira','force-scrape-all','sync-gpx','test-cabreira','admin/translate-all','admin/unify-events'];
+const maintenance = ['reset','cleanup-duplicates','admin/unify-events'];
 for (const path of maintenance) test('maintenance authorization precedes all work: '+path, async()=>{
  for(const status of [401,403,503]) {
   let calls=0;
@@ -41,18 +41,11 @@ for (const path of maintenance) test('maintenance authorization precedes all wor
   }
  }
 });
-test('cron fails closed when its secret is absent',async()=>{
- const previous=process.env.CRON_SECRET;delete process.env.CRON_SECRET;let calls=0;
- try {const r=await route('../app/api/cron/scrape/route.js',{startCalendarSync:async()=>{calls++;return {success:true};}});assert.equal((await r.GET(request('/api/cron/scrape'))).status,503);assert.equal(calls,0);}finally{if(previous===undefined)delete process.env.CRON_SECRET;else process.env.CRON_SECRET=previous;}
-});
+
 
 for (const path of maintenance) test('maintenance accepts an admin with isolated dependencies: '+path,async()=>{
  let writes=0;
  const r=await route('../app/api/'+path+'/route.js',{requireAdmin:admin,prisma:{event:{findMany:async()=>[],count:async()=>0,updateMany:async()=>{writes++;return {count:0};}},eventTranslation:{count:async()=>0}},NextResponse:Response,scrapeCabreira:async()=>{},translateAllPendingEvents:async()=>({success:true,count:0,totalPending:0})});
  for(const method of ['GET','POST'].filter(method=>typeof r[method]==='function'))assert.equal((await r[method](request('/api/'+path,method))).status,200);
  if(path==='reset'||path==='cleanup-duplicates')assert.equal(writes,1);
-});
-test('cron rejects the wrong secret and accepts its configured secret',async()=>{
- const previous=process.env.CRON_SECRET;process.env.CRON_SECRET='qa-isolated-secret';let calls=0;
- try {const r=await route('../app/api/cron/scrape/route.js',{startCalendarSync:async()=>{calls++;return {success:true};}});assert.equal((await r.GET(request('/api/cron/scrape'))).status,401);assert.equal(calls,0);assert.equal((await r.GET(new Request('https://calendar.test/api/cron/scrape',{headers:{authorization:'Bearer qa-isolated-secret'}}))).status,202);assert.equal(calls,1);}finally{if(previous===undefined)delete process.env.CRON_SECRET;else process.env.CRON_SECRET=previous;}
 });

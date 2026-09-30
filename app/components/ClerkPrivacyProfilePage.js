@@ -1,5 +1,6 @@
 'use client';
 
+import { useAdminRole } from '../hooks/useAdminRole';
 import { useState, useEffect } from 'react';
 import { useUser, useAuth } from '@clerk/nextjs';
 import { Trash2, RotateCcw, AlertTriangle, Clock, CheckCircle2, Lightbulb } from 'lucide-react';
@@ -14,8 +15,7 @@ export default function ClerkPrivacyProfilePage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [feedback, setFeedback] = useState(null);
 
-    const primaryEmail = (user?.primaryEmailAddress?.emailAddress || user?.emailAddresses?.[0]?.emailAddress || '').toLowerCase();
-    const isMaster = ['andre.rosa1603@gmail.com', 'andremrosa@gmail.com', 'andre_rosa', 'andrerosa', 'user_3HoiHwpGl9suYXrYx0QFhDMXHWD'].some(m => primaryEmail.includes(m) || user?.id === m);
+    const { isAdmin, isMaster } = useAdminRole();
 
     useEffect(() => {
         if (!isLoaded || !isSignedIn) return;
@@ -55,7 +55,7 @@ export default function ClerkPrivacyProfilePage() {
             const token = await getToken().catch(() => null);
             const res = await fetch('/api/user/delete-request', {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
                     ...(token ? { 'Authorization': `Bearer ${token}` } : {})
@@ -98,7 +98,7 @@ export default function ClerkPrivacyProfilePage() {
         setIsSubmitting(true);
         try {
             const token = await getToken().catch(() => null);
-            const res = await fetch('/api/user/delete-request', { 
+            const res = await fetch('/api/user/delete-request', {
                 method: 'DELETE',
                 headers: {
                     'Accept': 'application/json',

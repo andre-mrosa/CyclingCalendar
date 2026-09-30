@@ -3,7 +3,7 @@ import { prisma } from '@/app/lib/db';
 import { CALENDAR_SOURCES, normalizeCalendarSources } from '@/app/lib/calendarSources';
 import { parseListQuery, queryCalendarList } from '@/app/lib/calendarListQuery';
 export const dynamic = 'force-dynamic';
-const load = unstable_cache((years, sources) => queryCalendarList(prisma, years, sources), ['calendar-list-summary-v1'], { revalidate: 60, tags: ['calendar-events'] });
+const load = unstable_cache((years, sources) => queryCalendarList(prisma, years, sources), ['calendar-minimal-links-v3'], { revalidate: 60, tags: ['calendar-events'] });
 export async function GET(request) {
     const params = new URL(request.url).searchParams;
     let years, sources;

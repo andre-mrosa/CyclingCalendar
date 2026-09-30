@@ -19,7 +19,7 @@ export default function PageHeading({ title, subtitle, icon: Icon = Flag, hero =
             <div>
                 <div className={styles.eyebrow}>{!hero && <Icon size={14} aria-hidden="true" />} {hero ? text.eyebrow : 'Cycling Calendar'}</div>
                 <h1>{hero ? text.title : title}</h1>
-                <p>{hero ? text.description : subtitle}</p>
+                <p>{subtitle || text.description}</p>
             </div>
         </header>
     );

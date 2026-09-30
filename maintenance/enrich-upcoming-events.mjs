@@ -1,3 +1,5 @@
+import { assertContentProcessingApproved } from '../app/lib/contentReleasePolicy.js';
+assertContentProcessingApproved();
 // Dry run by default. --apply saves a backup before each optimistic update.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { prisma } from '../app/lib/db.js';

@@ -1,8 +1,5 @@
 "use client";
 import { formatEventLocation } from '../utils/eventLocation';
-import { calculateDistance, validCoordinates } from '../utils/distance';
-import { useRoadDistances } from '../hooks/useRoadDistances';
-import { cachedRoadDistance } from '../utils/roadDistanceCache';
 import { useClientReady, useOnline, useStoredString, writeStored } from '../hooks/useBrowserState';
 import { useToday } from '../hooks/useToday';
 import { FavoriteChanges, FavoriteSubscription } from './FavoritePlanning';
@@ -19,9 +16,9 @@ import { mergeEvents } from '../utils/mergeEvents';
 import { chooseCalendarEvents, toCalendarListEvent, sortCalendarEvents, filterCalendarByDate } from '../utils/calendarList';
 import { exportEventsToICS } from '../utils/exportCalendar';
 import SavedSearches from './SavedSearches';
-import AlertPreferences from './AlertPreferences';
+
 import { decodeSearch, normalizeSearch, searchUrl } from '../utils/savedSearches';
-import EventModal from './EventModal';
+import { originalEventUrl } from '../lib/publicEvent';
 import EscalaoAssistant from './EscalaoAssistant';
 import { trackEvent } from './AnalyticsTracker';
 import { useTranslation } from '../i18n/useTranslation';
@@ -33,7 +30,7 @@ import MonthCalendar from './MonthCalendar';
 import { eventsInPeriod, shiftMonth, groupEventsByDate, formatEventTitle } from '../utils/calendarPresentation';
 import AgendaOverview from './AgendaOverview';
 import styles from './site.module.css';
-import { matchesPeriod, isCancelled, conciseEscaloes, registrationDaysUntil } from '../utils/planning';
+import { matchesPeriod, isCancelled, conciseEscaloes } from '../utils/planning';
 
 const fetcher = async (url) => {
     const controller = new AbortController();
@@ -48,7 +45,8 @@ const fetcher = async (url) => {
         throw requestError;
     }
 
-    return data.events;
+    if (!Array.isArray(data.events)) throw new Error('EVENTS_UNAVAILABLE');
+    return data.events.map(toCalendarListEvent).filter(Boolean);
 };
 
 const EMPTY_EVENTS = [];
@@ -68,9 +66,9 @@ const formatMonthHeading = (year, monthIdx, lang) => {
     }
 };
 
-export default function CalendarView({ 
-    pageTitle = "Calendário FPC & Cabreira", 
-    pageSubtitle = "Agregador oficial de ciclismo em Portugal",
+export default function CalendarView({
+    pageTitle = "Calendário de ciclismo",
+    pageSubtitle = "Calendário independente de ciclismo em Portugal",
     forceAmbito = null,
     forceLicenca = null,
     forceEscalao = null,
@@ -80,28 +78,20 @@ export default function CalendarView({
     applyDefaultRegiao = false
 }) {
     const { t, language } = useTranslation();
-    const roadDistances = useRoadDistances();
+
     const pathname = usePathname();
-    const { 
-        defaultEscalao, 
+    const {
+        defaultEscalao,
         defaultRegiao,
-        selectedSources,
-        homeLocation: defaultHomeLocation,
-        setHomeLocation,
-        maxDistanceFilter: defaultMaxDistance
+        selectedSources
     } = useSettingsStore();
-    
-    const [searchOrigin, setSearchOrigin] = useState(undefined);
-    const homeLocation = searchOrigin === undefined ? defaultHomeLocation : searchOrigin;
-    const [distanceOverride, setMaxDistanceFilter] = useState(undefined);
-    const maxDistanceFilter = distanceOverride === undefined ? defaultMaxDistance : distanceOverride;
+
     const [searchSources, setSearchSources] = useState(null);
     const [urlReady, setUrlReady] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [viewMode, setViewMode] = useState('list');
     const [selectedMonth, setSelectedMonth] = useState(null); // formato 'YYYY-MM'
     const [selectedDay, setSelectedDay] = useState(null); // formato 'YYYY-MM-DD'
-    const [showCustomDistance, setShowCustomDistance] = useState(false);
     const [showEscalaoHelp, setShowEscalaoHelp] = useState(false);
     const [selectedEscaloes, setSelectedEscaloes] = useState(forceEscalao ? [forceEscalao] : []);
     const [selectedAmbito, setSelectedAmbito] = useState(forceAmbito || 'Todos');
@@ -120,7 +110,10 @@ export default function CalendarView({
     const defaultPastEventsFilter = 'futuros';
     const [pastEventsFilter, setPastEventsFilter] = useState(defaultPastEventsFilter);
     const [pagination, setPagination] = useState({ list: null, count: 100 });
-    const [eventSelection, setSelectedEvent] = useState(undefined);
+    const setSelectedEvent = event => {
+        const url = originalEventUrl(event?.link);
+        if (url) window.open(url, '_blank', 'noopener,noreferrer');
+    };
     const isOffline = !useOnline();
 
     const { favorites, toggleFavorite, isSignedIn } = useFavorites();
@@ -140,8 +133,8 @@ export default function CalendarView({
     }
 
     const effectiveSources = [...((searchSources?.length ? searchSources : selectedSources)?.length > 0 ? (searchSources || selectedSources) : ['FPC', 'Cabreira', 'Stop and Go', 'Classificações.net', 'Recorde Pessoal', 'Apedalar'])].sort();
-    const eventsUrl = `/api/events?view=list-v2&years=all&sources=${effectiveSources.join(',')}`;
-    const eventsCacheKey = `cycling_calendar_list_v2_${[...effectiveSources].sort().join(',')}`;
+    const eventsUrl = `/api/events?view=minimal-v3&years=all&sources=${effectiveSources.join(',')}`;
+    const eventsCacheKey = `cycling_calendar_minimal_v3_${[...effectiveSources].sort().join(',')}`;
     const { data: fetchedEvents, error, isLoading: loading, mutate } = useSWR(
         eventsUrl,
         fetcher,
@@ -163,14 +156,14 @@ export default function CalendarView({
 
     const events = useMemo(() => {
         const records = chooseCalendarEvents(fetchedEvents, localCachedEvents, { offline: isOffline, failed: !!error });
-        return records.length ? mergeEvents(records.map(toCalendarListEvent)) : EMPTY_EVENTS;
+        return records.length ? mergeEvents(records.map(toCalendarListEvent).filter(Boolean)) : EMPTY_EVENTS;
     }, [fetchedEvents, localCachedEvents, isOffline, error]);
 
     const selectedYears = useMemo(() => explicitYears || Array.from(new Set([
         String(currentYear), String(currentYear + 1),
         ...events.map(event => event.sortDate?.slice(0, 4)).filter(year => Number(year) >= currentYear),
     ])).sort(), [explicitYears, currentYear, events]);
-    const searchFilters = { searchTerm, selectedYears: explicitYears, selectedEscaloes, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, quickPeriod, selectedMonth, selectedDay, viewMode, maxDistanceFilter, sources: effectiveSources, ...(maxDistanceFilter && homeLocation ? { origin: { lat: homeLocation.lat, lng: homeLocation.lng } } : {}) };
+    const searchFilters = { searchTerm, selectedYears: explicitYears, selectedEscaloes, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, quickPeriod, selectedMonth, selectedDay, viewMode, sources: effectiveSources };
     function applySearch(raw) {
         const value = normalizeSearch(raw);
         if (!value) return;
@@ -179,9 +172,9 @@ export default function CalendarView({
         setSelectedAmbito(forceAmbito || value.selectedAmbito || 'Todos'); setSelectedLicenca(forceLicenca || value.selectedLicenca || 'Todas');
         setSelectedRegiao(value.selectedRegiao || 'Todas'); setSelectedDistrito(value.selectedDistrito || 'Todos');
         setMonthFrom(value.monthFrom || 1); setMonthTo(value.monthTo || 12); setSelectedTags(value.selectedTags || []);
-        setSelectedType(value.selectedType || 'Todos'); setPastEventsFilter(value.pastEventsFilter || 'futuros'); setQuickPeriod(value.quickPeriod || '');
+        setSelectedType(value.selectedType || 'Todos'); setPastEventsFilter(value.pastEventsFilter || 'futuros'); setQuickPeriod(['weekend', 'month'].includes(value.quickPeriod) ? value.quickPeriod : '');
         setSelectedMonth(value.selectedMonth || null); setSelectedDay(value.selectedDay || null); setViewMode(value.viewMode || 'list');
-        setSearchOrigin(value.origin || null); setMaxDistanceFilter(value.maxDistanceFilter); setSearchSources(value.sources?.length ? value.sources : null);
+        setSearchSources(value.sources?.length ? value.sources : null);
     }
     const urlReadyRef = useRef(false);
     const applySearchRef = useRef(applySearch);
@@ -209,9 +202,6 @@ export default function CalendarView({
         }, 350);
         return () => clearTimeout(timer);
     }, [serializedSearch, urlReady]);
-    const linkedId = mounted ? new URLSearchParams(window.location.search).get('event') : null;
-    const linkedEvent = linkedId ? events.find(event => String(event.id) === linkedId || event._allIds?.some(id => String(id) === linkedId)) : null;
-    const selectedEvent = eventSelection === undefined ? linkedEvent : eventSelection;
 
     const isInitialLoading = !mounted || (loading && events.length === 0);
 
@@ -247,17 +237,8 @@ export default function CalendarView({
         filtered = filterCalendarByDate(filtered, pastEventsFilter, today, selectedYears);
         filtered = filtered.filter(event => matchesPeriod(event, quickPeriod));
 
-        if (validCoordinates(homeLocation) && maxDistanceFilter) {
-            filtered = filtered.filter(event => {
-                if (!validCoordinates(event)) return false; // Hide events with unknown locations
-                const dist = calculateDistance(homeLocation.lat, homeLocation.lng, event.lat, event.lng);
-                if (dist === null) return false;
-                return dist <= maxDistanceFilter;
-            });
-        }
-
         return sortCalendarEvents(filtered, favorites);
-    }, [events, searchTerm, selectedYears, selectedEscaloes, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, filterByFavorites, filterByAgenda, markedSet, favorites, forceEscalao, forceAmbito, forceLicenca, quickPeriod, today, homeLocation, maxDistanceFilter]);
+    }, [events, searchTerm, selectedYears, selectedEscaloes, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, filterByFavorites, filterByAgenda, markedSet, favorites, forceEscalao, forceAmbito, forceLicenca, quickPeriod, today]);
 
     const filteredEvents = useMemo(() => eventsInPeriod(matchingEvents, selectedMonth, selectedDay), [matchingEvents, selectedMonth, selectedDay]);
     const calendarMonth = selectedMonth || matchingEvents.map(event => eventDateDisplay(event).start).find(Boolean)?.slice(0, 7) || new Date().toISOString().slice(0, 7);
@@ -279,7 +260,7 @@ export default function CalendarView({
     const uniqueEscaloes = ['Elite', 'Elite Amador', 'Sub-23', 'Sub-19 (Juniores)', 'Sub-17 (Cadetes)', 'Sub-15 (Juvenis)', 'Masters / Veteranos', 'Femininas', 'Escolas', 'Profissional (UCI)', 'Todos (Aberto)', 'Geral / Vários'];
     const uniqueAmbitos = ['Todos', ...new Set(events.map(e => e.ambito))];
     const uniqueLicencas = ['Todas', ...new Set(events.filter(e => e.licenca).map(e => e.licenca))];
-    
+
     const TODAS_AS_REGIOES = [
         'AC Minho', 'AC Porto', 'AC Vila Real', 'AC Beira Litoral', 'AC Beira Alta',
         'AC Beira Interior', 'AC Santarém', 'AC Setúbal', 'AC Algarve', 'AC Madeira', 'AC Açores'
@@ -313,35 +294,35 @@ export default function CalendarView({
                 const parsed = parseInt(y, 10);
                 return !isNaN(parsed) && parsed >= currYr;
             });
-        return futureAndCurrentYears.length > 0 
+        return futureAndCurrentYears.length > 0
             ? Array.from(new Set([currYr.toString(), ...futureAndCurrentYears])).sort()
             : [currYr.toString(), (currYr + 1).toString()];
     };
 
     const onSearchChange = (e) => setSearchTerm(e.target.value);
     const onYearToggle = (y) => {
-        const newYears = selectedYears.includes(y) 
-            ? selectedYears.filter(yr => yr !== y) 
+        const newYears = selectedYears.includes(y)
+            ? selectedYears.filter(yr => yr !== y)
             : [...selectedYears, y];
         if (newYears.length > 0) setSelectedYears(newYears);
     };
-    
+
     const onMonthFromChange = (e) => {
         const val = parseInt(e.target.value);
         setMonthFrom(val);
         if (monthTo < val) setMonthTo(val);
     };
 
-    
+
     const onMonthToChange = (e) => {
         const val = parseInt(e.target.value);
         setMonthTo(val);
         if (monthFrom > val) setMonthFrom(val);
     };
-    
+
     const onTagToggle = (tag) => {
-        const newTags = selectedTags.includes(tag) 
-            ? selectedTags.filter(t => t !== tag) 
+        const newTags = selectedTags.includes(tag)
+            ? selectedTags.filter(t => t !== tag)
             : [...selectedTags, tag];
         setSelectedTags(newTags);
     };
@@ -351,26 +332,6 @@ export default function CalendarView({
             ? selectedEscaloes.filter(e => e !== esc)
             : [...selectedEscaloes, esc];
         setSelectedEscaloes(newEsc);
-    };
-
-    const handleGetLocation = () => {
-        if (!navigator.geolocation) {
-            alert(t('error_geolocation_not_supported') || 'A geolocalização não é suportada por este browser.');
-            return;
-        }
-        navigator.geolocation.getCurrentPosition(
-            (pos) => {
-                setSearchOrigin(undefined);
-                setHomeLocation({
-                    lat: pos.coords.latitude,
-                    lng: pos.coords.longitude,
-                    label: 'A minha localização'
-                });
-            },
-            () => {
-                alert(t('error_geolocation_permission') || 'Não foi possível obter a localização. Permite o acesso nas definições do browser.');
-            }
-        );
     };
 
     const clearAllFilters = () => {
@@ -389,14 +350,14 @@ export default function CalendarView({
         setSelectedType('Todos');
         setPastEventsFilter(defaultPastEventsFilter);
         setSearchTerm('');
-        setMaxDistanceFilter(null); setSearchOrigin(undefined); setSearchSources(null);
+        setSearchSources(null);
     };
 
 
 
     return (
         <div className={styles.page}>
-            <PageHeading title={pageTitle} subtitle={pageSubtitle} hero={pathname === '/'} icon={filterByAgenda ? CalendarCheck : filterByFavorites ? Star : Calendar} />
+            <PageHeading title={pageTitle} subtitle={t('minimal_calendar_intro')} hero={pathname === '/'} icon={filterByAgenda ? CalendarCheck : filterByFavorites ? Star : Calendar} />
             <header className={styles.calendarControls} data-expanded={showFilters}>
                 {isOffline && (
                     <div className="mb-3.5 py-2 px-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs sm:text-sm font-medium flex items-center justify-center gap-2 animate-fade-in shadow-sm">
@@ -426,7 +387,7 @@ export default function CalendarView({
                 </div>
                 <div className={styles.toolbar}>
                     <div className={styles.toolbarActions}>
-                        <button 
+                        <button
                             onClick={() => setShowFilters(!showFilters)}
                             className={styles.filterButton}
                             aria-expanded={showFilters}
@@ -445,9 +406,9 @@ export default function CalendarView({
                             <option value="futuros">{t('filter_upcoming_only')}</option>
                             <option value="passados">{t('filter_past_only')}</option>
                         </select>
-                        
-                        {(maxDistanceFilter || selectedMonth || selectedDay || quickPeriod || selectedEscaloes.length > 0 || selectedDistrito !== 'Todos' || selectedRegiao !== 'Todas' || selectedTags.length > 0 || selectedType !== 'Todos' || selectedAmbito !== (forceAmbito || 'Todos') || selectedLicenca !== (forceLicenca || 'Todas') || (explicitYears !== null && JSON.stringify([...selectedYears].sort()) !== JSON.stringify(getDefaultSelectedYears())) || monthFrom !== 1 || monthTo !== 12 || searchTerm !== '' || pastEventsFilter !== defaultPastEventsFilter) && (
-                            <button 
+
+                        {(selectedMonth || selectedDay || quickPeriod || selectedEscaloes.length > 0 || selectedDistrito !== 'Todos' || selectedRegiao !== 'Todas' || selectedTags.length > 0 || selectedType !== 'Todos' || selectedAmbito !== (forceAmbito || 'Todos') || selectedLicenca !== (forceLicenca || 'Todas') || (explicitYears !== null && JSON.stringify([...selectedYears].sort()) !== JSON.stringify(getDefaultSelectedYears())) || monthFrom !== 1 || monthTo !== 12 || searchTerm !== '' || pastEventsFilter !== defaultPastEventsFilter) && (
+                            <button
                                 onClick={clearAllFilters}
                                 title={t('filter_clear_all')}
                                 className="col-span-2 sm:col-auto inline-flex items-center justify-center gap-1 font-medium text-xs sm:text-sm text-muted hover:text-slate-800 dark:hover:text-slate-300 transition-colors h-8 sm:h-10 px-2 cursor-pointer"
@@ -456,13 +417,13 @@ export default function CalendarView({
                             </button>
                         )}
                     </div>
-                    
+
                 </div>
                 <SavedSearches filters={searchFilters} apply={applySearch} />
                 {/* Expanded controls preserve every existing filter. */}
                 <div id="calendar-quick-filters" className={styles.quickFilters} data-expanded={showFilters}>
                     <div className={styles.periods}>
-                        {['', 'weekend', 'month', 'open'].map(period => (
+                        {['', 'weekend', 'month'].map(period => (
                             <button key={period} type="button" aria-pressed={quickPeriod === period} onClick={() => {
                                 setSelectedMonth(null); setSelectedDay(null);
                                 setQuickPeriod(period);
@@ -500,7 +461,7 @@ export default function CalendarView({
                         </button>
                     )}
                 </div>
-                
+
                 {showFilters && (
                     <div id="calendar-filters" className={styles.filters}>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 w-full">
@@ -509,9 +470,9 @@ export default function CalendarView({
                                     <label className="text-xs text-slate-400 uppercase tracking-wider font-bold ml-1">{t('filter_years')}</label>
                                     <div className="flex gap-2 flex-wrap">
                                         {availableYears.map(y => (
-                                            <button 
-                                                key={y} 
-                                                onClick={() => onYearToggle(y)} 
+                                            <button
+                                                key={y}
+                                                onClick={() => onYearToggle(y)}
                                                 aria-pressed={selectedYears.includes(y)}
                                                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors focus:outline-none cursor-pointer ${selectedYears.includes(y) ? 'bg-brand-soft text-brand border-brand font-bold' : 'bg-soft border-line text-muted hover:bg-slate-200 dark:hover:bg-[#4a433b] hover:text-slate-900 dark:hover:text-slate-300'}`}
                                             >
@@ -521,40 +482,40 @@ export default function CalendarView({
                                     </div>
                                 </div>
                             )}
-                            
+
                             {activeFilters.includes('month') && (
                                 <>
                                     <div className="flex flex-col gap-2">
                                         <label className="text-xs text-muted uppercase tracking-wider font-bold ml-1">{t('filter_start_month')}</label>
-                                        <select 
+                                        <select
                                             className="w-full h-9 px-3 text-sm rounded-lg border border-line bg-soft text-ink outline-none focus:border-brand transition-colors"
-                                            value={monthFrom} 
+                                            value={monthFrom}
                                             aria-label={t('filter_start_month')}
-                                            onChange={(e) => onMonthFromChange({target:{value: parseInt(e.target.value, 10)}})} 
+                                            onChange={(e) => onMonthFromChange({target:{value: parseInt(e.target.value, 10)}})}
                                         >
                                             {monthNames.map((name, idx) => <option key={idx + 1} value={idx + 1}>{name}</option>)}
                                         </select>
                                     </div>
-                                    
+
                                     <div className="flex flex-col gap-2">
                                         <label className="text-xs text-muted uppercase tracking-wider font-bold ml-1">{t('filter_end_month')}</label>
-                                        <select 
+                                        <select
                                             className="w-full h-9 px-3 text-sm rounded-lg border border-line bg-soft text-ink outline-none focus:border-brand transition-colors"
-                                            value={monthTo} 
+                                            value={monthTo}
                                             aria-label={t('filter_end_month')}
-                                            onChange={(e) => onMonthToChange({target:{value: parseInt(e.target.value, 10)}})} 
+                                            onChange={(e) => onMonthToChange({target:{value: parseInt(e.target.value, 10)}})}
                                         >
                                             {monthNames.map((name, idx) => <option key={idx + 1} value={idx + 1}>{name}</option>)}
                                         </select>
                                     </div>
                                 </>
                             )}
-                            
+
                             {activeFilters.includes('escalao') && !forceEscalao && (
                                 <div className="flex flex-col gap-2 col-span-full">
                                     <div className="flex items-center gap-1 mb-0.5">
                                         <label className="text-xs text-muted uppercase tracking-wider font-bold ml-1 flex items-center">{t('filter_categories')}</label>
-                                        <button 
+                                        <button
                                             onClick={() => setShowEscalaoHelp(true)}
                                             title={t('escalao_modal_desc')}
                                             className="text-brand hover:brightness-110 p-0 -mt-[2px] flex items-center justify-center transition-colors"
@@ -566,9 +527,9 @@ export default function CalendarView({
                                     </div>
                                     <div className="flex gap-2 flex-wrap">
                                         {uniqueEscaloes.map(esc => (
-                                            <button 
-                                                key={esc} 
-                                                onClick={() => onEscalaoToggle(esc)} 
+                                            <button
+                                                key={esc}
+                                                onClick={() => onEscalaoToggle(esc)}
                                                 aria-pressed={selectedEscaloes.includes(esc)}
                                                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors focus:outline-none ${selectedEscaloes.includes(esc) ? 'bg-brand-soft text-brand border-brand' : 'bg-soft border-line text-muted hover:bg-slate-200 dark:hover:bg-[#4a433b] hover:text-slate-900 dark:hover:text-slate-300'}`}
                                             >
@@ -578,15 +539,15 @@ export default function CalendarView({
                                     </div>
                                 </div>
                             )}
-                            
+
                             {activeFilters.includes('ambito') && !forceAmbito && (
                                 <div className="flex flex-col gap-2">
                                     <label className="text-xs text-muted uppercase tracking-wider font-bold ml-1">{t('filter_scope')}</label>
-                                    <select 
+                                    <select
                                         className="w-full h-9 px-3 text-sm rounded-lg border border-line bg-soft text-ink outline-none focus:border-brand transition-colors"
-                                        value={selectedAmbito} 
+                                        value={selectedAmbito}
                                         aria-label={t('filter_scope')}
-                                        onChange={(e) => setSelectedAmbito(e.target.value)} 
+                                        onChange={(e) => setSelectedAmbito(e.target.value)}
                                     >
                                         {uniqueAmbitos.map(opt => (
                                             <option key={opt} value={opt}>
@@ -596,15 +557,15 @@ export default function CalendarView({
                                     </select>
                                 </div>
                             )}
-                            
+
                             {activeFilters.includes('licenca') && !forceLicenca && (
                                 <div className="flex flex-col gap-2">
                                     <label className="text-xs text-muted uppercase tracking-wider font-bold ml-1">{t('filter_license')}</label>
-                                    <select 
+                                    <select
                                         className="w-full h-9 px-3 text-sm rounded-lg border border-line bg-soft text-ink outline-none focus:border-brand transition-colors"
-                                        value={selectedLicenca} 
+                                        value={selectedLicenca}
                                         aria-label={t('filter_license')}
-                                        onChange={(e) => setSelectedLicenca(e.target.value)} 
+                                        onChange={(e) => setSelectedLicenca(e.target.value)}
                                     >
                                         {uniqueLicencas.map(opt => (
                                             <option key={opt} value={opt}>
@@ -614,14 +575,14 @@ export default function CalendarView({
                                     </select>
                                 </div>
                             )}
-                            
+
                             <div className="flex flex-col gap-2">
                                 <label className="text-xs text-muted uppercase tracking-wider font-bold ml-1">{t('filter_event_type')}</label>
-                                <select 
+                                <select
                                     className="w-full h-9 px-3 text-sm rounded-lg border border-line bg-soft text-ink outline-none focus:border-brand transition-colors"
-                                    value={selectedType} 
+                                    value={selectedType}
                                     aria-label={t('filter_event_type')}
-                                    onChange={(e) => setSelectedType(e.target.value)} 
+                                    onChange={(e) => setSelectedType(e.target.value)}
                                 >
                                     <option value="Todos">{t('filter_all_types')}</option>
                                     <option value="Etapas">{t('filter_stages')}</option>
@@ -629,15 +590,15 @@ export default function CalendarView({
                                 </select>
                             </div>
 
-                            
+
                             {activeFilters.includes('regiao') && (
                                 <div className="flex flex-col gap-2">
                                     <label className="text-xs text-muted uppercase tracking-wider font-bold ml-1">{t('filter_region')}</label>
-                                    <select 
+                                    <select
                                         className="w-full h-9 px-3 text-sm rounded-lg border border-line bg-soft text-ink outline-none focus:border-brand transition-colors"
-                                        value={selectedRegiao} 
+                                        value={selectedRegiao}
                                         aria-label={t('filter_region')}
-                                        onChange={(e) => setSelectedRegiao(e.target.value)} 
+                                        onChange={(e) => setSelectedRegiao(e.target.value)}
                                     >
                                         {uniqueRegioes.map(opt => (
                                             <option key={opt} value={opt}>
@@ -648,65 +609,7 @@ export default function CalendarView({
                                 </div>
                             )}
 
-                            <div className="flex flex-col gap-2">
-                                <label className="text-xs text-muted uppercase tracking-wider font-bold ml-1">
-                                    {t('distance_filter_straight')}
-                                </label>
-                                {homeLocation ? (
-                                    <div className="flex items-center gap-2">
-                                        {showCustomDistance ? (
-                                            <div className="flex items-center gap-1 w-full">
-                                                <input 
-                                                    type="number" 
-                                                    className="w-full h-9 px-3 text-sm rounded-lg border border-line bg-soft text-ink outline-none focus:border-brand transition-colors"
-                                                    placeholder="Km"
-                                                    value={maxDistanceFilter || ''}
-                                                    onChange={(e) => setMaxDistanceFilter(e.target.value ? Number(e.target.value) : null)}
-                                                    autoFocus
-                                                />
-                                                <button onClick={() => setShowCustomDistance(false)} className="h-9 px-2 text-muted hover:text-ink">
-                                                    <X size={16} />
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <select 
-                                                className="w-full h-9 px-3 text-sm rounded-lg border border-line bg-soft text-ink outline-none focus:border-brand transition-colors"
-                                                value={[50, 100, 150, 200, 250, null, ''].includes(maxDistanceFilter) ? (maxDistanceFilter || '') : 'custom'} 
-                                                onChange={(e) => {
-                                                    if (e.target.value === 'custom') {
-                                                        setShowCustomDistance(true);
-                                                    } else {
-                                                        setMaxDistanceFilter(e.target.value ? Number(e.target.value) : null);
-                                                    }
-                                                }} 
-                                            >
-                                                <option value="">Todas as Distâncias</option>
-                                                <option value="50">Até 50 km</option>
-                                                <option value="100">Até 100 km</option>
-                                                <option value="150">Até 150 km</option>
-                                                <option value="200">Até 200 km</option>
-                                                <option value="250">Até 250 km</option>
-                                                {!['', 50, 100, 150, 200, 250].includes(maxDistanceFilter) && maxDistanceFilter && (
-                                                    <option value={maxDistanceFilter}>Até {maxDistanceFilter} km</option>
-                                                )}
-                                                <option value="custom">Outro...</option>
-                                            </select>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <button 
-                                        type="button"
-                                        onClick={handleGetLocation}
-                                        className="w-full h-9 px-3 text-sm rounded-lg border border-line bg-soft text-ink hover:bg-emerald-50 dark:hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-200 transition-colors flex items-center justify-center gap-1.5 font-medium"
-                                    >
-                                        <MapPin size={14} />
-                                        Ativar GPS
-                                    </button>
-                                )}
-                            </div>
-                            
                         </div>
-                        
                         {activeFilters.includes('modalidade') && (
                             <div className="mt-6 pt-5 border-t border-line">
                                 <span className="text-xs text-muted uppercase tracking-wider font-bold ml-1 block mb-3">
@@ -714,9 +617,9 @@ export default function CalendarView({
                                 </span>
                                 <div className="flex gap-2 flex-wrap">
                                 {availableTags.map(tag => (
-                                    <button 
-                                        key={tag} 
-                                        onClick={() => onTagToggle(tag)} 
+                                    <button
+                                        key={tag}
+                                        onClick={() => onTagToggle(tag)}
                                         aria-pressed={selectedTags.includes(tag)}
                                         className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors focus:outline-none ${selectedTags.includes(tag) ? 'bg-brand-soft text-brand border-brand' : 'bg-soft border-line text-muted hover:bg-slate-200 dark:hover:bg-[#4a433b] hover:text-slate-900 dark:hover:text-slate-300'}`}
                                     >
@@ -746,7 +649,7 @@ export default function CalendarView({
                 {selectedDay && <div className={styles.daySelection}><span>{new Intl.DateTimeFormat(language, { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(selectedDay + 'T12:00:00Z'))}</span><button type="button" onClick={() => setSelectedDay(null)}>{t('ui_clear_day')}<X size={14} /></button></div>}
                 {viewMode === 'calendar' && <MonthCalendar expanded month={calendarMonth} events={matchingEvents} selectedDay={selectedDay} onDay={chooseDay} onMonth={browseMonth} />}
                 <FavoriteChanges events={events} favorites={favorites} ready={Array.isArray(fetchedEvents) && !error && !isOffline} onSelect={setSelectedEvent} />
-                {filterByFavorites && <><AlertPreferences /><FavoriteSubscription /></>}
+                {filterByFavorites && <FavoriteSubscription />}
                 {(filterByAgenda || filterByFavorites) && !isInitialLoading && <AgendaOverview mode={filterByAgenda ? "agenda" : "favorites"} events={events.filter(event => filterByAgenda ? isMarked(event.id, 'event', event._allIds || []) : favorites.includes(event.id) || event._allIds?.some(id => favorites.includes(id)))} onSelect={setSelectedEvent} />}
                 {isInitialLoading && (
                     <div className="flex flex-col items-center justify-center py-16 text-slate-400">
@@ -760,7 +663,7 @@ export default function CalendarView({
                         <AlertTriangle size={28} aria-hidden="true" />
                         <h3>{t('error_occurred')}</h3>
                         <p>{t('events_load_error')}</p>
-                        <button 
+                        <button
                             onClick={() => mutate()}
                             className={styles.primaryButton}
                         >
@@ -791,7 +694,7 @@ export default function CalendarView({
                                 {t('filter_no_events')}
                             </p>
                             <button type="button" onClick={clearAllFilters} className={styles.filterButton}><X size={14} />{t('filter_clear_all')}</button>
-                            
+
                             {selectedRegiao !== 'Todas' && (
                                 <div className="bg-surface border border-line p-8 rounded-xl max-w-lg mx-auto">
                                     <Globe size={40} className="mx-auto mb-4 text-brand" aria-hidden="true" />
@@ -801,9 +704,9 @@ export default function CalendarView({
                                     <p className="text-muted mb-6 text-sm leading-relaxed">
                                          {t('regional_not_found_desc')}
                                     </p>
-                                    <a 
-                                        href={associationLinks[selectedRegiao] || 'https://www.fpciclismo.pt/'} 
-                                        target="_blank" 
+                                    <a
+                                        href={associationLinks[selectedRegiao] || 'https://www.fpciclismo.pt/'}
+                                        target="_blank"
                                         rel="noopener noreferrer"
                                         className="inline-flex items-center gap-2 bg-brand-strong border border-brand-strong text-white px-6 py-3 rounded-lg no-underline font-semibold hover:brightness-110 transition-all"
                                     >
@@ -860,21 +763,11 @@ export default function CalendarView({
                                 const dateConflict = getDateConflict(event);
                                 const isEventFavorited = favorites.includes(event.id) || (event._allIds && event._allIds.some(id => favorites.includes(id)));
 
-                                const translation = event.translations?.find(t => t.language === language) 
-                                    || (language !== 'pt' ? event.translations?.find(t => t.language === 'en') : null);
-                                const displayTitle = formatEventTitle(language === 'pt' ? event.title : (translation?.title || event.title));
+                                const displayTitle = formatEventTitle(event.title);
                                 const location = formatEventLocation(event) || t('summary_location_tbd');
 
-                                let distanceText = null;
-                                const roadMeters = cachedRoadDistance(roadDistances, homeLocation, event);
-                                if (validCoordinates(homeLocation) && validCoordinates(event)) {
-                                    const distanceValue = calculateDistance(homeLocation.lat, homeLocation.lng, event.lat, event.lng);
-                                    if (roadMeters !== null) distanceText = t('road_distance', { km: new Intl.NumberFormat(language, { maximumFractionDigits: 1 }).format(roadMeters / 1000) });
-                                    else if (distanceValue !== null) distanceText = t('distance_straight', { km: distanceValue });
-                                }
-
                                                 return (
-                                    <div 
+                                    <div
                                         key={event.id} className={styles.eventCard}
                                         data-state={isCancelled(event) ? 'cancelled' : isEventMarked ? 'marked' : dateConflict.hasConflict ? 'conflict' : isEventFavorited ? 'favorite' : undefined}
                                     >
@@ -882,14 +775,9 @@ export default function CalendarView({
                                         <div className="flex flex-col justify-center min-w-0 flex-1">
                                             <div className={styles.eventHeadingRow}>
                                                 <h3>
-                                                    <a href={`/events/${encodeURIComponent(event.id)}`} className={styles.eventTitle} onClick={(click) => {
-                                                        if (click.ctrlKey || click.metaKey || click.shiftKey || click.altKey) return;
-                                                        click.preventDefault();
-                                                        setSelectedEvent(event);
-                                                        trackEvent('EVENT_CLICK', { targetId: event.id, targetTitle: event.title, path: pathname });
-                                                    }}>{displayTitle}</a>
+                                                    <a href={originalEventUrl(event.link)} target="_blank" rel="noopener noreferrer" className={styles.eventTitle}>{displayTitle}</a>
                                                 </h3>
-                                                <button 
+                                                <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         toggleFavorite(event.id);
@@ -911,11 +799,6 @@ export default function CalendarView({
                                                 <span className="flex items-center flex-wrap">
                                                     <MapPin size={12} className="shrink-0 mr-1" />
                                                     <span>{location}</span>
-                                                    {distanceText && (
-                                                        <span className="ml-2 inline-flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded text-[10px]" title={t(roadMeters !== null ? 'road_destination_note' : 'distancia_estimada')}>
-                                                            {distanceText}
-                                                        </span>
-                                                    )}
                                                 </span>
                                                 <span>
                                                     <Bike size={12} className="text-slate-400 dark:text-slate-500 shrink-0" />
@@ -933,40 +816,18 @@ export default function CalendarView({
                                                 </span>
                                             )}
                                             {dateConflict.hasConflict && !isEventMarked && (
-                                                <span 
+                                                <span
                                                     className={`${styles.eventStatus} ${styles.eventConflict}`}
                                                     title={t('card_conflict_tooltip')}
                                                 >
                                                     <AlertTriangle size={13} /> {t('card_same_day')}
                                                 </span>
                                             )}
-
-                                            {/* Registration Countdown Alert */}
-                                            {(() => {
-                                                if (!event.registrationClosesAt && !event.registrationOpensAt) return null;
-                                                const now = new Date();
-                                                if (event.registrationClosesAt) {
-                                                    const closes = new Date(event.registrationClosesAt);
-                                                    const diffDays = registrationDaysUntil(event.registrationClosesAt, now);
-                                                    if (diffDays >= 0 && diffDays <= 4) {
-                                                        const countdownText = diffDays === 0 
-                                                            ? t('card_last_day') 
-                                                            : t('card_days_to_close').replace('{days}', diffDays);
-                                                        return (
-                                                            <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 flex items-center gap-1 shrink-0 animate-pulse">
-                                                                <Clock size={10} className="shrink-0" /> {countdownText}
-                                                            </span>
-                                                        );
-                                                    }
-                                                }
-                                                return null;
-                                            })()}
-
                                             {/* Main Scope / Âmbito (Ignora "Outro / A Definir") */}
                                             {(() => {
                                                 const rawAmbito = event.ambito?.trim();
                                                 const isGenericAmbito = !rawAmbito || rawAmbito.toLowerCase().includes('definir') || rawAmbito.toLowerCase() === 'outro';
-                                                
+
                                                 if (!isGenericAmbito) {
                                                     let displayAmbito = rawAmbito;
                                                     if (rawAmbito === 'Taça de Portugal') displayAmbito = t('badge_cup');
@@ -975,7 +836,7 @@ export default function CalendarView({
                                                     else if (rawAmbito === 'Prova Aberta') displayAmbito = t('card_open_race');
                                                     else if (rawAmbito === 'Internacional') displayAmbito = t('badge_uci');
                                                     else if (rawAmbito === 'Regional') displayAmbito = t('nav_regionals');
-                                                    
+
                                                     return (
                                                         <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider shrink-0 ${
                                                             rawAmbito === 'Taça de Portugal'
@@ -992,7 +853,7 @@ export default function CalendarView({
                                                         </span>
                                                     );
                                                 }
-                                                
+
                                                 // Se não tem âmbito válido, mostra licença relevante se existir (ex: Competição)
                                                 if (event.licenca && event.licenca !== 'CPT / Lazer') {
                                                     const displayLicenca = event.licenca === 'Competição' ? t('escalao_license_competition') : event.licenca;
@@ -1002,7 +863,7 @@ export default function CalendarView({
                                                         </span>
                                                     );
                                                 }
-                                                
+
                                                 return null;
                                             })()}
 
@@ -1013,7 +874,7 @@ export default function CalendarView({
                                                 </span>
                                             )}
                                     </div>
-                                    <ChevronRight size={17} className={styles.eventArrow} aria-hidden="true" />
+                                    <a href={originalEventUrl(event.link)} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 shrink-0" aria-label={t('minimal_original') + ': ' + event.title}>{t('minimal_original')} ↗</a>
                                 </div>
 
                                                 );
@@ -1031,14 +892,6 @@ export default function CalendarView({
                         )}
                     </>
                 )}
-
-                <EventModal 
-                    selectedEvent={selectedEvent} 
-                    setSelectedEvent={setSelectedEvent} 
-                    favorites={favorites} 
-                    toggleFavorite={toggleFavorite} 
-                    isSignedIn={isSignedIn} 
-                />
             </section>
             </div>
             {showEscalaoHelp && (

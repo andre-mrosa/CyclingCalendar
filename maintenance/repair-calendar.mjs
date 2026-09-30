@@ -1,3 +1,5 @@
+import { assertContentProcessingApproved } from '../app/lib/contentReleasePolicy.js';
+assertContentProcessingApproved();
 // Read-only audit by default. --apply-plan=path backs up event records first.
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';

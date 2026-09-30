@@ -11,7 +11,7 @@ export default function TermsOfService() {
       title: '1. Natureza do Serviço',
       content: (
         <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-          O <strong className="text-emerald-400">Cycling Calendar</strong> é um projeto não-comercial, criado e mantido de forma independente com o objetivo único de agregar e facilitar a consulta do calendário de provas de ciclismo em Portugal. <strong className="text-slate-700 dark:text-slate-300">Não somos organizadores</strong>, patrocinadores nem representantes de nenhum dos eventos listados.
+          O <strong className="text-emerald-700 dark:text-emerald-400">Cycling Calendar</strong> é um projeto não-comercial, criado e mantido de forma independente com o objetivo único de agregar e facilitar a consulta do calendário de provas de ciclismo em Portugal. <strong className="text-slate-700 dark:text-slate-300">Não somos organizadores</strong>, patrocinadores nem representantes de nenhum dos eventos listados.
         </p>
       ),
     },
@@ -20,8 +20,8 @@ export default function TermsOfService() {
       title: '2. Conteúdos e respetivos direitos',
       content: (
         <ul className="space-y-3 text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-          <li className="flex gap-3"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0"></div><span>O Cycling Calendar agrega informação sobre provas e não reivindica a titularidade dos conteúdos de terceiros apresentados no site.</span></li>
-          <li className="flex gap-3"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0"></div><span>Os eventuais direitos sobre <strong>textos, imagens, logótipos e altimetrias</strong> pertencem aos respetivos titulares. A apresentação destes conteúdos não implica afiliação ou aprovação por parte dos organizadores. Para questões de atribuição, correção ou remoção de conteúdos, utilize o <Link href="/contacto" className="underline underline-offset-4">formulário de contacto</Link>.</span></li>
+          <li className="flex gap-3"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0"></div><span>O Cycling Calendar apresenta um índice de provas com informação factual resumida e ligações para as páginas de origem.</span></li>
+          <li className="flex gap-3"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0"></div><span>Não disponibilizamos cópias de descrições, cartazes, fotografias, logótipos, altimetrias ou ficheiros de percursos das provas. As ligações externas não implicam afiliação ou aprovação por parte dos organizadores. Para questões de atribuição, correção ou remoção de conteúdos, utilize o <Link href="/contacto" className="underline underline-offset-4">formulário de contacto</Link>.</span></li>
         </ul>
       ),
     },
@@ -30,7 +30,7 @@ export default function TermsOfService() {
       title: '3. Limitação de Responsabilidade',
       content: (
         <div className="bg-rose-950/20 border border-rose-900/30 rounded-xl p-5 mt-2">
-          <p className="text-slate-700 dark:text-slate-300 text-sm mb-3">Na máxima extensão permitida por lei, o Cycling Calendar <strong className="text-rose-400">não se responsabiliza por</strong>:</p>
+          <p className="text-slate-700 dark:text-slate-300 text-sm mb-3">Na máxima extensão permitida por lei, o Cycling Calendar <strong className="text-rose-800 dark:text-rose-400">não se responsabiliza por</strong>:</p>
           <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
             <li className="flex gap-2 items-start"><X size={16} className="text-rose-500 mt-0.5 shrink-0" /><span>Inexatidões nas datas, percursos, ou cancelamentos repentinos de eventos.</span></li>
             <li className="flex gap-2 items-start"><X size={16} className="text-rose-500 mt-0.5 shrink-0" /><span>Falhas na plataforma, indisponibilidade temporária ou perda de dados de perfil.</span></li>
@@ -47,19 +47,19 @@ export default function TermsOfService() {
           <p className="text-slate-600 dark:text-slate-400 text-sm mb-4">Ao usar o Cycling Calendar, o utilizador concorda em:</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div className="p-4 bg-slate-100 dark:bg-slate-900/40 rounded-xl border border-slate-300 dark:border-slate-800/40">
-              <span className="block text-emerald-400 font-bold mb-1">Uso Correto</span>
+              <span className="block text-emerald-700 dark:text-emerald-400 font-bold mb-1">Uso Correto</span>
               <p className="text-slate-600 dark:text-slate-400">Usar a plataforma apenas para fins pessoais ou informativos.</p>
             </div>
             <div className="p-4 bg-slate-100 dark:bg-slate-900/40 rounded-xl border border-slate-300 dark:border-slate-800/40">
-              <span className="block text-rose-400 font-bold mb-1">Consulta Automatizada</span>
+              <span className="block text-rose-700 dark:text-rose-400 font-bold mb-1">Consulta Automatizada</span>
               <p className="text-slate-600 dark:text-slate-400">É permitida a consulta automatizada e a extração de dados (scraping), com uma frequência de pedidos que não prejudique a disponibilidade do serviço para os restantes utilizadores. Esta permissão não concede direitos sobre conteúdos de terceiros.</p>
             </div>
             <div className="p-4 bg-slate-100 dark:bg-slate-900/40 rounded-xl border border-slate-300 dark:border-slate-800/40">
-              <span className="block text-emerald-400 font-bold mb-1">Identidade</span>
+              <span className="block text-emerald-700 dark:text-emerald-400 font-bold mb-1">Identidade</span>
               <p className="text-slate-600 dark:text-slate-400">Não tentar fazer-se passar pela administração do site ou pelos organizadores.</p>
             </div>
             <div className="p-4 bg-slate-100 dark:bg-slate-900/40 rounded-xl border border-slate-300 dark:border-slate-800/40">
-              <span className="block text-rose-400 font-bold mb-1">Sistemas</span>
+              <span className="block text-rose-700 dark:text-rose-400 font-bold mb-1">Sistemas</span>
               <p className="text-slate-600 dark:text-slate-400">Não explorar ativamente vulnerabilidades de segurança.</p>
             </div>
           </div>
@@ -82,7 +82,7 @@ export default function TermsOfService() {
           <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
           Voltar ao calendário
         </Link>
-        
+
         <header className="mb-12">
           <h1 className="text-4xl sm:text-5xl font-extrabold text-slate-900 dark:text-white mb-4 tracking-tight">Termos de <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Serviço</span></h1>
           <p className="text-lg text-slate-600 dark:text-slate-400 font-medium">As regras da casa e as condições de utilização da plataforma.</p>
@@ -95,7 +95,7 @@ export default function TermsOfService() {
               <section key={index} className="p-6 sm:p-8 bg-slate-50 dark:bg-slate-950/80 rounded-3xl border border-slate-300 dark:border-slate-800/60 shadow-2xl backdrop-blur-xl">
                 <div className="flex items-center gap-4 mb-5">
                   <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 shadow-inner">
-                    <Icon size={22} className="text-emerald-400" />
+                    <Icon size={22} className="text-emerald-700 dark:text-emerald-400" />
                   </div>
                   <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">{section.title}</h2>
                 </div>
@@ -108,7 +108,7 @@ export default function TermsOfService() {
         </div>
 
         <footer className="mt-16 text-center border-t border-slate-300 dark:border-slate-800/60 pt-8">
-          <p className="text-xs text-slate-500 font-mono mb-4">Última atualização: 29 de setembro de 2026</p>
+          <p className="text-xs text-slate-500 font-mono mb-4">Última atualização: 30 de setembro de 2026</p>
         </footer>
       </div>
     </div>

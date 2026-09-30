@@ -1,4 +1,4 @@
-import { withRegistrationDates } from './registrationDates.js';
+import { toPublicEvent } from '../lib/publicEvent.js';
 import { eventDateDisplay } from './eventDateDisplay.js';
 
 export function filterCalendarByDate(events, filter, today, selectedYears = []) {
@@ -21,14 +21,7 @@ export function sortCalendarEvents(events, favorites = []) {
         .map(({ event }) => event);
 }
 
-// The list needs dates and labels; large documents and images load on opening a race.
-export function toCalendarListEvent(event) {
-    const { prices, image, logo, description, programa, insurance, prizes, gpxData, ...summary } = withRegistrationDates(event);
-    return {
-        ...summary,
-        translations: (event.translations || []).map(({ language, title, details }) => ({ language, title, details })),
-    };
-}
+export const toCalendarListEvent = toPublicEvent;
 
 export function chooseCalendarEvents(fetched, cached, { offline = false, failed = false } = {}) {
     // A valid empty response must not revive events from an old cache.

@@ -1,7 +1,8 @@
+import { assertSourceApproved } from '../contentReleasePolicy.js';
 import * as cheerio from 'cheerio';
 import { prisma } from '../db.js';
-import { 
-    getAmbito, getTag, getRegiao, getDistrito, 
+import {
+    getAmbito, getTag, getRegiao, getDistrito,
     toTitleCase, sanitizeHtml
 } from './utils.js';
 import { logInfo, logError } from '../logger.js';
@@ -9,12 +10,12 @@ import { saveOrMergeEvent } from '../merging/eventMerger.js';
 import { readStopAndGoHeader, stopAndGoEventUrl } from './stopandgoParser.js';
 
 const CYCLING_KEYWORDS = [
-    'btt', 'bike', 'ciclismo', 'cycling', 'gravel', 'granfondo', 
+    'btt', 'bike', 'ciclismo', 'cycling', 'gravel', 'granfondo',
     'mediofondo', 'minifondo', 'xco', 'xcm', 'xce', 'dhi', 'dhu',
     'downhill', 'enduro', 'maratona', 'rota', 'ngps', 'iberico',
-    'trofeu', 'trofeo', 'desafio', 'subida', 'circuito', 'raid', 
-    'resistencia', 'volta', 'taca', 'taça', 'campeonato', 'classic', 
-    'passeio', 'estrela', 'geres', 'gerês', 'xisto', 'bairrada', 
+    'trofeu', 'trofeo', 'desafio', 'subida', 'circuito', 'raid',
+    'resistencia', 'volta', 'taca', 'taça', 'campeonato', 'classic',
+    'passeio', 'estrela', 'geres', 'gerês', 'xisto', 'bairrada',
     'maia-urban', 'ceireiro', 'racenature', 'giao-bike', 'pedalar',
     'trail-btt', 'trail/btt', 'mtb'
 ];
@@ -29,8 +30,8 @@ const CYCLING_MODALITY_IDS = [
 ];
 
 const NON_CYCLING = [
-    'caminhada', 'atletismo', 'triathlon', 'triatlo', 
-    'obstaculos', 'ocr', 'kayak', 'sunset-trail', 'corrida', 
+    'caminhada', 'atletismo', 'triathlon', 'triatlo',
+    'obstaculos', 'ocr', 'kayak', 'sunset-trail', 'corrida',
     'maratona-da-europa', 'meia-maratona', 'meia maratona', 'trail-run', 'trail-noturno',
     'skyrace', 'skyrunning', 'sky-running', 'sky-race',
     'trail', 'ultra-trail', 'ultra trail', 'crosstrail', 'cross-trail', 'night-race',
@@ -53,13 +54,14 @@ function checkRateLimit(response) {
  * Scrape detalhado de uma prova específica da Stop and Go com verificação de modalidade
  */
 export async function scrapeEventPage(url, retries = 2, options = {}) {
+    assertSourceApproved("Stop and Go");
     try {
         let res = null;
         for (let attempt = 0; attempt <= retries; attempt++) {
             try {
-                res = await fetch(url, { 
-                    headers: { 'User-Agent': 'Mozilla/5.0' }, 
-                    signal: AbortSignal.timeout(6000) 
+                res = await fetch(url, {
+                    headers: { 'User-Agent': 'Mozilla/5.0' },
+                    signal: AbortSignal.timeout(6000)
                 });
                 if (res.ok) break;
                 // Stop the source on rate limiting instead of discarding pages
@@ -196,6 +198,7 @@ export function parseStopAndGoEvent(html, url, options = {}) {
  * Consulta o sitemap e as páginas de eventos para extrair todas as provas de ciclismo (BTT, Estrada, Gravel, Downhill, Trail/BTT)
  */
 export async function scrapeStopAndGo(options = {}) {
+    assertSourceApproved("Stop and Go");
     try {
         logInfo('SCRAPER', 'Início da sincronização Stop and Go (sitemap.xml + abas Downhill, Gravel, BTT, Estrada)');
 
@@ -216,11 +219,11 @@ export async function scrapeStopAndGo(options = {}) {
         // Recolher URLs de sitemap e das páginas de eventos gerais e por modalidades específicas de ciclismo (Downhill, Gravel, BTT, Trail/BTT, Ciclismo, Cycling)
         const eventPageUrls = new Set(sitemapUrls);
         const cyclingListingUrls = new Set();
-        
+
         // 1. Páginas gerais
         for (let page = 1; page <= 4; page++) {
             try {
-                const pRes = await fetch(`https://stopandgo.net/events?page=${page}`, { 
+                const pRes = await fetch(`https://stopandgo.net/events?page=${page}`, {
                     headers: { 'User-Agent': 'Mozilla/5.0' },
                     signal: AbortSignal.timeout(5000)
                 });

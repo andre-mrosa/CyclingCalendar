@@ -53,7 +53,7 @@ function ContactForm({ initialMessage }) {
                 <form onSubmit={handleContactSubmit} className="flex flex-col gap-5">
                     <p className="text-sm text-muted">Usamos os dados enviados para responder ao teu pedido. Para questões de privacidade, indica o teu email de resposta. <Link href="/privacy-policy" className="underline">Política de privacidade</Link>.</p>
                     {submitStatus === 'success' ? (
-                        <div className="p-6 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl text-center border border-emerald-500/20 text-base font-medium">
+                        <div role="status" className="p-6 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl text-center border border-emerald-500/20 text-base font-medium">
                             <strong className="font-semibold block mb-1">{t('contact_form_thank_you')}</strong> {t('contact_form_success')}
                         </div>
                     ) : (
@@ -61,10 +61,10 @@ function ContactForm({ initialMessage }) {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                 <div className="flex flex-col gap-2">
                                     <label htmlFor="contact-name" className="text-xs uppercase tracking-wider font-bold text-muted">{t('contact_form_name')}</label>
-                                    <input 
-                                        id="contact-name" autoComplete="name"
-                                        type="text" 
-                                        placeholder={t('contact_placeholder_name')} 
+                                    <input
+                                        id="contact-name" autoComplete="name" maxLength={200}
+                                        type="text"
+                                        placeholder={t('contact_placeholder_name')}
                                         value={formData.name}
                                         onChange={(e) => setFormData({...formData, name: e.target.value})}
                                         disabled={isSubmitting}
@@ -73,10 +73,10 @@ function ContactForm({ initialMessage }) {
                                 </div>
                                 <div className="flex flex-col gap-2">
                                     <label htmlFor="contact-email" className="text-xs uppercase tracking-wider font-bold text-muted">{t('contact_form_email')}</label>
-                                    <input 
-                                        id="contact-email" autoComplete="email"
-                                        type="email" 
-                                        placeholder={t('contact_placeholder_email')} 
+                                    <input
+                                        id="contact-email" autoComplete="email" maxLength={254}
+                                        type="email"
+                                        placeholder={t('contact_placeholder_email')}
                                         value={formData.email}
                                         onChange={(e) => setFormData({...formData, email: e.target.value})}
                                         disabled={isSubmitting}
@@ -86,9 +86,9 @@ function ContactForm({ initialMessage }) {
                             </div>
                             <div className="flex flex-col gap-2">
                                 <label htmlFor="contact-message" className="text-xs uppercase tracking-wider font-bold text-muted">{t('contact_form_msg')}</label>
-                                <textarea 
-                                    id="contact-message"
-                                    placeholder={t('contact_placeholder_msg')} 
+                                <textarea
+                                    id="contact-message" maxLength={10000}
+                                    placeholder={t('contact_placeholder_msg')}
                                     required
                                     value={formData.message}
                                     onChange={(e) => setFormData({...formData, message: e.target.value})}
@@ -97,15 +97,15 @@ function ContactForm({ initialMessage }) {
                                     className="bg-soft border border-line rounded-xl focus:border-brand focus:ring-1 focus:ring-brand p-3.5 outline-none text-ink placeholder-slate-400 dark:placeholder-slate-500 text-sm resize-y transition-colors disabled:opacity-50"
                                 />
                             </div>
-                            
+
                             {submitStatus === 'error' && (
-                                <div className="p-4 bg-red-500/10 text-red-400 rounded-xl text-center border border-red-500/20 text-sm">
+                                <div role="alert" className="p-4 bg-red-500/10 text-red-400 rounded-xl text-center border border-red-500/20 text-sm">
                                     {t('contact_form_error')}
                                 </div>
                             )}
-                            
-                            <button 
-                                type="submit" 
+
+                            <button
+                                type="submit"
                                 disabled={isSubmitting}
                                 className={styles.primaryButton}
                             >

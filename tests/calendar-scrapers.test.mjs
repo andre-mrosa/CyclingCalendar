@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { deepScrapeFPCWithRetry, parseFPCCalendar, fetchFPCCalendar } from '../app/lib/scrapers/fpc.js';
-import { parseStopAndGoEvent, scrapeEventPage } from '../app/lib/scrapers/stopandgo.js';
+import { fixtureModule } from './fixtureModule.mjs';
+const { deepScrapeFPCWithRetry, parseFPCCalendar, fetchFPCCalendar } = await fixtureModule('../app/lib/scrapers/fpc.js');
+const { parseStopAndGoEvent, scrapeEventPage } = await fixtureModule('../app/lib/scrapers/stopandgo.js');
 import { readStopAndGoHeader } from '../app/lib/scrapers/stopandgoParser.js';
 import { getAmbito } from '../app/lib/scrapers/utils.js';
 import { getEventDiscipline, getEventRaceType, getEventRaceTypes, getEventDisciplineFamilies, isStageRace } from '../app/utils/eventClassifier.js';

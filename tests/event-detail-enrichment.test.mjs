@@ -6,7 +6,8 @@ import { fpcDetailLink, prioritizeDetailChecks, needsFpcDetails } from '../app/l
 import { getEventDocuments } from '../app/utils/eventDocuments.js';
 import { parsePrograma } from '../app/utils/parsePrograma.js';
 import { parseScheduleServer } from '../app/utils/scheduleParserServer.js';
-import { deepScrapeFPCWithRetry } from '../app/lib/scrapers/fpc.js';
+import { fixtureModule } from './fixtureModule.mjs';
+const { deepScrapeFPCWithRetry } = await fixtureModule('../app/lib/scrapers/fpc.js');
 
 test('FPC descriptions become visible without duplicating documents or losing schedules', () => {
     const event = sanitizeEventHtml({ source: 'FPC + Apedalar', description: '<p>Introdução</p>', programa:

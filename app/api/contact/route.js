@@ -26,7 +26,7 @@ export async function POST(req) {
     const fromName = name || 'Utilizador do Calendário';
 
     const { data, error } = await resend.emails.send({
-      from: 'Calendário Ciclismo <onboarding@resend.dev>', // Usando o email de teste do Resend
+      from: process.env.CONTACT_FROM_EMAIL || process.env.ALERTS_FROM_EMAIL || 'Calendário Ciclismo <onboarding@resend.dev>',
       to: [toEmail],
       subject: `Nova mensagem no Calendário de Ciclismo de ${fromName}`,
       html: `
@@ -45,7 +45,7 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Não foi possível enviar a mensagem' }, { status: 502 });
     }
 
-    return NextResponse.json({ success: true, data });
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Contact Form Error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

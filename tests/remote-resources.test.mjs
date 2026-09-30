@@ -28,16 +28,16 @@ test('years reject malformed and unbounded inputs before database access', () =>
     assert.deepEqual(parseListQuery(new URLSearchParams({years:'all'})), []);
 });
 
-test('cached list summaries preserve registration/locality without reading HTML', async () => {
+test('minimal list never hydrates historical summaries or inferred registration data', async () => {
     const event = {id:'one',title:'Prova',details:'Estoi | BTT',distrito:'Faro',source:'FPC',prices:'Abertura das inscrições dia 01/09/2026',programa:''};
     const summary = buildListSummary(event);
     let queries = 0;
     const rows = await queryCalendarList({event:{findMany:async args=>{
         queries++; assert.equal(args.select.programa,undefined);assert.equal(args.select.prices,undefined);
-        return [{id:event.id,title:event.title,source:'FPC',listSummary:summary}];
+        return [{id:event.id,title:event.title,source:'FPC',distrito:'Faro',link:'https://www.fpciclismo.pt/prova/one',listSummary:summary}];
     }}}, [], ['FPC']);
     assert.equal(queries,1);
-    assert.equal(rows[0].locationInfo.locality,'Estoi');
-    assert.equal(rows[0].registrationOpensAt,'2026-09-01T00:00:00.000Z');
+    assert.equal(rows[0].distrito,'Faro'); assert.equal(rows[0].locationInfo,undefined);
+    assert.equal(rows[0].registrationOpensAt,undefined);
     assert.equal(rows[0].listSummary,undefined);
 });

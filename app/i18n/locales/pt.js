@@ -1,4 +1,6 @@
 const messages = {
+    minimal_calendar_intro: "Datas, modalidades e locais. Abre a página original para confirmar os detalhes e as inscrições.",
+    minimal_original: "Ver original",
     detail_load_failed: "Não foi possível carregar todos os detalhes da prova.",
     detail_retry: "Tentar novamente",
     search_link: "Link da pesquisa",
@@ -457,6 +459,8 @@ const messages = {
     footer_terms: "Termos de Utilização",
     footer_privacy: "Política de Privacidade",
     footer_contact: "Contacto & Sugestões",
+    map_privacy_notice: "O mapa é fornecido pela Google. Só é carregado quando o pedires; ao carregar, a Google recebe o teu endereço IP e pode utilizar cookies.",
+    map_load: "Carregar mapa Google",
     footer_project: "Projeto independente de divulgação de provas.",
 
     // Cookie Banner

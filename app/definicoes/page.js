@@ -1,5 +1,6 @@
 "use client";
 
+import { useAdminRole } from '../hooks/useAdminRole';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useUser } from '@clerk/nextjs';
@@ -18,19 +19,18 @@ import styles from '../components/site.module.css';
 export default function Conta() {
     const { theme, setTheme } = useTheme();
     const { t, language, setLanguage } = useTranslation();
-    const { 
+    const {
         defaultPage, setDefaultPage,
         defaultEscalao, setDefaultEscalao,
         defaultRegiao, setDefaultRegiao,
         selectedSources, toggleSource,
         hiddenTabs, toggleHiddenTab,
-        tabsOrder, moveTab, resetTabsOrder,
-        homeLocation, setHomeLocation
+        tabsOrder, moveTab, resetTabsOrder
     } = useSettingsStore();
 
     const { isLoaded, isSignedIn, user } = useUser();
     const [activeModal, setActiveModal] = useState(null);
-    
+
     // Deletion Request State
     const [deletionRequest, setDeletionRequest] = useState(null);
     const [deleteModalType, setDeleteModalType] = useState('DELETE_ACCOUNT'); // 'DELETE_DATA' | 'DELETE_ACCOUNT'
@@ -39,10 +39,7 @@ export default function Conta() {
     const [deleteReason, setDeleteReason] = useState('');
     const [deleteFeedback, setDeleteFeedback] = useState(null);
 
-    const primaryEmail = (user?.primaryEmailAddress?.emailAddress || user?.emailAddresses?.[0]?.emailAddress || '').toLowerCase();
-    const masterDefaults = ['andre.rosa1603@gmail.com', 'andremrosa@gmail.com', 'andre_rosa', 'andrerosa', 'user_3HoiHwpGl9suYXrYx0QFhDMXHWD'];
-    const isMaster = masterDefaults.some(m => primaryEmail.includes(m) || user?.id === m);
-    const isAdmin = isMaster || user?.publicMetadata?.role === 'admin';
+    const { isAdmin, isMaster } = useAdminRole();
 
     // Verificar se utilizador tem pedido pendente
     useEffect(() => {
@@ -61,24 +58,7 @@ export default function Conta() {
         checkDeletionStatus();
     }, [isLoaded, isSignedIn]);
 
-    const handleGetLocation = () => {
-        if (!navigator.geolocation) {
-            alert('A geolocalização não é suportada por este browser.');
-            return;
-        }
-        navigator.geolocation.getCurrentPosition(
-            (pos) => {
-                setHomeLocation({
-                    lat: pos.coords.latitude,
-                    lng: pos.coords.longitude,
-                    label: 'A minha localização'
-                });
-            },
-            () => {
-                alert('Não foi possível obter a localização. Permite o acesso nas definições do browser.');
-            }
-        );
-    };
+
 
     const handleConfirmDeletionRequest = async () => {
         setIsDeletingAccount(true);
@@ -87,9 +67,9 @@ export default function Conta() {
             const res = await fetch('/api/user/delete-request', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     type: deleteModalType,
-                    reason: deleteReason 
+                    reason: deleteReason
                 })
             });
             const data = await res.json();
@@ -199,56 +179,7 @@ export default function Conta() {
                         </div>
                     </div>
 
-                    {/* Localização e Distância */}
-                    <div className="flex flex-col md:flex-row md:items-center justify-between py-6 border-b border-slate-100 dark:border-slate-800/60 gap-4">
-                        <div>
-                            <h3 className="font-semibold text-ink flex items-center mb-1 text-base gap-2">
-                                <MapPin size={16} className="text-emerald-500" />
-                                Localização e Distância
-                            </h3>
-                            <p className="text-sm text-muted">
-                                {homeLocation?.label 
-                                      ? 'Ativo. O filtro usa a distância em linha reta; podes consultar o percurso no detalhe da prova.'
-                                      : 'Define a tua localização para veres a distância em linha reta às provas.'}
-                            </p>
-                        </div>
-                        <div className="flex flex-col sm:flex-row gap-3">
-                            {homeLocation && (
-                                <select 
-                                    className="h-10 px-3.5 text-sm rounded-xl border border-line bg-soft text-ink outline-none focus:border-brand transition-colors font-medium cursor-pointer"
-                                      aria-label={t('distance_filter_straight')}
-                                      value={maxDistanceFilter || ''} 
-                                    onChange={(e) => setMaxDistanceFilter(e.target.value ? Number(e.target.value) : null)}
-                                >
-                                    <option value="">Todas as distâncias</option>
-                                    <option value="50">Até 50 km</option>
-                                    <option value="100">Até 100 km</option>
-                                    <option value="150">Até 150 km</option>
-                                    <option value="200">Até 200 km</option>
-                                </select>
-                            )}
-                            <button 
-                                onClick={handleGetLocation}
-                                className="h-10 px-4 text-sm rounded-xl border border-line bg-soft text-ink hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-medium cursor-pointer flex items-center justify-center gap-2"
-                            >
-                                <MapPin size={16} />
-                                {homeLocation ? 'Atualizar' : 'Obter Localização GPS'}
-                            </button>
-                            {homeLocation && (
-                                <button 
-                                    onClick={() => {
-                                        setHomeLocation(null);
-                                        setMaxDistanceFilter(null);
-                                    }}
-                                    className="h-10 px-3 text-sm rounded-xl border border-line text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors cursor-pointer flex items-center justify-center"
-                                >
-                                    <Trash2 size={16} />
-                                </button>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Tema Visual */}
+{/* Tema Visual */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between py-6 border-b border-slate-100 dark:border-slate-800/60 gap-4">
                         <div>
                             <h3 className="font-semibold text-ink flex items-center mb-1 text-base">
@@ -256,9 +187,9 @@ export default function Conta() {
                             </h3>
                             <p className="text-sm text-muted">{t('settings_theme_desc')}</p>
                         </div>
-                        <select 
+                        <select
                             className="h-10 px-3.5 text-sm rounded-xl border border-line bg-soft text-ink outline-none focus:border-brand transition-colors w-full md:w-auto font-medium cursor-pointer"
-                            value={theme || 'system'} 
+                            aria-label={t('settings_theme_title')} value={theme || 'system'}
                             onChange={(e) => setTheme(e.target.value)}
                         >
                             <option value="system">{t('settings_theme_auto')}</option>
@@ -275,9 +206,9 @@ export default function Conta() {
                             </h3>
                             <p className="text-sm text-muted">{t('settings_default_page_desc')}</p>
                         </div>
-                        <select 
+                        <select
                             className="h-10 px-3.5 text-sm rounded-xl border border-line bg-soft text-ink outline-none focus:border-brand transition-colors w-full md:w-auto font-medium cursor-pointer"
-                            value={defaultPage || '/'} 
+                            aria-label={t('settings_default_page_title')} value={defaultPage || '/'}
                             onChange={(e) => setDefaultPage(e.target.value)}
                         >
                             <option value="/">{t('page_home_title')}</option>
@@ -299,7 +230,7 @@ export default function Conta() {
                             </h3>
                             <p className="text-sm text-muted">{t('settings_default_region_desc')}</p>
                         </div>
-                        <select className="h-10 px-3.5 text-sm rounded-xl border border-line bg-soft text-ink outline-none focus:border-brand transition-colors w-full md:w-auto font-medium cursor-pointer" value={defaultRegiao} onChange={(e) => setDefaultRegiao(e.target.value)}>
+                        <select className="h-10 px-3.5 text-sm rounded-xl border border-line bg-soft text-ink outline-none focus:border-brand transition-colors w-full md:w-auto font-medium cursor-pointer" aria-label={t('settings_default_region_title')} value={defaultRegiao} onChange={(e) => setDefaultRegiao(e.target.value)}>
                             <option value="Todas">{t('filter_all_regions')}</option>
                             <option value="AC Minho">AC Minho</option>
                             <option value="AC Porto">AC Porto</option>
@@ -323,7 +254,7 @@ export default function Conta() {
                             </h3>
                             <p className="text-sm text-muted">{t('settings_default_category_desc')}</p>
                         </div>
-                        <select className="h-10 px-3.5 text-sm rounded-xl border border-line bg-soft text-ink outline-none focus:border-brand transition-colors w-full md:w-auto font-medium cursor-pointer" value={defaultEscalao} onChange={(e) => setDefaultEscalao(e.target.value)}>
+                        <select className="h-10 px-3.5 text-sm rounded-xl border border-line bg-soft text-ink outline-none focus:border-brand transition-colors w-full md:w-auto font-medium cursor-pointer" aria-label={t('settings_default_category_title')} value={defaultEscalao} onChange={(e) => setDefaultEscalao(e.target.value)}>
                             <option value="Todos">{t('filter_all_categories')}</option>
                             <option value="Elite Amador / Individual">{translateEscalao('Elite Amador', language)} / {t('escalao_team_indiv')}</option>
                             <option value="Elite / Sub-23">{translateEscalao('Elite', language)} / {translateEscalao('Sub-23', language)}</option>
@@ -345,7 +276,7 @@ export default function Conta() {
                             <h3 className="font-semibold text-ink mb-1 text-base">{t('settings_reorder_tabs')}</h3>
                             <p className="text-sm text-muted">{t('settings_reorder_tabs_desc')}</p>
                         </div>
-                        <button 
+                        <button
                             onClick={resetTabsOrder}
                             className="inline-flex items-center gap-1.5 text-xs text-muted hover:text-brand transition-colors py-1 px-2.5 rounded-lg border border-line hover:border-brand shrink-0 self-start sm:self-auto cursor-pointer font-medium"
                             title={t('settings_reset_tabs')}
@@ -354,7 +285,7 @@ export default function Conta() {
                             <span>{t('settings_reset_tabs')}</span>
                         </button>
                     </div>
-                    
+
                     <div className="pt-3 flex flex-col gap-2">
                         {(tabsOrder && tabsOrder.length > 0 ? tabsOrder : ['Geral', 'Minha Agenda', 'Nacionais', 'Internacionais', 'Taças', 'Regionais', 'Lazer', 'Favoritos']).map((tab, idx, arr) => {
                             const isVisible = !hiddenTabs.includes(tab);
@@ -377,7 +308,7 @@ export default function Conta() {
                                     <div className="flex items-center gap-3 min-w-0">
                                         {/* Reorder Arrows */}
                                         <div className="flex items-center gap-0.5 shrink-0 bg-surface border border-line rounded-lg p-0.5">
-                                            <button 
+                                            <button
                                                 onClick={() => moveTab(idx, -1)}
                                                 disabled={isFirst}
                                                 className={`p-1 rounded transition-colors ${isFirst ? 'opacity-25 cursor-not-allowed' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-brand cursor-pointer'}`}
@@ -385,7 +316,7 @@ export default function Conta() {
                                             >
                                                 <ChevronUp size={15} />
                                             </button>
-                                            <button 
+                                            <button
                                                 onClick={() => moveTab(idx, 1)}
                                                 disabled={isLast}
                                                 className={`p-1 rounded transition-colors ${isLast ? 'opacity-25 cursor-not-allowed' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-brand cursor-pointer'}`}
@@ -403,7 +334,7 @@ export default function Conta() {
                                     {/* Visibility Toggle */}
                                     <div className="flex items-center gap-2.5 shrink-0">
                                         <span className="text-xs text-slate-400 hidden sm:inline">{isVisible ? t('settings_tab_active') : t('settings_tab_hidden')}</span>
-                                        <div 
+                                        <div
                                             className={`w-11 h-6 shrink-0 rounded-full transition-all flex items-center px-1 cursor-pointer border ${isVisible ? 'bg-brand-soft border-brand' : 'bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-700'}`}
                                             onClick={() => toggleHiddenTab(tab)}
                                             title={isVisible ? t('settings_tab_hidden') : t('settings_tab_active')}
@@ -443,7 +374,7 @@ export default function Conta() {
                                             {source.desc}
                                         </span>
                                     </div>
-                                    <div 
+                                    <div
                                         className={`w-11 h-6 shrink-0 rounded-full transition-all flex items-center px-1 cursor-pointer border ${isSelected ? 'bg-brand-soft border-brand' : 'bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-700'}`}
                                         onClick={() => toggleSource(source.id)}
                                     >
@@ -521,28 +452,28 @@ export default function Conta() {
 
             {/* Modals */}
             {activeModal && (
-                <div 
+                <div
                     className="fixed inset-0 bg-black/60 flex items-center justify-center z-[1000] p-4 backdrop-blur-sm animate-fade-in"
                     onClick={(e) => {
                         if (e.target === e.currentTarget && !isDeletingAccount) setActiveModal(null);
                     }}
                 >
                     <div className="bg-surface border border-line rounded-2xl relative max-w-[480px] w-full shadow-2xl overflow-hidden text-ink transition-colors duration-200">
-                        <button 
+                        <button
                             onClick={() => !isDeletingAccount && setActiveModal(null)}
                             className="absolute top-3.5 right-3.5 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors text-2xl leading-none z-10 cursor-pointer"
                         >×</button>
-                        
+
                         <div className="max-h-[90vh] overflow-y-auto p-5 sm:p-6">
                             {activeModal === 'regiao' && <RegionAssistant onApply={(val) => { setDefaultRegiao(val); setActiveModal(null); }} />}
                             {activeModal === 'escalao' && <EscalaoAssistant onApply={(val) => { setDefaultEscalao(val); setActiveModal(null); }} />}
-                            
+
                             {activeModal === 'delete_request' && (
                                 <div className="space-y-4">
                                     <div className="flex items-center gap-3">
                                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                                            deleteModalType === 'DELETE_DATA' 
-                                                ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' 
+                                            deleteModalType === 'DELETE_DATA'
+                                                ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
                                                 : 'bg-rose-500/15 text-rose-600 dark:text-rose-400'
                                         }`}>
                                             {deleteModalType === 'DELETE_DATA' ? <RotateCcw size={20} /> : <Trash2 size={20} />}

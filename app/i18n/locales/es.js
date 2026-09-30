@@ -1,4 +1,6 @@
 const messages = {
+    minimal_calendar_intro: "Fechas, modalidades y lugares. Abre la página original para confirmar los detalles y las inscripciones.",
+    minimal_original: "Ver original",
     detail_load_failed: "No se pudieron cargar todos los detalles de la prueba.",
     detail_retry: "Reintentar",
     search_link: "Enlace de la búsqueda",
@@ -457,6 +459,8 @@ const messages = {
     footer_terms: "Términos de Uso",
     footer_privacy: "Política de Privacidad",
     footer_contact: "Contacto y Sugerencias",
+    map_privacy_notice: "Google proporciona este mapa. Solo se carga cuando lo solicitas; al cargarlo, Google recibe tu dirección IP y puede utilizar cookies.",
+    map_load: "Cargar mapa de Google",
     footer_project: "Proyecto independiente de difusión de pruebas.",
 
     // Cookie Banner

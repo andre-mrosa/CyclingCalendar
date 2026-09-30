@@ -1,5 +1,6 @@
 import { clerkClient } from '@clerk/nextjs/server';
 import { prisma } from '@/app/lib/db';
+import { eraseAccountActivity } from '@/app/lib/eraseAccountActivity';
 import { requireAdmin, isMasterAdmin } from '@/app/lib/auth-helpers';
 import { logSystem, logWarn, logError } from '@/app/lib/logger';
 
@@ -56,6 +57,7 @@ export async function DELETE(request, { params }) {
                     unsafeMetadata: {
                         favorites: []
                     },
+                    privateMetadata: { calendarSubscriptionToken: null },
                     publicMetadata: {
                         ...targetUser.publicMetadata,
                         dataClearedAt: new Date().toISOString(),
@@ -65,10 +67,7 @@ export async function DELETE(request, { params }) {
             }
 
             // Atualizar pedido para processado se existir
-            await prisma.accountDeletionRequest.updateMany({
-                where: { userId: targetUserId, status: 'PENDING' },
-                data: { status: 'PROCESSED', updatedAt: new Date() }
-            });
+            await eraseAccountActivity(prisma, targetUserId);
 
             await logWarn('AUTH', `Dados do utilizador ${targetEmail} foram eliminados por ${adminCheck.userEmail}`, {
                 targetUserId,
@@ -79,7 +78,7 @@ export async function DELETE(request, { params }) {
 
             return Response.json({
                 success: true,
-                message: `Todos os dados e favoritos de ${targetEmail} foram eliminados com sucesso.`
+                message: `Os favoritos, alertas, subscrição e histórico de navegação associados à conta foram eliminados. As preferências guardadas no navegador podem ser removidas nas definições.`
             });
 
         } else {
@@ -89,10 +88,7 @@ export async function DELETE(request, { params }) {
             }
 
             // Atualizar estado do pedido de eliminação
-            await prisma.accountDeletionRequest.updateMany({
-                where: { userId: targetUserId },
-                data: { status: 'PROCESSED', updatedAt: new Date() }
-            });
+            await eraseAccountActivity(prisma, targetUserId);
 
             await logWarn('AUTH', `Conta do utilizador ${targetEmail} (${targetUserId}) foi ELIMINADA PERMANENTEMENTE por ${adminCheck.userEmail}`, {
                 targetUserId,

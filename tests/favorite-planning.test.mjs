@@ -1,3 +1,4 @@
+import { PUBLIC_EVENT_SELECT } from '../app/lib/publicEvent.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -5,7 +6,7 @@ import { sortCalendarEvents } from '../app/utils/calendarList.js';
 import { favoriteSnapshot, compareFavoriteSnapshots } from '../app/utils/favoriteChanges.js';
 import { validSubscriptionToken, subscriptionIcs } from '../app/lib/calendarSubscription.js';
 
-const event = (id, day = 13, extra = {}) => ({ id, title: 'Prova de ciclismo', date: `${day} SET 2026`, sortDate: `2026-09-${day}T00:00:00Z`, source: 'FPC', updatedAt: '2026-09-11T10:00:00Z', ...extra });
+const event = (id, day = 13, extra = {}) => ({ id, title: 'Prova de ciclismo', date: `${day} SET 2026`, sortDate: `2026-09-${day}T00:00:00Z`, source: 'FPC', link: 'https://www.fpciclismo.pt/prova/test', updatedAt: '2026-09-11T10:00:00Z', ...extra });
 
 test('favorites lead their own date without moving ahead of earlier dates or mutating input', () => {
     const input = [event('first', 12), event('ordinary'), event('star'), event('last', 14)];
@@ -53,7 +54,7 @@ test('feed reads only the authenticated capability owner favorites and rejects i
     const route=await isolated('../app/api/calendar/feed/[userId]/[token]/route.js',{
         clerkClient:async()=>({users:{getUser:async()=>({privateMetadata:{calendarSubscriptionToken:token},unsafeMetadata:{favorites:['saved']}})}}),
         prisma:{event:{findMany:async({where})=>{queries++;assert.deepEqual(where.id.in,['saved']);return [event('saved')];}}},
-        validSubscriptionToken,subscriptionIcs
+        validSubscriptionToken,subscriptionIcs,PUBLIC_EVENT_SELECT
     });
     const denied=await route.GET(null,{params:Promise.resolve({userId:'user_123',token:'b'.repeat(64)})});
     assert.equal(denied.status,404); assert.equal(queries,0);

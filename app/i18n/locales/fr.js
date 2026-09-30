@@ -1,4 +1,6 @@
 const messages = {
+    minimal_calendar_intro: "Dates, disciplines et lieux. Consultez la page d’origine pour confirmer les détails et les inscriptions.",
+    minimal_original: "Voir l’original",
     detail_load_failed: "Impossible de charger tous les détails de l’épreuve.",
     detail_retry: "Réessayer",
     search_link: "Lien de recherche",
@@ -457,6 +459,8 @@ const messages = {
     footer_terms: "Conditions d'Utilisation",
     footer_privacy: "Politique de Confidentialité",
     footer_contact: "Contact et Suggestions",
+    map_privacy_notice: "Cette carte est fournie par Google. Elle se charge uniquement sur demande ; Google reçoit alors votre adresse IP et peut utiliser des cookies.",
+    map_load: "Charger la carte Google",
     footer_project: "Projet indépendant d’information sur les épreuves.",
 
     // Cookie Banner

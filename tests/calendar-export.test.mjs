@@ -92,6 +92,6 @@ test('ICS escapes text and folds UTF-8 lines without corrupting characters', () 
     assert.match(unfolded, /SUMMARY:Évora\\, BTT\\;/);
     assert.equal(ics.split('\r\nBEGIN:VEVENT').length, 2);
     assert.ok(unfolded.includes('\\nBEGIN:VEVENT'));
-    assert.ok(unfolded.includes('/events/prova%2F1'));
+    assert.doesNotMatch(unfolded, /\/events\/prova/);
     for (const line of ics.split('\r\n')) assert.ok(Buffer.byteLength(line) <= 75);
 });

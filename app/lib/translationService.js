@@ -1,3 +1,4 @@
+import { assertContentProcessingApproved } from './contentReleasePolicy.js';
 import { prisma } from './db.js';
 import { logInfo, logWarn, logError } from './logger.js';
 
@@ -5,6 +6,7 @@ import { logInfo, logWarn, logError } from './logger.js';
  * Translates a single text string using Google Translate engine.
  */
 export async function translateText(text, sourceLang = 'pt', targetLang = 'en') {
+    assertContentProcessingApproved();
     if (!text || typeof text !== 'string' || !text.trim()) return '';
     const trimmed = text.trim();
     if (sourceLang === targetLang) return trimmed;
@@ -39,6 +41,7 @@ export async function translateText(text, sourceLang = 'pt', targetLang = 'en') 
  * Translates an event's translatable fields to the target language.
  */
 export async function translateEvent(event, targetLang = 'en') {
+    assertContentProcessingApproved();
     if (!event) return null;
 
     const titleEn = await translateText(event.title, 'pt', targetLang);
@@ -59,6 +62,7 @@ export async function translateEvent(event, targetLang = 'en') {
  * Translates and stores/updates an event's translation in the database.
  */
 export async function translateAndStoreEvent(event, targetLang = 'en', prismaClient = prisma) {
+    assertContentProcessingApproved();
     if (!event || !event.id) return null;
 
     try {
@@ -99,6 +103,7 @@ export async function translateAndStoreEvent(event, targetLang = 'en', prismaCli
  * Translates pending events in batches.
  */
 export async function translateAllPendingEvents(targetLang = 'en', batchSize = 100) {
+    assertContentProcessingApproved();
     try {
         // Find events that do NOT have a translation for targetLang
         const pendingEvents = await prisma.event.findMany({

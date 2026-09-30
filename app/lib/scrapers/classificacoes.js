@@ -1,8 +1,9 @@
+import { assertSourceApproved } from '../contentReleasePolicy.js';
 import * as cheerio from 'cheerio';
 import { prisma } from '../db.js';
-import { 
-    getAmbito, getTag, getRegiao, getDistrito, 
-    toTitleCase, sanitizeHtml 
+import {
+    getAmbito, getTag, getRegiao, getDistrito,
+    toTitleCase, sanitizeHtml
 } from './utils.js';
 import { logInfo, logError } from '../logger.js';
 import { isSameEvent } from '../merging/eventMatcher.js';
@@ -45,12 +46,12 @@ export function parseClassificacoesDate(rawDateStr, fallbackYear = new Date().ge
         const endAbbr = MONTH_ABBR[endMonthNum] || 'JAN';
 
         const sortDate = new Date(`${year}-${startMonthNum}-${startDay}T08:00:00Z`);
-        
+
         // Se for o mesmo dia
         if (startDay === endDay && startAbbr === endAbbr) {
             return { dateText: `${startDay} ${startAbbr} ${year}`, sortDate, year };
         }
-        
+
         const dateText = `${startDay} ${startAbbr} a ${endDay} ${endAbbr} ${year}`;
         return { dateText, sortDate, year };
     }
@@ -78,9 +79,9 @@ async function scrapeClassificacoesPage(url, retries = 2) {
         let res = null;
         for (let attempt = 0; attempt <= retries; attempt++) {
             try {
-                res = await fetch(url, { 
-                    headers: { 'User-Agent': 'Mozilla/5.0' }, 
-                    signal: AbortSignal.timeout(6000) 
+                res = await fetch(url, {
+                    headers: { 'User-Agent': 'Mozilla/5.0' },
+                    signal: AbortSignal.timeout(6000)
                 });
                 if (res.ok) break;
             } catch (err) {
@@ -195,6 +196,7 @@ async function scrapeClassificacoesPage(url, retries = 2) {
  * Nunca cria novas provas standalone para evitar duplicados ou dados históricos descontextualizados.
  */
 export async function scrapeClassificacoes(options = {}) {
+    assertSourceApproved("Classificações.net");
     try {
         logInfo('SCRAPER', 'Início da sincronização Classificações.net (enriquecimento de provas existentes)');
 

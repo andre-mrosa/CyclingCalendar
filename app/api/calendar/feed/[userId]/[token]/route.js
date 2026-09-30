@@ -1,4 +1,5 @@
 import { clerkClient } from '@clerk/nextjs/server';
+import { PUBLIC_EVENT_SELECT } from '@/app/lib/publicEvent';
 import { prisma } from '@/app/lib/db';
 import { subscriptionIcs, validSubscriptionToken } from '@/app/lib/calendarSubscription';
 
@@ -15,7 +16,7 @@ export async function GET(_request, { params }) {
         catch (error) { if (error.status === 404) return new Response('Not found', { status: 404, headers }); throw error; }
         if (!validSubscriptionToken(token, user.privateMetadata?.calendarSubscriptionToken)) return new Response('Not found', { status: 404, headers });
         const ids = Array.isArray(user.unsafeMetadata?.favorites) ? [...new Set(user.unsafeMetadata.favorites.filter(id => typeof id === 'string'))] : [];
-        const events = await prisma.event.findMany({ where: { id: { in: ids } }, orderBy: { sortDate: 'asc' } });
+        const events = await prisma.event.findMany({ where: { id: { in: ids } }, select: { ...PUBLIC_EVENT_SELECT, updatedAt: true }, orderBy: { sortDate: 'asc' } });
         return new Response(subscriptionIcs(events, 'https://www.cyclingcalendar.pt'), {
             headers: { ...headers, 'Content-Type': 'text/calendar; charset=utf-8', 'Content-Disposition': 'inline; filename="cycling-favorites.ics"' }
         });

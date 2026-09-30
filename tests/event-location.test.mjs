@@ -6,11 +6,11 @@ import { resolveCoordinates } from '../app/lib/weather.js';
 import { getDistrito } from '../app/lib/scrapers/utils.js';
 import { withEventLocation } from '../app/lib/eventLocation.js';
 
-test('published village survives display and both calendar exports', () => {
+test('legacy location display remains available internally but exports use the minimal district', () => {
     const event = { id: 'test', title: 'Race', date: '21 SET 2026', details: 'Estoi | BTT', distrito: 'Faro' };
     assert.equal(formatEventLocation(event), 'Estoi, Faro');
-    assert.equal(new URL(generateGoogleCalendarUrl(event)).searchParams.get('location'), 'Estoi, Faro');
-    assert.match(buildIcsContent(event), /LOCATION:Estoi\\, Faro/);
+    assert.equal(new URL(generateGoogleCalendarUrl(event)).searchParams.get('location'), 'Faro');
+    assert.match(buildIcsContent(event), /LOCATION:Faro/);
     assert.equal(formatEventLocation({ details: 'Porto de Mós', distrito: 'Porto' }), 'Porto de Mós, Porto');
 });
 

@@ -1,4 +1,6 @@
 const messages = {
+    minimal_calendar_intro: "Dates, disciplines and locations. Open the original page to confirm details and registration.",
+    minimal_original: "View original",
     detail_load_failed: "Could not load all race details.",
     detail_retry: "Try again",
     search_link: "Search link",
@@ -457,6 +459,8 @@ const messages = {
     footer_terms: "Terms of Use",
     footer_privacy: "Privacy Policy",
     footer_contact: "Contact & Feedback",
+    map_privacy_notice: "Google provides this map. It only loads when requested; loading shares your IP address with Google and may use cookies.",
+    map_load: "Load Google map",
     footer_project: "Independent event information project.",
 
     // Cookie Banner

@@ -88,3 +88,6 @@ dev.db
 
 /maintenance/mobile-review/
 /mobile-initial.png
+
+# Imported third-party event files must never be published
+/public/media/events/

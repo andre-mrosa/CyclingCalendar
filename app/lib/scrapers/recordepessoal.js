@@ -1,3 +1,4 @@
+import { assertSourceApproved } from '../contentReleasePolicy.js';
 import { parseRecordePessoalDetails } from './eventDetailParsers.js';
 import * as cheerio from 'cheerio';
 import { logInfo, logError } from '../logger.js';
@@ -8,28 +9,29 @@ import { saveOrMergeEvent } from '../merging/eventMerger.js';
 const BASE_URL = 'https://www.recordepessoal.pt';
 
 export async function scrapeRecordePessoal(options = {}) {
+    assertSourceApproved("Recorde Pessoal");
     const { years = [new Date().getFullYear().toString()] } = options;
     const allEvents = [];
-    
+
     logInfo('SCRAPER', 'Início da sincronização Recorde Pessoal');
-    
+
     try {
         const categories = ['btt', 'ciclismo-de-estrada'];
         const eventLinks = new Set();
-        
+
         for (const cat of categories) {
             const res = await fetch(`${BASE_URL}/eventos?cat=${cat}&pagina=-1`, {
                 headers: { 'User-Agent': 'Mozilla/5.0' }
             });
-            
+
             if (!res.ok) {
                 logError('SCRAPER', `Falha ao aceder à categoria ${cat} (HTTP ${res.status})`);
                 continue;
             }
-            
+
             const html = await res.text();
             const $ = cheerio.load(html);
-            
+
             $('.evento').each((i, el) => {
                 const title = $(el).find('.titulo').first().text().trim();
                 const rawLink = $(el).attr('data-evento');
@@ -39,28 +41,28 @@ export async function scrapeRecordePessoal(options = {}) {
                 }
             });
         }
-        
+
         const eventLinksArray = Array.from(eventLinks);
         logInfo('SCRAPER', `Encontrados ${eventLinksArray.length} eventos de Ciclismo na Recorde Pessoal`);
-        
+
         for (const link of eventLinksArray) {
             try {
                 // Throttle
                 await new Promise(r => setTimeout(r, 1000));
-                
+
                 const pageRes = await fetch(link, { headers: { 'User-Agent': 'Mozilla/5.0' } });
                 if (!pageRes.ok) continue;
-                
+
                 const pageHtml = await pageRes.text();
                 const $p = cheerio.load(pageHtml);
-                
+
                 const title = $p('.eventoTitulo .titulosPaginasBold').text().trim();
                 const local = $p('.localEvento div').eq(1).text().trim();
                 const dataRaw = $p('.dataEvento div').eq(1).text().trim(); // ex: 11 Outubro 2026
                 const posterUrl = $p('.cartazEvento').attr('href');
                 const logo = posterUrl ? BASE_URL + posterUrl : null;
                 const registrationLink = $p('a.inscreverEvento').attr('href');
-                
+
                 // Conversão de data PT
                 let cleanDate = dataRaw;
                 const match = dataRaw.match(/(\d{1,2})\s+([A-Za-zçÇ]+)\s+(\d{4})/);
@@ -73,9 +75,9 @@ export async function scrapeRecordePessoal(options = {}) {
                          sortDateStr = `${match[3]}-${months[m]}-${match[1].padStart(2, '0')}T00:00:00.000Z`;
                     }
                 }
-                
+
                 if (!title || !sortDateStr.includes('T00:00:00')) continue;
-                
+
                 const eventObj = {
                     id: `recordepessoal-${link.split('/').pop()}-${cleanDate.replace(/ /g, '-')}`.toLowerCase(),
                     title,
@@ -92,7 +94,7 @@ export async function scrapeRecordePessoal(options = {}) {
                     link: registrationLink ? (registrationLink.startsWith('http') ? registrationLink : BASE_URL + registrationLink) : link,
                     image: logo
                 };
-                
+
                 const enrichment = parseRecordePessoalDetails(pageHtml, link);
                 Object.assign(eventObj, { ...enrichment, extraLinks: JSON.stringify(enrichment.extraLinks) });
 
@@ -100,14 +102,14 @@ export async function scrapeRecordePessoal(options = {}) {
                     await saveOrMergeEvent(prisma, eventObj, { ...options, verifiedSource: 'Recorde Pessoal' });
                     allEvents.push(eventObj);
                 }
-                
+
             } catch(e) {
                 logError('SCRAPER', `Erro a processar prova Recorde Pessoal (${link}): ${e.message}`);
             }
         }
-        
+
         return allEvents.length;
-        
+
     } catch (e) {
         logError('SCRAPER', `Falha ao sincronizar Recorde Pessoal: ${e.message}`);
         throw e;
@@ -116,7 +118,7 @@ export async function scrapeRecordePessoal(options = {}) {
 
 function isCyclingEvent(title, cat) {
     const t = title.toLowerCase();
-    
+
     // Se o site diz que é ciclismo de estrada, e não diz explicitamente trail/corrida no titulo, aceitamos
     if (cat === 'ciclismo-de-estrada' && !t.includes('trail') && !t.includes('corrida')) {
         return true;
@@ -127,7 +129,7 @@ function isCyclingEvent(title, cat) {
             return false;
         }
     }
-    
+
     const keywords = ['btt', 'ciclismo', 'raid', 'passeio', 'gravel', 'granfondo', 'cicloturismo', 'resistência', 'xco', 'xcm', 'xcr', 'downhill', 'enduro', 'bike', 'ciclocrosse'];
     return keywords.some(k => t.includes(k));
 }

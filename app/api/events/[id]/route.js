@@ -1,48 +1,12 @@
-import { withEventLocation } from '@/app/lib/eventLocation';
 import { prisma } from '@/app/lib/db';
-import { getEventDiscipline, getEventCategories } from '@/app/utils/eventClassifier';
-import { withRegistrationDates } from '@/app/utils/registrationDates';
-import { sanitizeEventHtml } from '@/app/lib/sanitizeHtml';
-
-export async function GET(request, { params }) {
+import { PUBLIC_EVENT_SELECT, toPublicEvent } from '@/app/lib/publicEvent';
+export async function GET(_request, { params }) {
+    const { id } = await params;
     try {
-        const resolvedParams = await params;
-        const id = resolvedParams.id;
-        
-        if (!id) {
-            return Response.json({ success: false, error: 'ID is required' }, { status: 400 });
-        }
-
-        const event = await prisma.event.findUnique({
-            where: { id },
-            include: {
-                translations: true
-            }
-        });
-
-        if (!event || event.source?.includes('Quarentena')) {
-            return Response.json({ success: false, error: 'Event not found' }, { status: 404 });
-        }
-
-        // Convert stringified arrays back to arrays for frontend
-        const formattedEvent = {
-            ...sanitizeEventHtml(withRegistrationDates(withEventLocation(event))),
-            tag: getEventDiscipline(event),
-            escaloes: getEventCategories(event),
-            extraLinks: event.extraLinks ? (typeof event.extraLinks === 'string' ? JSON.parse(event.extraLinks) : event.extraLinks) : []
-        };
-
-        return Response.json(
-            { success: true, event: formattedEvent },
-            {
-                headers: {
-                    'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=600'
-                }
-            }
-        );
-
-    } catch (error) {
-        console.error('Error fetching single event:', error);
-        return Response.json({ success: false, error: error.message }, { status: 500 });
+        const event = toPublicEvent(await prisma.event.findUnique({ where: { id }, select: PUBLIC_EVENT_SELECT }));
+        return Response.json(event ? { success: true, event } : { success: false, error: 'Event not found' },
+            { status: event ? 200 : 404, headers: { 'Cache-Control': 'no-store' } });
+    } catch {
+        return Response.json({ success: false, error: 'Events temporarily unavailable' }, { status: 503 });
     }
 }

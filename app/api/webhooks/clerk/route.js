@@ -1,12 +1,17 @@
 import { Webhook } from 'svix';
 import { headers } from 'next/headers';
 import { prisma } from '@/app/lib/db';
+import { eraseAccountActivity } from '@/app/lib/eraseAccountActivity';
 import { logWarn, logInfo, logError } from '@/app/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req) {
     const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
+    // Never accept unsigned events, including when deployment configuration is missing.
+    if (!WEBHOOK_SECRET) {
+        return Response.json({ success: false, error: 'Webhook unavailable' }, { status: 503 });
+    }
 
     const headerPayload = await headers();
     const svix_id = headerPayload.get("svix-id");
@@ -38,40 +43,19 @@ export async function POST(req) {
             logWarn('SYSTEM', `Assinatura de webhook do Clerk inválida: ${err.message}`);
             return Response.json({ success: false, error: 'Invalid signature' }, { status: 400 });
         }
-    } else {
-        try {
-            payload = JSON.parse(body);
-        } catch {
-            return Response.json({ success: false, error: 'Invalid JSON' }, { status: 400 });
-        }
     }
 
+    if (!payload || typeof payload !== 'object' || typeof payload.type !== 'string') return Response.json({ success: false, error: 'Invalid event' }, { status: 400 });
     const eventType = payload.type;
     const data = payload.data || {};
 
     try {
         if (eventType === 'user.deleted') {
             const userId = data.id;
-            await prisma.favoriteAlert.deleteMany({ where: { userId } });
-
-            // Tentar obter o email a partir de pedidos de eliminação registados
-            const existingReq = await prisma.accountDeletionRequest.findUnique({
-                where: { userId }
-            });
-
-            const emailLabel = existingReq?.userEmail || 'Utilizador';
-
-            // Atualizar pedido de eliminação na base de dados se existir
-            await prisma.accountDeletionRequest.updateMany({
-                where: { userId },
-                data: { status: 'PROCESSED', updatedAt: new Date() }
-            });
-
-            // RGPD: Anonimizar histórico de cliques e visualizações
-            await prisma.analyticsSession.updateMany({
-                where: { userId },
-                data: { userId: null, userEmail: null }
-            });
+            if (typeof userId !== 'string' || !/^user_[A-Za-z0-9]+$/.test(userId) || userId.length > 200) {
+                return Response.json({ success: false, error: 'Invalid user ID' }, { status: 400 });
+            }
+            await eraseAccountActivity(prisma, userId);
         }
 
         return Response.json({ success: true, message: 'Webhook processado' });

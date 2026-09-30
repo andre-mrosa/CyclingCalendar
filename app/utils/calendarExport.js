@@ -1,4 +1,4 @@
-import { formatEventLocation } from './eventLocation.js';
+import { originalEventUrl } from '../lib/publicEvent.js';
 import { detectRaceDate } from './detectRaceDate.js';
 
 /**
@@ -57,9 +57,9 @@ export function generateGoogleCalendarUrl(event) {
     const dates = getCalendarDates(event);
     if (!dates) return null;
     const title = encodeURIComponent(event.title || 'Prova de Ciclismo');
-    const location = encodeURIComponent(formatEventLocation(event) || '');
+    const location = encodeURIComponent(event.distrito || '');
     const details = encodeURIComponent(
-        `Prova: ${event.title}\nModalidade: ${event.tag || 'Ciclismo'}\nMais detalhes e inscrições: ${typeof window !== 'undefined' ? `${window.location.origin}/events/${encodeURIComponent(event.id)}` : `https://cyclingcalendar.pt/events/${encodeURIComponent(event.id)}`}`
+        `Prova: ${event.title}\nModalidade: ${event.tag || 'Ciclismo'}\nMais detalhes e inscrições: ${originalEventUrl(event.link) || ''}`
     );
 
     const datesParam = `&dates=${dates.start}/${dates.end}`;
@@ -71,9 +71,9 @@ export function buildIcsContent(event, origin = 'https://cyclingcalendar.pt') {
     if (!dates) return null;
     const nowStr = formatIcsDate(new Date());
 
-    const eventUrl = `${origin}/events/${encodeURIComponent(event.id)}`;
+    const eventUrl = originalEventUrl(event.link) || '';
     const cleanTitle = escapeText(event.title || 'Prova de Ciclismo');
-    const cleanLocation = escapeText(formatEventLocation(event) || '');
+    const cleanLocation = escapeText(event.distrito || '');
     const cleanDescription = escapeText(`Prova: ${event.title || 'Prova de Ciclismo'}\nModalidade: ${event.tag || 'Ciclismo'}\nConsulta o programa oficial para confirmar os horários.\nDetalhes e inscrições: ${eventUrl}`);
 
     return [

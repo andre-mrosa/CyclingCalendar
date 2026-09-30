@@ -1,3 +1,4 @@
+import { assertContentProcessingApproved } from '../contentReleasePolicy.js';
 import { randomUUID } from 'node:crypto';
 import { scrapeFPC, incrementalDeepScrapeFPC } from './fpc.js';
 import { scrapeCabreira } from './cabreira.js';
@@ -23,6 +24,7 @@ export function getPipelineStages(scope, years) {
 
 // Acquire the lease before logging a start. Callback/lock errors reach the route.
 export function runUnifiedScrapingPipeline(triggeredBy = 'CRON', options = {}) {
+    assertContentProcessingApproved();
     const runId = options.runId || randomUUID();
     return withScraperLock(() => withScraperLogContext({ runId },
         () => runPipeline(triggeredBy, { ...options, runId })));

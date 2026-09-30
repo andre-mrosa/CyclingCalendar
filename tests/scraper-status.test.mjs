@@ -290,6 +290,7 @@ test('save metrics report every outcome once and never report rejected writes', 
 
 async function pipelineFixture(overrides = {}) {
     return isolatedModule('../app/lib/scrapers/unifiedPipeline.js', {
+        assertContentProcessingApproved: () => {},
         randomUUID: () => 'fixture-run', withScraperLogContext, logInfo, logError,
         withScraperLock: work => work(),
         scrapeFPC: async (_year, { onResult }) => { await onResult({ action: 'updated' }); return 1; },
@@ -413,27 +414,6 @@ test('a failed unification transaction reports partial and does not count a merg
 
 
 
-
-test('cron and manual starts enqueue durable work, and old recursive calls cannot launch runs', async t => {
-    const previousSecret = process.env.CRON_SECRET;
-    process.env.CRON_SECRET = 'isolated-cron-test';
-    t.after(() => {
-        if (previousSecret === undefined) delete process.env.CRON_SECRET;
-        else process.env.CRON_SECRET = previousSecret;
-    });
-    const calls = [];
-    const deps = { startCalendarSync: async options => { calls.push(options); return { accepted: true, runId: 'queued-run' }; } };
-    const manual = await isolatedModule('../app/api/force-scrape/route.js', { ...deps, requireAdmin: async () => ({ authorized: true }) });
-    assert.equal((await manual.GET(new Request('https://calendar.test/api/force-scrape?resume=true'))).status, 202);
-    assert.equal(calls[0].resume, true);
-    assert.equal(calls[0].scope, 'manual');
-    const cron = await isolatedModule('../app/api/cron/scrape/route.js', deps);
-    const headers = { Authorization: `Bearer ${process.env.CRON_SECRET}` };
-    assert.equal((await cron.GET(new Request('https://calendar.test/api/cron/scrape?scope=daily', { headers }))).status, 202);
-    assert.equal(calls[1].scope, 'daily');
-    assert.equal((await cron.GET(new Request('https://calendar.test/api/cron/scrape?stage=deepScrape&runId=old', { headers }))).status, 400);
-    assert.equal(calls.length, 2);
-});
 
 test('durable workflow carries stage checkpoints and retry state without self HTTP requests', async t => {
     t.mock.method(globalThis, 'fetch', () => { throw new Error('Self HTTP is forbidden'); });

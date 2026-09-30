@@ -1,8 +1,9 @@
+import { assertSourceApproved } from '../contentReleasePolicy.js';
 import * as cheerio from 'cheerio';
 import { prisma } from '../db.js';
-import { 
-    formatDateStr, parseSortDate, getAmbito, getTag, getRegiao, 
-    getDistrito, toTitleCase, parsePTDateToISO, sanitizeHtml, fetchImageAsBase64 
+import {
+    formatDateStr, parseSortDate, getAmbito, getTag, getRegiao,
+    getDistrito, toTitleCase, parsePTDateToISO, sanitizeHtml, fetchImageAsBase64
 } from './utils.js';
 import { logInfo, logError } from '../logger.js';
 import { saveOrMergeEvent } from '../merging/eventMerger.js';
@@ -10,6 +11,7 @@ import { downloadEventAsset } from './assetDownloader.js';
 import { parseRegistrationDates } from '../../utils/registrationDates.js';
 
 export const deepScrapeCabreira = async (link, eventId = 'cabreira-event') => {
+    assertSourceApproved("Cabreira");
     if (!link) return { pageTitle: null, opensAt: null, closesAt: null, description: null, prices: null, insurance: null, prizes: null, programa: null, additionalLinks: [] };
     try {
         const response = await fetch(link, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(15000) });
@@ -18,7 +20,7 @@ export const deepScrapeCabreira = async (link, eventId = 'cabreira-event') => {
         const $ = cheerio.load(html);
 
         const pageTitle = $('h1').first().text().replace(/\s+/g, ' ').trim() || null;
-        
+
         let opensAt = null;
         let closesAt = null;
         let description = '';
@@ -27,13 +29,13 @@ export const deepScrapeCabreira = async (link, eventId = 'cabreira-event') => {
         let prizes = '';
         let programa = null;
         const additionalLinks = [];
-        
+
         // Extrair links úteis da navegação (StopAndGo, Inscrições, Lista de Inscritos, Percursos)
         $('a').each((_, el) => {
             const href = $(el).attr('href');
             const text = $(el).text().trim();
             if (!href || href === '#' || href.startsWith('javascript:')) return;
-            
+
             if (href.includes('stopandgo.net') && href.includes('register')) {
                 if (!additionalLinks.some(l => l.link === href)) {
                     additionalLinks.push({ label: 'Inscrever no StopAndGo', link: href });
@@ -79,8 +81,8 @@ export const deepScrapeCabreira = async (link, eventId = 'cabreira-event') => {
             const pText = $(el).text().replace(/\s+/g, ' ').trim();
             const upper = pText.toUpperCase();
             if (
-                pText.length > 25 && 
-                !upper.includes('COOKIES') && 
+                pText.length > 25 &&
+                !upper.includes('COOKIES') &&
                 !upper.includes('PRIVACIDADE') &&
                 !upper.includes('TERMOS E CONDIÇÕES') &&
                 !upper.includes('TODOS OS DIREITOS RESERVADOS') &&
@@ -115,12 +117,12 @@ export const deepScrapeCabreira = async (link, eventId = 'cabreira-event') => {
                     return;
                 }
                 if (topTag !== 'div') return;
-                
+
                 let daysHtml = '';
                 $(topEl).children().each((j, dayEl) => {
                     const dayTag = (dayEl.tagName || dayEl.name || '').toLowerCase();
                     if (dayTag !== 'div') return;
-                    
+
                     let dayHtml = '';
                     $(dayEl).children().each((k, dayChild) => {
                         const childTag = (dayChild.tagName || dayChild.name || '').toLowerCase();
@@ -145,7 +147,7 @@ export const deepScrapeCabreira = async (link, eventId = 'cabreira-event') => {
                 });
                 if (daysHtml) programaHtml += `<div>${daysHtml}</div>`;
             });
-            
+
             if (programaHtml.length > 20) {
                 programa = sanitizeHtml(programaHtml);
             }
@@ -203,7 +205,7 @@ export const deepScrapeCabreira = async (link, eventId = 'cabreira-event') => {
             if (regResponse.ok) {
                 const regHtml = await regResponse.text();
                 const $reg = cheerio.load(regHtml);
-                
+
                 const dates = parseRegistrationDates($reg('body').html());
                 opensAt = dates.registrationOpensAt ? new Date(dates.registrationOpensAt) : opensAt;
                 closesAt = dates.registrationClosesAt ? new Date(dates.registrationClosesAt) : closesAt;
@@ -291,6 +293,7 @@ export const deepScrapeCabreira = async (link, eventId = 'cabreira-event') => {
 };
 
 export const scrapeCabreira = async (year, options = {}) => {
+    assertSourceApproved("Cabreira");
     try {
         logInfo('SCRAPER', `Início da sincronização Cabreira Solutions (Ano: ${year || 'Todos'})`);
         const response = await fetch(`https://cabreirasolutions.com/eventos/`, {
@@ -305,11 +308,11 @@ export const scrapeCabreira = async (year, options = {}) => {
         const $ = cheerio.load(html);
         const items = $('.evento-grid-item').toArray();
         let processedCount = 0;
-        
+
         const rawEvents = items.map(element => {
             const aTag = $(element).find('.evento-item-image-container a');
             let href = aTag.attr('href') || '';
-            
+
             let title = 'Evento Cabreira';
             if (href) {
                 const parts = href.split('/').filter(Boolean);
@@ -318,7 +321,7 @@ export const scrapeCabreira = async (year, options = {}) => {
                     title = slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
                 }
             }
-            
+
             let logoUrl = $(element).find('.evento-item-image-container .evento-item-logo').attr('src') || null;
             let imageUrl = null;
             const styleAttr = $(element).find('.evento-item-image-container .evento-item-image').attr('style');
@@ -330,10 +333,10 @@ export const scrapeCabreira = async (year, options = {}) => {
             let dateText = $(element).find('.evento-item-data').text().trim().toUpperCase() || 'DATA A DEFINIR';
             const rawDateForSort = dateText;
             dateText = formatDateStr(dateText, year);
-            
+
             let locText = $(element).find('.evento-item-local').text().trim() || 'A DEFINIR';
             if (locText !== 'A DEFINIR') locText = toTitleCase(locText);
-            
+
             const yearInDateMatch = dateText.match(/202\d/);
             const eventYear = yearInDateMatch ? yearInDateMatch[0] : (year || new Date().getFullYear().toString());
 

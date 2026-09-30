@@ -22,7 +22,7 @@ test('event structured data preserves dates and escapes script termination', () 
 });
 test('social images only use public HTTP URLs', () => {
     assert.equal(publicImage('data:image/png;base64,a'), null);
-    assert.equal(publicImage('/media/events/image.png'), SITE_URL + '/media/events/image.png');
+    assert.equal(publicImage('/media/events/image.png'), null);
     assert.equal(publicImage('javascript:alert(1)'), null);
 });
 test('favicon has useful browser and search sizes', () => {

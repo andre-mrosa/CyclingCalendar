@@ -12,12 +12,12 @@ test('price summary preserves phases and excludes insurance or refund amounts', 
 import { mergeEvents } from '../app/utils/mergeEvents.js';
 import { toCalendarListEvent, chooseCalendarEvents } from '../app/utils/calendarList.js';
 
-test('list payload omits heavy assets but retains registration dates and translated labels', () => {
-    const result = toCalendarListEvent({ id: 'race', title: 'Race', image: 'data:image/png;huge', logo: 'huge', prices: 'As inscrições encerram dia 08-09-2026 pelas 23h59.', translations: [{language:'en',title:'Race',details:'Town',description:'long',programa:'long'}] });
-    assert.equal(result.registrationClosesAt, '2026-09-08T23:59:00.000Z');
+test('list payload drops rich content, derived registration dates and translations', () => {
+    const result = toCalendarListEvent({ id: 'race', title: 'Race', link: 'https://www.fpciclismo.pt/prova/race', image: 'data:image/png;huge', logo: 'huge', prices: 'As inscrições encerram dia 08-09-2026 pelas 23h59.', translations: [{language:'en',title:'Race',details:'Town',description:'long',programa:'long'}] });
+    assert.equal(result.registrationClosesAt, undefined);
     assert.equal(result.image, undefined);
     assert.equal(result.prices, undefined);
-    assert.deepEqual(result.translations, [{language:'en',title:'Race',details:'Town'}]);
+    assert.equal(result.translations, undefined);
 });
 test('online loading does not show stale cached races and empty responses remain empty', () => {
     const cached = [{id:'old'}];

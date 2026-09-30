@@ -12,7 +12,7 @@ import styles from './favoritePlanning.module.css';
 export function FavoriteChanges({ events, favorites, ready, onSelect }) {
     const { user, isLoaded } = useUser();
     const { t } = useTranslation();
-    const key = `cycling_favorite_changes_v1_${user?.id || 'guest'}`;
+    const key = `cycling_favorite_changes_minimal_v2_${user?.id || 'guest'}`;
     const raw = useStoredString(key, '{}');
     const { changes, baseline } = useMemo(() => {
         if (!ready || !isLoaded) return { changes: [], baseline: null };
