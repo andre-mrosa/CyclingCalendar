@@ -1,15 +1,13 @@
-import { assertSourceApproved } from '../contentReleasePolicy.js';
-import { parseRecordePessoalDetails } from './eventDetailParsers.js';
+import { assertMinimalCollectionEnabled } from '../contentReleasePolicy.js';
 import * as cheerio from 'cheerio';
 import { logInfo, logError } from '../logger.js';
-import { getTag } from './utils.js';
 import { prisma } from '../db.js';
 import { saveOrMergeEvent } from '../merging/eventMerger.js';
 
 const BASE_URL = 'https://www.recordepessoal.pt';
 
 export async function scrapeRecordePessoal(options = {}) {
-    assertSourceApproved("Recorde Pessoal");
+    assertMinimalCollectionEnabled("Recorde Pessoal");
     const { years = [new Date().getFullYear().toString()] } = options;
     const allEvents = [];
 
@@ -59,9 +57,6 @@ export async function scrapeRecordePessoal(options = {}) {
                 const title = $p('.eventoTitulo .titulosPaginasBold').text().trim();
                 const local = $p('.localEvento div').eq(1).text().trim();
                 const dataRaw = $p('.dataEvento div').eq(1).text().trim(); // ex: 11 Outubro 2026
-                const posterUrl = $p('.cartazEvento').attr('href');
-                const logo = posterUrl ? BASE_URL + posterUrl : null;
-                const registrationLink = $p('a.inscreverEvento').attr('href');
 
                 // Conversão de data PT
                 let cleanDate = dataRaw;
@@ -84,19 +79,9 @@ export async function scrapeRecordePessoal(options = {}) {
                     date: cleanDate,
                     sortDate: sortDateStr,
                     details: local,
-                    tag: getTag(title),
-                    ambito: 'Regional',
-                    escaloes: JSON.stringify(['Todos (Aberto)']),
-                    licenca: 'Lazer',
-                    regiao: local,
-                    distrito: '',
                     source: 'Recorde Pessoal',
-                    link: registrationLink ? (registrationLink.startsWith('http') ? registrationLink : BASE_URL + registrationLink) : link,
-                    image: logo
+                    link,
                 };
-
-                const enrichment = parseRecordePessoalDetails(pageHtml, link);
-                Object.assign(eventObj, { ...enrichment, extraLinks: JSON.stringify(enrichment.extraLinks) });
 
                 if (years.includes(new Date(sortDateStr).getFullYear().toString())) {
                     await saveOrMergeEvent(prisma, eventObj, { ...options, verifiedSource: 'Recorde Pessoal' });

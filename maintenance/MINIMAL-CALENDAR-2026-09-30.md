@@ -28,7 +28,11 @@ Consulta de leitura em 30/09: 1735 registos históricos, dos quais 75 já em qua
 
 ## Publicação e recolha
 
-**Não publicado. Não reativar automaticamente.** A suspensão de produção continua no código e não há cron configurado. A recolha das seis fontes, os downloads e a tradução continuam bloqueados. O calendário factual não resolve, por si só, as questões de extração sistemática de bases de dados descritas em [RIGHTS-REVIEW-2026-09-29.md](RIGHTS-REVIEW-2026-09-29.md).
+**A produção continua fechada e não há cron configurado.** Por instrução do proprietário, os seis adaptadores ficam disponíveis num modo de recolha mínima para revisão posterior: novos registos gravam apenas nome, data, localidade, fonte e ligação à página original. Descrições, imagens, logótipos, programas, PDFs, altimetrias, coordenadas e traduções não são gravados; deep scraping, downloads e tradução continuam bloqueados. O pipeline também deixou de fazer enriquecimento e fusão de conteúdo legado.
+
+Esta alteração técnica **não declara as fontes autorizadas** nem resolve as questões de extração sistemática de bases de dados descritas em [RIGHTS-REVIEW-2026-09-29.md](RIGHTS-REVIEW-2026-09-29.md). Não foi executada uma recolha neste trabalho e não foram feitos pedidos às fontes.
+
+As fichas antigas na base de dados não foram apagadas; esta alteração limita novas gravações e a projeção pública já implementada. A suspensão de produção continua no código, por isso os endpoints de produção permanecem fechados até uma decisão de publicação separada.
 
 Apenas o servidor Next em modo de desenvolvimento, num endereço loopback, permite pré-visualizar esta versão. Builds de produção mantêm a suspensão mesmo quando o hostname é localhost. Esta exceção não é um mecanismo para publicar uma versão privada.
 
@@ -36,6 +40,6 @@ Não foram alterados Vercel, visibilidade do GitHub, dados de produção ou hist
 
 ## Verificação
 
-Testes automatizados cobrem a projeção de dados, exclusão de conteúdo histórico, links inseguros, endpoints retirados, exports e impossibilidade de contornar a suspensão em produção. Build e lint são verificados localmente.
+Testes automatizados cobrem a projeção mínima de novas gravações, bloqueio de processamento rico, links inseguros, endpoints retirados, exports e impossibilidade de contornar a suspensão em produção. Build e lint são verificados localmente.
 
 A validação em navegador usa eventos fictícios para evitar pedidos às fontes: larguras de 320, 390, 430 e 1280 px, links externos intercetados, favoritos locais, lista/calendário, exportação ICS e páginas de ajuda, definições e políticas. Não valida autenticação de produção, entrega de emails ou permissões jurídicas.

@@ -1,23 +1,41 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { PUBLIC_RELEASE_APPROVED, SOURCE_REVIEWS, assertSourceApproved, maintenanceResponse } from '../app/lib/contentReleasePolicy.js';
-import { fetchFPCCalendar, deepScrapeFPC } from '../app/lib/scrapers/fpc.js';
-import { scrapeEventPage } from '../app/lib/scrapers/stopandgo.js';
+import { PUBLIC_RELEASE_APPROVED, SOURCE_REVIEWS, assertMinimalCollectionEnabled, assertContentProcessingApproved, maintenanceResponse } from '../app/lib/contentReleasePolicy.js';
+import { deepScrapeFPC } from '../app/lib/scrapers/fpc.js';
 import { downloadEventAsset } from '../app/lib/scrapers/assetDownloader.js';
+import { toMinimalScrapedEvent } from '../app/lib/merging/eventMerger.js';
 
-test('release is held and every current or unknown source is denied', () => {
+test('release stays held while all configured sources can run in minimal metadata mode', () => {
     assert.equal(PUBLIC_RELEASE_APPROVED, false);
-    for (const source of [...Object.keys(SOURCE_REVIEWS), 'unknown', undefined]) {
-        assert.throws(() => assertSourceApproved(source), { code: 'CONTENT_RIGHTS_REVIEW_REQUIRED' });
+    for (const source of Object.keys(SOURCE_REVIEWS)) {
+        assert.doesNotThrow(() => assertMinimalCollectionEnabled(source));
+    }
+    for (const source of ['unknown', undefined]) {
+        assert.throws(() => assertMinimalCollectionEnabled(source), { code: 'CONTENT_RIGHTS_REVIEW_REQUIRED' });
     }
 });
-test('manual calendar, detail and asset entrypoints fail before any network call', async t => {
+test('rich processing and asset entrypoints remain blocked before any network call', async t => {
     let requests = 0;
     t.mock.method(globalThis, 'fetch', async () => { requests++; throw Error('Unexpected network'); });
-    for (const run of [() => fetchFPCCalendar(2026), () => deepScrapeFPC('https://www.fpciclismo.pt/a'), () => scrapeEventPage('https://stopandgo.net/events/a'), () => downloadEventAsset('https://example.com/a.png','x')]) {
-        await assert.rejects(run, { code: 'CONTENT_RIGHTS_REVIEW_REQUIRED' });
-    }
+    assert.throws(() => assertContentProcessingApproved(), { code: 'CONTENT_RIGHTS_REVIEW_REQUIRED' });
+    await assert.rejects(deepScrapeFPC('https://www.fpciclismo.pt/a'), { code: 'CONTENT_RIGHTS_REVIEW_REQUIRED' });
+    await assert.rejects(downloadEventAsset('https://example.com/a.png','x'), { code: 'CONTENT_RIGHTS_REVIEW_REQUIRED' });
     assert.equal(requests, 0);
+});
+test('database ingestion projects records to title, date, locality, source and original source link', () => {
+    const minimal = toMinimalScrapedEvent({
+        id: 'race-1', title: '  Prova de Teste  ', date: '12 JUL 2026', sortDate: '2026-07-12',
+        details: 'Porto | copied schedule text', source: 'Stop and Go',
+        link: 'https://stopandgo.net/events/teste', description: 'not retained', image: 'https://stopandgo.net/poster.jpg',
+    });
+    assert.deepEqual(Object.keys(minimal).sort(), ['date', 'details', 'distrito', 'id', 'link', 'regiao', 'sortDate', 'source', 'title'].sort());
+    assert.equal(minimal.title, 'Prova de Teste');
+    assert.equal(minimal.details, 'Porto');
+    assert.equal(minimal.link, 'https://stopandgo.net/events/teste');
+    assert.equal(toMinimalScrapedEvent({
+        id: 'unsafe-link', title: 'Prova', date: '12 JUL 2026', sortDate: '2026-07-12',
+        details: 'Porto', source: 'FPC', link: 'https://registration.example/event',
+    }), null);
 });
 test('hold returns no event content and prevents caching/indexing, including direct assets', async () => {
     for (const path of ['/', '/api/events', '/sitemap.xml', '/media/events/a.png', '/events/a', '/api/calendar/feed/a/token']) {

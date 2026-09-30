@@ -1,6 +1,7 @@
-// The owner paused the project on 2026-09-29 pending a rights/compliance review.
-// No environment variable may silently reopen the site or authorise a source.
-// Change this policy only alongside documented permissions and release approval.
+// The public release remains paused pending a rights/compliance review.
+// The owner requested a limited-metadata collection pilot before that review.
+// This enables known source adapters to run; it does not mean their terms or
+// database rights have been cleared. Never use this to reopen public access.
 export const PUBLIC_RELEASE_APPROVED = false;
 export const SOURCE_REVIEWS = Object.freeze({
     FPC: 'unverified',
@@ -11,8 +12,9 @@ export const SOURCE_REVIEWS = Object.freeze({
     'Classificações.net': 'unverified',
 });
 
-export function assertSourceApproved(source) {
-    const error = new Error(`Recolha suspensa: falta autorização documentada para ${source}.`);
+export function assertMinimalCollectionEnabled(source) {
+    if (Object.hasOwn(SOURCE_REVIEWS, source)) return;
+    const error = new Error(`Fonte não configurada para recolha mínima: ${source}.`);
     error.code = 'CONTENT_RIGHTS_REVIEW_REQUIRED';
     throw error;
 }

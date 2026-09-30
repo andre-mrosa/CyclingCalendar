@@ -1,10 +1,7 @@
-import { assertSourceApproved } from '../contentReleasePolicy.js';
+import { assertMinimalCollectionEnabled } from '../contentReleasePolicy.js';
 import * as cheerio from 'cheerio';
 import { prisma } from '../db.js';
-import {
-    getAmbito, getTag, getRegiao, getDistrito,
-    toTitleCase, sanitizeHtml
-} from './utils.js';
+import { toTitleCase } from './utils.js';
 import { logInfo, logError } from '../logger.js';
 import { saveOrMergeEvent } from '../merging/eventMerger.js';
 import { readStopAndGoHeader, stopAndGoEventUrl } from './stopandgoParser.js';
@@ -54,7 +51,7 @@ function checkRateLimit(response) {
  * Scrape detalhado de uma prova específica da Stop and Go com verificação de modalidade
  */
 export async function scrapeEventPage(url, retries = 2, options = {}) {
-    assertSourceApproved("Stop and Go");
+    assertMinimalCollectionEnabled("Stop and Go");
     try {
         let res = null;
         for (let attempt = 0; attempt <= retries; attempt++) {
@@ -113,12 +110,6 @@ export function parseStopAndGoEvent(html, url, options = {}) {
             return null;
         }
 
-        // Cartaz oficial
-        let posterUrl = $('h1').first().parent().find('img[src*="storage/events"]').first().attr('src') || null;
-        if (posterUrl && !posterUrl.startsWith('http')) posterUrl = 'https://stopandgo.net' + posterUrl;
-
-        if (posterUrl && !posterUrl.startsWith('http')) posterUrl = 'https://stopandgo.net' + posterUrl;
-
         // Data precisa do cabeçalho da prova
         const slug = url.split('/').filter(Boolean).pop();
         const dateText = header.date;
@@ -127,46 +118,7 @@ export function parseStopAndGoEvent(html, url, options = {}) {
         // Localização
         const location = toTitleCase(header.location.replace(/,\s*Portugal$/i, '').trim() || 'Portugal');
 
-        // Links de Inscrição, Regulamento e Inscritos
-        const extraLinks = [{ label: 'Página Stop and Go', link: url }];
-        let registrationLink = null;
-
-        $('a').each((_, el) => {
-            const href = $(el).attr('href') || '';
-            const text = $(el).text().replace(/\s+/g, ' ').trim();
-            if (!href || href === '#' || href.startsWith('javascript:')) return;
-            const fullUrl = href.startsWith('http') ? href : 'https://stopandgo.net' + href;
-            if (stopAndGoEventUrl(fullUrl) !== url) return;
-
-            if (href.includes('/registrations/create') || text.toLowerCase() === 'inscrição' || text.toLowerCase() === 'inscrever') {
-                registrationLink = fullUrl;
-                if (!extraLinks.some(l => l.link === fullUrl)) extraLinks.push({ label: 'Inscrição (Stop and Go)', link: fullUrl });
-            } else if (href.includes('/rules') || text.toLowerCase().includes('regulamento')) {
-                if (!extraLinks.some(l => l.link === fullUrl)) extraLinks.push({ label: 'Regulamento Oficial', link: fullUrl });
-            } else if (href.includes('/registrations') && !href.includes('/create')) {
-                if (!extraLinks.some(l => l.link === fullUrl)) extraLinks.push({ label: 'Lista de Inscritos', link: fullUrl });
-            } else if (href.includes('/conditions')) {
-                if (!extraLinks.some(l => l.link === fullUrl)) extraLinks.push({ label: 'Condições & Cancelamentos', link: fullUrl });
-            }
-        });
-
-        const tag = getTag(title, header.modality);
-        const regiao = getRegiao(location);
-        const distrito = getDistrito(location);
-        const ambito = getAmbito(title, header.modality);
-
         const id = 'sg_' + slug.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 32);
-
-        let programaHtml = null;
-        const mainContent = $('main').html() || $('body').html();
-        if (mainContent) {
-            const $body = cheerio.load(mainContent);
-            $body('nav, header, footer, script, style, svg, img, form, iframe, button').remove();
-            const textContent = $body.text().replace(/\s+/g, ' ').trim();
-            if (textContent.length > 50) {
-                programaHtml = `<div class="sg-description">${sanitizeHtml($body.html())}</div>`;
-            }
-        }
 
         return {
             id,
@@ -174,19 +126,8 @@ export function parseStopAndGoEvent(html, url, options = {}) {
             date: dateText,
             sortDate,
             details: location,
-            regiao,
-            distrito,
-            tag,
-            ambito,
-            licenca: 'CPT / Lazer',
             source: 'Stop and Go',
-            link: registrationLink || url,
-            image: posterUrl,
-            logo: null,
-            programa: programaHtml,
-            extraLinks: JSON.stringify(extraLinks),
-            escaloes: JSON.stringify(['Geral / Aberto']),
-            prices: null
+            link: url,
         };
     } catch (e) {
         return null;
@@ -198,7 +139,7 @@ export function parseStopAndGoEvent(html, url, options = {}) {
  * Consulta o sitemap e as páginas de eventos para extrair todas as provas de ciclismo (BTT, Estrada, Gravel, Downhill, Trail/BTT)
  */
 export async function scrapeStopAndGo(options = {}) {
-    assertSourceApproved("Stop and Go");
+    assertMinimalCollectionEnabled("Stop and Go");
     try {
         logInfo('SCRAPER', 'Início da sincronização Stop and Go (sitemap.xml + abas Downhill, Gravel, BTT, Estrada)');
 

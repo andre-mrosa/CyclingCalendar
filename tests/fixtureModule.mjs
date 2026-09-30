@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 export async function fixtureModule(relativePath) {
     const url = new URL(relativePath, import.meta.url);
     let source = await readFile(url, 'utf8');
-    source = source.replace(/^import \{ assertSourceApproved \} from .*;\r?$/m, 'const assertSourceApproved = () => {};');
+    source = source.replace(/^import \{ assertMinimalCollectionEnabled \} from .*;\r?$/m, 'const assertMinimalCollectionEnabled = () => {};');
     const imports = [...source.matchAll(/from\s+['"]([^'"]+)['"]/g)];
     for (const [, specifier] of imports) {
         const resolved = specifier.startsWith('.') ? new URL(specifier, url).href : import.meta.resolve(specifier);

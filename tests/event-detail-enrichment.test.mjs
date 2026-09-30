@@ -99,19 +99,11 @@ test('upcoming unchecked races take priority; attempted failures move back', () 
     assert.deepEqual(prioritizeDetailChecks(records, now).map(row => row.id), ['next', 'later', 'attempted', 'past']);
 });
 
-test('an empty FPC page is not marked successfully enriched', async t => {
-    t.mock.method(globalThis, 'fetch', async () => new Response('<html><body><nav>Menu</nav></body></html>'));
-    await assert.rejects(deepScrapeFPCWithRetry('https://www.fpciclismo.pt/pagina/empty', 'empty', { attempts: 1 }), /não continha detalhes/);
-});
-
-test('FPC isolates race content and retains multiple category schedules', async t => {
-    t.mock.method(globalThis, 'fetch', async () => new Response(`<html><body><div>GENERAL_NAVIGATION</div><a href="https://example.org/federation.pdf">Federation</a>
-      <section class="main__middle__container"><h1>Race details</h1>
-      <table class="dc_table_s20"><tr><td>09:00 Elite</td></tr></table>
-      <table class="dc_table_s20"><tr><td>10:00 Masters</td></tr></table>
-      <form>REGISTRATION_FORM<input value="private"></form></section></body></html>`));
-    const html = await deepScrapeFPCWithRetry('https://www.fpciclismo.pt/pagina/race', 'race', { attempts: 1 });
-    assert.match(html, /09:00 Elite/);
-    assert.match(html, /10:00 Masters/);
-    assert.doesNotMatch(html, /GENERAL_NAVIGATION|federation.pdf|REGISTRATION_FORM|private/);
+test('FPC rich detail fetching is blocked before network access', async t => {
+    let requests = 0;
+    t.mock.method(globalThis, 'fetch', async () => { requests++; throw new Error('Unexpected network'); });
+    for (const url of ['https://www.fpciclismo.pt/pagina/empty', 'https://www.fpciclismo.pt/pagina/race']) {
+        await assert.rejects(deepScrapeFPCWithRetry(url, 'race', { attempts: 1 }), { code: 'CONTENT_RIGHTS_REVIEW_REQUIRED' });
+    }
+    assert.equal(requests, 0);
 });

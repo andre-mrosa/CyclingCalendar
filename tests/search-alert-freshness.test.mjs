@@ -8,7 +8,7 @@ import { readFile } from 'node:fs/promises';
 import { saveOrMergeEvent, mergeEventRecords } from '../app/lib/merging/eventMerger.js';
 
 const now = new Date('2026-09-25T10:00:00Z');
-const event = { id: 'race', title: 'Prova BTT', date: '27 SET 2026', sortDate: '2026-09-27T00:00:00Z', registrationClosesAt: '2026-09-27T18:00:00.000Z' };
+const event = { id: 'race', title: 'Prova BTT', date: '27 SET 2026', sortDate: '2026-09-27T00:00:00Z', registrationClosesAt: '2026-09-27T18:00:00.000Z', source: 'FPC', link: 'https://www.fpciclismo.pt/calendario/prova' };
 test('shared searches preserve accented text, scope, distance origin and all recognised filters', () => {
     const filters = { searchTerm: 'São João & BTT', selectedYears: ['2026'], selectedTags: ['BTT'], selectedEscaloes: ['Elite'], selectedDistrito: 'Porto', monthFrom: 2, monthTo: 9, viewMode: 'calendar', selectedMonth: '2026-09', selectedDay: '2026-09-27', maxDistanceFilter: 100, origin: { lat: 41.1, lng: -8.6 }, sources: ['FPC'], private: 'ignored' };
     const url = new URL(searchUrl('https://example.test/regionais?event=old&lang=pt', filters));

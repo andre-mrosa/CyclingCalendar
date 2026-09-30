@@ -1,4 +1,4 @@
-import { assertSourceApproved } from '../contentReleasePolicy.js';
+import { assertContentProcessingApproved, assertMinimalCollectionEnabled } from '../contentReleasePolicy.js';
 import { getEventCategories } from '../../utils/eventClassifier.js';
 import * as cheerio from 'cheerio';
 import { prisma } from '../db.js';
@@ -11,7 +11,7 @@ import { saveOrMergeEvent } from '../merging/eventMerger.js';
 import { fpcDetailLink, prioritizeDetailChecks, needsFpcDetails } from './detailQueue.js';
 
 export const deepScrapeFPC = async (link, eventId = 'fpc-event') => {
-    assertSourceApproved("FPC");
+    assertContentProcessingApproved();
     if (!link) return null;
     const response = await fetch(link, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(15000) });
     if (!response.ok) throw new Error(`FPC devolveu HTTP ${response.status}`);
@@ -170,7 +170,7 @@ export const deepScrapeFPC = async (link, eventId = 'fpc-event') => {
 };
 
 export async function deepScrapeFPCWithRetry(link, eventId = 'fpc-event', { attempts = 3, delayMs = 750 } = {}) {
-    assertSourceApproved('FPC');
+    assertContentProcessingApproved();
     let lastError;
     for (let attempt = 1; attempt <= attempts; attempt++) {
         try {
@@ -186,7 +186,7 @@ export async function deepScrapeFPCWithRetry(link, eventId = 'fpc-event', { atte
 }
 
 export const fetchFPCCalendar = async (year) => {
-    assertSourceApproved("FPC");
+    assertMinimalCollectionEnabled("FPC");
         year = String(year);
         if (!/^\d{4}$/.test(year)) throw new Error('Época FPC inválida');
         // epoca_site2 is the form's hidden submit marker. Without it the server
@@ -344,7 +344,7 @@ export const parseFPCCalendar = (html, year) => {
 };
 
 export const scrapeFPC = async (year, options = {}) => {
-    assertSourceApproved("FPC");
+    assertMinimalCollectionEnabled("FPC");
     try {
         await logInfo('SCRAPER', `FPC ${year}: a recolher janeiro a dezembro (incluindo provas passadas)`);
         const events = await fetchFPCCalendar(year);
@@ -358,7 +358,7 @@ export const scrapeFPC = async (year, options = {}) => {
 }
 
 export const incrementalDeepScrapeFPC = async (limit = 25) => {
-    assertSourceApproved("FPC");
+    assertContentProcessingApproved();
     const now = new Date();
     const events = await prisma.event.findMany({
         where: {

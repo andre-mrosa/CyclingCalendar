@@ -1,30 +1,25 @@
-import { assertContentProcessingApproved } from '../contentReleasePolicy.js';
 import { randomUUID } from 'node:crypto';
-import { scrapeFPC, incrementalDeepScrapeFPC } from './fpc.js';
+import { scrapeFPC } from './fpc.js';
 import { scrapeCabreira } from './cabreira.js';
 import { scrapeStopAndGo } from './stopandgo.js';
 import { scrapeRecordePessoal } from './recordepessoal.js';
 import { scrapeApedalar } from './apedalar.js';
 import { scrapeClassificacoes } from './classificacoes.js';
 import { prisma } from '../db.js';
-import { isSameEvent } from '../merging/eventMatcher.js';
-import { mergeEventRecords } from '../merging/eventMerger.js';
 import { logInfo, logError, withScraperLogContext } from '../logger.js';
-import { translateAllPendingEvents } from '../translationService.js';
 import { withScraperLock } from './runLock.js';
 
 const VALID_SCOPES = new Set(['daily', 'weekly', 'manual']);
 
 export function getPipelineStages(scope, years) {
     const fpcStages = years.map(year => `fpc-${year}`);
-    if (scope === 'daily') return ['cabreira', 'stopandgo', 'recordepessoal', 'apedalar', 'classificacoes', 'deepScrape', 'finalize'];
-    if (scope === 'weekly') return [...fpcStages, 'deepScrape', 'finalize'];
-    return [...fpcStages, 'cabreira', 'stopandgo', 'recordepessoal', 'apedalar', 'classificacoes', 'deepScrape', 'finalize'];
+    if (scope === 'daily') return ['cabreira', 'stopandgo', 'recordepessoal', 'apedalar', 'classificacoes', 'finalize'];
+    if (scope === 'weekly') return [...fpcStages, 'finalize'];
+    return [...fpcStages, 'cabreira', 'stopandgo', 'recordepessoal', 'apedalar', 'classificacoes', 'finalize'];
 }
 
 // Acquire the lease before logging a start. Callback/lock errors reach the route.
 export function runUnifiedScrapingPipeline(triggeredBy = 'CRON', options = {}) {
-    assertContentProcessingApproved();
     const runId = options.runId || randomUUID();
     return withScraperLock(() => withScraperLogContext({ runId },
         () => runPipeline(triggeredBy, { ...options, runId })));
@@ -128,60 +123,9 @@ async function runPipeline(triggeredBy, options) {
                 case 'classificacoes':
                     await stage('classificacoes', 'Classificações.net', false, () => scrapeClassificacoes({ years }));
                     break;
-                case 'deepScrape':
-                    await stage('deepScrape', 'Deep Scraping FPC', false, async () => {
-                        const count = await incrementalDeepScrapeFPC(historical ? 20 : 10);
-                        stats.deepScrapedFpc = count;
-                        return count;
-                    });
-                    break;
                 case 'finalize':
-                    await stage('unification', 'Unificação', false, async () => {
-                        const allEvents = await prisma.event.findMany({ orderBy: { sortDate: 'asc' } });
-                        const mergedMap = new Set();
-                        let mergedCount = 0;
-                        for (let i = 0; i < allEvents.length; i++) {
-                            const primary = allEvents[i];
-                            if (mergedMap.has(primary.id)) continue;
-                            for (let j = i + 1; j < allEvents.length; j++) {
-                                const secondary = allEvents[j];
-                                if (mergedMap.has(secondary.id)) continue;
-                                if (isSameEvent(primary, secondary)) {
-                                    const mergedData = mergeEventRecords(primary, secondary);
-                                    await prisma.$transaction(async tx => {
-                                        await tx.event.update({ where: { id: primary.id }, data: mergedData });
-                                        // Move languages missing on the retained event;
-                                        // fill empty fields for languages it already has.
-                                        const translations = await tx.eventTranslation.findMany({ where: { eventId: secondary.id } });
-                                        for (const translation of translations) {
-                                            const where = { eventId_language: { eventId: primary.id, language: translation.language } };
-                                            const existing = await tx.eventTranslation.findUnique({ where });
-                                            if (!existing) {
-                                                await tx.eventTranslation.update({ where: { id: translation.id }, data: { eventId: primary.id } });
-                                            } else {
-                                                const fill = {};
-                                                for (const field of ['title', 'details', 'description', 'programa']) {
-                                                    if (!existing[field] && translation[field]) fill[field] = translation[field];
-                                                }
-                                                if (Object.keys(fill).length) await tx.eventTranslation.update({ where, data: fill });
-                                            }
-                                        }
-                                        await tx.event.delete({ where: { id: secondary.id } });
-                                    });
-                                    mergedMap.add(secondary.id);
-                                    mergedCount++;
-                                    Object.assign(primary, mergedData);
-                                }
-                            }
-                        }
-                        stats.mergedEvents = mergedCount;
-                        return mergedCount;
-                    });
-                    await stage('translation', 'Tradução', false, async () => {
-                        const result = await translateAllPendingEvents('en', 100);
-                        stats.translations = result ? { ...result, ...(result.error ? { error: String(result.error).slice(0, 1000) } : {}) } : null;
-                        if (result?.success === false) throw new Error(result.error || 'Falha na tradução');
-                        return result?.translatedCount;
+                    await stage('finalize', 'Recolha mínima concluída', false, async () => {
+                        return prisma.event.count();
                     });
                     break;
                 default: {

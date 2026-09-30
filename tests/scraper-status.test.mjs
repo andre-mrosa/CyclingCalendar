@@ -267,7 +267,7 @@ test('oversized diagnostics keep valid JSON and run attribution', async t => {
 });
 
 test('save metrics report every outcome once and never report rejected writes', async () => {
-    const event = { id: 'new', title: 'Gran Fondo Test', date: '12 JUL 2026', sortDate: new Date('2026-07-12'), source: 'FPC' };
+    const event = { id: 'new', title: 'Gran Fondo Test', date: '12 JUL 2026', sortDate: new Date('2026-07-12'), source: 'FPC', link: 'https://www.fpciclismo.pt/calendario/teste' };
     for (const action of ['created', 'updated', 'merged', 'quarantined']) {
         const outcomes = [];
         const existing = { ...event, id: action === 'merged' ? 'other' : 'new', source: action === 'quarantined' ? 'Quarentena' : 'FPC' };
@@ -288,6 +288,27 @@ test('save metrics report every outcome once and never report rejected writes', 
     assert.equal((await saveOrMergeEvent(db, event, { onResult: () => { throw new Error('telemetry'); } })).action, 'created');
 });
 
+test('scraper persistence drops descriptions, posters, routes, prices and other rich fields', async () => {
+    let saved;
+    const db = { event: {
+        findUnique: async () => null,
+        findMany: async () => [],
+        create: async ({ data }) => { saved = data; return data; },
+    } };
+    await saveOrMergeEvent(db, {
+        id: 'minimal-race', title: 'Passeio de Teste', date: '12 JUL 2026',
+        sortDate: '2026-07-12T00:00:00Z', details: 'Viseu | texto adicional',
+        source: 'Apedalar', link: 'https://apedalar.pt/eventos/teste',
+        description: 'Descrição copiada', programa: 'Programa copiado',
+        image: 'https://apedalar.pt/cartaz.jpg', gpxData: 'track', prices: '20 €',
+    }, { verifiedSource: 'Apedalar' });
+    assert.deepEqual(Object.keys(saved).sort(), [
+        'date', 'details', 'distrito', 'id', 'lastVerifiedAt', 'lastVerifiedSource',
+        'link', 'regiao', 'sortDate', 'source', 'title',
+    ].sort());
+    assert.equal(saved.details, 'Viseu');
+});
+
 async function pipelineFixture(overrides = {}) {
     return isolatedModule('../app/lib/scrapers/unifiedPipeline.js', {
         assertContentProcessingApproved: () => {},
@@ -297,9 +318,9 @@ async function pipelineFixture(overrides = {}) {
         scrapeCabreira: async (_year, { onResult }) => { await onResult({ action: 'created' }); return 1; },
         scrapeStopAndGo: async ({ onResult }) => { await onResult({ action: 'quarantined' }); return 1; },
         scrapeRecordePessoal: async () => 0, scrapeApedalar: async () => 0,
-        scrapeClassificacoes: async () => 0, incrementalDeepScrapeFPC: async () => 0,
+        scrapeClassificacoes: async () => 0,
         translateAllPendingEvents: async () => ({ success: true, translatedCount: 0 }),
-        prisma: { event: { findMany: async () => [] } },
+        prisma: { event: { findMany: async () => [], count: async () => 0 } },
         isSameEvent: () => false, mergeEventRecords: () => ({}), ...overrides
     });
 }
@@ -324,8 +345,8 @@ async function runPipelinePlan(pipeline, options = {}) {
 
 test('daily and weekly plans isolate FPC into one bounded stage per season', async () => {
     const pipeline = await pipelineFixture();
-    assert.deepEqual(pipeline.getPipelineStages('daily', ['2026', '2027']), ['cabreira', 'stopandgo', 'recordepessoal', 'apedalar', 'classificacoes', 'deepScrape', 'finalize']);
-    assert.deepEqual(pipeline.getPipelineStages('weekly', ['2026', '2027']), ['fpc-2026', 'fpc-2027', 'deepScrape', 'finalize']);
+    assert.deepEqual(pipeline.getPipelineStages('daily', ['2026', '2027']), ['cabreira', 'stopandgo', 'recordepessoal', 'apedalar', 'classificacoes', 'finalize']);
+    assert.deepEqual(pipeline.getPipelineStages('weekly', ['2026', '2027']), ['fpc-2026', 'fpc-2027', 'finalize']);
 });
 
 
@@ -335,7 +356,7 @@ test('pipeline leases every bounded stage and publishes complete metrics', async
     let locks = 0;
     const pipeline = await pipelineFixture({ withScraperLock: async work => { locks++; if (locks === 1) assert.equal(logs.length, 0); return work(); } });
     const result = await runPipelinePlan(pipeline);
-    assert.equal(locks, 9);
+    assert.equal(locks, 8);
     assert.equal(result.success, true);
     const summary = readLogDetails(logs.at(-1));
     assert.equal(summary.status, 'success');
@@ -354,7 +375,6 @@ test('pipeline cannot label swallowed/logged source and enrichment errors as suc
     const pipeline = await pipelineFixture({
         scrapeCabreira: async () => { await logError('SCRAPER', 'Cabreira: event failed'); return 0; },
         scrapeClassificacoes: async () => { await logError('SCRAPER', 'Classificações.net: offline'); return 0; },
-        translateAllPendingEvents: async () => ({ success: false, error: 'offline' })
     });
     const result = await runPipelinePlan(pipeline);
     assert.equal(result.success, false);
@@ -362,7 +382,7 @@ test('pipeline cannot label swallowed/logged source and enrichment errors as suc
     assert.equal(summary.status, 'partial');
     assert.ok(logs.some(log => readLogDetails(log).sources?.cabreira?.status === 'error'));
     assert.ok(logs.some(log => readLogDetails(log).steps?.classificacoes?.status === 'error'));
-    assert.equal(summary.steps.translation.status, 'error');
+    assert.equal(summary.steps.finalize.status, 'done');
 });
 
 test('lock conflict propagates without writing a phantom start', async t => {
@@ -373,40 +393,23 @@ test('lock conflict propagates without writing a phantom start', async t => {
     assert.equal(logs.length, 0);
 });
 
-test('unification moves missing translations and fills empty fields before atomic deletion', async t => {
+test('finalization only counts rows and does not merge existing imported content', async t => {
     captureLogs(t);
-    const calls = [];
-    const tx = {
-        event: { update: async () => calls.push('event-update'), delete: async () => calls.push('event-delete') },
-        eventTranslation: {
-            findMany: async () => [{ id: 'en-old', language: 'en', title: 'English' }, { id: 'fr-old', language: 'fr', title: 'Français', description: 'Description' }],
-            findUnique: async ({ where }) => where.eventId_language.language === 'en' ? null : { title: 'Retained title', description: null },
-            update: async query => calls.push(query)
-        }
-    };
-    const pipeline = await pipelineFixture({
-        isSameEvent: () => true,
-        prisma: { event: { findMany: async () => [{ id: 'primary' }, { id: 'secondary' }] },
-            $transaction: async work => { calls.push('begin'); await work(tx); calls.push('commit'); } }
-    });
+    let counts = 0;
+    const pipeline = await pipelineFixture({ prisma: { event: { count: async () => { counts++; return 17; } } } });
     const result = await pipeline.runUnifiedScrapingPipeline('TEST', { fullHistorical: false, scope: 'daily', pipelineStage: 'finalize' });
-    assert.equal(result.stats.mergedEvents, 1);
-    assert.deepEqual(calls, ['begin', 'event-update',
-        { where: { id: 'en-old' }, data: { eventId: 'primary' } },
-        { where: { eventId_language: { eventId: 'primary', language: 'fr' } }, data: { description: 'Description' } },
-        'event-delete', 'commit']);
+    assert.equal(result.success, true);
+    assert.equal(counts, 1);
 });
 
-test('a failed unification transaction reports partial and does not count a merge', async t => {
+test('failed final count reports partial', async t => {
     const logs = captureLogs(t);
-    const pipeline = await pipelineFixture({ isSameEvent: () => true,
-        prisma: { event: { findMany: async () => [{ id: 'primary' }, { id: 'secondary' }] },
-            $transaction: async () => { throw new Error('transaction rolled back'); } }
+    const pipeline = await pipelineFixture({
+        prisma: { event: { count: async () => { throw new Error('database unavailable'); } } }
     });
     const result = await pipeline.runUnifiedScrapingPipeline('TEST', { fullHistorical: false, scope: 'daily', pipelineStage: 'finalize' });
     assert.equal(result.success, false);
-    assert.equal(result.stats.mergedEvents, null);
-    assert.equal(readLogDetails(logs.at(-1)).steps.unification.status, 'error');
+    assert.equal(readLogDetails(logs.at(-1)).steps.finalize.status, 'error');
 });
 
 
@@ -424,7 +427,7 @@ test('durable workflow carries stage checkpoints and retry state without self HT
             return { success: true, nextStage: seen.length === 1 ? 'finalize' : null, years: ['2026'], nextAttempt: 2, hadErrors: true, fullHistorical: false };
         }, recordCalendarFailure: async () => { throw new Error('Unexpected failure'); }
     });
-    assert.deepEqual(await workflow.calendarSyncWorkflow({ runId: 'r', pipelineStage: 'deepScrape' }), { success: true, runId: 'r' });
+    assert.deepEqual(await workflow.calendarSyncWorkflow({ runId: 'r', pipelineStage: 'fpc-2026' }), { success: true, runId: 'r' });
     assert.equal(seen.length, 2);
     assert.equal(seen[1].pipelineStage, 'finalize');
     assert.equal(seen[1].attempt, 2);
@@ -451,16 +454,16 @@ test('resume queues only the pending checkpoint and refuses an already active wo
         getRun: () => ({ status: Promise.resolve('running') }), calendarSyncWorkflow: () => {},
         withScraperLock: work => work(), withScraperLogContext: (_ctx, work) => work(),
         logInfo: async () => ({ id: 'log' }), logError: async () => {},
-        getPipelineStages: () => ['fpc-2026', 'deepScrape', 'finalize'],
+        getPipelineStages: () => ['fpc-2026', 'finalize'],
         prisma: { systemLog: { findFirst: async ({ where }) => {
             if (where.message === 'Workflow de sincronização agendado.') return active ? { details: JSON.stringify({ workflowId: 'existing' }) } : null;
             if (where.message) return { details: JSON.stringify({ runId: 'old-run' }) };
-            return { details: JSON.stringify({ nextStage: 'deepScrape', scope: 'manual', yearsScraped: ['2026'], mode: 'DAILY_ACTIVE' }) };
+            return { details: JSON.stringify({ nextStage: 'finalize', scope: 'manual', yearsScraped: ['2026'], mode: 'DAILY_ACTIVE' }) };
         } } }
     });
     const result = await startSync.startCalendarSync({ resume: true });
     assert.equal(result.resumedFrom, 'old-run');
-    assert.equal(queued.pipelineStage, 'deepScrape');
+    assert.equal(queued.pipelineStage, 'finalize');
     assert.deepEqual(queued.years, ['2026']);
     queued = null;
     active = true;

@@ -1,6 +1,7 @@
 import { isSameEvent } from './eventMatcher.js';
 import { getEventDiscipline, isOfficialNationalChampionship } from '../../utils/eventClassifier.js';
 import { getAmbito } from '../scrapers/utils.js';
+import { originalEventUrl } from '../publicEvent.js';
 
 /**
  * Combina duas listas de links extras sem duplicar URLs
@@ -241,6 +242,37 @@ export function mergeEventRecords(existing, incoming) {
  */
 let municipalitiesCache = null;
 
+const MINIMAL_SOURCE_NAMES = new Set(['FPC', 'Cabreira', 'Stop and Go', 'Apedalar', 'Recorde Pessoal', 'Classificações.net']);
+
+function getOriginalSourceLink(event) {
+    const candidates = [event?.link];
+    try {
+        const extra = typeof event?.extraLinks === 'string' ? JSON.parse(event.extraLinks) : event?.extraLinks;
+        if (Array.isArray(extra)) candidates.push(...extra.map(item => item?.link));
+    } catch { /* Ignore malformed legacy links. */ }
+    return candidates.map(originalEventUrl).find(Boolean) || null;
+}
+
+export function toMinimalScrapedEvent(event) {
+    const source = String(event?.source || '').trim();
+    if (!MINIMAL_SOURCE_NAMES.has(source)) return null;
+    const title = String(event?.title || '').replace(/\s+/g, ' ').trim().slice(0, 300);
+    const date = String(event?.date || '').replace(/\s+/g, ' ').trim().slice(0, 100);
+    const sortDate = new Date(event?.sortDate || '');
+    if (!event?.id || !title || !date || !Number.isFinite(sortDate.getTime())) return null;
+
+    const location = [event?.details, event?.distrito, event?.regiao]
+        .map(value => String(value || '').split('|')[0].replace(/\s+/g, ' ').trim())
+        .find(value => value && value.length <= 120) || '';
+    const link = getOriginalSourceLink(event);
+    if (!link) return null;
+    return {
+        id: String(event.id), title, date, sortDate, details: location || null,
+        regiao: location || null, distrito: location || null,
+        source, link,
+    };
+}
+
 export const normalizeLocation = value => String(value || '').normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 
@@ -356,9 +388,9 @@ async function assignEventCoordinates(prisma, event) {
 }
 
 export async function saveOrMergeEvent(prisma, eventData, options = {}) {
-    if (!eventData || !eventData.id) return null;
+    eventData = toMinimalScrapedEvent(eventData);
+    if (!eventData) return null;
     const verification = options.verifiedSource ? { lastVerifiedAt: new Date(), lastVerifiedSource: options.verifiedSource } : {};
-    await assignEventCoordinates(prisma, eventData);
     // Report only settled database outcomes; telemetry must never turn a saved
     // event into a failed save or trigger a retry of that write.
     const report = async (result) => {
@@ -373,7 +405,11 @@ export async function saveOrMergeEvent(prisma, eventData, options = {}) {
 
     if (existingById) {
         if (existingById.source?.includes('Quarentena')) return report({ action: 'quarantined', event: existingById });
-        const mergedData = mergeEventRecords(existingById, eventData);
+        const mergedData = {
+            title: eventData.title, date: eventData.date, sortDate: eventData.sortDate,
+            details: eventData.details, regiao: eventData.regiao, distrito: eventData.distrito,
+            source: mergeSources(existingById.source, eventData.source), link: eventData.link || existingById.link,
+        };
         const updated = await prisma.event.update({
             where: { id: existingById.id },
             data: { ...mergedData, ...verification }
@@ -398,8 +434,15 @@ export async function saveOrMergeEvent(prisma, eventData, options = {}) {
 
         for (const candidate of candidates) {
             if (isSameEvent(candidate, eventData)) {
-                // Encontrámos a mesma prova! Fazemos a fusão (complementação) dos dados
-                const mergedData = mergeEventRecords(candidate, eventData);
+                const mergedData = {
+                    title: candidate.title || eventData.title,
+                    date: eventData.date, sortDate: eventData.sortDate,
+                    details: eventData.details || candidate.details,
+                    regiao: eventData.regiao || candidate.regiao,
+                    distrito: eventData.distrito || candidate.distrito,
+                    source: mergeSources(candidate.source, eventData.source),
+                    link: eventData.link || candidate.link,
+                };
                 const updated = await prisma.event.update({
                     where: { id: candidate.id },
                     data: { ...mergedData, ...verification }
@@ -410,8 +453,6 @@ export async function saveOrMergeEvent(prisma, eventData, options = {}) {
     }
 
     // 3. Se não houver correspondência, cria novo registo
-    const created = await prisma.event.create({
-        data: { ...eventData, ...verification }
-    });
+    const created = await prisma.event.create({ data: { ...eventData, ...verification } });
     return report({ action: 'created', event: created });
 }

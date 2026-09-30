@@ -1,5 +1,4 @@
-import { assertSourceApproved } from '../contentReleasePolicy.js';
-import { parseApedalarDetails } from './eventDetailParsers.js';
+import { assertMinimalCollectionEnabled } from '../contentReleasePolicy.js';
 import * as cheerio from 'cheerio';
 import { logInfo, logError } from '../logger.js';
 import { saveOrMergeEvent } from '../merging/eventMerger.js';
@@ -7,7 +6,7 @@ import { saveOrMergeEvent } from '../merging/eventMerger.js';
 const BASE_URL = 'https://apedalar.pt';
 
 export async function scrapeApedalar(prisma, year, options = {}) {
-    assertSourceApproved("Apedalar");
+    assertMinimalCollectionEnabled("Apedalar");
     logInfo('SCRAPER', 'Início da sincronização Apedalar');
 
     try {
@@ -61,35 +60,15 @@ export async function scrapeApedalar(prisma, year, options = {}) {
                 const date = `${day} ${['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'][Number(month)-1]} ${yearStr}`;
 
                 const local = $('h2:contains("ONDE?")').next('div').text().trim().replace(/\s+/g, ' ');
-                const posterRaw = $('img').toArray().find(el => $(el).attr('src') && $(el).attr('src').includes('/media/'));
-                const posterUrl = posterRaw ? $(posterRaw).attr('src') : null;
-
-                const registerLinkRaw = $('a:contains("Inscrever")').attr('href');
-                const registrationLink = registerLinkRaw ? (registerLinkRaw.startsWith('http') ? registerLinkRaw : BASE_URL + registerLinkRaw) : url;
-
                 const eventObj = {
                     id: `apedalar-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${day}-${month}-${yearStr}`,
                     title,
                     date,
                     sortDate,
                     details: local,
-                    tag: getTagFromTitle(title),
-                    ambito: 'Regional',
-                    escaloes: '["Todos (Aberto)"]',
-                    licenca: 'Lazer',
-                    regiao: local.split(',')[0].trim(),
                     source: 'Apedalar',
-                    link: registrationLink,
-                    extraLinks: JSON.stringify([{ label: 'Página Apedalar', link: url }]),
-                    image: posterUrl
+                    link: url,
                 };
-
-                const enrichment = parseApedalarDetails(html, url);
-                Object.assign(eventObj, { ...enrichment, extraLinks: JSON.stringify(enrichment.extraLinks) });
-
-                // Extrair texto de QUANTO? (preços) e REGULAMENTO (para extrair texto se houver info útil)
-                const quantoText = $('h2:contains("QUANTO?")').parent().text().replace(/QUANTO\?/i, '').trim().replace(/\s+/g, ' ');
-                if (!eventObj.prices && quantoText && quantoText.includes('€')) eventObj.prices = quantoText;
 
                 // Prevent non-cycling events if possible (though apedalar is almost 100% cycling, they might have trails)
                 if (!isCyclingEvent(title, true)) continue;
@@ -117,18 +96,4 @@ function isCyclingEvent(title, returnBool = false) {
     }
 
     return returnBool ? true : null;
-}
-
-function getTagFromTitle(title) {
-    const t = title.toLowerCase();
-    if (t.includes('estrada')) return 'Estrada';
-    if (t.includes('gravel')) return 'Gravel';
-    if (t.includes('enduro')) return 'Enduro';
-    if (t.includes('downhill') || t.includes(' dh ')) return 'Downhill';
-    if (t.includes('xco')) return 'XCO';
-    if (t.includes('xcm') || t.includes('maratona')) return 'BTT XCM';
-    if (t.includes('xcr') || t.includes('resistência')) return 'BTT XCR';
-    if (t.includes('passeio') || t.includes('cicloturismo')) return 'Passeio';
-    if (t.includes('granfondo')) return 'Granfondo';
-    return 'BTT';
 }
