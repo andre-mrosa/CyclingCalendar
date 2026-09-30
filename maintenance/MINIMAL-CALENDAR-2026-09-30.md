@@ -28,15 +28,15 @@ Consulta de leitura em 30/09: 1735 registos históricos, dos quais 75 já em qua
 
 ## Publicação e recolha
 
-**A produção continua fechada e não há cron configurado.** Por instrução do proprietário, os seis adaptadores ficam disponíveis num modo de recolha mínima para revisão posterior: novos registos gravam apenas nome, data, localidade, fonte e ligação à página original. Descrições, imagens, logótipos, programas, PDFs, altimetrias, coordenadas e traduções não são gravados; deep scraping, downloads e tradução continuam bloqueados. O pipeline também deixou de fazer enriquecimento e fusão de conteúdo legado.
+**A produção está aberta em modo de calendário mínimo e não há cron configurado.** Por instrução do proprietário, os seis adaptadores ficam disponíveis num modo de recolha mínima para revisão posterior: novos registos gravam apenas nome, data, localidade, fonte e ligação à página original. Descrições, imagens, logótipos, programas, PDFs, altimetrias, coordenadas e traduções não são gravados; deep scraping, downloads e tradução continuam bloqueados. O pipeline também deixou de fazer enriquecimento e fusão de conteúdo legado.
 
 Esta alteração técnica **não declara as fontes autorizadas** nem resolve as questões de extração sistemática de bases de dados descritas em [RIGHTS-REVIEW-2026-09-29.md](RIGHTS-REVIEW-2026-09-29.md). Não foi executada uma recolha neste trabalho e não foram feitos pedidos às fontes.
 
-As fichas antigas na base de dados não foram apagadas; esta alteração limita novas gravações e a projeção pública já implementada. A suspensão de produção continua no código, por isso os endpoints de produção permanecem fechados até uma decisão de publicação separada.
+As fichas antigas na base de dados não foram apagadas; a projeção pública expõe apenas nome, data, localização, origem e ligação original. Os detalhes antigos não são enviados ao navegador.
 
-Apenas o servidor Next em modo de desenvolvimento, num endereço loopback, permite pré-visualizar esta versão. Builds de produção mantêm a suspensão mesmo quando o hostname é localhost. Esta exceção não é um mecanismo para publicar uma versão privada.
+O calendário público está acessível em produção. Os endpoints de enriquecimento, importação de conteúdos ricos e ficheiros importados continuam retirados.
 
-Não foram alterados Vercel, visibilidade do GitHub, dados de produção ou histórico Git. Um futuro lançamento exige decisão separada sobre fontes, dados admitidos e autorização para publicar. A exposição histórica do repositório público e a falha do formulário de contacto continuam pendentes da revisão anterior.
+Não foram alterados dados de produção ou histórico Git. A publicação mínima não constitui validação jurídica das fontes. A exposição histórica do repositório público e a falha do formulário de contacto continuam pendentes da revisão anterior.
 
 ## Verificação
 

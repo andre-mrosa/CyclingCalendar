@@ -11,11 +11,11 @@ const historical = { id: 'example', title: 'Prova exemplo', date: '04 OUT 2026',
     description: 'PRIVATE_DESCRIPTION', image: 'PRIVATE_IMAGE', logo: 'PRIVATE_LOGO', programa: 'PRIVATE_PROGRAM', details: 'PRIVATE_DETAILS', prices: 'PRIVATE_PRICES',
     translations: [{ title: 'PRIVATE_TRANSLATION' }], listSummary: { locationInfo: { label: 'PRIVATE_LOCATION' } }, extraLinks: [{ link: 'PRIVATE_DOCUMENT' }], gpxData: 'PRIVATE_GPX', lat: 41, lng: -8 };
 
-test('database and browser projection omit all historical enrichment, including unexpected future fields', async () => {
+test('database and browser projection expose only name, date, locality and source link', async () => {
     let calls = 0;
     const events = await queryCalendarList({ event: { findMany: async ({ select }) => {
         calls++; assert.deepEqual(select, PUBLIC_EVENT_SELECT);
-        for (const key of ['description', 'details', 'translations', 'listSummary', 'programa', 'image', 'extraLinks']) assert.equal(select[key], undefined);
+        for (const key of ['description', 'details', 'translations', 'listSummary', 'programa', 'image', 'extraLinks', 'tag', 'ambito', 'escaloes', 'licenca']) assert.equal(select[key], undefined);
         return [{ ...historical, futureSensitiveField: 'PRIVATE_FUTURE' }];
     } } }, [], ['FPC']);
     assert.equal(calls, 1);
@@ -63,20 +63,20 @@ test('event assets are absent from public and sitemap cannot read the old event 
     assert.doesNotMatch(sitemap, /prisma|\/events\//);
 });
 
-test('production remains closed even on localhost; retired files stay closed in development', async t => {
+test('production calendar is open; retired files remain closed', async t => {
     const previous = process.env.NODE_ENV;
     t.after(() => { if (previous === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = previous; delete globalThis.__minimalProxy; });
     let middlewareCalls = 0;
-    globalThis.__minimalProxy = { PUBLIC_RELEASE_APPROVED: false, maintenanceResponse, retiredContentResponse,
+    globalThis.__minimalProxy = { PUBLIC_RELEASE_APPROVED: true, maintenanceResponse, retiredContentResponse,
         clerkMiddleware: () => () => { middlewareCalls++; return new Response('local preview'); } };
     const source = readFileSync(new URL('../proxy.js', import.meta.url), 'utf8').replace(/^import .*;\r?$/gm, '');
     const { default: proxy } = await import('data:text/javascript;base64,' + Buffer.from('const { PUBLIC_RELEASE_APPROVED, maintenanceResponse, retiredContentResponse, clerkMiddleware } = globalThis.__minimalProxy;\n' + source).toString('base64'));
     process.env.NODE_ENV = 'production';
-    for (const host of ['localhost', '127.0.0.1', 'www.cyclingcalendar.pt']) assert.equal(proxy(new Request('http://' + host + '/')).status, 503);
-    assert.equal(middlewareCalls, 0);
+    for (const host of ['localhost', '127.0.0.1', 'www.cyclingcalendar.pt']) assert.equal(proxy(new Request('http://' + host + '/')).status, 200);
+    assert.equal(middlewareCalls, 3);
     process.env.NODE_ENV = 'development';
     assert.equal(proxy(new Request('http://localhost/')).status, 200);
     assert.equal(proxy(new Request('http://localhost/media/events/a.png')).status, 410);
-    assert.equal(proxy(new Request('https://www.cyclingcalendar.pt/')).status, 503);
-    assert.equal(middlewareCalls, 1);
+    assert.equal(proxy(new Request('https://www.cyclingcalendar.pt/')).status, 200);
+    assert.equal(middlewareCalls, 5);
 });

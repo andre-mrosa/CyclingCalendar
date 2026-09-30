@@ -5,8 +5,8 @@ import { deepScrapeFPC } from '../app/lib/scrapers/fpc.js';
 import { downloadEventAsset } from '../app/lib/scrapers/assetDownloader.js';
 import { toMinimalScrapedEvent } from '../app/lib/merging/eventMerger.js';
 
-test('release stays held while all configured sources can run in minimal metadata mode', () => {
-    assert.equal(PUBLIC_RELEASE_APPROVED, false);
+test('public calendar is open while all configured sources stay in minimal metadata mode', () => {
+    assert.equal(PUBLIC_RELEASE_APPROVED, true);
     for (const source of Object.keys(SOURCE_REVIEWS)) {
         assert.doesNotThrow(() => assertMinimalCollectionEnabled(source));
     }
@@ -37,7 +37,7 @@ test('database ingestion projects records to title, date, locality, source and o
         details: 'Porto', source: 'FPC', link: 'https://registration.example/event',
     }), null);
 });
-test('hold returns no event content and prevents caching/indexing, including direct assets', async () => {
+test('maintenance response prevents caching/indexing when explicitly used', async () => {
     for (const path of ['/', '/api/events', '/sitemap.xml', '/media/events/a.png', '/events/a', '/api/calendar/feed/a/token']) {
         const r = maintenanceResponse('https://site.test' + path);
         assert.equal(r.status, 503);

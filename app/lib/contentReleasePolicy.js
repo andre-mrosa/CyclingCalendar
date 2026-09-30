@@ -1,8 +1,6 @@
-// The public release remains paused pending a rights/compliance review.
-// The owner requested a limited-metadata collection pilot before that review.
-// This enables known source adapters to run; it does not mean their terms or
-// database rights have been cleared. Never use this to reopen public access.
-export const PUBLIC_RELEASE_APPROVED = false;
+// Public calendar is open in minimal-metadata mode at the owner's request.
+// This does not mean source terms or database rights have been cleared.
+export const PUBLIC_RELEASE_APPROVED = true;
 export const SOURCE_REVIEWS = Object.freeze({
     FPC: 'unverified',
     Cabreira: 'permission-required',
