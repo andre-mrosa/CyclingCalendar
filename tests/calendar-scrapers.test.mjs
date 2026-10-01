@@ -49,7 +49,7 @@ test('An unpublished future season is empty only with its confirmed complete for
     assert.throws(() => parseFPCCalendar(html.replace('</html>', ''), year), /Tabela/);
 });
 
-test('FPC retains January, XCE/XCC, CRI/Fundo, event names and cross-month dates', () => {
+test('FPC parser returns only event name, date, locality and original source link', () => {
     const events = parseFPCCalendar(fpcPage([
         fpcRow('Campeonatos Nacionais Pista', '23-01-2026', '25-01-2026', 'Pista CN'),
         fpcRow('Campeonato Nacional XCE', '26-06-2026', undefined, 'BTT XCE'),
@@ -60,9 +60,10 @@ test('FPC retains January, XCE/XCC, CRI/Fundo, event names and cross-month dates
         fpcRow('Campeonato Nacional XCC', '18-07-2026', undefined, 'BTT XCC')
     ].join('')), 2026);
     assert.equal(events.length, 6);
-    assert.equal(events.filter(e => e.ambito === 'Campeonato Nacional').length, 5);
-    assert.equal(events[1].tag, 'BTT XCE');
-    assert.equal(events[2].tag, 'BTT XCC');
+    assert.deepEqual(Object.keys(events[0]).sort(), ['date', 'details', 'distrito', 'id', 'link', 'regiao', 'sortDate', 'source', 'title'].sort());
+    assert.equal(events[1].details, 'Fundão');
+    assert.equal(events[1].source, 'FPC');
+    assert.ok(events.every(event => !('tag' in event) && !('description' in event) && !('image' in event)));
     assert.equal(events[4].sortDate.toISOString(), '2026-07-31T00:00:00.000Z');
     assert.match(events[4].date, /31 JUL 2026 a 02 AGO 2026/);
 });

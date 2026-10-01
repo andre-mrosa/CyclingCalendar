@@ -46,7 +46,7 @@ test('exports contain original links and district, never historical descriptions
 test('removed HTTP features cannot start a fetch, even with a cron secret or user-supplied URL', async t => {
     let calls = 0;
     t.mock.method(globalThis, 'fetch', () => { calls++; throw Error('Network forbidden'); });
-    for (const path of ['programa', 'image-proxy', 'gpx', 'download-track', 'weather', 'road-distance', 'translate', 'sync-gpx', 'test-cabreira', 'force-cabreira', 'force-scrape', 'force-scrape-all', 'calendar/add', 'admin/translate-all', 'cron/alerts', 'cron/scrape']) {
+    for (const path of ['programa', 'image-proxy', 'gpx', 'download-track', 'weather', 'road-distance', 'translate', 'sync-gpx', 'test-cabreira', 'force-cabreira', 'force-scrape-all', 'calendar/add', 'admin/translate-all', 'cron/alerts']) {
         const route = await import(`../app/api/${path}/route.js`);
         for (const method of ['GET', 'POST'].filter(method => route[method])) {
             const result = await route[method](new Request('https://calendar.test/api/' + path + '?url=https://example.com/a', { method, headers: { authorization: 'Bearer test-secret' } }));

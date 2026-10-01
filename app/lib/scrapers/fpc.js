@@ -1,11 +1,7 @@
 import { assertContentProcessingApproved, assertMinimalCollectionEnabled } from '../contentReleasePolicy.js';
-import { getEventCategories } from '../../utils/eventClassifier.js';
 import * as cheerio from 'cheerio';
 import { prisma } from '../db.js';
-import {
-    getAmbito, getTag, getRegiao,
-    getDistrito, toTitleCase, getLicenca, sanitizeHtml, fetchImageAsBase64
-} from './utils.js';
+import { toTitleCase, sanitizeHtml, fetchImageAsBase64 } from './utils.js';
 import { logInfo, logError } from '../logger.js';
 import { saveOrMergeEvent } from '../merging/eventMerger.js';
 import { fpcDetailLink, prioritizeDetailChecks, needsFpcDetails } from './detailQueue.js';
@@ -240,15 +236,11 @@ export const parseFPCCalendar = (html, year) => {
         for (const element of rows) {
             const ths = $(element).find('th');
             const cols = $(element).find('td');
-                if (ths.length >= 1 && cols.length >= 3) {
+            if (ths.length >= 1 && cols.length >= 2) {
                 let dateText = $(ths[0]).text().trim();
                 const endDateText = ths.length > 1 ? $(ths[1]).text().trim() : '';
                 const nameText = $(cols[0]).text().trim();
                 let locText = toTitleCase($(cols[1]).text().trim());
-                const extraText = $(cols[2]).text().trim();
-                const organizadorText = cols.length > 3 ? $(cols[3]).text().trim() : null;
-
-
                 if (nameText && /^\d{2}-\d{2}-\d{4}$/.test(dateText)) {
                     const parts = dateText.split('-');
                     if (parts[2] !== String(year)) throw new Error(`Época incorreta na linha FPC: ${dateText}`);
@@ -264,36 +256,7 @@ export const parseFPCCalendar = (html, year) => {
                         }
                     }
 
-                    let escaloes = [];
-                    const det = extraText.trim();
-                    const lowerName = nameText.toLowerCase();
-                    const codes = det.match(/\.\d{2}/g) || [];
-                    const uciCodes = det.match(/\b([12]\.(1|Pro|HC))\b/i);
-
-                    if (det.toLowerCase().includes('cpt') || lowerName.includes('aberta') || lowerName.includes('amador') || lowerName.includes('passeio') || lowerName.includes('granfondo')) escaloes.push('Todos (Aberto)');
-                    if (uciCodes || lowerName.includes('volta a portugal') || lowerName.includes('volta ao algarve') || lowerName.includes('volta ao alentejo')) escaloes.push('Profissional (UCI)');
-
-                    if (codes.includes('.12') || lowerName.includes('elite')) escaloes.push('Elite');
-                    if (codes.includes('.13') || lowerName.includes('sub23') || lowerName.includes('sub-23')) escaloes.push('Sub-23');
-                    if (codes.includes('.14') || lowerName.includes('sub19') || lowerName.includes('sub-19') || lowerName.includes('juniores')) escaloes.push('Sub-19 (Juniores)');
-                    if (codes.includes('.15') || lowerName.includes('sub17') || lowerName.includes('sub-17') || lowerName.includes('cadetes')) escaloes.push('Sub-17 (Cadetes)');
-                    if (codes.includes('.16') || lowerName.includes('sub15') || lowerName.includes('sub-15') || lowerName.includes('juvenis')) escaloes.push('Sub-15 (Juvenis)');
-
-                    const hasMasterName = lowerName.includes('master') || lowerName.includes('veterano');
-                    const hasYouthName = lowerName.includes('cadete') || lowerName.includes('junior') || lowerName.includes('júnior') || lowerName.includes('juvenil') || lowerName.includes('escola');
-                    if ((codes.includes('.17') && (!hasYouthName || hasMasterName)) || hasMasterName) escaloes.push('Masters / Veteranos');
-
-                    if (codes.includes('.18') || lowerName.includes('feminin')) escaloes.push('Femininas');
-                    if (det.toLowerCase().includes('escolas') || lowerName.includes('escolas')) escaloes.push('Escolas');
-
-                    if (escaloes.length === 0) escaloes.push('Geral / Vários');
-                    escaloes = getEventCategories({ source: 'FPC', details: det, escaloes: [...new Set(escaloes)] });
-
-                    const ambitoVal = getAmbito(nameText, det, '', 'FPC');
-
-                    let fpcLinks = [];
-                    let mainLink = 'https://www.fpciclismo.pt/';
-                    let hasProvaInscrever = false;
+                    let sourceLink = 'https://www.fpciclismo.pt/calendario';
 
                     $(element).find('a').each((i, a) => {
                         const href = $(a).attr('href') || '';
@@ -305,14 +268,8 @@ export const parseFPCCalendar = (html, year) => {
                         } else if (href.startsWith('http') && !href.endsWith('fpciclismo.pt') && !href.endsWith('fpciclismo.pt/')) {
                             extracted = href;
                         }
-                        if (extracted) {
-                            fpcLinks.push({ label: 'Link FPC', link: extracted });
-                            if (extracted.includes('prova-inscrever')) {
-                                mainLink = extracted;
-                                hasProvaInscrever = true;
-                            } else if (!hasProvaInscrever) {
-                                mainLink = extracted;
-                            }
+                        if (extracted && sourceLink === 'https://www.fpciclismo.pt/calendario') {
+                            sourceLink = extracted;
                         }
                     });
 
@@ -322,17 +279,11 @@ export const parseFPCCalendar = (html, year) => {
                         title: nameText,
                         date: dateText,
                         sortDate,
-                        details: `${locText} | ${extraText}`,
-                        tag: getTag(nameText, det),
-                        ambito: ambitoVal,
-                        escaloes: JSON.stringify(escaloes),
-                        licenca: getLicenca(nameText, det, ambitoVal),
-                        regiao: getRegiao(nameText, `${det} ${locText}`),
-                        distrito: getDistrito(nameText, `${det} ${locText}`),
+                        details: locText,
+                        regiao: locText,
+                        distrito: locText,
                         source: 'FPC',
-                        link: mainLink,
-                        extraLinks: JSON.stringify(fpcLinks),
-                        organizador: organizadorText || null
+                        link: sourceLink,
                     };
 
                     events.set(id, { id, ...eventData });

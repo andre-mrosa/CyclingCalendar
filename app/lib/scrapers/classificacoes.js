@@ -125,8 +125,10 @@ async function scrapeClassificacoesPage(url, retries = 2) {
 
         // Extrair Localização
         let location = 'Portugal';
-        const pageText = $('body').text().replace(/\s+/g, ' ').trim();
-        const locMatch = pageText.match(/Localidade\s*:\s*([A-ZÀ-Úa-zà-ú\s]+)/i) || pageText.match(/([A-ZÀ-Úa-zà-ú\s]+),\s*Portugal/);
+        const locationField = $('p, span, div, td, th').toArray()
+            .map(element => $(element).text().replace(/\s+/g, ' ').trim())
+            .find(value => /^Localidade\s*:/i.test(value) && value.length <= 180);
+        const locMatch = locationField?.match(/^Localidade\s*:\s*([^|,]+(?:,\s*[^|]+)?)/i);
         if (locMatch) location = toTitleCase(locMatch[1].trim());
 
         const cleanTitle = toTitleCase(title.replace(/^(BTT|Ciclismo|Gravel|Estrada|Modalidades|Início)\s*/i, '').trim());
@@ -148,14 +150,12 @@ async function scrapeClassificacoesPage(url, retries = 2) {
 }
 
 /**
- * Scraper Universal Classificações.net
- * Consulta o sitemap e APENAS enriquece provas já existentes na base de dados (FPC, Cabreira, Stop and Go).
- * Nunca cria novas provas standalone para evitar duplicados ou dados históricos descontextualizados.
+ * Recolhe apenas o nome, data, localidade e ligação original das provas.
  */
 export async function scrapeClassificacoes(options = {}) {
     assertMinimalCollectionEnabled("Classificações.net");
     try {
-        logInfo('SCRAPER', 'Início da sincronização Classificações.net (enriquecimento de provas existentes)');
+        logInfo('SCRAPER', 'Início da recolha mínima Classificações.net');
 
         const res = await fetch('https://classificacoes.net/sitemap.xml', {
             headers: { 'User-Agent': 'Mozilla/5.0' },
@@ -180,7 +180,7 @@ export async function scrapeClassificacoes(options = {}) {
             return years.some(yr => lower.includes(yr));
         });
 
-        logInfo('SCRAPER', `Classificações.net: ${targetUrls.length} páginas relevantes a verificar...`);
+        logInfo('SCRAPER', `Classificações.net: ${targetUrls.length} páginas com dados básicos a verificar...`);
 
         let enrichedCount = 0;
         const BATCH_SIZE = 8;
@@ -196,7 +196,7 @@ export async function scrapeClassificacoes(options = {}) {
             }
         }
 
-        logInfo('SCRAPER', `Classificações.net: ${enrichedCount} provas oficiais enriquecidas com resultados e classificações.`);
+        logInfo('SCRAPER', `Classificações.net: ${enrichedCount} provas processadas com dados básicos.`);
         return enrichedCount;
 
     } catch (e) {
