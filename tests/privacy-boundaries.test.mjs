@@ -2,7 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { eraseAccountActivity } from '../app/lib/eraseAccountActivity.js';
-import { POST as track } from '../app/api/analytics/track/route.js';
 let sequence = 0;
 async function load(path, deps) {
     const key = `privacyAudit${sequence++}`;
@@ -49,8 +48,29 @@ test('erasure is transactionally scoped to the requested account and minimises t
     assert.equal(calls[3].arg.data.userEmail, 'removido');
 });
 
-test('old clients cannot resume detailed analytics collection', async () => {
-    const response = await track(new Request('https://site.test/api/analytics/track', { method: 'POST', body: '{"visitorId":"legacy"}' }));
+test('analytics writes are opt-in, aggregate-only, and reject old personal payloads', async () => {
+    let writes = 0;
+    const db = { analyticsAggregate: { upsert: async ({ create }) => { writes++; assert.deepEqual(Object.keys(create).sort(), ['count', 'day', 'key', 'path', 'targetId', 'type']); assert.equal(create.type, 'PAGE_VIEW'); assert.equal(create.path, '/'); assert.equal(create.targetId, null); }, deleteMany: async () => ({ count: 0 }) }, event: { findUnique: async () => null } };
+    const route = await load('../app/api/analytics/track/route.js', {
+        cookies: async () => ({ get: name => ({ value: name === 'cc_analytics_consent' ? 'accepted-v1' : undefined }) }),
+        prisma: db,
+        ANALYTICS_CONSENT_ACCEPTED: 'accepted-v1', ANALYTICS_CONSENT_COOKIE: 'cc_analytics_consent',
+        ANALYTICS_AGGREGATE_TYPES: ['SESSION_START', 'PAGE_VIEW', 'SEARCH', 'ICS_EXPORT', 'FAVORITE_TOGGLE', 'EVENT_OPEN'],
+        analyticsAggregateKey: () => 'key', analyticsBucket: () => new Date('2026-10-01T00:00:00Z'),
+        normalizeAnalyticsPath: value => value === '/' ? value : null,
+    });
+    const rejected = await load('../app/api/analytics/track/route.js', {
+        cookies: async () => ({ get: name => ({ value: name === 'cc_analytics_consent' ? 'rejected-v1' : undefined }) }),
+        prisma: db,
+        ANALYTICS_CONSENT_ACCEPTED: 'accepted-v1', ANALYTICS_CONSENT_COOKIE: 'cc_analytics_consent',
+        ANALYTICS_AGGREGATE_TYPES: ['SESSION_START', 'PAGE_VIEW', 'SEARCH', 'ICS_EXPORT', 'FAVORITE_TOGGLE', 'EVENT_OPEN'],
+        analyticsAggregateKey: () => 'key', analyticsBucket: () => new Date('2026-10-01T00:00:00Z'), normalizeAnalyticsPath: value => value,
+    });
+    const oldPayload = JSON.stringify({ visitorId: 'persistent-id', sessionId: 'session-id', userEmail: 'person@example.test', type: 'PAGE_VIEW', path: '/' });
+    assert.equal((await rejected.POST(new Request('https://site.test/api/analytics/track', { method: 'POST', body: oldPayload }))).status, 204);
+    assert.equal(writes, 0);
+    const response = await route.POST(new Request('https://site.test/api/analytics/track', { method: 'POST', body: oldPayload }));
     assert.equal(response.status, 204);
     assert.equal(response.headers.get('cache-control'), 'no-store');
+    assert.equal(writes, 1);
 });

@@ -1,59 +1,38 @@
 import { prisma } from '@/app/lib/db';
 import { clerkClient } from '@clerk/nextjs/server';
 import { requireAdmin } from '@/app/lib/auth-helpers';
-import { formatDuration } from '@/app/lib/analytics';
+import { analyticsSince } from '@/app/lib/analyticsAggregate';
 import { buildEventInventory, PUBLISHED_EVENTS_WHERE } from '@/app/lib/admin/eventInventory';
 
 export const dynamic = 'force-dynamic';
 
+const sumType = (rows, type) => rows.reduce((sum, row) => sum + (row.type === type ? row.count : 0), 0);
+
+function rankBy(rows, type, field, outputField) {
+    const counts = new Map();
+    for (const row of rows) {
+        if (row.type !== type) continue;
+        const value = row[field];
+        if (!value || value === '*') continue;
+        counts.set(value, (counts.get(value) || 0) + row.count);
+    }
+    return [...counts.entries()].map(([key, count]) => ({ [outputField]: key, count }))
+        .sort((a, b) => b.count - a.count).slice(0, 8);
+}
+
 export async function GET(request) {
     const adminCheck = await requireAdmin();
     if (!adminCheck.authorized) {
-        return Response.json({ success: false, error: adminCheck.error }, { status: adminCheck.status });
+        return Response.json({ success: false, error: adminCheck.error }, { status: adminCheck.status, headers: { 'Cache-Control': 'no-store' } });
     }
 
+    const requestedTimeframe = new URL(request.url).searchParams.get('timeframe') || '7d';
+    const timeframe = requestedTimeframe === '24h' ? 'today' : requestedTimeframe;
+    const sinceDate = analyticsSince(timeframe);
+    if (!sinceDate) return Response.json({ success: false, error: 'Período inválido.' }, { status: 400, headers: { 'Cache-Control': 'no-store' } });
+
     try {
-        const { searchParams } = new URL(request.url);
-        const timeframe = searchParams.get('timeframe') || '7d'; // '24h' | '7d' | '30d' | 'all'
-
-        let sinceDate = new Date(0);
-        const now = Date.now();
-        if (timeframe === '24h') {
-            sinceDate = new Date(now - 24 * 60 * 60 * 1000);
-        } else if (timeframe === '7d') {
-            sinceDate = new Date(now - 7 * 24 * 60 * 60 * 1000);
-        } else if (timeframe === '30d') {
-            sinceDate = new Date(now - 30 * 24 * 60 * 60 * 1000);
-        }
-
-        const analyticsFilter = {
-            isAdmin: false,
-            createdAt: { gte: sinceDate }
-        };
-
-        const [
-            // Database entity stats
-            eventInventory,
-            totalLogs, errorLogs, recentLogs,
-            totalUsers,
-
-            // Traffic & Analytics Stats (Strictly Non-Admin)
-            uniqueVisitorsGroup,
-            totalSessions,
-            pageViewsSum,
-            totalInteractionEvents,
-            avgDurationData,
-            topCountriesGroup,
-            topCitiesGroup,
-            deviceGroup,
-            browserGroup,
-            osGroup,
-            topPagesGroup,
-            topEventsGroup,
-            searchEvents,
-            recentSessions
-        ] = await Promise.all([
-            // DB Entities
+        const [eventInventory, errorCount, totalUsers, aggregates] = await Promise.all([
             prisma.$transaction(async tx => {
                 const groups = await tx.event.groupBy({ by: ['source', 'sortDate'], _count: { _all: true } });
                 const inventory = buildEventInventory(groups);
@@ -62,208 +41,51 @@ export async function GET(request) {
                 }
                 return inventory;
             }, { isolationLevel: 'RepeatableRead' }),
-            prisma.systemLog.count({ where: { id: { not: 'operational-scraper-lease' } } }).catch(() => 0),
-            prisma.systemLog.count({ where: { level: 'ERROR' } }).catch(() => 0),
-            prisma.systemLog.findMany({
-                where: { id: { not: 'operational-scraper-lease' } },
-                take: 5,
-                orderBy: { createdAt: 'desc' },
-                select: { id: true, level: true, source: true, message: true, createdAt: true }
-            }).catch(() => []),
+            prisma.systemLog.count({ where: { level: 'ERROR', id: { not: 'operational-scraper-lease' } } }).catch(() => null),
             (async () => {
                 try {
                     const client = await clerkClient();
-                    if (typeof client.users.getCount === 'function') {
-                        return await client.users.getCount();
-                    }
+                    if (typeof client.users.getCount === 'function') return await client.users.getCount();
                     const list = await client.users.getUserList({ limit: 1 });
-                    return list?.totalCount ?? (Array.isArray(list) ? list.length : 0);
-                } catch {
-                    return 0;
-                }
+                    return list?.totalCount ?? (Array.isArray(list) ? list.length : null);
+                } catch { return null; }
             })(),
-
-            // Analytics Aggregations
-            prisma.analyticsSession.groupBy({
-                by: ['visitorId'],
-                where: analyticsFilter
-            }).catch(() => []),
-
-            prisma.analyticsSession.count({
-                where: analyticsFilter
-            }).catch(() => 0),
-
-            prisma.analyticsSession.aggregate({
-                _sum: { pageViewsCount: true },
-                where: analyticsFilter
-            }).catch(() => ({ _sum: { pageViewsCount: 0 } })),
-
-            prisma.analyticsEvent.count({
-                where: {
-                    isAdmin: false,
-                    createdAt: { gte: sinceDate },
-                    type: { not: 'PAGE_VIEW' }
-                }
-            }).catch(() => 0),
-
-            prisma.analyticsSession.aggregate({
-                _avg: { durationSeconds: true },
-                where: {
-                    ...analyticsFilter,
-                    durationSeconds: { gt: 0 }
-                }
-            }).catch(() => ({ _avg: { durationSeconds: 0 } })),
-
-            prisma.analyticsSession.groupBy({
-                by: ['country'],
-                where: analyticsFilter,
-                _count: { id: true },
-                orderBy: { _count: { id: 'desc' } },
-                take: 8
-            }).catch(() => []),
-
-            prisma.analyticsSession.groupBy({
-                by: ['city', 'country'],
-                where: {
-                    ...analyticsFilter,
-                    city: { not: 'Desconhecido' }
-                },
-                _count: { id: true },
-                orderBy: { _count: { id: 'desc' } },
-                take: 8
-            }).catch(() => []),
-
-            prisma.analyticsSession.groupBy({
-                by: ['device'],
-                where: analyticsFilter,
-                _count: { id: true }
-            }).catch(() => []),
-
-            prisma.analyticsSession.groupBy({
-                by: ['browser'],
-                where: analyticsFilter,
-                _count: { id: true },
-                orderBy: { _count: { id: 'desc' } },
-                take: 6
-            }).catch(() => []),
-
-            prisma.analyticsSession.groupBy({
-                by: ['os'],
-                where: analyticsFilter,
-                _count: { id: true },
-                orderBy: { _count: { id: 'desc' } },
-                take: 6
-            }).catch(() => []),
-
-            prisma.analyticsEvent.groupBy({
-                by: ['path'],
-                where: {
-                    isAdmin: false,
-                    type: 'PAGE_VIEW',
-                    createdAt: { gte: sinceDate }
-                },
-                _count: { id: true },
-                orderBy: { _count: { id: 'desc' } },
-                take: 8
-            }).catch(() => []),
-
-            prisma.analyticsEvent.groupBy({
-                by: ['targetId', 'targetTitle'],
-                where: {
-                    isAdmin: false,
-                    type: 'EVENT_CLICK',
-                    targetTitle: { not: null },
-                    createdAt: { gte: sinceDate }
-                },
-                _count: { id: true },
-                orderBy: { _count: { id: 'desc' } },
-                take: 8
-            }).catch(() => []),
-
-            prisma.analyticsEvent.findMany({
-                where: {
-                    isAdmin: false,
-                    type: 'SEARCH',
-                    createdAt: { gte: sinceDate }
-                },
-                select: { metadata: true },
-                take: 100
-            }).catch(() => []),
-
-            prisma.analyticsSession.findMany({
-                where: { isAdmin: false },
-                orderBy: { lastActiveAt: 'desc' },
-                take: 10,
-                select: {
-                    id: true,
-                    country: true,
-                    city: true,
-                    device: true,
-                    browser: true,
-                    os: true,
-                    durationSeconds: true,
-                    pageViewsCount: true,
-                    initialPath: true,
-                    lastActiveAt: true,
-                    createdAt: true
-                }
-            }).catch(() => [])
+            prisma.analyticsAggregate.findMany({
+                where: { day: { gte: sinceDate } },
+                select: { type: true, path: true, targetId: true, count: true },
+            }),
         ]);
 
-        // Process searches
-        const searchCounts = {};
-        for (const item of searchEvents) {
-            try {
-                let parsed = item.metadata;
-                if (typeof parsed === 'string') parsed = JSON.parse(parsed);
-                const q = parsed?.query?.trim()?.toLowerCase();
-                if (q) {
-                    searchCounts[q] = (searchCounts[q] || 0) + 1;
-                }
-            } catch {}
-        }
-        const topSearches = Object.entries(searchCounts)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 8)
-            .map(([query, count]) => ({ query, count }));
-
-        const avgSec = Math.round(avgDurationData?._avg?.durationSeconds || 0);
+        const eventCounts = rankBy(aggregates, 'EVENT_OPEN', 'targetId', 'id');
+        const eventTitles = eventCounts.length ? await prisma.event.findMany({
+            where: { id: { in: eventCounts.map(row => row.id) }, ...PUBLISHED_EVENTS_WHERE },
+            select: { id: true, title: true },
+        }) : [];
+        const titleById = new Map(eventTitles.map(event => [event.id, event.title]));
+        const topEvents = eventCounts.filter(row => titleById.has(row.id))
+            .map(row => ({ ...row, title: titleById.get(row.id) })).slice(0, 8);
 
         return Response.json({
             success: true,
             stats: {
                 events: eventInventory,
-                users: {
-                    total: totalUsers
-                },
-                logs: {
-                    total: totalLogs,
-                    errors: errorLogs,
-                    recent: recentLogs
-                },
+                users: { total: totalUsers },
+                logs: { errors: errorCount },
                 analytics: {
                     timeframe,
-                    uniqueVisitors: uniqueVisitorsGroup.length,
-                    totalSessions,
-                    totalPageViews: pageViewsSum?._sum?.pageViewsCount || totalSessions,
-                    totalEvents: totalInteractionEvents,
-                    avgDurationSeconds: avgSec,
-                    avgDurationFormatted: formatDuration(avgSec),
-                    countries: topCountriesGroup.map(c => ({ country: c.country, count: c._count.id })),
-                    cities: topCitiesGroup.map(c => ({ city: c.city, country: c.country, count: c._count.id })),
-                    devices: deviceGroup.map(d => ({ device: d.device, count: d._count.id })),
-                    browsers: browserGroup.map(b => ({ browser: b.browser, count: b._count.id })),
-                    os: osGroup.map(o => ({ os: o.os, count: o._count.id })),
-                    topPages: topPagesGroup.map(p => ({ path: p.path, views: p._count.id })),
-                    topEvents: topEventsGroup.map(e => ({ id: e.targetId, title: e.targetTitle, clicks: e._count.id })),
-                    topSearches,
-                    recentSessions
-                }
-            }
-        });
-
+                    sessions: sumType(aggregates, 'SESSION_START'),
+                    pageViews: sumType(aggregates, 'PAGE_VIEW'),
+                    searches: sumType(aggregates, 'SEARCH'),
+                    calendarExports: sumType(aggregates, 'ICS_EXPORT'),
+                    favoriteChanges: sumType(aggregates, 'FAVORITE_TOGGLE'),
+                    interactions: aggregates.reduce((sum, row) => sum + (row.type !== 'PAGE_VIEW' && row.type !== 'SESSION_START' ? row.count : 0), 0),
+                    topPages: rankBy(aggregates, 'PAGE_VIEW', 'path', 'path'),
+                    topEvents,
+                },
+            },
+        }, { headers: { 'Cache-Control': 'no-store' } });
     } catch (error) {
-        console.error('Error in admin stats:', error);
-        return Response.json({ success: false, error: error.message }, { status: 500 });
+        console.error('Error in admin stats:', error?.message);
+        return Response.json({ success: false, error: 'Não foi possível carregar as estatísticas.' }, { status: 503, headers: { 'Cache-Control': 'no-store' } });
     }
 }

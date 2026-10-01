@@ -53,6 +53,7 @@
 .danger { color: var(--danger); border-color: var(--danger); }
 .danger:hover { background: var(--danger-soft); }
 .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.threeMetrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .metric { padding: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; display: flex; flex-direction: column; }
 .metric > span { color: var(--muted); font-size: 12px; font-weight: 600; }
 .metric > strong { font-size: clamp(27px, 3vw, 36px); font-weight: 600; line-height: 1.3; letter-spacing: -.04em; margin: 10px 0; font-variant-numeric: tabular-nums; }
@@ -163,6 +164,7 @@
 @keyframes admin-spin { to { transform: rotate(360deg); } }
 @media (max-width: 1050px) {
     .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .threeMetrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .threeColumns { grid-template-columns: 1fr; }
     .userRow { grid-template-columns: minmax(0, 1fr) minmax(150px, .6fr); }
     .userActions { grid-column: 1 / -1; justify-content: flex-start; }

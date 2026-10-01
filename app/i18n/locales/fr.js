@@ -540,6 +540,14 @@ const messages = {
     detail_schedule: "Programme",
     detail_docs: "Documents Officiels",
     detail_presentation: "Présentation de l’épreuve",
+    analytics_consent_title: "Aidez-nous à améliorer le calendrier ?",
+    analytics_consent_body: "Si vous acceptez, nous enregistrons des décomptes agrégés de sessions, de pages et d’actions. Nous ne stockons aucun identifiant de visiteur, recherche, compte, localisation ou appareil. Refuser ne limite aucune fonctionnalité.",
+    analytics_consent_accept: "Autoriser les statistiques",
+    analytics_consent_reject: "Refuser les statistiques",
+    analytics_consent_granted: "Les statistiques facultatives sont activées. Vous pouvez retirer votre accord ici à tout moment.",
+    analytics_consent_denied: "Les statistiques facultatives sont désactivées. Votre activité n’est pas incluse dans les décomptes.",
+    analytics_consent_pending: "Chargement du choix des statistiques…",
+    analytics_consent_error: "Impossible d’enregistrer votre choix. Réessayez.",
 };
 
 export default messages;

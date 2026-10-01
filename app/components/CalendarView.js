@@ -775,7 +775,7 @@ export default function CalendarView({
                                         <div className="flex flex-col justify-center min-w-0 flex-1">
                                             <div className={styles.eventHeadingRow}>
                                                 <h3>
-                                                    <a href={originalEventUrl(event.link)} target="_blank" rel="noopener noreferrer" className={styles.eventTitle}>{displayTitle}</a>
+                                                    <a href={originalEventUrl(event.link)} target="_blank" rel="noopener noreferrer" className={styles.eventTitle} onClick={() => trackEvent('EVENT_OPEN', { targetId: event.id })}>{displayTitle}</a>
                                                 </h3>
                                                 <button
                                                     onClick={(e) => {

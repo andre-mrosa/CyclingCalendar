@@ -540,6 +540,14 @@ const messages = {
     detail_schedule: "Schedule",
     detail_docs: "Official Documents",
     detail_presentation: "Event Presentation",
+    analytics_consent_title: "Help us improve the calendar?",
+    analytics_consent_body: "If you agree, we store aggregate counts of sessions, pages, and actions. We do not store visitor IDs, searches, accounts, locations, or devices. Declining does not limit any feature.",
+    analytics_consent_accept: "Allow statistics",
+    analytics_consent_reject: "Decline statistics",
+    analytics_consent_granted: "Optional statistics are enabled. You can withdraw permission here at any time.",
+    analytics_consent_denied: "Optional statistics are disabled. Your activity is not included in the counts.",
+    analytics_consent_pending: "Loading your statistics preference…",
+    analytics_consent_error: "We could not save your choice. Please try again.",
 };
 
 export default messages;

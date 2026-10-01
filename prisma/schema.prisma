@@ -162,6 +162,21 @@ model AnalyticsEvent {
   @@index([path])
 }
 
+// Opt-in counters only: no visitor, account, device or location identifiers.
+model AnalyticsAggregate {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  day       DateTime @db.Date
+  type      String
+  path      String
+  targetId  String?
+  count     Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@index([day, type])
+  @@index([type, targetId])
+}
+
 
 
 model Municipality {

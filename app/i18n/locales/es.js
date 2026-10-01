@@ -539,6 +539,14 @@ const messages = {
     detail_schedule: "Programa y Horarios",
     detail_docs: "Documentos Oficiales",
     detail_presentation: "Presentación de la Prueba",
+    analytics_consent_title: "¿Nos ayudas a mejorar el calendario?",
+    analytics_consent_body: "Si aceptas, guardamos recuentos agregados de sesiones, páginas y acciones. No guardamos identificadores de visitantes, búsquedas, cuentas, ubicaciones ni dispositivos. Rechazar no limita ninguna función.",
+    analytics_consent_accept: "Permitir estadísticas",
+    analytics_consent_reject: "Rechazar estadísticas",
+    analytics_consent_granted: "Las estadísticas opcionales están activadas. Puedes retirar el permiso aquí cuando quieras.",
+    analytics_consent_denied: "Las estadísticas opcionales están desactivadas. Tu actividad no se incluye en los recuentos.",
+    analytics_consent_pending: "Cargando la preferencia de estadísticas…",
+    analytics_consent_error: "No se pudo guardar la elección. Inténtalo de nuevo.",
 };
 
 export default messages;
