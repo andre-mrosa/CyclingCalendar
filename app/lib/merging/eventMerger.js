@@ -242,7 +242,7 @@ export function mergeEventRecords(existing, incoming) {
  */
 let municipalitiesCache = null;
 
-const MINIMAL_SOURCE_NAMES = new Set(['FPC', 'Cabreira', 'Stop and Go', 'Apedalar', 'Recorde Pessoal', 'Classificações.net']);
+const MINIMAL_SOURCE_NAMES = new Set(['FPC', 'Cabreira', 'Apedalar', 'Recorde Pessoal', 'Classificações.net']);
 
 function getOriginalSourceLink(event) {
     const candidates = [event?.link];

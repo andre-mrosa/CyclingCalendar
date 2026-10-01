@@ -4,13 +4,19 @@ export const PUBLIC_RELEASE_APPROVED = true;
 export const SOURCE_REVIEWS = Object.freeze({
     FPC: 'unverified',
     Cabreira: 'permission-required',
-    'Stop and Go': 'permission-required',
+    'Stop and Go': 'disabled-pending-permission',
     Apedalar: 'permission-required',
     'Recorde Pessoal': 'unverified',
     'Classificações.net': 'unverified',
 });
 
 export function assertMinimalCollectionEnabled(source) {
+    const status = SOURCE_REVIEWS[source];
+    if (status === 'disabled-pending-permission') {
+        const error = new Error(`${source} está desativado até existir autorização escrita.`);
+        error.code = 'SOURCE_DISABLED_PENDING_PERMISSION';
+        throw error;
+    }
     if (Object.hasOwn(SOURCE_REVIEWS, source)) return;
     const error = new Error(`Fonte não configurada para recolha mínima: ${source}.`);
     error.code = 'CONTENT_RIGHTS_REVIEW_REQUIRED';

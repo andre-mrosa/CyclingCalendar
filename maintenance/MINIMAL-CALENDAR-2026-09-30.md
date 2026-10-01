@@ -28,7 +28,7 @@ Consulta de leitura em 30/09: 1735 registos históricos, dos quais 75 já em qua
 
 ## Publicação e recolha
 
-**A produção está aberta em modo de calendário mínimo e não há cron configurado.** Por instrução do proprietário, os seis adaptadores ficam disponíveis num modo de recolha mínima para revisão posterior: novos registos gravam apenas nome, data, localidade, fonte e ligação à página original. Descrições, imagens, logótipos, programas, PDFs, altimetrias, coordenadas e traduções não são gravados; deep scraping, downloads e tradução continuam bloqueados. O pipeline também deixou de fazer enriquecimento e fusão de conteúdo legado.
+**A produção está aberta em modo de calendário mínimo e não há cron configurado.** Os cinco adaptadores FPC, Cabreira, Recorde Pessoal, Apedalar e Classificações.net ficam limitados a nome, data, localidade e ligação à página original. Stop and Go foi removido do pipeline e bloqueado até haver autorização escrita. Descrições, imagens, logótipos, programas, PDFs, altimetrias, coordenadas e traduções não são publicados nem gravados em novos registos; deep scraping, downloads e tradução continuam bloqueados. O pipeline também deixou de fazer enriquecimento de conteúdo legado.
 
 Esta alteração técnica **não declara as fontes autorizadas** nem resolve as questões de extração sistemática de bases de dados descritas em [RIGHTS-REVIEW-2026-09-29.md](RIGHTS-REVIEW-2026-09-29.md). Não foi executada uma recolha neste trabalho e não foram feitos pedidos às fontes.
 

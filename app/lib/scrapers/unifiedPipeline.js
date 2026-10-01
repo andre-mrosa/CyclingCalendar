@@ -1,7 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { scrapeFPC } from './fpc.js';
 import { scrapeCabreira } from './cabreira.js';
-import { scrapeStopAndGo } from './stopandgo.js';
 import { scrapeRecordePessoal } from './recordepessoal.js';
 import { scrapeApedalar } from './apedalar.js';
 import { scrapeClassificacoes } from './classificacoes.js';
@@ -13,9 +12,9 @@ const VALID_SCOPES = new Set(['daily', 'weekly', 'manual']);
 
 export function getPipelineStages(scope, years) {
     const fpcStages = years.map(year => `fpc-${year}`);
-    if (scope === 'daily') return ['cabreira', 'stopandgo', 'recordepessoal', 'apedalar', 'classificacoes', 'finalize'];
+    if (scope === 'daily') return ['cabreira', 'recordepessoal', 'apedalar', 'classificacoes', 'finalize'];
     if (scope === 'weekly') return [...fpcStages, 'finalize'];
-    return [...fpcStages, 'cabreira', 'stopandgo', 'recordepessoal', 'apedalar', 'classificacoes', 'finalize'];
+    return [...fpcStages, 'cabreira', 'recordepessoal', 'apedalar', 'classificacoes', 'finalize'];
 }
 
 // Acquire the lease before logging a start. Callback/lock errors reach the route.
@@ -50,8 +49,8 @@ async function runPipeline(triggeredBy, options) {
         pipelineStage,
         scope,
         sourcesScraped: scope === 'daily'
-              ? ['Cabreira', 'Stop and Go', 'Recorde Pessoal', 'Apedalar', 'Classificações.net']
-              : scope === 'weekly' ? ['FPC'] : ['FPC', 'Cabreira', 'Stop and Go', 'Recorde Pessoal', 'Apedalar', 'Classificações.net'],
+              ? ['Cabreira', 'Recorde Pessoal', 'Apedalar', 'Classificações.net']
+              : scope === 'weekly' ? ['FPC'] : ['FPC', 'Cabreira', 'Recorde Pessoal', 'Apedalar', 'Classificações.net'],
         yearsScraped: years, fpcEvents: {}, deepScrapedFpc: null, mergedEvents: null,
         sources: {}, steps: {}, errors: []
     };
@@ -110,9 +109,6 @@ async function runPipeline(triggeredBy, options) {
             switch (pipelineStage) {
                 case 'cabreira':
                     await stage('cabreira', 'Cabreira', true, saveOptions => scrapeCabreira(null, saveOptions));
-                    break;
-                case 'stopandgo':
-                    await stage('stopandgo', 'Stop and Go', true, saveOptions => scrapeStopAndGo({ years, ...saveOptions }));
                     break;
                 case 'recordepessoal':
                     await stage('recordepessoal', 'Recorde Pessoal', true, saveOptions => scrapeRecordePessoal({ years, ...saveOptions }));

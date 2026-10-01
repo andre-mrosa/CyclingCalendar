@@ -5,10 +5,14 @@ import { deepScrapeFPC } from '../app/lib/scrapers/fpc.js';
 import { downloadEventAsset } from '../app/lib/scrapers/assetDownloader.js';
 import { toMinimalScrapedEvent } from '../app/lib/merging/eventMerger.js';
 
-test('public calendar is open while all configured sources stay in minimal metadata mode', () => {
+test('public calendar is open; Stop and Go is blocked pending written permission', () => {
     assert.equal(PUBLIC_RELEASE_APPROVED, true);
     for (const source of Object.keys(SOURCE_REVIEWS)) {
-        assert.doesNotThrow(() => assertMinimalCollectionEnabled(source));
+        if (source === 'Stop and Go') {
+            assert.throws(() => assertMinimalCollectionEnabled(source), { code: 'SOURCE_DISABLED_PENDING_PERMISSION' });
+        } else {
+            assert.doesNotThrow(() => assertMinimalCollectionEnabled(source));
+        }
     }
     for (const source of ['unknown', undefined]) {
         assert.throws(() => assertMinimalCollectionEnabled(source), { code: 'CONTENT_RIGHTS_REVIEW_REQUIRED' });
@@ -25,13 +29,14 @@ test('rich processing and asset entrypoints remain blocked before any network ca
 test('database ingestion projects records to title, date, locality, source and original source link', () => {
     const minimal = toMinimalScrapedEvent({
         id: 'race-1', title: '  Prova de Teste  ', date: '12 JUL 2026', sortDate: '2026-07-12',
-        details: 'Porto | copied schedule text', source: 'Stop and Go',
-        link: 'https://stopandgo.net/events/teste', description: 'not retained', image: 'https://stopandgo.net/poster.jpg',
+        details: 'Porto | copied schedule text', source: 'FPC',
+        link: 'https://www.fpciclismo.pt/prova/teste', description: 'not retained', image: 'https://www.fpciclismo.pt/poster.jpg',
     });
     assert.deepEqual(Object.keys(minimal).sort(), ['date', 'details', 'distrito', 'id', 'link', 'regiao', 'sortDate', 'source', 'title'].sort());
     assert.equal(minimal.title, 'Prova de Teste');
     assert.equal(minimal.details, 'Porto');
-    assert.equal(minimal.link, 'https://stopandgo.net/events/teste');
+    assert.equal(minimal.link, 'https://www.fpciclismo.pt/prova/teste');
+    assert.equal(toMinimalScrapedEvent({ id: 'stopped-source', title: 'Prova', date: '12 JUL 2026', sortDate: '2026-07-12', details: 'Porto', source: 'Stop and Go', link: 'https://stopandgo.net/events/teste' }), null);
     assert.equal(toMinimalScrapedEvent({
         id: 'unsafe-link', title: 'Prova', date: '12 JUL 2026', sortDate: '2026-07-12',
         details: 'Porto', source: 'FPC', link: 'https://registration.example/event',

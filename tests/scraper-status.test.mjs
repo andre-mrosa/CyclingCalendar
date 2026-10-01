@@ -316,7 +316,6 @@ async function pipelineFixture(overrides = {}) {
         withScraperLock: work => work(),
         scrapeFPC: async (_year, { onResult }) => { await onResult({ action: 'updated' }); return 1; },
         scrapeCabreira: async (_year, { onResult }) => { await onResult({ action: 'created' }); return 1; },
-        scrapeStopAndGo: async ({ onResult }) => { await onResult({ action: 'quarantined' }); return 1; },
         scrapeRecordePessoal: async () => 0, scrapeApedalar: async () => 0,
         scrapeClassificacoes: async () => 0,
         translateAllPendingEvents: async () => ({ success: true, translatedCount: 0 }),
@@ -345,7 +344,7 @@ async function runPipelinePlan(pipeline, options = {}) {
 
 test('daily and weekly plans isolate FPC into one bounded stage per season', async () => {
     const pipeline = await pipelineFixture();
-    assert.deepEqual(pipeline.getPipelineStages('daily', ['2026', '2027']), ['cabreira', 'stopandgo', 'recordepessoal', 'apedalar', 'classificacoes', 'finalize']);
+    assert.deepEqual(pipeline.getPipelineStages('daily', ['2026', '2027']), ['cabreira', 'recordepessoal', 'apedalar', 'classificacoes', 'finalize']);
     assert.deepEqual(pipeline.getPipelineStages('weekly', ['2026', '2027']), ['fpc-2026', 'fpc-2027', 'finalize']);
 });
 
@@ -356,13 +355,13 @@ test('pipeline leases every bounded stage and publishes complete metrics', async
     let locks = 0;
     const pipeline = await pipelineFixture({ withScraperLock: async work => { locks++; if (locks === 1) assert.equal(logs.length, 0); return work(); } });
     const result = await runPipelinePlan(pipeline);
-    assert.equal(locks, 8);
+    assert.equal(locks, 7);
     assert.equal(result.success, true);
     const summary = readLogDetails(logs.at(-1));
     assert.equal(summary.status, 'success');
     assert.equal(logs.filter(log => readLogDetails(log).sourceId === 'fpc' && readLogDetails(log).event === 'source-year-complete').length, 2);
     assert.ok(logs.some(log => readLogDetails(log).sources?.cabreira?.metrics?.created === 1));
-    assert.ok(logs.some(log => readLogDetails(log).sources?.stopandgo?.metrics?.quarantined === 1));
+    assert.ok(logs.every(log => readLogDetails(log).sourceId !== 'stopandgo'));
     assert.ok(logs.every(log => readLogDetails(log).runId === 'fixture-run'));
     assert.ok(logs.some(log => readLogDetails(log).year));
     const status = parseScraperStatus({ startLog: logs[0], completionLog: logs.at(-1), now: Date.now(), logs });
