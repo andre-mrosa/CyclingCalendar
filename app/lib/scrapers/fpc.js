@@ -1,192 +1,14 @@
-import { assertContentProcessingApproved, assertMinimalCollectionEnabled } from '../contentReleasePolicy.js';
 import * as cheerio from 'cheerio';
+import { assertMinimalCollectionEnabled } from '../contentReleasePolicy.js';
 import { prisma } from '../db.js';
-import { toTitleCase, sanitizeHtml, fetchImageAsBase64 } from './utils.js';
+import { toTitleCase } from './utils.js';
 import { logInfo, logError } from '../logger.js';
 import { saveOrMergeEvent } from '../merging/eventMerger.js';
-import { fpcDetailLink, prioritizeDetailChecks, needsFpcDetails } from './detailQueue.js';
-
-export const deepScrapeFPC = async (link, eventId = 'fpc-event') => {
-    assertContentProcessingApproved();
-    if (!link) return null;
-    const response = await fetch(link, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(15000) });
-    if (!response.ok) throw new Error(`FPC devolveu HTTP ${response.status}`);
-        const arrayBuffer = await response.arrayBuffer();
-        const html = Buffer.from(arrayBuffer).toString('latin1');
-        const $ = cheerio.load(html);
-
-        let extractedHtml = '';
-
-        // Extrair texto descritivo e imagens (Cartaz/Banner) usando o body inteiro
-        // para garantir que não falhamos se eles criarem múltiplos contentores no site
-        const containerHtml = ($('.main__middle__container').length ? $('.main__middle__container') : $('body')).html();
-        if (containerHtml && !containerHtml.includes('Página não encontrada')) {
-            const $tempBody = cheerio.load(containerHtml);
-            $tempBody('#navigation, #sub_menu_sobre, footer, script, style, iframe, .navbar, .logo, .menu, .menu_lateral_items, .redes_sociais, #menu, .header, nav, header, .three__blocks, .footer, .footer_bg, #rodape, .patrocinadores, .parceiros, .cyclopnet, .copyright').remove(); // remove lixo
-
-            // Extract cartaz and other buttons from the full body before isolating main content
-            let mainImgUrl = null;
-            const bannerImg = $tempBody('img[src*="anexo_banner"]');
-            const cartazImg = $tempBody('img[src*="anexo_cartaz"]');
-            if (bannerImg.length > 0) mainImgUrl = bannerImg.first().attr('src');
-            else if (cartazImg.length > 0) mainImgUrl = cartazImg.first().attr('src');
-
-            let buttonsHtml = '<div class="fpc-buttons" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; margin-bottom: 1.5rem;">';
-            $tempBody('input[type="button"]').each((i, el) => {
-                const val = $tempBody(el).attr('value');
-                const onclick = $tempBody(el).attr('onclick');
-                const parentA = $tempBody(el).closest('a').attr('href');
-                let link = null;
-                if (onclick) {
-                    const match = onclick.match(/window\.open\s*\(\s*'([^']+)'/);
-                    if (match) link = match[1];
-                } else if (parentA) {
-                    link = parentA;
-                }
-
-                if (val && link) {
-                    if (val.toLowerCase() === 'cartaz') {
-                        mainImgUrl = link;
-                    }
-                    const isRed = val.toLowerCase().includes('classifica');
-                    buttonsHtml += `<a href="${link}" target="_blank" rel="noopener noreferrer" style="background-color: ${isRed ? '#ef4444' : '#10b981'}; color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; text-decoration: none; font-weight: 500; display: inline-block;">${val}</a>`;
-                }
-            });
-            buttonsHtml += '</div>';
-
-            // Isolate main content if available, else fallback to body
-            const mainContentHtml = $tempBody('.main-content').length > 0 ? $tempBody('.main-content').html() : $tempBody('body').html();
-            const $temp = cheerio.load(mainContentHtml);
-
-            // Remover painel de noticias da FPC para nao poluir a BD com lixo
-            $temp('form[name="nr_pagina"]').parent().remove();
-            $temp('a').each(function() {
-                if ($temp(this).text().trim() === 'Ler Mais') {
-                    $temp(this).parent().parent().remove();
-                }
-            });
-
-            // Remover nós de texto soltos que sejam lixo
-            $temp('*').contents().filter(function() { return this.nodeType === 3 && this.nodeValue.includes('Cyclopnet'); }).parent().remove();
-            $temp('*').contents().filter(function() { return this.nodeType === 3 && this.nodeValue.includes('FPC ©'); }).parent().remove();
-
-            if (buttonsHtml.includes('<a ')) extractedHtml += buttonsHtml;
-
-            if (mainImgUrl) {
-                // Normalize relative URLs to absolute
-                if (!mainImgUrl.startsWith('http')) {
-                    mainImgUrl = mainImgUrl.startsWith('/')
-                        ? `https://www.fpciclismo.pt${mainImgUrl}`
-                        : `https://www.fpciclismo.pt/${mainImgUrl}`;
-                }
-                mainImgUrl = mainImgUrl.replace(/^http:\/\//, 'https://');
-
-                const isCartaz = mainImgUrl.includes('anexo_cartaz') || mainImgUrl.toLowerCase().includes('cartaz');
-                const maxWidth = isCartaz ? 'max-width: 400px; margin: 0 auto; display: block;' : 'width: 100%;';
-
-                // Fetch and store image as base64 in DB (compressed via sharp)
-                const base64Img = await fetchImageAsBase64(mainImgUrl);
-                if (base64Img) {
-                    extractedHtml += `<div class="fpc-banner" style="margin-bottom: 1.5rem;"><img src="${base64Img}" style="${maxWidth} border-radius: var(--radius-md); box-shadow: var(--shadow-md);" alt="Imagem do Evento" loading="lazy" /></div>`;
-                }
-            }
-            $temp('form, input, select, textarea, button, table.dc_table_s20').remove();
-            $temp('img').remove(); // remover as restantes imagens para texto limpo
-
-            const textContent = $temp.text().replace(/\s+/g, ' ').trim();
-            if (textContent.length > 50 && !textContent.includes('Regulamentos Filiações')) {
-                // Formatar links úteis que restaram na descrição
-                $temp('a').each((i, el) => {
-                    $temp(el).attr('target', '_blank');
-                    $temp(el).attr('rel', 'noopener noreferrer');
-                    $temp(el).attr('style', 'color: var(--accent-primary); text-decoration: underline; font-weight: 500;');
-                });
-
-                extractedHtml += `<div class="fpc-description" style="margin-bottom: 1.5rem; color: var(--text-secondary); line-height: 1.6;">${sanitizeHtml($temp.html())}</div>`;
-            }
-        }
-
-        // Extrair Links (Regulamentos, PDFs, KML)
-        const pdfLinks = [];
-        const $source = cheerio.load(containerHtml || '');
-        $source('a, input[type="button"]').each((i, el) => {
-            let href = $(el).attr('href');
-            const onclick = $(el).attr('onclick') || $(el).attr('onClick');
-
-            // Tentar extrair link do onClick (comum no site da FPC para PDFs)
-            if (onclick && onclick.includes('window.open')) {
-                const match = onclick.match(/window\.open\s*\(\s*'([^']+)'/);
-                if (match) href = match[1];
-            }
-
-            const text = $(el).text().trim() || $(el).attr('value') || 'Link Adicional';
-            if (text.toLowerCase() === 'cartaz') return; // Já extraído como imagem
-
-            if (href && href !== 'javascript:void(0)' && (href.toLowerCase().endsWith('.pdf') || href.toLowerCase().endsWith('.jpg') || href.toLowerCase().endsWith('.png') || href.toLowerCase().endsWith('.kml') || href.toLowerCase().endsWith('.gpx') || href.includes('fpciclismo.pt/ficheiro/'))) {
-                let fullLink = href;
-                if (!href.startsWith('http')) {
-                    fullLink = href.startsWith('/') ? `https://www.fpciclismo.pt${href}` : `https://www.fpciclismo.pt/${href}`;
-                }
-                // Avoid duplicates
-                if (!pdfLinks.some(l => l.link === fullLink)) {
-                    pdfLinks.push({ text, link: fullLink });
-                }
-            }
-        });
-
-        if (pdfLinks.length > 0) {
-            extractedHtml += `<div class="fpc-downloads">
-                <div style="display: flex; flex-direction: column; gap: 0.75rem;">`;
-
-            for (const doc of pdfLinks) {
-                const isMap = doc.link.toLowerCase().endsWith('.kml') || doc.link.toLowerCase().endsWith('.gpx');
-                const icon = isMap
-                    ? `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-secondary);"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg>`
-                    : `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-secondary);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`;
-
-                extractedHtml += `
-                    <a href="${doc.link}" target="_blank" rel="noopener noreferrer" style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: var(--bg-secondary); border: 1px solid var(--card-border); border-radius: var(--radius-md); text-decoration: none; color: var(--text-primary); transition: all 0.2s ease;">
-                        ${icon}
-                        <span style="font-weight: 500;">${sanitizeHtml(doc.text)}</span>
-                    </a>`;
-            }
-            extractedHtml += `</div></div>`;
-        }
-
-        const table = $('.main__middle__container table.table-striped, .main__middle__container table.dc_table_s20, body > table.table-striped, body > table.dc_table_s20');
-        if (table.length > 0) {
-            extractedHtml += table.toArray().map(element => sanitizeHtml('<table class="extracted-table">' + $(element).html() + '</table>')).join('');
-        }
-
-        if (extractedHtml.trim().length > 0) {
-            return extractedHtml;
-        }
-
-    return null;
-};
-
-export async function deepScrapeFPCWithRetry(link, eventId = 'fpc-event', { attempts = 3, delayMs = 750 } = {}) {
-    assertContentProcessingApproved();
-    let lastError;
-    for (let attempt = 1; attempt <= attempts; attempt++) {
-        try {
-            const html = await deepScrapeFPC(link, eventId);
-            if (html) return html;
-            throw new Error('A página FPC não continha detalhes válidos');
-        } catch (error) {
-            lastError = error;
-            if (attempt < attempts) await new Promise(resolve => setTimeout(resolve, delayMs * attempt));
-        }
-    }
-    throw lastError;
-}
 
 export const fetchFPCCalendar = async (year) => {
-    assertMinimalCollectionEnabled("FPC");
         year = String(year);
-        if (!/^\d{4}$/.test(year)) throw new Error('Época FPC inválida');
-        // epoca_site2 is the form's hidden submit marker. Without it the server
-        // silently ignores the requested months and returns the current month.
+        if (!/^\d{4}$/.test(year)) throw new Error('A �poca FPC inv�lida');
+        
         const formData = new URLSearchParams({
             epoca_site: year, epoca_site2: year,
             mes_de_new: '01', mes_ate_new: '12',
@@ -204,7 +26,7 @@ export const fetchFPCCalendar = async (year) => {
                     cache: 'no-store',
                     signal: AbortSignal.timeout(20000)
                 });
-                if (!response.ok) throw new Error(`Falha ao aceder ao calendário FPC (HTTP ${response.status})`);
+                if (!response.ok) throw new Error(Falha ao aceder ao calend�rio FPC (HTTP ${response.status}));
                 html = new TextDecoder('iso-8859-1').decode(await response.arrayBuffer());
                 break;
             } catch (error) {
@@ -218,17 +40,15 @@ export const fetchFPCCalendar = async (year) => {
 export const parseFPCCalendar = (html, year) => {
         const $ = cheerio.load(html);
         for (const [field, expected] of Object.entries({ epoca_site: String(year), mes_de_new: '01', mes_ate_new: '12' })) {
-            if ($(`select[name="${field}"]`).val() !== expected) {
-                throw new Error(`A FPC não confirmou ${field}=${expected}; calendário parcial rejeitado`);
+            if ($(select[name="\"]).val() !== expected) {
+                throw new Error(A FPC n�o confirmou ${field}=${expected}; calend�rio parcial rejeitado);
             }
         }
         if (!$('table.dc_table_s12').length) {
-            // Unpublished future seasons have the confirmed form, no race classes
-            // and no table. This is different from a partial/error response.
             const classes = $('select[name="classeprova_prova_new"]');
             const hasRaceClasses = classes.find('option').toArray().some(option => $(option).attr('value'));
             if (Number(year) > new Date().getFullYear() && classes.length && !hasRaceClasses && /<\/html>/i.test(html)) return [];
-            throw new Error('Tabela do calendário FPC não encontrada');
+            throw new Error('Tabela do calend�rio FPC n�o encontrada');
         }
 
         const rows = $('table.dc_table_s12 tbody tr').toArray();
@@ -243,16 +63,16 @@ export const parseFPCCalendar = (html, year) => {
                 let locText = toTitleCase($(cols[1]).text().trim());
                 if (nameText && /^\d{2}-\d{2}-\d{4}$/.test(dateText)) {
                     const parts = dateText.split('-');
-                    if (parts[2] !== String(year)) throw new Error(`Época incorreta na linha FPC: ${dateText}`);
-                    const sortDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00Z`);
-                    if (Number.isNaN(sortDate.getTime())) throw new Error(`Data FPC inválida: ${dateText}`);
+                    if (parts[2] !== String(year)) throw new Error(�poca incorreta na linha FPC: ${dateText});
+                    const sortDate = new Date(${parts[2]}--T00:00:00Z);
+                    if (Number.isNaN(sortDate.getTime())) throw new Error(Data FPC inv�lida: ${dateText});
                     const months = {'01':'JAN', '02':'FEV', '03':'MAR', '04':'ABR', '05':'MAI', '06':'JUN', '07':'JUL', '08':'AGO', '09':'SET', '10':'OUT', '11':'NOV', '12':'DEZ'};
-                    if (parts.length === 3) dateText = `${parts[0]} ${months[parts[1]] || parts[1]} ${parts[2]}`;
+                    if (parts.length === 3) dateText = ${parts[0]}  ;
 
                     if (endDateText && endDateText !== $(ths[0]).text().trim() && endDateText.length > 2) {
                         const eParts = endDateText.split('-');
                         if (eParts.length === 3) {
-                            dateText = `${dateText} a ${eParts[0]} ${months[eParts[1]] || eParts[1]} ${eParts[2]}`;
+                            dateText = ${dateText} a   ;
                         }
                     }
 
@@ -297,44 +117,21 @@ export const parseFPCCalendar = (html, year) => {
 export const scrapeFPC = async (year, options = {}) => {
     assertMinimalCollectionEnabled("FPC");
     try {
-        await logInfo('SCRAPER', `FPC ${year}: a recolher janeiro a dezembro (incluindo provas passadas)`);
+        await logInfo('SCRAPER', FPC ${year}: a recolher janeiro a dezembro);
         const events = await fetchFPCCalendar(year);
-        for (const event of events) await saveOrMergeEvent(prisma, event, { ...options, verifiedSource: 'FPC' });
-        await logInfo('SCRAPER', `Sincronização FPC ${year} concluída (${events.length} eventos processados)`);
-        return events.length;
+        const todayZero = new Date();
+        todayZero.setHours(0,0,0,0);
+        let processed = 0;
+        for (const event of events) {
+            // ONLY PROCESS FUTURE EVENTS
+            if (event.sortDate < todayZero) continue;
+            await saveOrMergeEvent(prisma, event, { ...options, verifiedSource: 'FPC' });
+            processed++;
+        }
+        await logInfo('SCRAPER', Sincroniza��o FPC ${year} conclu�da (${processed} provas futuras processadas));
+        return processed;
     } catch (e) {
-        await logError('SCRAPER', `Erro no scraping FPC ${year}: ${e.message}`, e);
+        await logError('SCRAPER', Erro no scraping FPC ${year}: ${e.message}, e);
         throw e;
     }
 }
-
-export const incrementalDeepScrapeFPC = async (limit = 25) => {
-    assertContentProcessingApproved();
-    const now = new Date();
-    const events = await prisma.event.findMany({
-        where: {
-            source: { contains: 'FPC', not: { contains: 'Quarentena' } },
-            sortDate: { gte: new Date(now.getTime() - 365 * 86400000) },
-            OR: [{ detailsCheckedAt: null }, { detailsCheckedAt: { lt: new Date(now.getTime() - 7 * 86400000) } }],
-        },
-    });
-    const candidates = prioritizeDetailChecks(events.filter(event => needsFpcDetails(event) && fpcDetailLink(event)), now).slice(0, limit);
-    let processed = 0;
-    const started = Date.now();
-    for (const event of candidates) {
-        if (Date.now() - started > 180000) break;
-        // Record attempts separately from verification, so unavailable pages do not starve other races.
-        await prisma.event.update({ where: { id: event.id }, data: { detailsCheckedAt: new Date() } });
-        try {
-            const programa = await deepScrapeFPCWithRetry(fpcDetailLink(event), event.id, { attempts: 2 });
-            await prisma.event.update({ where: { id: event.id }, data: {
-                programa, lastVerifiedAt: new Date(), lastVerifiedSource: 'FPC',
-            } });
-            processed++;
-        } catch (error) {
-            await logInfo('SCRAPER', 'Detalhes FPC ainda indisponíveis: ' + event.id, { error: error.message });
-        }
-    }
-    await logInfo('SCRAPER', 'Detalhes FPC atualizados: ' + processed);
-    return processed;
-};
