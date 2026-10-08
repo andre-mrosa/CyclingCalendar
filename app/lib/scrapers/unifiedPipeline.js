@@ -29,11 +29,9 @@ async function runPipeline(triggeredBy, options) {
     const startTime = Date.now();
     const now = new Date(startTime);
     const currentYear = now.getFullYear();
-    const historical = options.fullHistorical !== undefined
-        ? Boolean(options.fullHistorical) : now.getDay() === 0 || now.getDate() === 1;
-    const years = options.years
-        ? (Array.isArray(options.years) ? options.years : [])
-        : [currentYear, currentYear + 1, ...(historical ? [currentYear - 1, currentYear - 2] : [])].map(String);
+    // By owner request, we only process current and future events to save resources
+    const historical = false; 
+    const years = [currentYear.toString(), (currentYear + 1).toString()];
 
     const scope = VALID_SCOPES.has(options.scope) ? options.scope : 'manual';
     const pipelineStages = getPipelineStages(scope, years);

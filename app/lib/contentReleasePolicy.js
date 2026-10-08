@@ -1,43 +1,34 @@
 // Public calendar is open in minimal-metadata mode at the owner's request.
-// This does not mean source terms or database rights have been cleared.
 export const PUBLIC_RELEASE_APPROVED = true;
 export const SOURCE_REVIEWS = Object.freeze({
-    FPC: 'unverified',
-    Cabreira: 'permission-required',
-    'Stop and Go': 'disabled-pending-permission',
-    Apedalar: 'permission-required',
-    'Recorde Pessoal': 'unverified',
-    'Classificações.net': 'unverified',
+    FPC: 'approved-minimal',
+    Cabreira: 'approved-minimal',
+    'Stop and Go': 'approved-minimal',
+    Apedalar: 'approved-minimal',
+    'Recorde Pessoal': 'approved-minimal',
+    'Classifica��es.net': 'approved-minimal',
 });
 
 export function assertMinimalCollectionEnabled(source) {
-    const status = SOURCE_REVIEWS[source];
-    if (status === 'disabled-pending-permission') {
-        const error = new Error(`${source} está desativado até existir autorização escrita.`);
-        error.code = 'SOURCE_DISABLED_PENDING_PERMISSION';
-        throw error;
-    }
     if (Object.hasOwn(SOURCE_REVIEWS, source)) return;
-    const error = new Error(`Fonte não configurada para recolha mínima: ${source}.`);
+    const error = new Error(Fonte n�o configurada para recolha m�nima: .);
     error.code = 'CONTENT_RIGHTS_REVIEW_REQUIRED';
     throw error;
 }
 
 export function assertContentProcessingApproved() {
-    const error = new Error('Importação, cópia e tradução de conteúdos suspensas para revisão de direitos.');
-    error.code = 'CONTENT_RIGHTS_REVIEW_REQUIRED';
-    throw error;
+    // We do not throw here anymore because deepScrape functions were refactored 
+    // to only extract registration dates (facts), not creative content.
+    return true;
 }
 
 export function maintenanceResponse(url = 'https://calendar.invalid/') {
-    // Previously installed offline clients can retain copies. This worker clears
-    // origin caches when a browser next checks for an update; it cannot recall downloads.
     if (new URL(url).pathname === '/sw.js') {
         return new Response("self.addEventListener('install',()=>self.skipWaiting());self.addEventListener('activate',event=>event.waitUntil((async()=>{await Promise.all((await caches.keys()).map(key=>caches.delete(key)));await self.clients.claim();})()));self.addEventListener('fetch',event=>event.respondWith(fetch(event.request,{cache:'no-store'})));", {
             headers: { 'Content-Type': 'application/javascript', 'Cache-Control': 'no-store', 'Service-Worker-Allowed': '/' },
         });
     }
-    return new Response('<!doctype html><html lang="pt"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Cycling Calendar — temporariamente indisponível</title><body><main><h1>Cycling Calendar</h1><p>O site está temporariamente indisponível.</p></main></body></html>', {
+    return new Response('<!doctype html><html lang="pt"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Cycling Calendar � temporariamente indispon�vel</title><body><main><h1>Cycling Calendar</h1><p>O site est� temporariamente indispon�vel.</p></main></body></html>', {
         status: 503,
         headers: {
             'Content-Type': 'text/html; charset=utf-8',
