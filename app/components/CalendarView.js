@@ -793,23 +793,6 @@ export default function CalendarView({
                                     </div>
 
                                     <div className={styles.eventBadges}>
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    toggleFavorite(event.id);
-                                                    trackEvent('FAVORITE_TOGGLE', {
-                                                        targetId: event.id,
-                                                        targetTitle: event.title
-                                                    });
-                                                }}
-                                                className={styles.eventFavorite}
-                                                aria-pressed={isEventFavorited}
-                                                aria-label={isEventFavorited ? t('card_remove_favorite') : t('card_add_favorite')}
-                                                data-active={isEventFavorited}
-                                                title={isEventFavorited ? t('card_remove_favorite') : t('card_add_favorite')}
-                                            >
-                                                <Star size={18} fill={isEventFavorited ? "currentColor" : "none"} />
-                                            </button>
                                             <RegistrationBadge opensAt={event.registrationOpensAt} closesAt={event.registrationClosesAt} isCancelled={isCancelled(event)} sortDate={event.sortDate} />
                                             {isCancelled(event) && <span className={styles.cancelledBadge}><AlertTriangle size={12} />{t('planning_cancelled')}</span>}
                                             {isEventMarked && (
@@ -877,6 +860,23 @@ export default function CalendarView({
                                             )}
                                     </div>
                                     <a href={originalEventUrl(event.link)} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 shrink-0" aria-label={t('minimal_original') + ': ' + event.title}>{t('minimal_original')} ↗</a>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            toggleFavorite(event.id);
+                                            trackEvent('FAVORITE_TOGGLE', {
+                                                targetId: event.id,
+                                                targetTitle: event.title
+                                            });
+                                        }}
+                                        className={styles.eventFavorite}
+                                        aria-pressed={isEventFavorited}
+                                        aria-label={isEventFavorited ? t('card_remove_favorite') : t('card_add_favorite')}
+                                        data-active={isEventFavorited}
+                                        title={isEventFavorited ? t('card_remove_favorite') : t('card_add_favorite')}
+                                    >
+                                        <Star size={18} fill={isEventFavorited ? "currentColor" : "none"} />
+                                    </button>
                                 </div>
 
                                                 );
@@ -914,3 +914,4 @@ export default function CalendarView({
         </div>
     );
 }
+
