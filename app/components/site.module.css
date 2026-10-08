@@ -286,7 +286,7 @@
   .heroArt { display: none; }
   .mobileNav .brand small { display: none; }
   .eventHeadingRow h3 { padding-top: 4px; }
-  .eventFavorite { min-width: 44px; min-height: 44px; margin-top: -6px; margin-right: -6px; }
+  .eventFavorite { min-width: 44px; min-height: 44px; }
   .settingsControls main > section { padding: 18px; }
   .eventDialog { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
   .eventFooter { padding: 10px 16px; }
@@ -408,7 +408,7 @@
   .eventCard { gap: 3px; padding: 13px 12px; }
   .eventHeadingRow h3 { padding-top: 0; }
   .eventMeta { font-size: 12px; }
-  .eventFavorite { margin-top: -7px; margin-right: -7px; }
+  .eventFavorite { }
   .date { min-height: 58px; }
   .bottomNav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 45; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); padding: 6px 10px calc(6px + env(safe-area-inset-bottom)); border-top: 1px solid var(--site-line); background: var(--site-nav); }
   .bottomNav > * { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-height: 50px; color: var(--site-muted); font-size: 10px; cursor: pointer; }
@@ -425,3 +425,4 @@
   .primaryFilters { grid-template-columns: minmax(0, 1fr); }
   .calendarControls .toolbarActions { grid-template-columns: minmax(0, 1fr); }
 }
+

@@ -778,23 +778,6 @@ export default function CalendarView({
                                                 <h3>
                                                     <a href={originalEventUrl(event.link)} target="_blank" rel="noopener noreferrer" className={styles.eventTitle} onClick={() => trackEvent('EVENT_OPEN', { targetId: event.id })}>{displayTitle}</a>
                                                 </h3>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        toggleFavorite(event.id);
-                                                        trackEvent('FAVORITE_TOGGLE', {
-                                                            targetId: event.id,
-                                                            targetTitle: event.title
-                                                        });
-                                                    }}
-                                                    className={styles.eventFavorite}
-                                                    aria-pressed={isEventFavorited}
-                                                    aria-label={isEventFavorited ? t('card_remove_favorite') : t('card_add_favorite')}
-                                                    data-active={isEventFavorited}
-                                                    title={isEventFavorited ? t('card_remove_favorite') : t('card_add_favorite')}
-                                                >
-                                                    <Star size={18} fill={isEventFavorited ? "currentColor" : "none"} />
-                                                </button>
                                             </div>
                                             <div className={styles.eventMeta}>
                                                 <span className="flex items-center flex-wrap">
@@ -810,6 +793,23 @@ export default function CalendarView({
                                     </div>
 
                                     <div className={styles.eventBadges}>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    toggleFavorite(event.id);
+                                                    trackEvent('FAVORITE_TOGGLE', {
+                                                        targetId: event.id,
+                                                        targetTitle: event.title
+                                                    });
+                                                }}
+                                                className={styles.eventFavorite}
+                                                aria-pressed={isEventFavorited}
+                                                aria-label={isEventFavorited ? t('card_remove_favorite') : t('card_add_favorite')}
+                                                data-active={isEventFavorited}
+                                                title={isEventFavorited ? t('card_remove_favorite') : t('card_add_favorite')}
+                                            >
+                                                <Star size={18} fill={isEventFavorited ? "currentColor" : "none"} />
+                                            </button>
                                             <RegistrationBadge opensAt={event.registrationOpensAt} closesAt={event.registrationClosesAt} isCancelled={isCancelled(event)} sortDate={event.sortDate} />
                                             {isCancelled(event) && <span className={styles.cancelledBadge}><AlertTriangle size={12} />{t('planning_cancelled')}</span>}
                                             {isEventMarked && (

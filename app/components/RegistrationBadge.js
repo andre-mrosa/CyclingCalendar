@@ -21,7 +21,7 @@ export default function RegistrationBadge({ opensAt, closesAt, isCancelled, sort
     if (closesAt && new Date(closesAt) < now) {
         status = 'closed';
         Icon = CalendarX;
-        text = language === 'en' ? 'Registrations closed' : 'Inscrições encerradas';
+        text = language === 'en' ? 'Registrations closed' : 'InscriÃ§Ãµes encerradas';
     } else if (opensAt && new Date(opensAt) > now) {
         status = 'opening_soon';
         Icon = CalendarClock;
@@ -32,7 +32,7 @@ export default function RegistrationBadge({ opensAt, closesAt, isCancelled, sort
     } else if (opensAt && new Date(opensAt) <= now && (!closesAt || new Date(closesAt) > now)) {
         status = 'open';
         Icon = CalendarCheck;
-        text = language === 'en' ? 'Registrations open' : 'Inscrições abertas';
+        text = language === 'en' ? 'Registrations open' : 'InscriÃ§Ãµes abertas';
         className = 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20';
     }
 
