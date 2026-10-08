@@ -27,6 +27,7 @@ import { isStageRace, getEventDiscipline } from '../utils/eventClassifier';
 import { usePathname } from 'next/navigation';
 import PageHeading from './PageHeading';
 import MonthCalendar from './MonthCalendar';
+import RegistrationBadge from './RegistrationBadge';
 import { eventsInPeriod, shiftMonth, groupEventsByDate, formatEventTitle } from '../utils/calendarPresentation';
 import AgendaOverview from './AgendaOverview';
 import styles from './site.module.css';
@@ -809,6 +810,7 @@ export default function CalendarView({
                                     </div>
 
                                     <div className={styles.eventBadges}>
+                                            <RegistrationBadge opensAt={event.registrationOpensAt} closesAt={event.registrationClosesAt} isCancelled={isCancelled(event)} sortDate={event.sortDate} />
                                             {isCancelled(event) && <span className={styles.cancelledBadge}><AlertTriangle size={12} />{t('planning_cancelled')}</span>}
                                             {isEventMarked && (
                                                 <span className={styles.eventStatus}>

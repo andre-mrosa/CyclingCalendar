@@ -1,7 +1,7 @@
 // Explicit output contract for the minimal calendar. This limits republication;
 // it does not establish permission to extract a source's database.
 export const PUBLIC_EVENT_SELECT = Object.freeze(Object.fromEntries([
-    'id', 'title', 'date', 'sortDate', 'regiao', 'distrito', 'source', 'link',
+    'id', 'title', 'date', 'sortDate', 'regiao', 'distrito', 'source', 'link', 'registrationOpensAt', 'registrationClosesAt',
 ].map(key => [key, true])));
 
 const SOURCE_HOSTS = ['fpciclismo.pt', 'cabreirasolutions.com', 'stopandgo.net',
@@ -36,6 +36,8 @@ export function toPublicEvent(event) {
         id: String(event.id), title, date: label(event.date, 100),
         sortDate: event.sortDate instanceof Date ? event.sortDate.toISOString() : label(event.sortDate, 40),
         regiao: label(event.regiao, 100), distrito: label(event.distrito, 100),
+        registrationOpensAt: event.registrationOpensAt instanceof Date ? event.registrationOpensAt.toISOString() : (event.registrationOpensAt || null),
+        registrationClosesAt: event.registrationClosesAt instanceof Date ? event.registrationClosesAt.toISOString() : (event.registrationClosesAt || null),
         source: label(event.source, 180), link,
     };
 }
