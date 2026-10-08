@@ -11,7 +11,7 @@ export const SOURCE_REVIEWS = Object.freeze({
 
 export function assertMinimalCollectionEnabled(source) {
     if (Object.hasOwn(SOURCE_REVIEWS, source)) return;
-    const error = new Error(Fonte não configurada para recolha mínima: .);
+    const error = new Error(`Fonte não configurada para recolha mínima: ${source}.`);
     error.code = 'CONTENT_RIGHTS_REVIEW_REQUIRED';
     throw error;
 }

@@ -1,45 +1,8 @@
 import { normalizeLocation } from '../../utils/eventLocation.js';
 import * as cheerio from 'cheerio';
 
-import sharp from 'sharp';
 import sanitize from 'sanitize-html';
 
-export const fetchImageAsBase64 = async (url) => {
-    if (!url) return null;
-    try {
-        const response = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(10000) });
-        if (!response.ok) return null;
-        
-        const contentType = (response.headers.get('content-type') || '').toLowerCase();
-        
-        // Skip non-image responses (HTML pages, redirects, etc.)
-        if (!contentType.includes('image') && !contentType.includes('octet-stream')) {
-            return null;
-        }
-        
-        const arrayBuffer = await response.arrayBuffer();
-        let buffer = Buffer.from(arrayBuffer);
-        
-        // SVGs can't be processed by sharp — pass through directly
-        if (contentType.includes('svg')) {
-            return `data:image/svg+xml;base64,${buffer.toString('base64')}`;
-        }
-        
-        try {
-            buffer = await sharp(buffer)
-                .resize({ width: 800, withoutEnlargement: true })
-                .webp({ quality: 80 })
-                .toBuffer();
-            return `data:image/webp;base64,${buffer.toString('base64')}`;
-        } catch (sharpError) {
-            // If sharp fails, return raw image as-is (better than nothing)
-            return `data:${contentType || 'image/jpeg'};base64,${Buffer.from(arrayBuffer).toString('base64')}`;
-        }
-    } catch (e) {
-        console.error('Error fetching image as base64:', url, e);
-        return null;
-    }
-};
 
 import { getEventDiscipline, isOfficialNationalChampionship } from '../../utils/eventClassifier.js';
 

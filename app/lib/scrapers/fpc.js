@@ -26,7 +26,7 @@ export const fetchFPCCalendar = async (year) => {
                     cache: 'no-store',
                     signal: AbortSignal.timeout(20000)
                 });
-                if (!response.ok) throw new Error(Falha ao aceder ao calendário FPC (HTTP ${response.status}));
+                if (!response.ok) throw new Error(`Falha ao aceder ao calendário FPC (HTTP ${response.status})`);
                 html = new TextDecoder('iso-8859-1').decode(await response.arrayBuffer());
                 break;
             } catch (error) {
@@ -40,8 +40,8 @@ export const fetchFPCCalendar = async (year) => {
 export const parseFPCCalendar = (html, year) => {
         const $ = cheerio.load(html);
         for (const [field, expected] of Object.entries({ epoca_site: String(year), mes_de_new: '01', mes_ate_new: '12' })) {
-            if ($(select[name="\"]).val() !== expected) {
-                throw new Error(A FPC não confirmou ${field}=${expected}; calendário parcial rejeitado);
+            if ($(`select[name="${field}"]`).val() !== expected) {
+                throw new Error(`A FPC não confirmou ${field}=${expected}; calendário parcial rejeitado`);
             }
         }
         if (!$('table.dc_table_s12').length) {
@@ -63,16 +63,16 @@ export const parseFPCCalendar = (html, year) => {
                 let locText = toTitleCase($(cols[1]).text().trim());
                 if (nameText && /^\d{2}-\d{2}-\d{4}$/.test(dateText)) {
                     const parts = dateText.split('-');
-                    if (parts[2] !== String(year)) throw new Error(Época incorreta na linha FPC: ${dateText});
-                    const sortDate = new Date(${parts[2]}--T00:00:00Z);
-                    if (Number.isNaN(sortDate.getTime())) throw new Error(Data FPC inválida: ${dateText});
+                    if (parts[2] !== String(year)) throw new Error(`Época incorreta na linha FPC: ${dateText}`);
+                    const sortDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00Z`);
+                    if (Number.isNaN(sortDate.getTime())) throw new Error(`Data FPC inválida: ${dateText}`);
                     const months = {'01':'JAN', '02':'FEV', '03':'MAR', '04':'ABR', '05':'MAI', '06':'JUN', '07':'JUL', '08':'AGO', '09':'SET', '10':'OUT', '11':'NOV', '12':'DEZ'};
-                    if (parts.length === 3) dateText = ${parts[0]}  ;
+                    if (parts.length === 3) dateText = `${parts[0]} ${months[parts[1]] || parts[1]} ${parts[2]}`;
 
                     if (endDateText && endDateText !== $(ths[0]).text().trim() && endDateText.length > 2) {
                         const eParts = endDateText.split('-');
                         if (eParts.length === 3) {
-                            dateText = ${dateText} a   ;
+                            dateText = `${dateText} a ${eParts[0]} ${months[eParts[1]] || eParts[1]} ${eParts[2]}`;
                         }
                     }
 
@@ -117,7 +117,7 @@ export const parseFPCCalendar = (html, year) => {
 export const scrapeFPC = async (year, options = {}) => {
     assertMinimalCollectionEnabled("FPC");
     try {
-        await logInfo('SCRAPER', FPC ${year}: a recolher janeiro a dezembro);
+        await logInfo('SCRAPER', `FPC ${year}: a recolher janeiro a dezembro`);
         const events = await fetchFPCCalendar(year);
         const todayZero = new Date();
         todayZero.setHours(0,0,0,0);
@@ -128,10 +128,10 @@ export const scrapeFPC = async (year, options = {}) => {
             await saveOrMergeEvent(prisma, event, { ...options, verifiedSource: 'FPC' });
             processed++;
         }
-        await logInfo('SCRAPER', Sincronização FPC ${year} concluída (${processed} provas futuras processadas));
+        await logInfo('SCRAPER', `Sincronização FPC ${year} concluída (${processed} provas futuras processadas)`);
         return processed;
     } catch (e) {
-        await logError('SCRAPER', Erro no scraping FPC ${year}: ${e.message}, e);
+        await logError('SCRAPER', `Erro no scraping FPC ${year}: ${e.message}`, e);
         throw e;
     }
 }

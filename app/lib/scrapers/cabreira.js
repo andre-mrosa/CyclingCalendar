@@ -34,13 +34,13 @@ export const deepScrapeCabreira = async (link) => {
 export const scrapeCabreira = async (year, options = {}) => {
     assertMinimalCollectionEnabled("Cabreira");
     try {
-        logInfo('SCRAPER', Início da sincronização Cabreira Solutions (Ano: ));
-        const response = await fetch(https://cabreirasolutions.com/eventos/, {
+        logInfo('SCRAPER', `Início da sincronização Cabreira Solutions (Ano: ${year || 'Todos'})`);
+        const response = await fetch(`https://cabreirasolutions.com/eventos/`, {
             headers: { 'User-Agent': 'Mozilla/5.0' }
         });
 
         if (!response.ok) {
-            throw new Error(Falha ao aceder ao portal Cabreira Solutions (HTTP ));
+            throw new Error(`Falha ao aceder ao portal Cabreira Solutions (HTTP ${response.status})`);
         }
 
         const html = await response.text();
@@ -105,16 +105,16 @@ export const scrapeCabreira = async (year, options = {}) => {
                     await saveOrMergeEvent(prisma, { id: id, ...eventData }, { ...options, verifiedSource: 'Cabreira' });
                     processedCount++;
                 } catch (err) {
-                    await logError('SCRAPER', Erro ao processar prova Cabreira : , err);
+                    await logError('SCRAPER', `Erro ao processar prova Cabreira ${ev.title}: ${err.message}`, err);
                 }
             }));
             await delay(1000); // Polite delay between batches
         }
 
-        await logInfo('SCRAPER', Sincronização Cabreira concluída ( provas futuras processadas na BD));
+        await logInfo('SCRAPER', `Sincronização Cabreira concluída (${processedCount} provas futuras processadas na BD)`);
         return processedCount;
     } catch (e) {
-        await logError('SCRAPER', Erro durante o scraping da Cabreira Solutions: , e);
+        await logError('SCRAPER', `Erro durante o scraping da Cabreira Solutions: ${e.message}`, e);
         throw e;
     }
 };
