@@ -5,11 +5,11 @@ import { Button, Notice, Status } from './ui';
 import styles from '../admin.module.css';
 
 export const adminTabs = [
-    { id: 'stats', label: 'Início', icon: LayoutDashboard },
-    { id: 'inventory', label: 'Calendário', icon: CalendarDays },
-    { id: 'operations', label: 'Sincronização', icon: Activity },
-    { id: 'users', label: 'Utilizadores', icon: Users },
-    { id: 'logs', label: 'Registos', icon: FileText },
+    { id: 'stats', label: 'Visão Geral', icon: LayoutDashboard },
+    { id: 'inventory', label: 'Gestão do Calendário', icon: CalendarDays },
+    { id: 'users', label: 'Comunidade', icon: Users },
+    { id: 'operations', label: 'Automação (Scraper)', icon: Activity },
+    { id: 'logs', label: 'Registos do Sistema', icon: FileText },
 ];
 
 export default function AdminDashboardView({ activeTab = 'stats', navigate, running, pendingDeletions = 0, dark = false, onToggleTheme, error, onRetry, children, dialog }) {
