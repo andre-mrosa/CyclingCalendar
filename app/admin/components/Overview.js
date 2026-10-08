@@ -64,7 +64,7 @@ export default function Overview({ stats, busy, refreshing, timeframe, setTimefr
                         {running ? ' está a sincronizar dados neste momento' : ' sincronizou com sucesso recentemente'}.
                     </p>
                 </div>
-                <div className="flex flex-wrap items-center gap-3 relative z-10">
+                <div className="flex flex-wrap items-center gap-3">
                     <Button onClick={() => navigate('operations')} tone={isSyncError ? 'danger' : 'default'} className="bg-white">
                         {isSyncError ? 'Verificar Falha no Scraper' : 'Forçar Sincronização'}
                     </Button>
@@ -87,7 +87,7 @@ export default function Overview({ stats, busy, refreshing, timeframe, setTimefr
                     value={events?.quarantined} 
                     icon={AlertTriangle}
                     alert={events?.quarantined > 0}
-                    subtitle={events?.quarantined > 0 ? 'Requer revisão manual!' : 'Tudo limpo'}
+                    subtitle={events?.quarantined > 0 ? 'Filtro automático do scraper' : 'Tudo limpo'}
                 />
                 <StatCard 
                     title="Comunidade" 

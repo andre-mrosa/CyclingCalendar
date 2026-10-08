@@ -82,7 +82,7 @@ export default function AdminDashboardView({ activeTab = 'stats', navigate, runn
             </aside>
             
             <main className="flex-1 flex flex-col min-w-0 overflow-y-auto relative">
-                <header className="px-6 md:px-10 py-8 border-b border-line bg-surface sticky top-0 z-10 hidden md:flex items-center justify-between">
+                <header className="px-6 md:px-10 py-8 border-b border-line bg-surface sticky top-0 z-30 hidden md:flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{adminTabs.find(t => t.id === activeTab)?.label}</h1>
                     </div>
