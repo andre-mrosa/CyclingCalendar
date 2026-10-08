@@ -47,7 +47,6 @@
   body {
     background-color: var(--background);
     color: var(--foreground);
-    font-family: var(--font-geist-sans), system-ui, sans-serif;
     min-width: 320px;
     text-rendering: optimizeLegibility;
     letter-spacing: -0.01em;

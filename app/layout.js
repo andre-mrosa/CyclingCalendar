@@ -34,7 +34,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="pt"  suppressHydrationWarning>
       <head><style id="color-palettes">{paletteCSS()}</style><script dangerouslySetInnerHTML={{ __html: paletteBootstrap }} /></head>
-      <body className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-canvas text-ink antialiased`} suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-canvas text-ink antialiased font-sans`} suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem={true}>
           <ThemeClerkProvider>
             <ColorPaletteManager />

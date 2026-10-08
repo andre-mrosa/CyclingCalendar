@@ -97,12 +97,12 @@
 .eventMain { display: flex; align-items: flex-start; gap: 20px; min-width: 0; }
 .date { display: flex; flex-direction: column; justify-content: flex-start; gap: 5px; width: 62px; min-height: 62px; flex: 0 0 auto; padding: 3px 12px 3px 0; color: var(--foreground); background: transparent; border: 0; border-right: 1px solid var(--site-line); border-radius: 0; text-align: left; }
 .dateMonth { display: none; }
-.dateDay { font-size: 26px; font-weight: 500; line-height: 1.15; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.dateDay { font-size: 26px; font-weight: 600; line-height: 1.15; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
 .dateRange { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
 .dateRange time { display: flex; flex-direction: column; }
 .dateConnector { width: 1px; height: 7px; margin-left: 14px; background: var(--site-line); }
 .dateEndpointMonth { font-size: 10px; font-weight: 400; letter-spacing: 0; color: var(--site-muted); text-transform: uppercase; }
-.eventTitle { position: static; color: var(--foreground); font-size: 17px; font-weight: 500; line-height: 1.4; letter-spacing: -.02em; text-align: left; cursor: pointer; }
+.eventTitle { position: static; color: var(--foreground); font-size: 18px; font-weight: 600; line-height: 1.4; letter-spacing: -.02em; text-align: left; cursor: pointer; }
 .eventTitle::after { content: ''; position: absolute; inset: 0; z-index: 1; }
 .eventFavorite { position: relative; z-index: 3; display: inline-grid; place-items: center; flex-shrink: 0; min-width: 40px; min-height: 40px; border-radius: 5px; color: var(--site-muted); cursor: pointer; }
 .eventFavorite:hover { background: var(--site-soft); }
@@ -233,7 +233,7 @@
   .eventMain { width: 100%; flex: 1 0 100%; gap: 10px; }
   .date { width: 50px; min-height: 62px; gap: 4px; }
   .dateDay { font-size: 30px; }
-  .eventTitle { font-size: 15px; line-height: 1.4; }
+  .eventTitle { font-size: 16px; font-weight: 600; line-height: 1.4; }
   .eventTitle::after { inset: 0; }
   .eventMeta { gap: 3px 9px; font-size: 11px; }
   .eventBadges { max-width: none; padding-left: 60px; justify-content: flex-start; }
