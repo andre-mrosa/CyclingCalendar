@@ -4,10 +4,11 @@ import { prisma } from '../db.js';
 import { toTitleCase, parsePTDateToISO, getAmbito, getTag } from './utils.js';
 import { logInfo, logError } from '../logger.js';
 import { saveOrMergeEvent } from '../merging/eventMerger.js';
-import { NON_CYCLING, isValidHeader } from './stopandgoParser.js';
+import { CYCLING_MODALITIES, readStopAndGoHeader } from './stopandgoParser.js';
 import { parseRegistrationDates } from '../../utils/registrationDates.js';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
+const NON_CYCLING = ['atletismo', 'trail', 'tt', 'skyrunning', 'urban trail', 'triathlon', 'triatlo', 'canoagem', 'natacao', 'trichallenge', 'caminhada', 'multisport', 'obstaculos'];
 
 export const deepScrapeStopAndGo = async (url) => {
     let opensAt = null, closesAt = null;
@@ -33,13 +34,13 @@ export const scrapeStopAndGo = async (options = {}) => {
     assertMinimalCollectionEnabled("Stop and Go");
     let processedCount = 0;
     try {
-        logInfo('SCRAPER', 'Início da sincronização Stop and Go (sitemap.xml + abas Downhill, Gravel, BTT, Estrada)');
+        logInfo('SCRAPER', 'Inï¿½cio da sincronizaï¿½ï¿½o Stop and Go (sitemap.xml + abas Downhill, Gravel, BTT, Estrada)');
 
         const res = await fetch('https://stopandgo.net/sitemap.xml', {
             headers: { 'User-Agent': 'Mozilla/5.0' },
             signal: AbortSignal.timeout(8000)
         });
-        if (!res.ok) throw new Error(Falha no sitemap.xml: HTTP );
+        if (!res.ok) throw new Error(`Falha no sitemap.xml: HTTP ${res.status}`);
         const xml = await res.text();
         const $ = cheerio.load(xml, { xmlMode: true });
 
@@ -60,7 +61,7 @@ export const scrapeStopAndGo = async (options = {}) => {
         });
 
         const urlsToScrape = targetUrls;
-        logInfo('SCRAPER', Stop and Go:  cabeçalhos de provas a validar...);
+        logInfo('SCRAPER', `Stop and Go: ${urlsToScrape.length} cabeï¿½alhos de provas a validar...`);
 
         const BATCH_SIZE = 4;
         const todayZero = new Date();
@@ -77,7 +78,7 @@ export const scrapeStopAndGo = async (options = {}) => {
                             const evtRes = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(6000) });
                             if (evtRes.ok) {
                                 const evtHtml = await evtRes.text();
-                                header = isValidHeader(url, evtHtml);
+                                header = readStopAndGoHeader(evtHtml);
                                 break;
                             }
                         } catch(e) {}
@@ -107,16 +108,16 @@ export const scrapeStopAndGo = async (options = {}) => {
                     await saveOrMergeEvent(prisma, { id, ...eventData }, { ...options, verifiedSource: 'Stop and Go' });
                     processedCount++;
                 } catch (err) {
-                    await logError('SCRAPER', Erro a processar Stop and Go url : );
+                    await logError('SCRAPER', `Erro a processar Stop and Go url ${url}: ${err.message}`);
                 }
             }));
             await delay(1000); // Polite delay between batches
         }
 
-        await logInfo('SCRAPER', Sincronização Stop and Go concluída ( provas futuras processadas na BD));
+        await logInfo('SCRAPER', `Sincronizaï¿½ï¿½o Stop and Go concluï¿½da (${processedCount} provas futuras processadas na BD)`);
         return processedCount;
     } catch (err) {
-        await logError('SCRAPER', Erro no scraping Stop and Go: , err);
+        await logError('SCRAPER', `Erro no scraping Stop and Go: ${err.message}`, err);
         throw err;
     }
 };
