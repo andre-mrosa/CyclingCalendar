@@ -15,12 +15,12 @@ export function subscriptionIcs(events, origin) {
         if (!event) return '';
         let content = buildIcsContent(event, origin);
         if (!content) return '';
-        if (isCancelled(event)) content = content.replace('STATUS:CONFIRMED', 'STATUS:CANCELLED')
-            .replace(/BEGIN:VALARM[\s\S]*?END:VALARM\r\n/, '');
+        if (isCancelled(event)) content = content.replace(/STATUS:CONFIRMED/g, 'STATUS:CANCELLED')
+            .replace(/BEGIN:VALARM[\s\S]*?END:VALARM\r\n/g, '');
         const modified = new Date(raw.updatedAt || raw.createdAt);
         if (Number.isFinite(modified.getTime())) {
             const stamp = modified.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
-            content = content.replace(/DTSTAMP:[^\r]+/, `DTSTAMP:${stamp}\r\nLAST-MODIFIED:${stamp}`);
+            content = content.replace(/DTSTAMP:[^\r]+/g, `DTSTAMP:${stamp}\r\nLAST-MODIFIED:${stamp}`);
         }
         return content.slice(content.indexOf('BEGIN:VEVENT'), content.lastIndexOf('END:VCALENDAR'));
     });

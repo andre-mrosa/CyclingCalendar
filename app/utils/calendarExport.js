@@ -76,7 +76,7 @@ export function buildIcsContent(event, origin = 'https://cyclingcalendar.pt') {
     const cleanLocation = escapeText(event.distrito || '');
     const cleanDescription = escapeText(`Prova: ${event.title || 'Prova de Ciclismo'}\nModalidade: ${event.tag || 'Ciclismo'}\nConsulta o programa oficial para confirmar os horários.\nDetalhes e inscrições: ${eventUrl}`);
 
-    return [
+    const lines = [
         'BEGIN:VCALENDAR',
         'VERSION:2.0',
         'PRODID:-//Cycling Calendar Portugal//PT',
@@ -97,9 +97,57 @@ export function buildIcsContent(event, origin = 'https://cyclingcalendar.pt') {
         'TRIGGER:-P1D',
         'DESCRIPTION:Lembrete de prova de ciclismo',
         'END:VALARM',
-        'END:VEVENT',
-        'END:VCALENDAR'
-    ].map(foldLine).join('\r\n') + '\r\n';
+        'END:VEVENT'
+    ];
+
+    if (event.registrationOpensAt) {
+        const d = new Date(event.registrationOpensAt);
+        if (Number.isFinite(d.getTime())) {
+            lines.push(
+                'BEGIN:VEVENT',
+                `UID:reg-open-${encodeURIComponent(event.id)}@cyclingcalendar.pt`,
+                `DTSTAMP:${nowStr}`,
+                `DTSTART:${formatIcsDate(d)}`,
+                `DTEND:${formatIcsDate(new Date(d.getTime() + 60*60*1000))}`,
+                `SUMMARY:Abertura Inscrições: ${cleanTitle}`,
+                `DESCRIPTION:${cleanDescription}`,
+                `URL:${eventUrl}`,
+                'STATUS:CONFIRMED',
+                'BEGIN:VALARM',
+                'ACTION:DISPLAY',
+                'TRIGGER:-PT15M',
+                'DESCRIPTION:As inscrições abrem em 15 minutos!',
+                'END:VALARM',
+                'END:VEVENT'
+            );
+        }
+    }
+
+    if (event.registrationClosesAt) {
+        const d = new Date(event.registrationClosesAt);
+        if (Number.isFinite(d.getTime())) {
+            lines.push(
+                'BEGIN:VEVENT',
+                `UID:reg-close-${encodeURIComponent(event.id)}@cyclingcalendar.pt`,
+                `DTSTAMP:${nowStr}`,
+                `DTSTART:${formatIcsDate(d)}`,
+                `DTEND:${formatIcsDate(new Date(d.getTime() + 60*60*1000))}`,
+                `SUMMARY:Fim Inscrições: ${cleanTitle}`,
+                `DESCRIPTION:${cleanDescription}`,
+                `URL:${eventUrl}`,
+                'STATUS:CONFIRMED',
+                'BEGIN:VALARM',
+                'ACTION:DISPLAY',
+                'TRIGGER:-P1D',
+                'DESCRIPTION:Último dia para inscrições!',
+                'END:VALARM',
+                'END:VEVENT'
+            );
+        }
+    }
+
+    lines.push('END:VCALENDAR');
+    return lines.map(foldLine).join('\r\n') + '\r\n';
 }
 
 export function downloadIcsFile(event) {
