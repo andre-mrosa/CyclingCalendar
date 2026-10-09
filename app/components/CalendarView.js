@@ -793,7 +793,7 @@ export default function CalendarView({
                                     </div>
 
                                     <div className={styles.eventBadges}>
-                                            <RegistrationBadge opensAt={event.registrationOpensAt} closesAt={event.registrationClosesAt} isCancelled={isCancelled(event)} sortDate={event.sortDate} />
+                                            <RegistrationBadge event={event} isCancelled={isCancelled(event)} />
                                             {isCancelled(event) && <span className={styles.cancelledBadge}><AlertTriangle size={12} />{t('planning_cancelled')}</span>}
                                             {isEventMarked && (
                                                 <span className={styles.eventStatus}>
@@ -864,7 +864,7 @@ export default function CalendarView({
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             e.preventDefault();
-                                            import('../utils/calendarExport').then(m => m.downloadIcsFile(event));
+                                            import('../utils/calendarExport').then(m => window.open(m.generateGoogleCalendarUrl(event, 'race'), '_blank'));
                                             trackEvent('CALENDAR_EXPORT_SINGLE', { targetId: event.id, targetTitle: event.title });
                                         }}
                                         className={`${styles.eventExportBtn} sm:ml-0 ml-auto`}

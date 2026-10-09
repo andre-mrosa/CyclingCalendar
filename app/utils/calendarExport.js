@@ -53,17 +53,30 @@ function foldLine(line) {
     return result;
 }
 
-export function generateGoogleCalendarUrl(event) {
-    const dates = getCalendarDates(event);
+export function generateGoogleCalendarUrl(event, type = 'race') {
+    let title = event.title || 'Prova de Ciclismo';
+    let dates = getCalendarDates(event);
+    if (type === 'reg_open' && event.registrationOpensAt) {
+        title = 'Abertura Inscrições: ' + title;
+        const d = new Date(event.registrationOpensAt);
+        const end = new Date(d.getTime() + 60*60*1000);
+        dates = { start: formatIcsDate(d), end: formatIcsDate(end) };
+    } else if (type === 'reg_close' && event.registrationClosesAt) {
+        title = 'Fim Inscrições: ' + title;
+        const d = new Date(event.registrationClosesAt);
+        const end = new Date(d.getTime() + 60*60*1000);
+        dates = { start: formatIcsDate(d), end: formatIcsDate(end) };
+    }
     if (!dates) return null;
-    const title = encodeURIComponent(event.title || 'Prova de Ciclismo');
-    const location = encodeURIComponent(event.distrito || '');
-    const details = encodeURIComponent(
-        `Prova: ${event.title}\nModalidade: ${event.tag || 'Ciclismo'}\nMais detalhes e inscrições: ${originalEventUrl(event.link) || ''}`
+
+    const encTitle = encodeURIComponent(title);
+    const encLocation = encodeURIComponent(event.distrito || '');
+    const encDetails = encodeURIComponent(
+        'Prova: ' + (event.title || '') + '\nModalidade: ' + (event.tag || 'Ciclismo') + '\nMais detalhes e inscrições: ' + (originalEventUrl(event.link) || '')
     );
 
-    const datesParam = `&dates=${dates.start}/${dates.end}`;
-    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&location=${location}&details=${details}${datesParam}`;
+    const datesParam = '&dates=' + dates.start + '/' + dates.end;
+    return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encTitle + '&location=' + encLocation + '&details=' + encDetails + datesParam;
 }
 
 export function buildIcsContent(event, origin = 'https://cyclingcalendar.pt') {
