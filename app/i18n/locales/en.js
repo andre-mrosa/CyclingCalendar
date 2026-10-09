@@ -548,6 +548,6 @@ const messages = {
     analytics_consent_denied: "Optional statistics are disabled. Your activity is not included in the counts.",
     analytics_consent_pending: "Loading your statistics preference…",
     analytics_consent_error: "We could not save your choice. Please try again.",
+    export_calendar: "Add to Calendar",
 };
-
 export default messages;

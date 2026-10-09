@@ -547,6 +547,6 @@ const messages = {
     analytics_consent_denied: "Estatísticas opcionais desativadas. A tua atividade não é incluída nas contagens.",
     analytics_consent_pending: "A carregar a preferência de estatísticas…",
     analytics_consent_error: "Não foi possível guardar a escolha. Tenta novamente.",
+    export_calendar: "Adicionar ao Calend�rio",
 };
-
 export default messages;

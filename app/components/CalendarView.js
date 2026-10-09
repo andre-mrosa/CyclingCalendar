@@ -8,7 +8,7 @@ import { useState, useEffect, useRef, useMemo, Fragment } from 'react';
 import { useSettingsStore } from '../store/useSettingsStore';
 import useSWR from 'swr';
 
-import { Calendar, MapPin, Search, X, ChevronLeft, ChevronRight, Users, Heart, Star, LayoutGrid, List, HelpCircle, Filter, Bike, AlertTriangle, Check, CalendarCheck, History, WifiOff, Download, Clock, Globe } from 'lucide-react';
+import { Calendar, CalendarPlus, MapPin, Search, X, ChevronLeft, ChevronRight, Users, Heart, Star, LayoutGrid, List, HelpCircle, Filter, Bike, AlertTriangle, Check, CalendarCheck, History, WifiOff, Download, Clock, Globe } from 'lucide-react';
 import { useFavorites } from '../hooks/useFavorites';
 import { useCalendarEvents } from '../hooks/useCalendarEvents';
 import { filterEvents } from '../utils/filterEvents';
@@ -860,6 +860,19 @@ export default function CalendarView({
                                             )}
                                     </div>
                                     <a href={originalEventUrl(event.link)} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 shrink-0" aria-label={t('minimal_original') + ': ' + event.title}>{t('minimal_original')} ↗</a>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            e.preventDefault();
+                                            import('../utils/calendarExport').then(m => m.downloadIcsFile(event));
+                                            trackEvent('CALENDAR_EXPORT_SINGLE', { targetId: event.id, targetTitle: event.title });
+                                        }}
+                                        className={`${styles.eventExportBtn} sm:ml-0 ml-auto`}
+                                        aria-label={t('export_calendar')}
+                                        title={t('export_calendar')}
+                                    >
+                                        <CalendarPlus size={18} />
+                                    </button>
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();

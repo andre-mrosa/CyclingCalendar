@@ -548,6 +548,6 @@ const messages = {
     analytics_consent_denied: "Les statistiques facultatives sont désactivées. Votre activité n’est pas incluse dans les décomptes.",
     analytics_consent_pending: "Chargement du choix des statistiques…",
     analytics_consent_error: "Impossible d’enregistrer votre choix. Réessayez.",
+    export_calendar: "Ajouter au Calendrier",
 };
-
 export default messages;
