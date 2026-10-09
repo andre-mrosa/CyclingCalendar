@@ -864,7 +864,7 @@ export default function CalendarView({
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             e.preventDefault();
-                                            import('../utils/calendarExport').then(m => window.open(m.generateGoogleCalendarUrl(event, 'race'), '_blank'));
+                                            import('../utils/calendarExport').then(m => m.autoAddToGoogleCalendar(event, 'race', m.generateGoogleCalendarUrl(event, 'race')));
                                             trackEvent('CALENDAR_EXPORT_SINGLE', { targetId: event.id, targetTitle: event.title });
                                         }}
                                         className={`${styles.eventExportBtn} sm:ml-0 ml-auto`}

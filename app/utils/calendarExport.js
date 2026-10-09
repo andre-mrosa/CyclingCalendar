@@ -179,3 +179,29 @@ export function downloadIcsFile(event) {
     setTimeout(() => URL.revokeObjectURL(url), 60000);
     return true;
 }
+
+
+
+export async function autoAddToGoogleCalendar(event, type = 'race', gcalUrl) {
+    const popup = window.open('about:blank', '_blank');
+    try {
+        const res = await fetch('/api/calendar/add', |
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ event, type })
+        });
+        const data = await res.json();
+        if (data.success) {
+            popup.close();
+            console.log('Sucesso ao adicionar magicamente ao calendário Cycling Calendar');
+            await new Promise(r => setTimeout(r, 100));
+            alert('Adicionado com sucesso ao teu Cycling Calendar!');
+            return;
+        }
+    } catch (e) {
+        console.warn('OAuth API failed, falling back to web:', e);
+    }
+    
+    // Fallback para o link web normal (OAuth falhou ou não tem token)
+    popup.location.href = gcalUrl;
+}

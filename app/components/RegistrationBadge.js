@@ -55,10 +55,12 @@ export default function RegistrationBadge({ event, isCancelled }) {
     if (gcalUrl && status !== 'closed') {
         return (
             <a 
-                href={gcalUrl} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                onClick={(e) => e.stopPropagation()}
+                href="#" 
+                onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    import('../utils/calendarExport').then(m => m.autoAddToGoogleCalendar(event, type, gcalUrl));
+                }}
                 className={`flex items-center gap-1.5 px-2 py-1 rounded-[5px] text-[11px] font-semibold tracking-wide shrink-0 cursor-pointer hover:opacity-80 transition-opacity ${className}`} 
                 title={text + ' (Adicionar ao Google Calendar)'}
             >
