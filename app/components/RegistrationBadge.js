@@ -39,8 +39,8 @@ export default function RegistrationBadge({ opensAt, closesAt, isCancelled, sort
     if (!status) return null;
 
     return (
-        <span className={`flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider shrink-0 ${className}`} title={text}>
-            <Icon size={12} className="shrink-0" />
+        <span className={`flex items-center gap-1.5 px-2 py-1 rounded-[5px] text-[11px] font-semibold tracking-wide shrink-0 ${className}`} title={text}>
+            <Icon size={13} className="shrink-0" />
             <span>{text}</span>
         </span>
     );
