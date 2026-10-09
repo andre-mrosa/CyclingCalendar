@@ -42,7 +42,7 @@ export default function RegistrationBadge({ event, isCancelled }) {
         if (event.registrationClosesAt) {
             text = language === 'en' ? `Open until ${formatDate(event.registrationClosesAt)}` : `Abertas até ${formatDate(event.registrationClosesAt)}`;
         } else {
-            text = language === 'en' ? 'Registrations open' : 'Inscrições abertas';
+            text = language === "en" ? `Open since ${formatDate(event.registrationOpensAt)}` : `Abertas desde ${formatDate(event.registrationOpensAt)}`;
             type = 'reg_open'; // fallback
         }
         className = 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20';
