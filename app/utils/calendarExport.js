@@ -185,7 +185,7 @@ export function downloadIcsFile(event) {
 export async function autoAddToGoogleCalendar(event, type = 'race', gcalUrl) {
     const popup = window.open('about:blank', '_blank');
     try {
-        const res = await fetch('/api/calendar/add', |
+        const res = await fetch('/api/calendar/add', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ event, type })
