@@ -36,9 +36,16 @@ export async function GET(request) {
             prisma.$transaction(async tx => {
                 const groups = await tx.event.groupBy({ by: ['source', 'sortDate'], _count: { _all: true } });
                 const inventory = buildEventInventory(groups);
-                for (const [key, field] of [['withRegistration', 'registrationClosesAt'], ['withPrices', 'prices'], ['withProgramme', 'programa'], ['withImage', 'image']]) {
-                    inventory[key] = await tx.event.count({ where: { ...PUBLISHED_EVENTS_WHERE, [field]: { not: null }, ...(field !== 'registrationClosesAt' ? { NOT: [{ source: { contains: 'Quarentena' } }, { [field]: '' }] } : {}) } });
-                }
+                const [withRegistration, withLocation, withLink, withTranslations] = await Promise.all([
+                    tx.event.count({ where: { ...PUBLISHED_EVENTS_WHERE, registrationClosesAt: { not: null } } }),
+                    tx.event.count({ where: { ...PUBLISHED_EVENTS_WHERE, details: { not: null }, NOT: [{ details: '' }] } }),
+                    tx.event.count({ where: { ...PUBLISHED_EVENTS_WHERE, link: { not: null }, NOT: [{ link: '' }] } }),
+                    tx.event.count({ where: { ...PUBLISHED_EVENTS_WHERE, translations: { some: {} } } }),
+                ]);
+                inventory.withRegistration = withRegistration;
+                inventory.withLocation = withLocation;
+                inventory.withLink = withLink;
+                inventory.withTranslations = withTranslations;
                 return inventory;
             }, { isolationLevel: 'RepeatableRead' }),
             prisma.systemLog.count({ where: { level: 'ERROR', id: { not: 'operational-scraper-lease' } } }).catch(() => null),

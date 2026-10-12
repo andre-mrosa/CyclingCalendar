@@ -11,7 +11,9 @@ export default function Inventory({ events, busy, refresh }) {
         { id: 'fpc', name: 'FPCiclismo', count: selected?.fpc },
         { id: 'cabreira', name: 'Cabreira Solutions', count: selected?.cabreira },
         { id: 'stopAndGo', name: 'Stop & Go', count: selected?.stopAndGo },
-        ...(events?.sources || []).filter(source => !['fpc', 'cabreira', 'stopAndGo'].includes(source.id)).map(source => ({ id: source.id, name: source.name, count: selected?.[source.id] })),
+        { id: 'recordepessoal', name: 'Recorde Pessoal', count: selected?.recordepessoal },
+        { id: 'apedalar', name: 'Apedalar', count: selected?.apedalar },
+        ...(events?.sources || []).filter(source => !['fpc', 'cabreira', 'stopAndGo', 'recordepessoal', 'apedalar'].includes(source.id)).map(source => ({ id: source.id, name: source.name, count: selected?.[source.id] })),
     ];
     return <div className={styles.stack}>
         <div className={styles.sectionHeading}><div><h2>Inventário do calendário</h2><p>O que está publicado, o que está guardado e de onde vem.</p></div><RefreshButton busy={busy} onClick={refresh} /></div>
@@ -23,7 +25,7 @@ export default function Inventory({ events, busy, refresh }) {
         </div>
         <div className={styles.explainer}><Info size={18} /><p><strong>Inventário não é atividade de scraping.</strong> Os registos processados numa execução podem atualizar provas existentes. Não são novas provas nem devem ser somados ao inventário.</p></div>
         <Panel title="Publicação por ano" description="Cada prova é contada uma vez no total publicado. As colunas de fontes podem sobrepor-se." action={<label className={styles.inlineField}>Ano<select value={year} onChange={event => setYear(event.target.value)}><option value="all">Todos os anos</option>{years.map(row => <option key={String(row.year)} value={String(row.year)}>{row.year ?? 'Sem ano'}</option>)}</select></label>}>
-            {years.length ? <div className={styles.tableScroll}><table className={styles.table}><thead><tr><th>Ano</th><th>Publicadas únicas</th><th>FPC</th><th>Cabreira</th><th>Stop & Go</th><th>Várias fontes¹</th></tr></thead><tbody>{years.filter(row => year === 'all' || String(row.year) === year).map(row => <tr key={row.year}><th scope="row">{row.year ?? 'Sem ano'}</th><td><strong>{number(row.total)}</strong></td><td>{number(row.fpc)}</td><td>{number(row.cabreira)}</td><td>{number(row.stopAndGo)}</td><td>{number(row.multiSource)}</td></tr>)}</tbody></table></div> : <Empty busy={busy}>O detalhe por ano ainda não está disponível.</Empty>}
+            {years.length ? <div className={styles.tableScroll}><table className={styles.table}><thead><tr><th>Ano</th><th>Publicadas únicas</th><th>FPC</th><th>Cabreira</th><th>Stop & Go</th><th>Recorde Pessoal</th><th>Apedalar</th><th>Várias fontes¹</th></tr></thead><tbody>{years.filter(row => year === 'all' || String(row.year) === year).map(row => <tr key={row.year}><th scope="row">{row.year ?? 'Sem ano'}</th><td><strong>{number(row.total)}</strong></td><td>{number(row.fpc)}</td><td>{number(row.cabreira)}</td><td>{number(row.stopAndGo)}</td><td>{number(row.recordepessoal)}</td><td>{number(row.apedalar)}</td><td>{number(row.multiSource)}</td></tr>)}</tbody></table></div> : <Empty busy={busy}>O detalhe por ano ainda não está disponível.</Empty>}
             <p className={styles.footnote}>¹ Subconjunto das publicadas, não um total adicional.</p>
         </Panel>
         <div className={styles.twoColumns}>
@@ -32,7 +34,15 @@ export default function Inventory({ events, busy, refresh }) {
                 <p className={styles.footnote}>Uma prova pode pertencer a várias fontes. Não somar estas linhas. Exclusivas = provas que só existem nessa fonte. — = não disponibilizado.</p>
             </Panel>
             <Panel title="Qualidade e horizonte" description="Cobertura global das provas publicadas, em todos os anos.">
-                <dl className={styles.definitionList}>{[['Próximas provas', events?.upcoming], ['Provas passadas', events?.past], ['Sem data', events?.undated], ['Com programa / regulamento', events?.withProgramme], ['Com cartaz', events?.withImage], ['Com prazo de inscrição', events?.withRegistration], ['Com preços', events?.withPrices]].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{number(value)}</dd></div>)}</dl>
+                <dl className={styles.definitionList}>{[
+                    ['Próximas provas', events?.upcoming],
+                    ['Provas passadas', events?.past],
+                    ['Sem data', events?.undated],
+                    ['Com prazo de inscrição', events?.withRegistration],
+                    ['Com localidade / concelho', events?.withLocation],
+                    ['Com link oficial', events?.withLink],
+                    ['Com tradução multilíngue', events?.withTranslations]
+                ].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{number(value)}</dd></div>)}</dl>
             </Panel>
         </div>
     </div>;

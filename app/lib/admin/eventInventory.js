@@ -4,7 +4,8 @@ const SOURCE_DEFINITIONS = [
     ['fpc', 'FPC', 'FPCiclismo'],
     ['cabreira', 'Cabreira', 'Cabreira Solutions'],
     ['stopAndGo', 'Stop and Go', 'Stop and Go'],
-    ['classificacoes', 'Classificações.net', 'Classificações.net'],
+    ['recordepessoal', 'Recorde Pessoal', 'Recorde Pessoal'],
+    ['apedalar', 'Apedalar', 'Apedalar'],
 ];
 
 // Source counts overlap. Only total/byYear.total count each stored event once.
@@ -28,7 +29,11 @@ export function buildEventInventory(groups, now = new Date()) {
         const date = row.sortDate ? new Date(row.sortDate) : null;
         const day = date && Number.isFinite(date.getTime()) ? date.toISOString().slice(0, 10) : null;
         const year = day ? Number(day.slice(0, 4)) : null;
-        if (!years.has(year)) years.set(year, { year, total: 0, fpc: 0, cabreira: 0, stopAndGo: 0, classificacoes: 0, multiSource: 0 });
+        if (!years.has(year)) {
+            const yearRow = { year, total: 0, multiSource: 0 };
+            for (const [id] of SOURCE_DEFINITIONS) yearRow[id] = 0;
+            years.set(year, yearRow);
+        }
         const yearRow = years.get(year);
         inventory.total += count;
         yearRow.total += count;
