@@ -4,7 +4,7 @@ import { scrapeCabreira } from './cabreira.js';
 import { scrapeStopAndGo } from './stopandgo.js';
 import { scrapeRecordePessoal } from './recordepessoal.js';
 import { scrapeApedalar } from './apedalar.js';
-import { scrapeClassificacoes } from './classificacoes.js';
+import { translateAllPendingEvents } from '../translationService.js';
 import { prisma } from '../db.js';
 import { logInfo, logError, withScraperLogContext } from '../logger.js';
 import { withScraperLock } from './runLock.js';
@@ -13,9 +13,9 @@ const VALID_SCOPES = new Set(['daily', 'weekly', 'manual']);
 
 export function getPipelineStages(scope, years) {
     const fpcStages = years.map(year => `fpc-${year}`);
-    if (scope === 'daily') return ['cabreira', 'stopandgo', 'recordepessoal', 'apedalar', 'classificacoes', 'finalize'];
-    if (scope === 'weekly') return [...fpcStages, 'finalize'];
-    return [...fpcStages, 'cabreira', 'stopandgo', 'recordepessoal', 'apedalar', 'classificacoes', 'finalize'];
+    if (scope === 'daily') return ['cabreira', 'stopandgo', 'recordepessoal', 'apedalar', 'translation', 'finalize'];
+    if (scope === 'weekly') return [...fpcStages, 'translation', 'finalize'];
+    return [...fpcStages, 'cabreira', 'stopandgo', 'recordepessoal', 'apedalar', 'translation', 'finalize'];
 }
 
 // Acquire the lease before logging a start. Callback/lock errors reach the route.
@@ -48,8 +48,8 @@ async function runPipeline(triggeredBy, options) {
         pipelineStage,
         scope,
         sourcesScraped: scope === 'daily'
-              ? ['Cabreira', 'Recorde Pessoal', 'Apedalar', 'Classificações.net']
-              : scope === 'weekly' ? ['FPC'] : ['FPC', 'Cabreira', 'Recorde Pessoal', 'Apedalar', 'Classificações.net'],
+              ? ['Cabreira', 'Stop and Go', 'Recorde Pessoal', 'Apedalar']
+              : scope === 'weekly' ? ['FPC'] : ['FPC', 'Cabreira', 'Stop and Go', 'Recorde Pessoal', 'Apedalar'],
         yearsScraped: years, fpcEvents: {}, deepScrapedFpc: null, mergedEvents: null,
         sources: {}, steps: {}, errors: []
     };
@@ -118,8 +118,16 @@ async function runPipeline(triggeredBy, options) {
                 case 'apedalar':
                     await stage('apedalar', 'Apedalar', true, saveOptions => scrapeApedalar(prisma, years[0], { ...saveOptions }));
                     break;
-                case 'classificacoes':
-                    await stage('classificacoes', 'Classificações.net', false, () => scrapeClassificacoes({ years }));
+                case 'translation':
+                    await stage('translation', 'Tradução Multilíngue', false, async () => {
+                        let total = 0;
+                        for (const lang of ['en', 'es', 'fr']) {
+                            const res = await translateAllPendingEvents(lang, 50);
+                            if (res && res.count) total += res.count;
+                        }
+                        stats.translations = { success: true, translatedCount: total };
+                        return total;
+                    });
                     break;
                 case 'finalize':
                     await stage('finalize', 'Recolha mínima concluída', false, async () => {

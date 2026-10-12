@@ -6,7 +6,6 @@ export const SOURCE_REVIEWS = Object.freeze({
     'Stop and Go': 'approved-minimal',
     Apedalar: 'approved-minimal',
     'Recorde Pessoal': 'approved-minimal',
-    'Classificações.net': 'approved-minimal',
 });
 
 export function assertMinimalCollectionEnabled(source) {

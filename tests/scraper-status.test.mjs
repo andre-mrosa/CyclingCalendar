@@ -113,7 +113,7 @@ test('structured completion alone restores stages, metrics and partial outcomes'
     assert.equal(result.lastRun.status, 'partial');
     assert.equal(result.sources.cabreira.status, 'error');
     assert.equal(result.steps.translation.status, 'error');
-    assert.equal(result.steps.classificacoes.status, 'idle');
+    assert.equal(result.steps.finalize.status, 'idle');
     assert.deepEqual(result.sources.fpc.metrics, fpcMetrics);
     assert.equal(result.stepDurations[1], '70s');
     assert.equal(result.metrics.processed, 398);
@@ -168,7 +168,7 @@ test('legacy progress correctly recognizes source finishes without marking next 
     assert.equal(result.sources.stopandgo.status, 'running');
     assert.equal(result.sources.fpc.status, 'error');
     assert.equal(result.steps.translation.status, 'running');
-    assert.equal(result.steps.unification.status, 'idle');
+    assert.equal(result.steps.finalize.status, 'idle');
 });
 
 // Substitute only module boundaries. Tests never connect to a database, invoke
@@ -316,9 +316,9 @@ async function pipelineFixture(overrides = {}) {
         withScraperLock: work => work(),
         scrapeFPC: async (_year, { onResult }) => { await onResult({ action: 'updated' }); return 1; },
         scrapeCabreira: async (_year, { onResult }) => { await onResult({ action: 'created' }); return 1; },
+        scrapeStopAndGo: async ({ onResult }) => { await onResult({ action: 'quarantined' }); return 1; },
         scrapeRecordePessoal: async () => 0, scrapeApedalar: async () => 0,
-        scrapeClassificacoes: async () => 0,
-        translateAllPendingEvents: async () => ({ success: true, translatedCount: 0 }),
+        translateAllPendingEvents: async () => ({ success: true, count: 0, translatedCount: 0 }),
         prisma: { event: { findMany: async () => [], count: async () => 0 } },
         isSameEvent: () => false, mergeEventRecords: () => ({}), ...overrides
     });
@@ -344,8 +344,8 @@ async function runPipelinePlan(pipeline, options = {}) {
 
 test('daily and weekly plans isolate FPC into one bounded stage per season', async () => {
     const pipeline = await pipelineFixture();
-    assert.deepEqual(pipeline.getPipelineStages('daily', ['2026', '2027']), ['cabreira', 'recordepessoal', 'apedalar', 'classificacoes', 'finalize']);
-    assert.deepEqual(pipeline.getPipelineStages('weekly', ['2026', '2027']), ['fpc-2026', 'fpc-2027', 'finalize']);
+    assert.deepEqual(pipeline.getPipelineStages('daily', ['2026', '2027']), ['cabreira', 'stopandgo', 'recordepessoal', 'apedalar', 'translation', 'finalize']);
+    assert.deepEqual(pipeline.getPipelineStages('weekly', ['2026', '2027']), ['fpc-2026', 'fpc-2027', 'translation', 'finalize']);
 });
 
 
@@ -355,13 +355,13 @@ test('pipeline leases every bounded stage and publishes complete metrics', async
     let locks = 0;
     const pipeline = await pipelineFixture({ withScraperLock: async work => { locks++; if (locks === 1) assert.equal(logs.length, 0); return work(); } });
     const result = await runPipelinePlan(pipeline);
-    assert.equal(locks, 7);
+    assert.equal(locks, 8);
     assert.equal(result.success, true);
     const summary = readLogDetails(logs.at(-1));
     assert.equal(summary.status, 'success');
     assert.equal(logs.filter(log => readLogDetails(log).sourceId === 'fpc' && readLogDetails(log).event === 'source-year-complete').length, 2);
     assert.ok(logs.some(log => readLogDetails(log).sources?.cabreira?.metrics?.created === 1));
-    assert.ok(logs.every(log => readLogDetails(log).sourceId !== 'stopandgo'));
+    assert.ok(logs.some(log => readLogDetails(log).sources?.stopandgo?.metrics?.quarantined === 1));
     assert.ok(logs.every(log => readLogDetails(log).runId === 'fixture-run'));
     assert.ok(logs.some(log => readLogDetails(log).year));
     const status = parseScraperStatus({ startLog: logs[0], completionLog: logs.at(-1), now: Date.now(), logs });
@@ -373,14 +373,14 @@ test('pipeline cannot label swallowed/logged source and enrichment errors as suc
     const logs = captureLogs(t);
     const pipeline = await pipelineFixture({
         scrapeCabreira: async () => { await logError('SCRAPER', 'Cabreira: event failed'); return 0; },
-        scrapeClassificacoes: async () => { await logError('SCRAPER', 'Classificações.net: offline'); return 0; },
+        translateAllPendingEvents: async () => { await logError('SCRAPER', 'Tradução: offline'); return { success: false, error: 'offline' }; },
     });
     const result = await runPipelinePlan(pipeline);
     assert.equal(result.success, false);
     const summary = readLogDetails(logs.at(-1));
     assert.equal(summary.status, 'partial');
     assert.ok(logs.some(log => readLogDetails(log).sources?.cabreira?.status === 'error'));
-    assert.ok(logs.some(log => readLogDetails(log).steps?.classificacoes?.status === 'error'));
+    assert.ok(logs.some(log => readLogDetails(log).steps?.translation?.status === 'error'));
     assert.equal(summary.steps.finalize.status, 'done');
 });
 

@@ -6,10 +6,8 @@ const SOURCE_DEFS = {
     apedalar: ['Apedalar', 'Eventos de ciclismo — processados, não novos']
 };
 const STEP_DEFS = {
-    classificacoes: ['Resultados & PDFs', 'Classificações.net'],
-    deepScrape: ['Deep Scraping FPC', 'Programas & Cartazes'],
-    unification: ['Unificação & Fusão', 'Deduplicação Multi-Fonte'],
-    translation: ['Tradução Multilíngue', 'EN / ES / FR']
+    translation: ['Tradução Multilíngue', 'EN / ES / FR'],
+    finalize: ['Finalização', 'Conclusão e contagem do calendário']
 };
 const METRICS = ['processed', 'created', 'updated', 'merged', 'quarantined'];
 const validCount = value => typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null;
@@ -30,10 +28,8 @@ function entities(definitions) {
 }
 
 function entityId(message) {
-    if (/deep scrap/i.test(message)) return 'deepScrape';
-    if (/classificaç/i.test(message)) return 'classificacoes';
-    if (/unificaç|unify/i.test(message)) return 'unification';
     if (/traduç|translation/i.test(message)) return 'translation';
+    if (/finalizaç|finalize|recolha mínima/i.test(message)) return 'finalize';
     if (/fpc/i.test(message)) return 'fpc';
     if (/cabreira/i.test(message)) return 'cabreira';
     if (/stop\s*(and|&)\s*go|stopandgo/i.test(message)) return 'stopandgo';
@@ -134,9 +130,6 @@ export function parseScraperStatus({ startLog = null, completionLog = null, logs
             stopandgo: /(?:concluída\s*\((\d+)\s*provas|(\d+)\s*provas de ciclismo)/i,
             recordepessoal: /(?:concluída\s*\((\d+)\s*provas|(\d+)\s*provas de ciclismo|concluído em)/i,
             apedalar: /(?:concluída\s*\((\d+)\s*provas|(\d+)\s*provas de ciclismo|encontrados\s*(\d+)\s*eventos)/i,
-            classificacoes: /(?:concluída\s*\((\d+)\s*provas|(\d+)\s*(?:já sincronizadas|provas oficiais enriquecidas))/i,
-            deepScrape: /(\d+)\s*programas/i,
-            unification: /(\d+)\s*provas fundidas/i,
             translation: /(\d+)\s*eventos traduzidos/i
         };
         const count = patterns[id] && message.match(patterns[id]);
@@ -162,8 +155,8 @@ export function parseScraperStatus({ startLog = null, completionLog = null, logs
             if (years.length && years.every(year => validCount(stats.fpcEvents[year]) !== null) && sources.fpc.status !== 'error') sources.fpc.status = 'done';
         }
     }
-    for (const [id, count] of [['deepScrape', stats.deepScrapedFpc], ['unification', stats.mergedEvents], ['translation', stats.translations?.translatedCount]]) {
-        if (validCount(count) !== null) steps[id].count = count;
+    if (validCount(stats.translations?.translatedCount) !== null && steps.translation) {
+        steps.translation.count = stats.translations.translatedCount;
     }
     for (const error of Array.isArray(stats.errors) ? stats.errors : []) {
         if (error == null) continue;
