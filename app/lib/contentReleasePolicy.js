@@ -6,12 +6,12 @@ export const SOURCE_REVIEWS = Object.freeze({
     'Stop and Go': 'approved-minimal',
     Apedalar: 'approved-minimal',
     'Recorde Pessoal': 'approved-minimal',
-    'ClassificaÁıes.net': 'approved-minimal',
+    'Classifica√ß√µes.net': 'approved-minimal',
 });
 
 export function assertMinimalCollectionEnabled(source) {
     if (Object.hasOwn(SOURCE_REVIEWS, source)) return;
-    const error = new Error(`Fonte n„o configurada para recolha mÌnima: ${source}.`);
+    const error = new Error(`Fonte n√£o configurada para recolha m√≠nima: ${source}.`);
     error.code = 'CONTENT_RIGHTS_REVIEW_REQUIRED';
     throw error;
 }
@@ -28,7 +28,7 @@ export function maintenanceResponse(url = 'https://calendar.invalid/') {
             headers: { 'Content-Type': 'application/javascript', 'Cache-Control': 'no-store', 'Service-Worker-Allowed': '/' },
         });
     }
-    return new Response('<!doctype html><html lang="pt"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Cycling Calendar ó temporariamente indisponÌvel</title><body><main><h1>Cycling Calendar</h1><p>O site est· temporariamente indisponÌvel.</p></main></body></html>', {
+    return new Response('<!doctype html><html lang="pt"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Cycling Calendar - temporariamente indispon√≠vel</title><body><main><h1>Cycling Calendar</h1><p>O site est√° temporariamente indispon√≠vel.</p></main></body></html>', {
         status: 503,
         headers: {
             'Content-Type': 'text/html; charset=utf-8',
