@@ -54,6 +54,7 @@ function foldLine(line) {
 }
 
 export function generateGoogleCalendarUrl(event, type = 'race') {
+    if (!event) return null;
     let title = event.title || 'Prova de Ciclismo';
     let dates = getCalendarDates(event);
     if (type === 'reg_open' && event.registrationOpensAt) {

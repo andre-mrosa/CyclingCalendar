@@ -1,4 +1,4 @@
-﻿/* Shared visual system: quiet surfaces, clear dates, readable controls. */
+/* Shared visual system: quiet surfaces, clear dates, readable controls. */
 .primaryFilters { display: grid; grid-template-columns: minmax(0, 1.6fr) repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
 .primaryFilters > label { display: flex; flex-direction: column; gap: 6px; min-width: 0; color: var(--site-muted); font-size: 12px; }
 .primaryFilters select { width: 100%; min-width: 0; height: 46px; padding: 10px 12px; color: var(--foreground); background: var(--site-surface); border: 1px solid var(--site-line); border-radius: 6px; font-size: 14px; }
@@ -109,7 +109,7 @@
 .eventFavorite[aria-pressed='true'], .eventExportBtn[aria-pressed='true'] { color: var(--site-accent); }
 .eventMeta { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; margin-top: 4px; color: var(--site-muted); font-size: 12px; line-height: 1.5; }
 .eventMeta > span { display: inline-flex; align-items: center; gap: 5px; min-width: 0; }
-.eventBadges { position: relative; z-index: 3; display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 7px; max-width: 180px; }
+.eventBadges { position: relative; z-index: 3; display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 7px; max-width: 240px; }
 .eventBadges > span { padding: 4px 8px; border-radius: 5px; font-size: 11px; font-weight: 500; text-transform: none; letter-spacing: 0; }
 .eventBadges > span:not(:has(svg)) { color: var(--site-muted); background: var(--site-soft); border-color: transparent; font-size: 11px; }
 .eventBadges > .eventStatus { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; border: 1px solid transparent; background: var(--site-accent-soft); color: var(--site-accent); font-size: 11px; font-weight: 600; line-height: 1.4; border-radius: 5px; }

@@ -4,7 +4,7 @@ import { useTranslation } from '../i18n/useTranslation';
 import { generateGoogleCalendarUrl } from '../utils/calendarExport';
 
 export default function RegistrationBadge({ event, isCancelled }) {
-    const { language } = useTranslation();
+    const { language, t } = useTranslation();
     
     if (isCancelled || !event.sortDate) return null;
     
@@ -21,28 +21,34 @@ export default function RegistrationBadge({ event, isCancelled }) {
     let type = 'reg_open';
 
     const formatDate = (dateStr) => {
-        return new Date(dateStr).toLocaleDateString(language === 'en' ? 'en-US' : 'pt-PT', { day: '2-digit', month: 'short' });
+        const localeMap = {
+            en: 'en-US',
+            es: 'es-ES',
+            fr: 'fr-FR',
+            pt: 'pt-PT'
+        };
+        return new Date(dateStr).toLocaleDateString(localeMap[language] || 'pt-PT', { day: '2-digit', month: 'short' });
     };
 
     if (event.registrationClosesAt && new Date(event.registrationClosesAt) < now) {
         status = 'closed';
         Icon = CalendarX;
         type = 'reg_close';
-        text = language === 'en' ? 'Registrations closed' : 'Inscrições encerradas';
+        text = t('badge_reg_closed');
     } else if (event.registrationOpensAt && new Date(event.registrationOpensAt) > now) {
         status = 'opening_soon';
         Icon = CalendarClock;
         type = 'reg_open';
-        text = language === 'en' ? `Opens ${formatDate(event.registrationOpensAt)}` : `Abrem a ${formatDate(event.registrationOpensAt)}`;
+        text = t('badge_reg_opening', { date: formatDate(event.registrationOpensAt) });
         className = 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20';
     } else if (event.registrationOpensAt && new Date(event.registrationOpensAt) <= now && (!event.registrationClosesAt || new Date(event.registrationClosesAt) > now)) {
         status = 'open';
         Icon = CalendarCheck;
         type = 'reg_close'; // the next milestone is closing
         if (event.registrationClosesAt) {
-            text = language === 'en' ? `Open until ${formatDate(event.registrationClosesAt)}` : `Abertas até ${formatDate(event.registrationClosesAt)}`;
+            text = t('badge_reg_open_until', { date: formatDate(event.registrationClosesAt) });
         } else {
-            text = language === "en" ? `Open since ${formatDate(event.registrationOpensAt)}` : `Abertas desde ${formatDate(event.registrationOpensAt)}`;
+            text = t('badge_reg_open_since', { date: formatDate(event.registrationOpensAt) });
             type = 'reg_open'; // fallback
         }
         className = 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20';
@@ -61,8 +67,8 @@ export default function RegistrationBadge({ event, isCancelled }) {
                     e.stopPropagation();
                     import('../utils/calendarExport').then(m => m.autoAddToGoogleCalendar(event, type, gcalUrl));
                 }}
-                className={`flex items-center gap-1.5 px-2 py-1 rounded-[5px] text-[11px] font-semibold tracking-wide shrink-0 cursor-pointer hover:opacity-80 transition-opacity ${className}`} 
-                title={text + ' (Adicionar ao Google Calendar)'}
+                className={`flex items-center gap-1.5 px-2 py-1 rounded-[5px] text-[11px] font-semibold tracking-wide shrink-0 whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity ${className}`} 
+                title={text + t('badge_reg_add_calendar')}
             >
                 <Icon size={13} className="shrink-0" />
                 <span>{text}</span>
@@ -72,7 +78,7 @@ export default function RegistrationBadge({ event, isCancelled }) {
     }
 
     return (
-        <span className={`flex items-center gap-1.5 px-2 py-1 rounded-[5px] text-[11px] font-semibold tracking-wide shrink-0 ${className}`} title={text}>
+        <span className={`flex items-center gap-1.5 px-2 py-1 rounded-[5px] text-[11px] font-semibold tracking-wide shrink-0 whitespace-nowrap ${className}`} title={text}>
             <Icon size={13} className="shrink-0" />
             <span>{text}</span>
         </span>
