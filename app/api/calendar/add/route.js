@@ -41,7 +41,7 @@ async function getTargetCalendarId(token) {
 
 function parsePtDate(dateStr) {
     if (!dateStr || typeof dateStr !== 'string') return null;
-    if (/^\d(4}-\d(2}-\d(2}/.test(dateStr)) return dateStr.slice(0, 10);
+    if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) return dateStr.slice(0, 10);
     const months = { 'JAN': '01', 'FEV': '02', 'MAR': '03', 'ABR': '04', 'MAI': '05', 'JUN': '06', 'JUL': '07', 'AGO': '08', 'SET': '09', 'OUT': '10', 'NOV': '11', 'DEZ': '12' };
     const parts = dateStr.toUpperCase().trim().split(' ');
     const mIdx = parts.findIndex(p => months[p] || months[p.replace('Ç','C').replace('Ç','C').substring(0, 3)]);
