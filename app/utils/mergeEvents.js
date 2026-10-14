@@ -1,6 +1,7 @@
 import { getEventDiscipline } from './eventClassifier.js';
 import { isSameEvent } from '../lib/merging/eventMatcher.js';
 import { normalizeText } from '../lib/merging/eventMatcher.js';
+import { getPreferredEventLink } from '../lib/publicEvent.js';
 
 // Already aggregated sources may contain FPC without being an original FPC row.
 // Allow only exact open-ride identities at the same location in that case.
@@ -84,6 +85,10 @@ export function mergeEvents(events) {
             if (bestEvent.extraLinks) bestEvent.extraLinks.forEach(l => uniqueLinksMap.set(l.link, l));
             allExtraLinks.forEach(l => uniqueLinksMap.set(l.link, l));
             bestEvent.extraLinks = Array.from(uniqueLinksMap.values());
+            const preferred = getPreferredEventLink(bestEvent.link, bestEvent.extraLinks);
+            if (preferred) {
+                bestEvent.link = preferred;
+            }
             
             if (allEscaloes.size > 0) bestEvent.escaloes = Array.from(allEscaloes);
             bestEvent._mergedSources = [...new Set(duplicates.flatMap(d => d._mergedSources || [d.source]).filter(Boolean))];

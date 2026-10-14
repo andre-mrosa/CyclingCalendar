@@ -1,7 +1,7 @@
 import { isSameEvent } from './eventMatcher.js';
 import { getEventDiscipline, isOfficialNationalChampionship } from '../../utils/eventClassifier.js';
 import { getAmbito } from '../scrapers/utils.js';
-import { originalEventUrl } from '../publicEvent.js';
+import { originalEventUrl, getPreferredEventLink, isFpcUrl } from '../publicEvent.js';
 
 /**
  * Combina duas listas de links extras sem duplicar URLs
@@ -86,37 +86,39 @@ export function mergeEventRecords(existing, incoming) {
     };
 
     let extraLinksList = [...parseLinks(existing.extraLinks), ...parseLinks(incoming.extraLinks)];
-    let primaryLink = existing.link || incoming.link;
 
-    if (existing.link && incoming.link && existing.link.toLowerCase() !== incoming.link.toLowerCase()) {
-        const isExistingFpc = existing.link.includes('fpciclismo.pt');
-        const isIncomingOrg = incoming.link.includes('cabreirasolutions.com') || incoming.link.includes('stopandgo.net') || incoming.link.includes('recordepessoal.pt') || incoming.link.includes('apedalar.pt');
+    // Escolhe o link preferido: se a prova existir noutro link para além da FPC, vai para esse link
+    const preferredLink = getPreferredEventLink(
+        existing.link,
+        [incoming.link, existing.extraLinks, incoming.extraLinks]
+    ) || existing.link || incoming.link;
 
-        if (isExistingFpc && isIncomingOrg) {
-            if (!extraLinksList.some(l => l.link?.toLowerCase() === existing.link.toLowerCase())) {
-                extraLinksList.push({ label: 'Ficha Homologação FPC', link: existing.link });
-            }
-            primaryLink = incoming.link;
-        } else {
-            const incomingLabel = incoming.source?.includes('Cabreira')
-                ? 'Site Oficial Cabreira'
-                : incoming.source?.includes('Stop')
-                    ? 'Inscrições Stop & Go'
-                    : incoming.source?.includes('Recorde Pessoal')
-                        ? 'Inscrições Recorde Pessoal'
-                        : incoming.source?.includes('Apedalar')
-                            ? 'Inscrições Apedalar'
-                            : incoming.source?.includes('Classificações')
-                                ? 'Classificações e Resultados'
-                                : 'Página da Organização';
-            if (!extraLinksList.some(l => l.link?.toLowerCase() === incoming.link.toLowerCase())) {
-                extraLinksList.push({ label: incomingLabel, link: incoming.link });
+    for (const linkItem of [{ link: existing.link, source: existing.source }, { link: incoming.link, source: incoming.source }]) {
+        if (linkItem.link && linkItem.link.toLowerCase() !== preferredLink?.toLowerCase()) {
+            const isFpc = isFpcUrl(linkItem.link);
+            const label = isFpc
+                ? 'Ficha Homologação FPC'
+                : linkItem.source?.includes('Cabreira')
+                    ? 'Site Oficial Cabreira'
+                    : linkItem.source?.includes('Stop')
+                        ? 'Inscrições Stop & Go'
+                        : linkItem.source?.includes('Recorde Pessoal')
+                            ? 'Inscrições Recorde Pessoal'
+                            : linkItem.source?.includes('Apedalar')
+                                ? 'Inscrições Apedalar'
+                                : linkItem.source?.includes('Classificações')
+                                    ? 'Classificações e Resultados'
+                                    : 'Página da Organização';
+
+            if (!extraLinksList.some(l => l.link?.toLowerCase() === linkItem.link.toLowerCase())) {
+                extraLinksList.push({ label, link: linkItem.link });
             }
         }
     }
 
-    // Deduplicar lista final de links extras
+    // Deduplicar lista final de links extras e omitir o link primário
     const seenUrls = new Set();
+    if (preferredLink) seenUrls.add(preferredLink.toLowerCase());
     const finalExtraLinks = [];
     for (const item of extraLinksList) {
         if (item && item.link && !seenUrls.has(item.link.toLowerCase())) {
@@ -125,6 +127,7 @@ export function mergeEventRecords(existing, incoming) {
         }
     }
     const extraLinks = finalExtraLinks.length > 0 ? JSON.stringify(finalExtraLinks) : null;
+    let primaryLink = preferredLink;
 
     // Priorizar data real caso uma delas seja placeholder ou se incoming tiver intervalo " a "
     const isExistingPlaceholder = !existing.date || existing.date.includes('DEFINIR') || existing.date.includes('A definir');
@@ -245,12 +248,7 @@ let municipalitiesCache = null;
 const MINIMAL_SOURCE_NAMES = new Set(['FPC', 'Cabreira', 'Apedalar', 'Recorde Pessoal', 'Classificações.net']);
 
 function getOriginalSourceLink(event) {
-    const candidates = [event?.link];
-    try {
-        const extra = typeof event?.extraLinks === 'string' ? JSON.parse(event.extraLinks) : event?.extraLinks;
-        if (Array.isArray(extra)) candidates.push(...extra.map(item => item?.link));
-    } catch { /* Ignore malformed legacy links. */ }
-    return candidates.map(originalEventUrl).find(Boolean) || null;
+    return getPreferredEventLink(event?.link, event?.extraLinks);
 }
 
 export function toMinimalScrapedEvent(event) {
@@ -405,10 +403,25 @@ export async function saveOrMergeEvent(prisma, eventData, options = {}) {
 
     if (existingById) {
         if (existingById.source?.includes('Quarentena')) return report({ action: 'quarantined', event: existingById });
+        const preferredLink = getPreferredEventLink(
+            eventData.link,
+            [existingById.link, existingById.extraLinks, eventData.extraLinks]
+        ) || eventData.link || existingById.link;
+
+        const mergedExtraLinks = mergeExtraLinks(
+            existingById.extraLinks,
+            JSON.stringify([
+                ...(existingById.link && existingById.link !== preferredLink ? [{ label: isFpcUrl(existingById.link) ? 'Ficha Homologação FPC' : 'Página da Prova', link: existingById.link }] : []),
+                ...(eventData.link && eventData.link !== preferredLink ? [{ label: isFpcUrl(eventData.link) ? 'Ficha Homologação FPC' : 'Página da Prova', link: eventData.link }] : [])
+            ])
+        );
+
         const mergedData = {
             title: eventData.title, date: eventData.date, sortDate: eventData.sortDate,
             details: eventData.details, regiao: eventData.regiao, distrito: eventData.distrito,
-            source: mergeSources(existingById.source, eventData.source), link: eventData.link || existingById.link,
+            source: mergeSources(existingById.source, eventData.source),
+            link: preferredLink,
+            ...(mergedExtraLinks ? { extraLinks: mergedExtraLinks } : {})
         };
         const updated = await prisma.event.update({
             where: { id: existingById.id },
@@ -434,6 +447,19 @@ export async function saveOrMergeEvent(prisma, eventData, options = {}) {
 
         for (const candidate of candidates) {
             if (isSameEvent(candidate, eventData)) {
+                const preferredLink = getPreferredEventLink(
+                    eventData.link,
+                    [candidate.link, candidate.extraLinks, eventData.extraLinks]
+                ) || eventData.link || candidate.link;
+
+                const mergedExtraLinks = mergeExtraLinks(
+                    candidate.extraLinks,
+                    JSON.stringify([
+                        ...(candidate.link && candidate.link !== preferredLink ? [{ label: isFpcUrl(candidate.link) ? 'Ficha Homologação FPC' : 'Página da Prova', link: candidate.link }] : []),
+                        ...(eventData.link && eventData.link !== preferredLink ? [{ label: isFpcUrl(eventData.link) ? 'Ficha Homologação FPC' : 'Página da Prova', link: eventData.link }] : [])
+                    ])
+                );
+
                 const mergedData = {
                     title: candidate.title || eventData.title,
                     date: eventData.date, sortDate: eventData.sortDate,
@@ -441,7 +467,8 @@ export async function saveOrMergeEvent(prisma, eventData, options = {}) {
                     regiao: eventData.regiao || candidate.regiao,
                     distrito: eventData.distrito || candidate.distrito,
                     source: mergeSources(candidate.source, eventData.source),
-                    link: eventData.link || candidate.link,
+                    link: preferredLink,
+                    ...(mergedExtraLinks ? { extraLinks: mergedExtraLinks } : {})
                 };
                 const updated = await prisma.event.update({
                     where: { id: candidate.id },
