@@ -7,6 +7,7 @@ import {
 import { logInfo, logError } from '../logger.js';
 import { saveOrMergeEvent } from '../merging/eventMerger.js';
 import { parseRegistrationDates } from '../../utils/registrationDates.js';
+import { detectRaceDate } from '../../utils/detectRaceDate.js';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
@@ -34,7 +35,7 @@ export const deepScrapeCabreira = async (link) => {
 export const scrapeCabreira = async (year, options = {}) => {
     assertMinimalCollectionEnabled("Cabreira");
     try {
-        logInfo('SCRAPER', `Início da sincronização Cabreira Solutions (Ano: ${year || 'Todos'})`);
+        logInfo('SCRAPER', `Inï¿½cio da sincronizaï¿½ï¿½o Cabreira Solutions (Ano: ${year || 'Todos'})`);
         const response = await fetch(`https://cabreirasolutions.com/eventos/`, {
             headers: { 'User-Agent': 'Mozilla/5.0' }
         });
@@ -78,7 +79,9 @@ export const scrapeCabreira = async (year, options = {}) => {
 
             return { href, title, dateText, sortDate, locText, eventYear };
         }).filter(ev => {
-            if (ev.sortDate < todayZero) return false;
+            const detected = detectRaceDate({ date: ev.dateText, sortDate: ev.sortDate });
+            const effectiveEnd = detected?.raceEndDateISO ? new Date(detected.raceEndDateISO + 'T23:59:59.999Z') : ev.sortDate;
+            if (effectiveEnd < todayZero) return false;
             return !year || ev.dateText.includes(year);
         });
 
@@ -111,7 +114,7 @@ export const scrapeCabreira = async (year, options = {}) => {
             await delay(1000); // Polite delay between batches
         }
 
-        await logInfo('SCRAPER', `Sincronização Cabreira concluída (${processedCount} provas futuras processadas na BD)`);
+        await logInfo('SCRAPER', `Sincronizaï¿½ï¿½o Cabreira concluï¿½da (${processedCount} provas futuras processadas na BD)`);
         return processedCount;
     } catch (e) {
         await logError('SCRAPER', `Erro durante o scraping da Cabreira Solutions: ${e.message}`, e);

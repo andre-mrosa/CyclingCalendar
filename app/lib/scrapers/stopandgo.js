@@ -6,6 +6,7 @@ import { logInfo, logError } from '../logger.js';
 import { saveOrMergeEvent } from '../merging/eventMerger.js';
 import { CYCLING_MODALITIES, readStopAndGoHeader } from './stopandgoParser.js';
 import { parseRegistrationDates } from '../../utils/registrationDates.js';
+import { detectRaceDate } from '../../utils/detectRaceDate.js';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 const NON_CYCLING = ['atletismo', 'trail', 'tt', 'skyrunning', 'urban trail', 'triathlon', 'triatlo', 'canoagem', 'natacao', 'trichallenge', 'caminhada', 'multisport', 'obstaculos'];
@@ -52,16 +53,17 @@ export const scrapeStopAndGo = async (options = {}) => {
 
         const cyclingListingUrls = new Set();
         
+        const CYCLING_TERMS = ['btt', 'gravel', 'downhill', 'cycling', 'bike', 'granfondo', 'racenature', 'maratona', 'resistencia', 'raid', 'xcm', 'xco', 'dhi', 'dhu', 'ciclocrosse', 'ciclismo'];
         const targetUrls = sitemapUrls.filter(u => {
             const lower = u.toLowerCase();
             const hasExplicitYear = /202\d/.test(lower);
-            const isCycling = lower.includes('btt') || lower.includes('gravel') || lower.includes('downhill') || lower.includes('cycling') || lower.includes('bike');
-            const isExcluded = NON_CYCLING.some(kw => lower.includes(kw) && !lower.includes('cycling') && !lower.includes('bike') && !lower.includes('btt') && !lower.includes('gravel') && !lower.includes('downhill'));
+            const isCycling = CYCLING_TERMS.some(term => lower.includes(term));
+            const isExcluded = NON_CYCLING.some(kw => lower.includes(kw) && !CYCLING_TERMS.some(term => lower.includes(term)));
             return (cyclingListingUrls.has(u) || (hasExplicitYear && isCycling && !isExcluded));
         });
 
         const urlsToScrape = targetUrls;
-        logInfo('SCRAPER', `Stop and Go: ${urlsToScrape.length} cabe�alhos de provas a validar...`);
+        logInfo('SCRAPER', `Stop and Go: ${urlsToScrape.length} cabeçalhos de provas a validar...`);
 
         const BATCH_SIZE = 4;
         const todayZero = new Date();
@@ -87,7 +89,9 @@ export const scrapeStopAndGo = async (options = {}) => {
                     
                     if (!header || !header.cycling || !header.sortDate) return;
                     
-                    if (new Date(header.sortDate) < todayZero) return; // ONLY PROCESS FUTURE EVENTS
+                    const raceDates = detectRaceDate({ date: header.date, sortDate: header.sortDate });
+                    const effectiveEnd = raceDates?.raceEndDateISO ? new Date(raceDates.raceEndDateISO + 'T23:59:59.999Z') : new Date(header.sortDate);
+                    if (effectiveEnd < todayZero) return; // ONLY PROCESS FUTURE OR ONGOING EVENTS
 
                     const slug = url.split('/').filter(Boolean).pop();
                     const id = 'stopandgo-' + slug;

@@ -20,3 +20,14 @@ test('the same event data is filtered again when the Lisbon day changes', () => 
     assert.deepEqual(filterCalendarByDate(events, 'futuros', after), []);
     assert.equal(lisbonWallClock(new Date('2026-12-20T23:00:00Z')).slice(0, 10), '2026-12-20');
 });
+
+test('enumerated multi-day events remain visible during their ongoing days', () => {
+    const events = [{ date: '16, 17, E 18 OUT 2026', sortDate: '2026-10-16T00:00:00.000Z' }];
+    const day17 = '2026-10-17';
+    const day18 = '2026-10-18';
+    const day19 = '2026-10-19';
+    assert.equal(filterCalendarByDate(events, 'futuros', day17).length, 1);
+    assert.equal(filterCalendarByDate(events, 'futuros', day18).length, 1);
+    assert.equal(filterCalendarByDate(events, 'futuros', day19).length, 0);
+});
+

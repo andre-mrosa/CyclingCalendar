@@ -4,10 +4,11 @@ import { prisma } from '../db.js';
 import { toTitleCase } from './utils.js';
 import { logInfo, logError } from '../logger.js';
 import { saveOrMergeEvent } from '../merging/eventMerger.js';
+import { detectRaceDate } from '../../utils/detectRaceDate.js';
 
 export const fetchFPCCalendar = async (year) => {
         year = String(year);
-        if (!/^\d{4}$/.test(year)) throw new Error('A época FPC inválida');
+        if (!/^\d{4}$/.test(year)) throw new Error('A Ã©poca FPC invÃ¡lida');
         
         const formData = new URLSearchParams({
             epoca_site: year, epoca_site2: year,
@@ -26,7 +27,7 @@ export const fetchFPCCalendar = async (year) => {
                     cache: 'no-store',
                     signal: AbortSignal.timeout(20000)
                 });
-                if (!response.ok) throw new Error(`Falha ao aceder ao calendário FPC (HTTP ${response.status})`);
+                if (!response.ok) throw new Error(`Falha ao aceder ao calendÃ¡rio FPC (HTTP ${response.status})`);
                 html = new TextDecoder('iso-8859-1').decode(await response.arrayBuffer());
                 break;
             } catch (error) {
@@ -41,14 +42,14 @@ export const parseFPCCalendar = (html, year) => {
         const $ = cheerio.load(html);
         for (const [field, expected] of Object.entries({ epoca_site: String(year), mes_de_new: '01', mes_ate_new: '12' })) {
             if ($(`select[name="${field}"]`).val() !== expected) {
-                throw new Error(`A FPC não confirmou ${field}=${expected}; calendário parcial rejeitado`);
+                throw new Error(`A FPC nÃ£o confirmou ${field}=${expected}; calendÃ¡rio parcial rejeitado`);
             }
         }
         if (!$('table.dc_table_s12').length) {
             const classes = $('select[name="classeprova_prova_new"]');
             const hasRaceClasses = classes.find('option').toArray().some(option => $(option).attr('value'));
             if (Number(year) > new Date().getFullYear() && classes.length && !hasRaceClasses && /<\/html>/i.test(html)) return [];
-            throw new Error('Tabela do calendário FPC não encontrada');
+            throw new Error('Tabela do calendÃ¡rio FPC nÃ£o encontrada');
         }
 
         const rows = $('table.dc_table_s12 tbody tr').toArray();
@@ -63,12 +64,11 @@ export const parseFPCCalendar = (html, year) => {
                 let locText = toTitleCase($(cols[1]).text().trim());
                 if (nameText && /^\d{2}-\d{2}-\d{4}$/.test(dateText)) {
                     const parts = dateText.split('-');
-                    if (parts[2] !== String(year)) throw new Error(`Época incorreta na linha FPC: ${dateText}`);
+                    if (parts[2] !== String(year)) throw new Error(`Ã‰poca incorreta na linha FPC: ${dateText}`);
                     const sortDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00Z`);
-                    if (Number.isNaN(sortDate.getTime())) throw new Error(`Data FPC inválida: ${dateText}`);
+                    if (Number.isNaN(sortDate.getTime())) throw new Error(`Data FPC invÃ¡lida: ${dateText}`);
                     const months = {'01':'JAN', '02':'FEV', '03':'MAR', '04':'ABR', '05':'MAI', '06':'JUN', '07':'JUL', '08':'AGO', '09':'SET', '10':'OUT', '11':'NOV', '12':'DEZ'};
-                    if (parts.length === 3) dateText = `${parts[0]} ${months[parts[1]] || parts[1]} ${parts[2]}`;
-
+                    if (parts.length === 3) dateText = `${parts[0]} ${months[parts[1]] || parts[1]} ${parts[2]}`;
                     if (endDateText && endDateText !== $(ths[0]).text().trim() && endDateText.length > 2) {
                         const eParts = endDateText.split('-');
                         if (eParts.length === 3) {
@@ -98,7 +98,7 @@ export const parseFPCCalendar = (html, year) => {
                     const eventData = {
                         title: nameText,
                         date: dateText,
-                        sortDate,
+                        sortDate,
                         details: locText,
                         regiao: locText,
                         distrito: locText,
@@ -123,12 +123,14 @@ export const scrapeFPC = async (year, options = {}) => {
         todayZero.setHours(0,0,0,0);
         let processed = 0;
         for (const event of events) {
-            // ONLY PROCESS FUTURE EVENTS
-            if (event.sortDate < todayZero) continue;
+            // ONLY PROCESS FUTURE OR ONGOING EVENTS
+            const raceDates = detectRaceDate(event);
+            const effectiveEnd = raceDates?.raceEndDateISO ? new Date(raceDates.raceEndDateISO + 'T23:59:59.999Z') : event.sortDate;
+            if (effectiveEnd < todayZero) continue;
             await saveOrMergeEvent(prisma, event, { ...options, verifiedSource: 'FPC' });
             processed++;
         }
-        await logInfo('SCRAPER', `Sincronização FPC ${year} concluída (${processed} provas futuras processadas)`);
+        await logInfo('SCRAPER', `SincronizaÃ§Ã£o FPC ${year} concluÃ­da (${processed} provas futuras processadas)`);
         return processed;
     } catch (e) {
         await logError('SCRAPER', `Erro no scraping FPC ${year}: ${e.message}`, e);

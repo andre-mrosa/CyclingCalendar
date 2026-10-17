@@ -18,8 +18,9 @@ export function detectRaceDate(event) {
     const year = raw.match(/\b(20\d{2})\b/)?.[1] || sortISO?.slice(0, 4);
     let start, end;
     if (raw && /definir|anunciar|adiad|tbd|evento|unknown/i.test(raw)) return null;
-    const range = raw.match(/^(\d{1,2})\s*(?:de\s+)?([a-zà-ú]{3,9})?(?:\s+(20\d{2}))?\s*(?:a|até|e|[-–—])\s*(\d{1,2})\s+(?:de\s+)?([a-zà-ú]{3,9})(?:\s+(20\d{2}))?$/i);
-    const single = raw.match(/^(\d{1,2})\s+(?:de\s+)?([a-zà-ú]{3,9})(?:\s+(20\d{2}))?$/i);
+    const range = raw.match(/^(\d{1,2})\s*(?:de\s+)?([a-zà-ú]{3,9})?(?:\s+(?:de\s+)?(20\d{2}))?\s*(?:a|até|[-–—])\s*(\d{1,2})\s+(?:de\s+)?([a-zà-ú]{3,9})(?:\s+(?:de\s+)?(20\d{2}))?$/i);
+    const enumerated = raw.match(/^(\d{1,2})(?:[,\s]+\d{1,2})*(?:[,\s]+(?:e|&)\s*|\s*[-–—]\s*)(\d{1,2})\s+(?:de\s+)?([a-zà-ú]{3,9})(?:\s+(?:de\s+)?(20\d{2}))?$/i);
+    const single = raw.match(/^(\d{1,2})\s+(?:de\s+)?([a-zà-ú]{3,9})(?:\s+(?:de\s+)?(20\d{2}))?$/i);
     if (range) {
         const firstMonth = range[2] || range[5], lastMonth = range[5];
         let firstYear = Number(range[3] || range[6] || year);
@@ -31,6 +32,12 @@ export function detectRaceDate(event) {
         }
         start = isoDate(range[1], firstMonth, firstYear);
         end = isoDate(range[4], lastMonth, lastYear);
+    } else if (enumerated) {
+        const month = enumerated[3];
+        const eventYear = Number(enumerated[4] || year);
+        if (!eventYear) return null;
+        start = isoDate(enumerated[1], month, eventYear);
+        end = isoDate(enumerated[2], month, eventYear);
     } else if (single) {
         start = isoDate(single[1], single[2], single[3] || year);
         end = start;
@@ -45,7 +52,11 @@ export function detectRaceDate(event) {
         return null;
     }
     if (!start || !end || end < start) return null;
-    if (/\s+e\s+/i.test(raw) && (new Date(end) - new Date(start)) > 86400000) return null;
+    if (/\s+e\s+/i.test(raw)) {
+        const diff = new Date(end) - new Date(start);
+        if (!raw.includes(',') && diff > 86400000) return null;
+        if (diff > 6 * 86400000) return null;
+    }
     return { raceDateISO: start, raceEndDateISO: end, startTime: null,
-        label: raw || start, isMultiStage: false, raceDayOnly: start === end };
+        label: raw || start, isMultiStage: start !== end, raceDayOnly: start === end };
 }
