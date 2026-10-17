@@ -9,6 +9,7 @@ import Inventory from './components/Inventory';
 import Operations from './components/Operations';
 import Users from './components/Users';
 import Logs from './components/Logs';
+import Quarantine from './components/Quarantine';
 import { ConfirmDialog, Notice } from './components/ui';
 
 async function readResponse(response) {
@@ -104,6 +105,24 @@ export default function AdminDashboardPage() {
             setError('users', null);
         } catch (error) { setError('users', error.message); }
         finally { setIsLoadingUsers(false); }
+    }, [authFetch, setError]);
+
+    const [quarantineEvents, setQuarantineEvents] = useState([]);
+    const [quarantineCategoriesCount, setQuarantineCategoriesCount] = useState({});
+    const [isLoadingQuarantine, setIsLoadingQuarantine] = useState(false);
+    const [quarantineTarget, setQuarantineTarget] = useState(null);
+
+    const loadQuarantine = useCallback(async () => {
+        setIsLoadingQuarantine(true);
+        try {
+            const response = await authFetch('/api/admin/quarantine');
+            const data = await readResponse(response);
+            if (!response.ok || !data.success) throw new Error(data.error || 'Não foi possível carregar as provas em quarentena.');
+            setQuarantineEvents(data.events || []);
+            setQuarantineCategoriesCount(data.categoriesCount || {});
+            setError('quarantine', null);
+        } catch (error) { setError('quarantine', error.message); }
+        finally { setIsLoadingQuarantine(false); }
     }, [authFetch, setError]);
 
     const filteredUsers = useMemo(() => {
@@ -304,6 +323,10 @@ export default function AdminDashboardPage() {
         checkScraperStatus();
     }, [isLoaded, isSignedIn, checkScraperStatus]);
     useEffect(() => {
+        if (!isLoaded || !isSignedIn || activeTab !== 'quarantine') return;
+        loadQuarantine();
+    }, [isLoaded, isSignedIn, activeTab, loadQuarantine]);
+    useEffect(() => {
         if (!isLoaded || !isSignedIn || activeTab !== 'logs') return;
         const timer = setTimeout(loadLogs, 250);
         // eslint-disable-next-line react-hooks/exhaustive-deps -- This is an invalidation counter, not a DOM ref.
@@ -351,11 +374,14 @@ export default function AdminDashboardPage() {
         setRoleChangeTarget(null);
         setDeleteTarget(null);
         setClearLogsTarget(null);
+        setQuarantineTarget(null);
         setActionMessage(null);
     };
     const openRole = (user, newRole) => { setActionMessage(null); setRoleChangeTarget({ user, newRole }); };
     const openDelete = (user, mode) => { setActionMessage(null); setDeleteTarget({ user, mode }); };
     const openClear = all => { setActionMessage(null); setClearLogsTarget({ all }); };
+    const openRestoreQuarantine = event => { setActionMessage(null); setQuarantineTarget({ event, action: 'restore' }); };
+    const openDeleteQuarantine = event => { setActionMessage(null); setQuarantineTarget({ event, action: 'delete' }); };
 
     const executeAction = async () => {
         if (actionBusy) return;
@@ -372,11 +398,26 @@ export default function AdminDashboardPage() {
                 response = await authFetch(`/api/admin/users/${encodeURIComponent(deleteTarget.user.id)}?mode=${deleteTarget.mode}`, { method: 'DELETE' });
             } else if (clearLogsTarget) {
                 response = await authFetch(`/api/admin/logs?${clearLogsTarget.all ? 'all=true' : 'days=30'}`, { method: 'DELETE' });
+            } else if (quarantineTarget) {
+                if (quarantineTarget.action === 'restore') {
+                    response = await authFetch('/api/admin/quarantine', {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: quarantineTarget.event.id }),
+                    });
+                } else {
+                    response = await authFetch(`/api/admin/quarantine?id=${encodeURIComponent(quarantineTarget.event.id)}`, {
+                        method: 'DELETE',
+                    });
+                }
             } else return;
             const data = await readResponse(response);
             if (!response.ok || !data.success) throw new Error(data.error || 'Não foi possível concluir a ação.');
             setActionMessage({ type: 'success', text: data.message || 'Ação concluída.' });
-            await Promise.all([loadStats(true), clearLogsTarget ? loadLogs() : loadUsers()]);
+            await Promise.all([
+                loadStats(true), 
+                quarantineTarget ? loadQuarantine() : clearLogsTarget ? loadLogs() : loadUsers()
+            ]);
         } catch (error) { setActionMessage({ type: 'error', text: error.message }); }
         finally { setActionBusy(false); }
     };
@@ -393,20 +434,35 @@ export default function AdminDashboardPage() {
         if (activeTab === 'users') loadUsers();
         else if (activeTab === 'logs') loadLogs();
         else if (activeTab === 'operations') checkScraperStatus();
+        else if (activeTab === 'quarantine') loadQuarantine();
         else loadStats();
     };
     const visibleError = errors[activeTab === 'inventory' ? 'stats' : activeTab];
-    const modalTitle = roleChangeTarget ? 'Alterar permissões' : deleteTarget ? deleteTarget.mode === 'delete_data' ? 'Limpar dados do utilizador' : 'Eliminar conta permanentemente' : clearLogsTarget?.all ? 'Eliminar todos os logs?' : 'Limpar logs antigos?';
+    const modalTitle = roleChangeTarget ? 'Alterar permissões' : deleteTarget ? deleteTarget.mode === 'delete_data' ? 'Limpar dados do utilizador' : 'Eliminar conta permanentemente' : clearLogsTarget?.all ? 'Eliminar todos os logs?' : clearLogsTarget ? 'Limpar logs antigos?' : quarantineTarget?.action === 'restore' ? 'Restaurar prova para o calendário' : 'Eliminar prova permanentemente';
 
-    return <AdminDashboardView activeTab={activeTab} navigate={navigate} running={runningOp} pendingDeletions={pendingDeletionsCount} dark={mounted && resolvedTheme === 'dark'} onToggleTheme={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')} error={visibleError} onRetry={retry} dialog={
-        (roleChangeTarget || deleteTarget || clearLogsTarget) && <ConfirmDialog title={modalTitle} onClose={closeDialog} onConfirm={executeAction} busy={actionBusy} message={actionMessage} danger={!!deleteTarget || !!clearLogsTarget} confirmLabel={deleteTarget?.mode === 'delete_account' ? 'Eliminar permanentemente' : 'Confirmar ação'}>
+    return <AdminDashboardView activeTab={activeTab} navigate={navigate} running={runningOp} pendingDeletions={pendingDeletionsCount} quarantinedCount={stats?.events?.quarantined ?? quarantineEvents.length} dark={mounted && resolvedTheme === 'dark'} onToggleTheme={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')} error={visibleError} onRetry={retry} dialog={
+        (roleChangeTarget || deleteTarget || clearLogsTarget || quarantineTarget) && <ConfirmDialog title={modalTitle} onClose={closeDialog} onConfirm={executeAction} busy={actionBusy} message={actionMessage} danger={!!deleteTarget || !!clearLogsTarget || quarantineTarget?.action === 'delete'} confirmLabel={deleteTarget?.mode === 'delete_account' || quarantineTarget?.action === 'delete' ? 'Eliminar permanentemente' : quarantineTarget?.action === 'restore' ? 'Restaurar prova' : 'Confirmar ação'}>
             {roleChangeTarget && <><p>Alterar o cargo de <strong>{roleChangeTarget.user.fullName || roleChangeTarget.user.email}</strong> ({roleChangeTarget.user.email}) para <strong>{roleChangeTarget.newRole === 'admin' ? 'administrador' : 'utilizador'}</strong>?</p><p>Esta alteração afeta o acesso às ferramentas de administração.</p></>}
             {deleteTarget && <><p><strong>{deleteTarget.user.fullName || 'Utilizador'}</strong><br />{deleteTarget.user.email}</p>{deleteTarget.user.deletionReason && <p>Motivo indicado: {deleteTarget.user.deletionReason}</p>}<Notice error>{deleteTarget.mode === 'delete_data' ? 'Todos os favoritos e preferências serão removidos. A conta mantém-se ativa.' : 'A conta será apagada permanentemente do sistema de autenticação (Clerk). Esta ação não pode ser desfeita.'}</Notice></>}
             {clearLogsTarget && <p>{clearLogsTarget.all ? 'Todos os logs do sistema serão eliminados permanentemente, incluindo os que não correspondem aos filtros atuais.' : 'Os logs do sistema com mais de 30 dias serão eliminados permanentemente. Os registos mais recentes serão mantidos.'}</p>}
+            {quarantineTarget && (
+                quarantineTarget.action === 'restore' ? (
+                    <>
+                        <p>Tens a certeza de que desejas restaurar <strong>{quarantineTarget.event.title}</strong>?</p>
+                        <p className="text-sm text-muted">A prova sairá do estado de quarentena e voltará a ficar visível no calendário público de ciclismo.</p>
+                    </>
+                ) : (
+                    <>
+                        <p>Tens a certeza de que desejas eliminar <strong>{quarantineTarget.event.title}</strong>?</p>
+                        <Notice error>Esta prova será removida permanentemente da base de dados e não voltará a aparecer.</Notice>
+                    </>
+                )
+            )}
         </ConfirmDialog>
     }>
             {activeTab === 'stats' && <Overview stats={stats} busy={isLoadingStats} refreshing={isLiveRefreshing} timeframe={analyticsTimeframe} setTimeframe={setAnalyticsTimeframe} autoRefresh={autoRefreshStats} setAutoRefresh={setAutoRefreshStats} refresh={() => loadStats()} navigate={navigate} pendingDeletions={pendingDeletionsCount} lastRun={lastScrapeResult} running={runningOp} />}
             {activeTab === 'inventory' && <Inventory events={stats?.events} busy={isLoadingStats} refresh={() => loadStats()} />}
+            {activeTab === 'quarantine' && <Quarantine events={quarantineEvents} categoriesCount={quarantineCategoriesCount} busy={isLoadingQuarantine} refresh={loadQuarantine} onRestore={openRestoreQuarantine} onDelete={openDeleteQuarantine} actionBusy={actionBusy} />}
             {activeTab === 'operations' && <Operations running={runningOp} output={opOutput} sources={scraperState.sources} steps={scraperState.steps} activeStep={scraperState.activeStep} elapsed={scraperElapsedSecs} lastRun={lastScrapeResult} currentRun={scraperState} logs={scraperState.logs || []} onRun={handleRunOperation} onRefresh={checkScraperStatus} onLogs={() => navigate('logs')} onClear={() => openClear(false)} clearing={actionBusy} statusError={scraperError} />}
             {activeTab === 'users' && <Users users={filteredUsers} total={users.length} busy={isLoadingUsers} search={userSearch} setSearch={setUserSearch} roleFilter={userRoleFilter} setRoleFilter={setUserRoleFilter} pending={pendingDeletionsCount} refresh={loadUsers} onRole={openRole} onDelete={openDelete} />}
             {activeTab === 'logs' && <Logs logs={logs} busy={isLoadingLogs} search={logSearch} setSearch={setLogSearch} level={logLevelFilter} setLevel={setLogLevelFilter} source={logSourceFilter} setSource={setLogSourceFilter} autoRefresh={autoRefreshLogs} setAutoRefresh={setAutoRefreshLogs} refresh={loadLogs} expanded={expandedLogId} setExpanded={setExpandedLogId} copied={copiedLogId} onCopy={handleCopyLog} onClear={openClear} clearing={actionBusy} />}

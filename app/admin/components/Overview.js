@@ -20,9 +20,18 @@ function TopEventCard({ title, count, max, index }) {
     );
 }
 
-function StatCard({ title, value, icon: Icon, trend, subtitle, alert }) {
+function StatCard({ title, value, icon: Icon, trend, subtitle, alert, onClick }) {
+    const Tag = onClick ? 'button' : 'div';
     return (
-        <div className={`p-6 rounded-2xl border ${alert ? 'bg-red-50/50 border-red-200 dark:bg-red-900/10 dark:border-red-900/30' : 'bg-surface border-line shadow-sm'} flex flex-col relative overflow-hidden`}>
+        <Tag 
+            type={onClick ? 'button' : undefined}
+            onClick={onClick}
+            className={`p-6 rounded-2xl border text-left transition-all ${
+                onClick ? 'cursor-pointer hover:border-brand/40 hover:shadow-md' : ''
+            } ${
+                alert ? 'bg-red-50/50 border-red-200 dark:bg-red-900/10 dark:border-red-900/30' : 'bg-surface border-line shadow-sm'
+            } flex flex-col relative overflow-hidden`}
+        >
             <div className="flex justify-between items-start mb-4">
                 <div className={`p-2.5 rounded-xl ${alert ? 'bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-400' : 'bg-brand-soft text-brand'}`}>
                     <Icon size={20} />
@@ -38,7 +47,7 @@ function StatCard({ title, value, icon: Icon, trend, subtitle, alert }) {
                 <strong className={`text-3xl font-bold tracking-tight ${alert ? 'text-red-700 dark:text-red-400' : 'text-ink'}`}>{number(value)}</strong>
             </div>
             {subtitle && <p className="text-xs text-muted mt-2">{subtitle}</p>}
-        </div>
+        </Tag>
     );
 }
 
@@ -81,19 +90,22 @@ export default function Overview({ stats, busy, refreshing, timeframe, setTimefr
                     value={events?.upcoming} 
                     icon={CalendarDays}
                     subtitle={`${number(events?.total)} no total histórico`}
+                    onClick={() => navigate('inventory')}
                 />
                 <StatCard 
                     title="Em Quarentena" 
                     value={events?.quarantined} 
                     icon={AlertTriangle}
                     alert={events?.quarantined > 0}
-                    subtitle={events?.quarantined > 0 ? 'Filtro automático do scraper' : 'Tudo limpo'}
+                    subtitle={events?.quarantined > 0 ? 'Filtro automático do scraper (ver motivos)' : 'Tudo limpo'}
+                    onClick={() => navigate('quarantine')}
                 />
                 <StatCard 
                     title="Comunidade" 
                     value={stats?.users?.total} 
                     icon={Users}
                     subtitle={pendingDeletions > 0 ? `${number(pendingDeletions)} contas para apagar` : 'Utilizadores registados'}
+                    onClick={() => navigate('users')}
                 />
                 <div className="p-6 rounded-2xl border border-line bg-surface shadow-sm flex flex-col">
                     <div className="flex justify-between items-start mb-4">

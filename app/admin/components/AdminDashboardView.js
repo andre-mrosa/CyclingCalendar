@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Activity, ArrowUpRight, CalendarDays, FileText, LayoutDashboard, Moon, Shield, Sun, Users } from 'lucide-react';
+import { Activity, AlertTriangle, ArrowUpRight, CalendarDays, FileText, LayoutDashboard, Moon, Shield, Sun, Users } from 'lucide-react';
 import { Button, Notice, Status } from './ui';
 
 import styles from '../admin.module.css';
@@ -7,12 +7,13 @@ import styles from '../admin.module.css';
 export const adminTabs = [
     { id: 'stats', label: 'Visão Geral', icon: LayoutDashboard },
     { id: 'inventory', label: 'Gestão do Calendário', icon: CalendarDays },
+    { id: 'quarantine', label: 'Quarentena', icon: AlertTriangle },
     { id: 'users', label: 'Comunidade', icon: Users },
     { id: 'operations', label: 'Automação (Scraper)', icon: Activity },
     { id: 'logs', label: 'Registos do Sistema', icon: FileText },
 ];
 
-export default function AdminDashboardView({ activeTab = 'stats', navigate, running, pendingDeletions = 0, dark = false, onToggleTheme, error, onRetry, children, dialog }) {
+export default function AdminDashboardView({ activeTab = 'stats', navigate, running, pendingDeletions = 0, quarantinedCount = 0, dark = false, onToggleTheme, error, onRetry, children, dialog }) {
     const onTabKeyDown = (event, index) => {
         let next;
         if (event.key === 'ArrowDown') next = (index + 1) % adminTabs.length;
@@ -65,6 +66,11 @@ export default function AdminDashboardView({ activeTab = 'stats', navigate, runn
                             {tab.id === 'users' && pendingDeletions > 0 && (
                                 <span className="ml-auto bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400 py-0.5 px-2 rounded-full text-xs font-bold border border-red-200 dark:border-red-800" aria-label={`${pendingDeletions} pedidos de eliminação`}>
                                     {pendingDeletions}
+                                </span>
+                            )}
+                            {tab.id === 'quarantine' && quarantinedCount > 0 && (
+                                <span className="ml-auto bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 py-0.5 px-2 rounded-full text-xs font-bold border border-amber-200 dark:border-amber-800" aria-label={`${quarantinedCount} provas em quarentena`}>
+                                    {quarantinedCount}
                                 </span>
                             )}
                         </button>
