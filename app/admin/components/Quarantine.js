@@ -8,15 +8,16 @@ import {
     RotateCcw, 
     Trash2, 
     Filter, 
-    CheckCircle2, 
     Compass, 
     Footprints, 
     Flag, 
     Mountain, 
-    Truck 
+    Truck,
+    ChevronLeft,
+    ChevronRight,
+    Info
 } from 'lucide-react';
 import { Button, Empty, Panel, RefreshButton, number } from './ui';
-import styles from '../admin.module.css';
 
 const CATEGORIES = [
     { id: 'ALL', label: 'Todas as categorias', icon: Filter },
@@ -39,11 +40,13 @@ export default function Quarantine({
 }) {
     const [search, setSearch] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('ALL');
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(15);
 
     const filtered = useMemo(() => {
         return events.filter(event => {
             const matchesCategory = categoryFilter === 'ALL' || event.category === categoryFilter;
-            const q = search.toLowerCase();
+            const q = search.toLowerCase().trim();
             const matchesSearch = !q || 
                 event.title?.toLowerCase().includes(q) ||
                 event.details?.toLowerCase().includes(q) ||
@@ -52,6 +55,22 @@ export default function Quarantine({
             return matchesCategory && matchesSearch;
         });
     }, [events, categoryFilter, search]);
+
+    const handleSearchChange = (val) => {
+        setSearch(val);
+        setPage(1);
+    };
+
+    const handleCategoryChange = (catId) => {
+        setCategoryFilter(catId);
+        setPage(1);
+    };
+
+    const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+    const paginated = useMemo(() => {
+        const start = (page - 1) * pageSize;
+        return filtered.slice(start, start + pageSize);
+    }, [filtered, page, pageSize]);
 
     const getBadgeStyle = (color) => {
         switch (color) {
@@ -71,38 +90,24 @@ export default function Quarantine({
     };
 
     return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <h2 className="text-xl font-bold tracking-tight text-ink flex items-center gap-2">
-                        <AlertTriangle className="text-red-500" size={24} />
-                        Provas em Quarentena
-                    </h2>
-                    <p className="text-sm text-muted mt-1 max-w-2xl leading-relaxed">
-                        Estas provas foram identificadas pelos scrapers ou pelo filtro de triagem automática como modalidades não-ciclismo 
-                        (como Trail Running, Atletismo a pé, Meias Maratonas ou Passeios TT motorizados) e foram retiradas do calendário público para não poluir as buscas dos ciclistas.
-                    </p>
+        <div className="space-y-4">
+            {/* Explainer Accordion (Compact & Non-intrusive) */}
+            <details className="group bg-surface border border-line rounded-xl text-xs overflow-hidden transition-all">
+                <summary className="flex items-center justify-between px-4 py-2.5 cursor-pointer font-medium text-muted hover:text-ink hover:bg-soft/40 transition-colors list-none select-none">
+                    <div className="flex items-center gap-2">
+                        <Info size={15} className="text-amber-500 shrink-0" />
+                        <span>Porque estão estas <strong>{events.length} provas</strong> em quarentena?</span>
+                    </div>
+                    <span className="text-[10px] text-muted group-open:rotate-180 transition-transform">▼</span>
+                </summary>
+                <div className="px-4 pb-3 pt-1 text-muted leading-relaxed border-t border-line/40 bg-soft/20 text-xs">
+                    Plataformas como a <em>Stop & Go</em> alojam inscrições de atletismo, trail e caminhadas além de ciclismo. 
+                    O filtro automático guarda-as aqui para que o calendário de ciclismo fique limpo. Se alguma prova tiver sido excluída por engano (ex: um Granfondo ou Maratona de BTT), podes restaurá-la para o calendário com um só clique.
                 </div>
-                <div className="shrink-0">
-                    <RefreshButton busy={busy} onClick={refresh} />
-                </div>
-            </div>
-
-            {/* Explainer Banner */}
-            <div className="bg-red-50/50 dark:bg-red-950/20 border border-red-200/70 dark:border-red-900/40 rounded-xl p-4 sm:p-5 flex items-start gap-3">
-                <AlertTriangle className="text-red-600 dark:text-red-400 shrink-0 mt-0.5" size={20} />
-                <div className="text-sm text-red-900 dark:text-red-200 space-y-1">
-                    <p className="font-semibold">Porque estão estas provas aqui?</p>
-                    <p className="text-xs text-red-800 dark:text-red-300/90 leading-relaxed">
-                        Plataformas como a <em>Stop & Go</em> alojam inscrições de atletismo e caminhadas além de ciclismo. 
-                        O filtro automático guarda-as aqui para que possas rever. Se alguma prova tiver sido excluída por engano (ex: um Granfondo ou Maratona de BTT), podes restaurá-la para o calendário com um só clique.
-                    </p>
-                </div>
-            </div>
+            </details>
 
             {/* Category Quick Badges */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
                 {CATEGORIES.map(cat => {
                     const count = cat.id === 'ALL' ? events.length : (categoriesCount[cat.id] || 0);
                     const isSelected = categoryFilter === cat.id;
@@ -111,14 +116,14 @@ export default function Quarantine({
                         <button
                             key={cat.id}
                             type="button"
-                            onClick={() => setCategoryFilter(cat.id)}
-                            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg border transition-all ${
+                            onClick={() => handleCategoryChange(cat.id)}
+                            className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-lg border transition-all ${
                                 isSelected
                                     ? 'bg-neutral-900 text-white border-neutral-900 dark:bg-white dark:text-neutral-900 shadow-sm'
                                     : 'bg-surface text-muted border-line hover:text-ink hover:bg-soft'
                             }`}
                         >
-                            <Icon size={14} />
+                            <Icon size={13} />
                             <span>{cat.label}</span>
                             <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
                                 isSelected ? 'bg-white/20 text-white dark:bg-black/20 dark:text-neutral-900' : 'bg-soft text-muted'
@@ -130,21 +135,37 @@ export default function Quarantine({
                 })}
             </div>
 
-            {/* Filter Bar */}
-            <div className="flex flex-col sm:flex-row gap-3">
+            {/* Filter & Controls Bar */}
+            <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between">
                 <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" size={16} />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" size={15} />
                     <input
                         type="text"
-                        placeholder="Pesquisar por título, localidade ou motivo da quarentena…"
+                        placeholder="Pesquisar por título, localidade ou motivo…"
                         value={search}
-                        onChange={e => setSearch(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2 text-sm bg-surface border border-line rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/40 text-ink placeholder:text-muted"
+                        onChange={e => handleSearchChange(e.target.value)}
+                        className="w-full pl-9 pr-4 py-1.5 text-sm bg-surface border border-line rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/40 text-ink placeholder:text-muted"
                     />
+                </div>
+                <div className="shrink-0 flex items-center justify-between sm:justify-end gap-2">
+                    <label className="text-xs text-muted flex items-center gap-1.5">
+                        <span>Ver:</span>
+                        <select
+                            value={pageSize}
+                            onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
+                            className="bg-surface border border-line rounded-md px-2 py-1 text-xs text-ink focus:outline-none cursor-pointer"
+                        >
+                            <option value={15}>15 por página</option>
+                            <option value={25}>25 por página</option>
+                            <option value={50}>50 por página</option>
+                            <option value={100}>Todas</option>
+                        </select>
+                    </label>
+                    <RefreshButton busy={busy} onClick={refresh} />
                 </div>
             </div>
 
-            {/* Events Table Panel */}
+            {/* Events Panel */}
             <Panel
                 title={`Lista de Exclusões (${filtered.length})`}
                 description={categoryFilter === 'ALL' ? 'Todos os registos em quarentena' : `A filtrar por: ${CATEGORIES.find(c => c.id === categoryFilter)?.label}`}
@@ -154,92 +175,196 @@ export default function Quarantine({
                         {events.length === 0 ? 'Não existem provas em quarentena. O calendário está limpo!' : 'Nenhuma prova encontrada com os filtros atuais.'}
                     </Empty>
                 ) : (
-                    <div className="w-full overflow-x-auto">
-                        <table className="w-full text-left border-collapse text-sm">
-                            <thead>
-                                <tr className="border-b border-line bg-soft/40 text-xs font-semibold text-muted tracking-wider uppercase">
-                                    <th className="px-6 py-3.5">Prova</th>
-                                    <th className="px-6 py-3.5">Data Detetada</th>
-                                    <th className="px-6 py-3.5">Localidade</th>
-                                    <th className="px-6 py-3.5">Motivo da Quarentena</th>
-                                    <th className="px-6 py-3.5 text-right">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-line">
-                                {filtered.map(event => (
-                                    <tr key={event.id} className="hover:bg-soft/40 transition-colors">
-                                        {/* Title + Link */}
-                                        <td className="px-6 py-4">
-                                            <div className="flex flex-col gap-0.5">
-                                                <div className="font-semibold text-ink flex items-center gap-2">
-                                                    {event.title}
-                                                    {event.link && (
-                                                        <a 
-                                                            href={event.link} 
-                                                            target="_blank" 
-                                                            rel="noopener noreferrer" 
-                                                            className="text-muted hover:text-brand transition-colors inline-flex items-center"
-                                                            title="Ver página original"
-                                                        >
-                                                            <ExternalLink size={13} />
-                                                        </a>
-                                                    )}
-                                                </div>
-                                                <span className="text-xs text-muted font-mono">{event.id}</span>
-                                            </div>
-                                        </td>
-
-                                        {/* Date */}
-                                        <td className="px-6 py-4 whitespace-nowrap text-xs text-ink font-medium">
-                                            {event.date || 'Sem data'}
-                                        </td>
-
-                                        {/* Location */}
-                                        <td className="px-6 py-4 whitespace-nowrap text-xs text-muted">
-                                            {event.details || event.distrito || event.regiao || 'Portugal'}
-                                        </td>
-
-                                        {/* Reason & Badge */}
-                                        <td className="px-6 py-4 max-w-sm">
-                                            <div className="flex flex-col gap-1.5 items-start">
-                                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border ${getBadgeStyle(event.color)}`}>
-                                                    {event.badge}
-                                                </span>
-                                                <span className="text-xs text-muted leading-tight">
-                                                    {event.reason}
-                                                </span>
-                                            </div>
-                                        </td>
-
-                                        {/* Action Buttons */}
-                                        <td className="px-6 py-4 text-right whitespace-nowrap">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <Button
-                                                    tone="default"
-                                                    disabled={actionBusy}
-                                                    onClick={() => onRestore(event)}
-                                                    className="text-xs py-1 px-2.5 hover:border-green-500 hover:text-green-600 dark:hover:text-green-400"
-                                                    title="Mover esta prova para o calendário público de ciclismo"
-                                                >
-                                                    <RotateCcw size={13} />
-                                                    Restaurar
-                                                </Button>
-                                                <Button
-                                                    tone="danger"
-                                                    disabled={actionBusy}
-                                                    onClick={() => onDelete(event)}
-                                                    className="text-xs py-1 px-2.5"
-                                                    title="Eliminar permanentemente da base de dados"
-                                                >
-                                                    <Trash2 size={13} />
-                                                    Eliminar
-                                                </Button>
-                                            </div>
-                                        </td>
+                    <div>
+                        {/* Desktop Table View */}
+                        <div className="hidden md:block w-full">
+                            <table className="w-full text-left border-collapse text-sm table-fixed">
+                                <colgroup>
+                                    <col className="w-[36%]" />
+                                    <col className="w-[14%]" />
+                                    <col className="w-[16%]" />
+                                    <col className="w-[18%]" />
+                                    <col className="w-[16%]" />
+                                </colgroup>
+                                <thead>
+                                    <tr className="border-b border-line bg-soft/40 text-xs font-semibold text-muted tracking-wider uppercase">
+                                        <th className="px-4 py-3">Prova</th>
+                                        <th className="px-4 py-3">Data Detetada</th>
+                                        <th className="px-4 py-3">Localidade</th>
+                                        <th className="px-4 py-3">Motivo da Quarentena</th>
+                                        <th className="px-4 py-3 text-right">Ações</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="divide-y divide-line">
+                                    {paginated.map(event => (
+                                        <tr key={event.id} className="hover:bg-soft/40 transition-colors">
+                                            {/* Prova */}
+                                            <td className="px-4 py-3 align-middle">
+                                                <div className="flex flex-col min-w-0 pr-2">
+                                                    <div className="font-semibold text-ink text-sm flex items-center gap-1.5">
+                                                        <span className="truncate" title={event.title}>{event.title}</span>
+                                                        {event.link && (
+                                                            <a 
+                                                                href={event.link} 
+                                                                target="_blank" 
+                                                                rel="noopener noreferrer" 
+                                                                className="text-muted hover:text-brand transition-colors shrink-0"
+                                                                title="Ver página original"
+                                                            >
+                                                                <ExternalLink size={13} />
+                                                            </a>
+                                                        )}
+                                                    </div>
+                                                    <span className="text-[11px] text-muted font-mono truncate">{event.id}</span>
+                                                </div>
+                                            </td>
+
+                                            {/* Data */}
+                                            <td className="px-4 py-3 align-middle text-xs text-ink font-medium whitespace-nowrap">
+                                                {event.date || 'Sem data'}
+                                            </td>
+
+                                            {/* Localidade */}
+                                            <td className="px-4 py-3 align-middle text-xs text-muted">
+                                                <span className="truncate block" title={event.details || event.distrito || event.regiao || 'Portugal'}>
+                                                    {event.details || event.distrito || event.regiao || 'Portugal'}
+                                                </span>
+                                            </td>
+
+                                            {/* Motivo */}
+                                            <td className="px-4 py-3 align-middle">
+                                                <div className="flex flex-col items-start min-w-0">
+                                                    <span 
+                                                        className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border ${getBadgeStyle(event.color)}`}
+                                                        title={event.reason}
+                                                    >
+                                                        {event.badge}
+                                                    </span>
+                                                    <span className="text-[11px] text-muted truncate max-w-full mt-0.5" title={event.reason}>
+                                                        {event.reason}
+                                                    </span>
+                                                </div>
+                                            </td>
+
+                                            {/* Ações */}
+                                            <td className="px-4 py-3 align-middle text-right whitespace-nowrap">
+                                                <div className="flex items-center justify-end gap-1.5">
+                                                    <Button
+                                                        tone="default"
+                                                        disabled={actionBusy}
+                                                        onClick={() => onRestore(event)}
+                                                        className="text-xs py-1 px-2.5 hover:border-green-500 hover:text-green-600 dark:hover:text-green-400"
+                                                        title="Mover esta prova para o calendário público de ciclismo"
+                                                    >
+                                                        <RotateCcw size={12} />
+                                                        Restaurar
+                                                    </Button>
+                                                    <Button
+                                                        tone="danger"
+                                                        disabled={actionBusy}
+                                                        onClick={() => onDelete(event)}
+                                                        className="text-xs py-1 px-2.5"
+                                                        title="Eliminar permanentemente da base de dados"
+                                                    >
+                                                        <Trash2 size={12} />
+                                                        Eliminar
+                                                    </Button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Mobile Card List View */}
+                        <div className="md:hidden divide-y divide-line">
+                            {paginated.map(event => (
+                                <div key={event.id} className="p-4 space-y-2.5">
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div className="min-w-0 flex-1">
+                                            <div className="font-semibold text-ink text-sm flex items-center gap-1.5">
+                                                <span className="break-words">{event.title}</span>
+                                                {event.link && (
+                                                    <a 
+                                                        href={event.link} 
+                                                        target="_blank" 
+                                                        rel="noopener noreferrer" 
+                                                        className="text-muted hover:text-brand shrink-0"
+                                                    >
+                                                        <ExternalLink size={13} />
+                                                    </a>
+                                                )}
+                                            </div>
+                                            <span className="text-[10px] text-muted font-mono">{event.id}</span>
+                                        </div>
+                                        <span className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border ${getBadgeStyle(event.color)}`}>
+                                            {event.badge}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
+                                        <span>📅 <strong className="text-ink font-medium">{event.date || 'Sem data'}</strong></span>
+                                        <span>📍 {event.details || event.distrito || 'Portugal'}</span>
+                                    </div>
+
+                                    <p className="text-xs text-muted italic bg-soft/30 p-2 rounded border border-line/40">
+                                        {event.reason}
+                                    </p>
+
+                                    <div className="flex items-center justify-end gap-2 pt-1">
+                                        <Button
+                                            tone="default"
+                                            disabled={actionBusy}
+                                            onClick={() => onRestore(event)}
+                                            className="text-xs py-1 px-2.5 flex-1 hover:border-green-500 hover:text-green-600"
+                                        >
+                                            <RotateCcw size={12} />
+                                            Restaurar
+                                        </Button>
+                                        <Button
+                                            tone="danger"
+                                            disabled={actionBusy}
+                                            onClick={() => onDelete(event)}
+                                            className="text-xs py-1 px-2.5 flex-1"
+                                        >
+                                            <Trash2 size={12} />
+                                            Eliminar
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Pagination Bar */}
+                        {filtered.length > pageSize && (
+                            <div className="px-4 sm:px-6 py-3 border-t border-line flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted bg-soft/20">
+                                <div>
+                                    A mostrar <strong>{(page - 1) * pageSize + 1}</strong> a <strong>{Math.min(page * pageSize, filtered.length)}</strong> de <strong>{number(filtered.length)}</strong> provas
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                                        disabled={page === 1}
+                                        className="py-1 px-2.5 text-xs"
+                                    >
+                                        <ChevronLeft size={14} />
+                                        Anterior
+                                    </Button>
+                                    <span className="px-2 font-medium text-ink">
+                                        Página {page} de {totalPages}
+                                    </span>
+                                    <Button
+                                        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                        disabled={page === totalPages}
+                                        className="py-1 px-2.5 text-xs"
+                                    >
+                                        Seguinte
+                                        <ChevronRight size={14} />
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </Panel>
