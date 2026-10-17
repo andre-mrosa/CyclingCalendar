@@ -35,7 +35,7 @@ export const deepScrapeCabreira = async (link) => {
 export const scrapeCabreira = async (year, options = {}) => {
     assertMinimalCollectionEnabled("Cabreira");
     try {
-        logInfo('SCRAPER', `In�cio da sincroniza��o Cabreira Solutions (Ano: ${year || 'Todos'})`);
+        logInfo('SCRAPER', `Início da sincronização Cabreira Solutions (Ano: ${year || 'Todos'})`);
         const response = await fetch(`https://cabreirasolutions.com/eventos/`, {
             headers: { 'User-Agent': 'Mozilla/5.0' }
         });
@@ -114,7 +114,7 @@ export const scrapeCabreira = async (year, options = {}) => {
             await delay(1000); // Polite delay between batches
         }
 
-        await logInfo('SCRAPER', `Sincroniza��o Cabreira conclu�da (${processedCount} provas futuras processadas na BD)`);
+        await logInfo('SCRAPER', `Sincronização Cabreira concluída (${processedCount} provas futuras processadas na BD)`);
         return processedCount;
     } catch (e) {
         await logError('SCRAPER', `Erro durante o scraping da Cabreira Solutions: ${e.message}`, e);

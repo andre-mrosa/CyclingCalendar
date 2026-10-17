@@ -35,7 +35,7 @@ export const scrapeStopAndGo = async (options = {}) => {
     assertMinimalCollectionEnabled("Stop and Go");
     let processedCount = 0;
     try {
-        logInfo('SCRAPER', 'In�cio da sincroniza��o Stop and Go (sitemap.xml + abas Downhill, Gravel, BTT, Estrada)');
+        logInfo('SCRAPER', 'Início da sincronização Stop and Go (sitemap.xml + abas Downhill, Gravel, BTT, Estrada)');
 
         const res = await fetch('https://stopandgo.net/sitemap.xml', {
             headers: { 'User-Agent': 'Mozilla/5.0' },
@@ -118,7 +118,7 @@ export const scrapeStopAndGo = async (options = {}) => {
             await delay(1000); // Polite delay between batches
         }
 
-        await logInfo('SCRAPER', `Sincroniza��o Stop and Go conclu�da (${processedCount} provas futuras processadas na BD)`);
+        await logInfo('SCRAPER', `Sincronização Stop and Go concluída (${processedCount} provas futuras processadas na BD)`);
         return processedCount;
     } catch (err) {
         await logError('SCRAPER', `Erro no scraping Stop and Go: ${err.message}`, err);
