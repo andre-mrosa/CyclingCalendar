@@ -177,22 +177,14 @@ export default function Quarantine({
                 ) : (
                     <div>
                         {/* Desktop Table View */}
-                        <div className="hidden md:block w-full">
-                            <table className="w-full text-left border-collapse text-sm table-fixed">
-                                <colgroup>
-                                    <col className="w-[36%]" />
-                                    <col className="w-[14%]" />
-                                    <col className="w-[16%]" />
-                                    <col className="w-[18%]" />
-                                    <col className="w-[16%]" />
-                                </colgroup>
+                        <div className="hidden md:block w-full overflow-x-auto">
+                            <table className="w-full text-left border-collapse text-sm">
                                 <thead>
                                     <tr className="border-b border-line bg-soft/40 text-xs font-semibold text-muted tracking-wider uppercase">
-                                        <th className="px-4 py-3">Prova</th>
-                                        <th className="px-4 py-3">Data Detetada</th>
-                                        <th className="px-4 py-3">Localidade</th>
-                                        <th className="px-4 py-3">Motivo da Quarentena</th>
-                                        <th className="px-4 py-3 text-right">Ações</th>
+                                        <th className="px-4 py-3 min-w-[200px]">Prova</th>
+                                        <th className="px-4 py-3 w-40 whitespace-nowrap">Data / Local</th>
+                                        <th className="px-4 py-3 w-48">Motivo da Quarentena</th>
+                                        <th className="px-4 py-3 w-48 text-right whitespace-nowrap">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-line">
@@ -219,41 +211,39 @@ export default function Quarantine({
                                                 </div>
                                             </td>
 
-                                            {/* Data */}
-                                            <td className="px-4 py-3 align-middle text-xs text-ink font-medium whitespace-nowrap">
-                                                {event.date || 'Sem data'}
-                                            </td>
-
-                                            {/* Localidade */}
-                                            <td className="px-4 py-3 align-middle text-xs text-muted">
-                                                <span className="truncate block" title={event.details || event.distrito || event.regiao || 'Portugal'}>
-                                                    {event.details || event.distrito || event.regiao || 'Portugal'}
-                                                </span>
+                                            {/* Data / Local */}
+                                            <td className="px-4 py-3 align-middle whitespace-nowrap">
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs text-ink font-semibold">{event.date || 'Sem data'}</span>
+                                                    <span className="text-[11px] text-muted truncate max-w-[150px]" title={event.details || event.distrito || event.regiao || 'Portugal'}>
+                                                        {event.details || event.distrito || event.regiao || 'Portugal'}
+                                                    </span>
+                                                </div>
                                             </td>
 
                                             {/* Motivo */}
                                             <td className="px-4 py-3 align-middle">
-                                                <div className="flex flex-col items-start min-w-0">
+                                                <div className="flex flex-col items-start min-w-0 pr-2">
                                                     <span 
                                                         className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border ${getBadgeStyle(event.color)}`}
                                                         title={event.reason}
                                                     >
                                                         {event.badge}
                                                     </span>
-                                                    <span className="text-[11px] text-muted truncate max-w-full mt-0.5" title={event.reason}>
+                                                    <span className="text-[11px] text-muted truncate max-w-[180px] mt-0.5" title={event.reason}>
                                                         {event.reason}
                                                     </span>
                                                 </div>
                                             </td>
 
                                             {/* Ações */}
-                                            <td className="px-4 py-3 align-middle text-right whitespace-nowrap">
-                                                <div className="flex items-center justify-end gap-1.5">
+                                            <td className="px-4 py-3 align-middle text-right whitespace-nowrap w-48">
+                                                <div className="inline-flex items-center justify-end gap-2 shrink-0">
                                                     <Button
                                                         tone="default"
                                                         disabled={actionBusy}
                                                         onClick={() => onRestore(event)}
-                                                        className="text-xs py-1 px-2.5 hover:border-green-500 hover:text-green-600 dark:hover:text-green-400"
+                                                        className="text-xs py-1 px-2.5 hover:border-green-500 hover:text-green-600 dark:hover:text-green-400 shrink-0"
                                                         title="Mover esta prova para o calendário público de ciclismo"
                                                     >
                                                         <RotateCcw size={12} />
@@ -263,7 +253,7 @@ export default function Quarantine({
                                                         tone="danger"
                                                         disabled={actionBusy}
                                                         onClick={() => onDelete(event)}
-                                                        className="text-xs py-1 px-2.5"
+                                                        className="text-xs py-1 px-2.5 shrink-0"
                                                         title="Eliminar permanentemente da base de dados"
                                                     >
                                                         <Trash2 size={12} />
