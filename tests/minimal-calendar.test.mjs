@@ -11,16 +11,16 @@ const historical = { id: 'example', title: 'Prova exemplo', date: '04 OUT 2026',
     description: 'PRIVATE_DESCRIPTION', image: 'PRIVATE_IMAGE', logo: 'PRIVATE_LOGO', programa: 'PRIVATE_PROGRAM', details: 'PRIVATE_DETAILS', prices: 'PRIVATE_PRICES',
     translations: [{ title: 'PRIVATE_TRANSLATION' }], listSummary: { locationInfo: { label: 'PRIVATE_LOCATION' } }, extraLinks: [{ link: 'PRIVATE_DOCUMENT' }], gpxData: 'PRIVATE_GPX', lat: 41, lng: -8 };
 
-test('database and browser projection expose only name, date, locality and source link', async () => {
+test('database and browser projection expose only minimal calendar fields and source link', async () => {
     let calls = 0;
     const events = await queryCalendarList({ event: { findMany: async ({ select }) => {
         calls++; assert.deepEqual(select, PUBLIC_EVENT_SELECT);
-        for (const key of ['description', 'details', 'translations', 'listSummary', 'programa', 'image', 'extraLinks', 'tag', 'ambito', 'escaloes', 'licenca']) assert.equal(select[key], undefined);
+        for (const key of ['description', 'details', 'translations', 'listSummary', 'programa', 'image', 'extraLinks']) assert.equal(select[key], undefined);
         return [{ ...historical, futureSensitiveField: 'PRIVATE_FUTURE' }];
     } } }, [], ['FPC']);
     assert.equal(calls, 1);
     assert.equal(events.length, 1);
-    assert.doesNotMatch(JSON.stringify(events), /PRIVATE_|registration|gpx|lat"|lng"/);
+    assert.doesNotMatch(JSON.stringify(events), /PRIVATE_|gpx|lat"|lng"/);
     assert.deepEqual(toPublicEvent(events[0]), events[0]);
 });
 

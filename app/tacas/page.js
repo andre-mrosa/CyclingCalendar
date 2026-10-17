@@ -10,7 +10,7 @@ export default function Tacas() {
             pageTitle={t('page_cups_title')} 
             pageSubtitle={t('page_cups_subtitle')}
             forceAmbito="Taça de Portugal"
-            activeFilters={['search', 'year', 'month', 'escalao', 'distrito']}
+            activeFilters={['search', 'year', 'month', 'escalao', 'distrito', 'modalidade']}
         />
     );
 }

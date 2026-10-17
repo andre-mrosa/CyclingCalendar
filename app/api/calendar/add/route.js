@@ -1,5 +1,6 @@
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
+import { detectRaceDate } from '@/app/utils/detectRaceDate';
 
 async function getTargetCalendarId(token) {
     try {
@@ -105,15 +106,16 @@ export async function POST(req) {
         };
 
         if (type === 'race') {
-            const startDateStr = parsePtDate(event.date);
-            let endDateStr = parsePtDate(event.endDate) || startDateStr;
+            const detected = detectRaceDate(event);
+            const startDateStr = detected?.raceDateISO || parsePtDate(event.date) || (event.sortDate ? new Date(event.sortDate).toISOString().slice(0, 10) : null);
+            let endDateStr = detected?.raceEndDateISO || parsePtDate(event.endDate) || startDateStr;
             if (!startDateStr) return NextResponse.json({ error: 'Invalid date' }, { status: 400 });
             
             const endDt = new Date(endDateStr);
             endDt.setDate(endDt.getDate() + 1);
             
             gEvent.summary = event.title;
-            gEvent.description = `Mais informações: ${event.link || 'App CyclingCalendar'}\n\nEscalão: ${event.escalao || '-'}\nÂmbito: ${event.ambito || '-'}`;
+            gEvent.description = `Mais informações: ${event.link || 'App CyclingCalendar'}\n\nModalidade: ${event.tag || '-'}\nÂmbito: ${event.ambito || '-'}`;
             gEvent.location = (event.distrito && event.distrito !== 'A definir') ? event.distrito + ', Portugal' : 'Portugal';
             gEvent.start = { date: startDateStr };
             gEvent.end = { date: endDt.toISOString().split('T')[0] };
@@ -138,10 +140,10 @@ export async function POST(req) {
         });
 
         if (!createRes.ok) return NextResponse.json({ error: 'Create failed' }, { status: 500 });
-        return nextResponse.json({ success: true, message: 'created', calendar: targetCalendarId });
+        return NextResponse.json({ success: true, message: 'created', calendar: targetCalendarId });
 
     } catch (error) {
         console.error("Calendar API Error:", error);
-        return nextResponse.json({ error: 'Internal Error' }, { status: 500 });
+        return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
     }
 }

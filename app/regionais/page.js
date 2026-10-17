@@ -10,7 +10,7 @@ export default function Regionais() {
             pageTitle={t('page_regionals_title')} 
             pageSubtitle={t('page_regionals_subtitle')}
             forceAmbito="Regional"
-            activeFilters={['search', 'year', 'month', 'escalao', 'regiao']}
+            activeFilters={['search', 'year', 'month', 'escalao', 'regiao', 'modalidade']}
             applyDefaultRegiao={true}
         />
     );

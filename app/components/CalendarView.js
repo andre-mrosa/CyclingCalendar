@@ -134,8 +134,8 @@ export default function CalendarView({
     }
 
     const effectiveSources = [...((searchSources?.length ? searchSources : selectedSources)?.length > 0 ? (searchSources || selectedSources) : ['FPC', 'Cabreira', 'Stop and Go', 'Classificações.net', 'Recorde Pessoal', 'Apedalar'])].sort();
-    const eventsUrl = `/api/events?view=minimal-v3&years=all&sources=${effectiveSources.join(',')}`;
-    const eventsCacheKey = `cycling_calendar_minimal_v3_${[...effectiveSources].sort().join(',')}`;
+    const eventsUrl = `/api/events?view=minimal-v4&years=all&sources=${effectiveSources.join(',')}`;
+    const eventsCacheKey = `cycling_calendar_minimal_v4_${[...effectiveSources].sort().join(',')}`;
     const { data: fetchedEvents, error, isLoading: loading, mutate } = useSWR(
         eventsUrl,
         fetcher,
@@ -259,8 +259,8 @@ export default function CalendarView({
     const setVisibleCount = count => setPagination({ list: filteredEvents, count: typeof count === 'function' ? count(visibleCount) : count });
 
     const uniqueEscaloes = ['Elite', 'Elite Amador', 'Sub-23', 'Sub-19 (Juniores)', 'Sub-17 (Cadetes)', 'Sub-15 (Juvenis)', 'Masters / Veteranos', 'Femininas', 'Escolas', 'Profissional (UCI)', 'Todos (Aberto)', 'Geral / Vários'];
-    const uniqueAmbitos = ['Todos', ...new Set(events.map(e => e.ambito))];
-    const uniqueLicencas = ['Todas', ...new Set(events.filter(e => e.licenca).map(e => e.licenca))];
+    const uniqueAmbitos = ['Todos', ...new Set(events.map(e => e.ambito).filter(Boolean))];
+    const uniqueLicencas = ['Todas', ...new Set(events.map(e => e.licenca).filter(Boolean))];
 
     const TODAS_AS_REGIOES = [
         'AC Minho', 'AC Porto', 'AC Vila Real', 'AC Beira Litoral', 'AC Beira Alta',

@@ -122,12 +122,14 @@ export function filterEvents(events, filters) {
 
     if (selectedAmbito && selectedAmbito !== 'Todos') {
         filtered = filtered.filter(event => selectedAmbito === 'Campeonato Nacional'
-            ? isOfficialNationalChampionship(event)
+            ? (event.ambito === 'Campeonato Nacional' || isOfficialNationalChampionship(event))
             : event.ambito === selectedAmbito);
     }
 
     if (selectedLicenca && selectedLicenca !== 'Todas') {
-        filtered = filtered.filter(event => event.licenca === selectedLicenca);
+        filtered = filtered.filter(event => selectedLicenca === 'CPT / Lazer'
+            ? (event.licenca === 'CPT / Lazer' || event.licenca === 'Lazer')
+            : event.licenca === selectedLicenca);
     }
 
     if (selectedRegiao && selectedRegiao !== 'Todas') {
