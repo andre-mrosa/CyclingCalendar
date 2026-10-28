@@ -46,7 +46,7 @@ test('exports contain original links and district, never historical descriptions
 test('removed HTTP features cannot start a fetch, even with a cron secret or user-supplied URL', async t => {
     let calls = 0;
     t.mock.method(globalThis, 'fetch', () => { calls++; throw Error('Network forbidden'); });
-    for (const path of ['programa', 'image-proxy', 'gpx', 'download-track', 'weather', 'road-distance', 'translate', 'sync-gpx', 'test-cabreira', 'force-cabreira', 'force-scrape-all', 'calendar/add', 'admin/translate-all', 'cron/alerts']) {
+    for (const path of ['programa', 'image-proxy', 'gpx', 'download-track', 'weather', 'road-distance', 'translate', 'sync-gpx', 'test-cabreira', 'force-cabreira', 'force-scrape-all', 'admin/translate-all', 'cron/alerts']) {
         const route = await import(`../app/api/${path}/route.js`);
         for (const method of ['GET', 'POST'].filter(method => route[method])) {
             const result = await route[method](new Request('https://calendar.test/api/' + path + '?url=https://example.com/a', { method, headers: { authorization: 'Bearer test-secret' } }));
@@ -57,10 +57,11 @@ test('removed HTTP features cannot start a fetch, even with a cron secret or use
     assert.equal(calls, 0);
 });
 
-test('event assets are absent from public and sitemap cannot read the old event catalogue', () => {
+test('event assets are absent and sitemap only consumes the minimal public catalogue', () => {
     assert.equal(existsSync(new URL('../public/media/events', import.meta.url)), false);
     const sitemap = readFileSync(new URL('../app/sitemap.js', import.meta.url), 'utf8');
     assert.doesNotMatch(sitemap, /prisma|\/events\//);
+    assert.match(sitemap, /getPublicCalendarEvents/);
 });
 
 test('production calendar is open; retired files remain closed', async t => {

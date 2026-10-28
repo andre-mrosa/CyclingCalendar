@@ -63,7 +63,7 @@ export function isStageRace(event) {
 }
 
 export function getEventDiscipline(eventOrTitle, details = '') {
-    return getEventRaceTypes(eventOrTitle, details)[0] || 'Estrada';
+    return getEventRaceTypes(eventOrTitle, details)[0] || '';
 }
 
 export function getEventCategories(event) {
@@ -193,7 +193,7 @@ export function getEventRaceTypes(eventOrTitle, details = '') {
     if (RACE_TAXONOMY.some(group => group.discipline === storedFamily)) return [storedFamily];
     if (/passeio|cicloturismo|turismo\s+em\s+bicicleta|\brota\b/.test(titleText)) return ['Passeio / Lazer'];
 
-    return ['Estrada'];
+    return [];
 }
 
 export function getEventRaceType(eventOrTitle, details = '') {

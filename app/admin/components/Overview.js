@@ -126,7 +126,7 @@ export default function Overview({ stats, busy, refreshing, timeframe, setTimefr
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                     <div>
                         <h3 className="text-xl font-bold tracking-tight text-ink">Impacto e Audiência</h3>
-                        <p className="text-sm text-muted mt-1">Como os ciclistas interagem com o calendário.</p>
+                        <p className="text-sm text-muted mt-1">Atividade registada apenas com consentimento para estatísticas. Exclui dispositivos de administrador e pedidos com Do Not Track. Não representa o total de visitas nem os cliques do Google.</p>
                     </div>
                     <div className="flex items-center gap-3 bg-surface border border-line p-1.5 rounded-xl">
                         <select value={timeframe} onChange={event => setTimeframe(event.target.value)} className="bg-transparent text-sm text-ink font-medium px-3 py-1.5 focus:outline-none cursor-pointer">
@@ -147,7 +147,7 @@ export default function Overview({ stats, busy, refreshing, timeframe, setTimefr
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><Activity size={16}/></div>
-                                        <span className="text-sm font-medium text-ink">Sessões Totais</span>
+                                        <span className="text-sm font-medium text-ink">Sessões registadas</span>
                                     </div>
                                     <span className="font-bold text-ink">{number(analytics?.sessions)}</span>
                                 </div>

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { analyticsAggregateKey, analyticsBucket, analyticsSince, normalizeAnalyticsPath } from '../app/lib/analyticsAggregate.js';
+import { eventPath } from '../app/lib/eventDiscovery.js';
 
 test('aggregate dates use one UTC day bucket and keys separate metric dimensions', () => {
     const day = analyticsBucket(new Date('2026-10-01T23:59:59Z'));
@@ -22,6 +23,12 @@ test('date filters include today, seven, thirty or thirteen months of UTC bucket
 test('only known public paths can enter aggregate analytics', () => {
     assert.equal(normalizeAnalyticsPath('/'), '/');
     assert.equal(normalizeAnalyticsPath('/regionais'), '/regionais');
+    assert.equal(normalizeAnalyticsPath('/modalidades/btt'), '/modalidades/btt');
+    assert.equal(normalizeAnalyticsPath('/modalidades/unknown'), null);
+    assert.equal(normalizeAnalyticsPath('/regioes/minho'), '/regioes/minho');
+    assert.equal(normalizeAnalyticsPath(eventPath({ id: 'secret/event#2', title: 'Prova' })), '/provas');
+    assert.equal(normalizeAnalyticsPath('/provas/not-a-valid-id'), null);
+    assert.equal(normalizeAnalyticsPath('/provas'), '/provas');
     for (const path of ['/admin', '/agenda', '/definicoes', '/api/analytics/track', '/events/race', '/?email=x', '/nacionais#top']) {
         assert.equal(normalizeAnalyticsPath(path), null, path);
     }

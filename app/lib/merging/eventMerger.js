@@ -2,6 +2,7 @@ import { isSameEvent } from './eventMatcher.js';
 import { getEventDiscipline, isOfficialNationalChampionship } from '../../utils/eventClassifier.js';
 import { getAmbito } from '../scrapers/utils.js';
 import { originalEventUrl, getPreferredEventLink, isFpcUrl } from '../publicEvent.js';
+import { SOURCE_REVIEWS } from '../contentReleasePolicy.js';
 
 /**
  * Combina duas listas de links extras sem duplicar URLs
@@ -245,7 +246,7 @@ export function mergeEventRecords(existing, incoming) {
  */
 let municipalitiesCache = null;
 
-const MINIMAL_SOURCE_NAMES = new Set(['FPC', 'Cabreira', 'Apedalar', 'Recorde Pessoal', 'Classificações.net']);
+const MINIMAL_SOURCE_NAMES = new Set(Object.keys(SOURCE_REVIEWS));
 
 function getOriginalSourceLink(event) {
     return getPreferredEventLink(event?.link, event?.extraLinks);

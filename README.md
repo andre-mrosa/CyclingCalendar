@@ -20,12 +20,13 @@ Testes: `npm test` (ou `node --test tests/*.test.mjs`).
 O histórico de migrações é PostgreSQL. A preparação de uma base nova, o baseline
 de instalações existentes e o preenchimento dos resumos estão documentados em
 [`maintenance/DATABASE.md`](maintenance/DATABASE.md). Executar as migrações antes
-de publicar esta versão. A listagem lê `Event.listSummary`, em vez dos programas
-HTML completos; um trigger invalida o resumo quando os dados relevantes mudam.
+de publicar esta versão. A listagem atual consulta apenas os campos básicos
+definidos em `PUBLIC_EVENT_SELECT`; não lê programas nem resumos históricos.
+Os resumos e os respetivos triggers permanecem no histórico da base de dados.
 O cache da origem tem 60 segundos e o do CDN 300 segundos.
 
 As dependências incluem overrides de segurança para dependências transitivas de
-Prisma, Workflow e Workbox. Manter estes overrides até as dependências diretas
+Prisma e Workflow. Manter estes overrides até as dependências diretas
 incorporarem versões corrigidas, verificando com `npm audit`, build e testes.
 
 ### Painel de administração e contagens
@@ -54,9 +55,24 @@ não ciclísticos confirmados passam para a fonte `Quarentena`, preservando IDs
 e dados para recuperação. Falhas HTTP e dados ambíguos ficam sem alteração.
 Os ficheiros de recuperação são locais e estão excluídos do Git.
 
-Pesquisas guardadas, alertas por email e consultas às fontes: configuração e validação em [maintenance/SEARCH-ALERTS.md](maintenance/SEARCH-ALERTS.md).
+As pesquisas guardadas estão disponíveis. O envio automático de alertas por email
+está desativado; as instruções antigas estão identificadas como históricas em
+[maintenance/SEARCH-ALERTS.md](maintenance/SEARCH-ALERTS.md).
 
-## Getting Started
+## SEO e informação pública
+
+As fichas de provas usam apenas os campos básicos do calendário e ligam à fonte.
+Preços, vagas, organizadores e locais exatos desconhecidos não são inferidos.
+O sitemap inclui fichas próprias e coleções com dados disponíveis. A auditoria
+HTTP de leitura é `node maintenance/verify-seo.mjs` (servidor local na porta 3102,
+ou `SEO_TEST_URL` para outro destino). Detalhes e limites da revisão em
+[maintenance/SEO-2026-10-28.md](maintenance/SEO-2026-10-28.md).
+
+A limpeza de componentes, dependências, scripts e previews antigos, com os
+caminhos de recuperação, está registada em
+[maintenance/CLEANUP-2026-10-28.md](maintenance/CLEANUP-2026-10-28.md).
+
+## Desenvolvimento local
 
 First, run the development server:
 

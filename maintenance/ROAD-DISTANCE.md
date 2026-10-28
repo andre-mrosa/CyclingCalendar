@@ -1,5 +1,9 @@
 # Distância por estrada sem serviço pago
 
+> Documento histórico de uma funcionalidade retirada da interface. O endpoint
+> de distâncias devolve 410 e não calcula percursos. As instruções abaixo não
+> descrevem a versão atual; ver a [revisão de limpeza](CLEANUP-2026-10-28.md).
+
 O detalhe de uma prova inclui um link de percurso Google Maps, que não usa uma API faturada nem requer chave. Os cartões e o filtro identificam explicitamente a distância em linha reta.
 
 Para calcular quilómetros dentro do site, criar uma conta **Standard gratuita** em https://account.heigit.org/ e configurar `ORS_API_KEY` como variável privada no ambiente Vercel. Fazer novo deployment após a configuração. Nunca usar `NEXT_PUBLIC_` para esta chave nem guardá-la no Git. Sem chave, o botão de cálculo fica oculto e a API devolve `NOT_CONFIGURED`.

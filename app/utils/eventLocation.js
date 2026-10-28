@@ -3,7 +3,7 @@ export const normalizeLocation = value => String(value || '').normalize('NFD')
 
 export function cleanLocation(value) {
     const text = String(value || '').replace(/\s+/g, ' ').replace(/^[-–—,;\s]+|[-–—,;\s]+$/g, '').trim();
-    return /^(a definir|a indicar|a anunciar|por confirmar|local a definir|data a definir|nacional|portugal|todos|todas|tbd|n\/a|-)$/i.test(text) ? '' : text;
+    return /^(a definir|a designar|a indicar|a anunciar|em anexo|por confirmar|local a definir|data a definir|nacional|portugal|todos|todas|tbd|n\/a|-)$/i.test(text) ? '' : text;
 }
 
 function safeMapUrl(value) {
@@ -50,6 +50,7 @@ export const extractEventTown = event => getEventLocation(event).locality || '';
 export function formatEventLocation(event) {
     const { label, locality, district } = getEventLocation(event);
     if (!label) return '';
+    if (normalizeLocation(label) === normalizeLocation(district)) return label;
     let result = label;
     if (locality && normalizeLocation(label) !== normalizeLocation(locality)) {
         const parts = label.split(',').map(part => part.trim());

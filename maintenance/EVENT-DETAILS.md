@@ -1,5 +1,11 @@
 # Event detail recovery — September 2026
 
+> Historical record. The rich event pages and importers described below were
+> retired when the minimal calendar replaced them. Their enrichment and browser
+> verification scripts were archived during the [October cleanup](CLEANUP-2026-10-28.md).
+> Current event pages expose basic facts and source links; do not use the old
+> commands below as instructions for the current release.
+
 Apedalar and Recorde Pessoal now import the public event description, schedule,
 prices where available, and document links. Registration forms and participant
 lists are excluded. FPC descriptions embedded in legacy `programa` HTML are

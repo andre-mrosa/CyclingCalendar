@@ -6,23 +6,23 @@ import styles from './site.module.css';
 
 const copy = {
     pt: {
-        title: 'Calendário de Provas de Ciclismo em Portugal 2026',
-        description: 'Consulta todas as provas de estrada, BTT, gravel e granfondos. Datas oficiais, locais e inscrições num só lugar.',
+        title: 'Calendário de provas de ciclismo em Portugal',
+        description: 'Consulta datas e ligações de provas de estrada, BTT, gravel e granfondos. Confirma os detalhes na fonte.',
         eyebrow: 'Cycling Calendar Portugal'
     },
     en: {
-        title: 'Cycling Calendar Portugal 2026',
-        description: 'Find all road races, MTB, gravel and granfondos in Portugal. Official dates, locations and registrations.',
+        title: 'Cycling calendar in Portugal',
+        description: 'Browse dates and links for road races, MTB, gravel and granfondos. Confirm details at the source.',
         eyebrow: 'Cycling Calendar Portugal'
     },
     es: {
-        title: 'Calendario de Pruebas de Ciclismo en Portugal 2026',
-        description: 'Encuentra todas las pruebas de carretera, BTT, gravel y granfondos en Portugal. Fechas, lugares e inscripciones.',
+        title: 'Calendario de pruebas de ciclismo en Portugal',
+        description: 'Consulta fechas y enlaces de carretera, BTT, gravel y granfondos. Confirma los detalles en la fuente.',
         eyebrow: 'Cycling Calendar Portugal'
     },
     fr: {
-        title: 'Calendrier des Courses Cyclistes au Portugal 2026',
-        description: 'Trouvez toutes les courses de route, VTT, gravel et granfondos au Portugal. Dates officielles, lieux et inscriptions.',
+        title: 'Calendrier des courses cyclistes au Portugal',
+        description: 'Consultez les dates et liens des courses sur route, VTT, gravel et granfondos. Confirmez les détails à la source.',
         eyebrow: 'Cycling Calendar Portugal'
     },
 };

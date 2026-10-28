@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixtureModule } from './fixtureModule.mjs';
-const { deepScrapeFPCWithRetry, parseFPCCalendar, fetchFPCCalendar } = await fixtureModule('../app/lib/scrapers/fpc.js');
-const { parseStopAndGoEvent, scrapeEventPage } = await fixtureModule('../app/lib/scrapers/stopandgo.js');
+const { parseFPCCalendar, fetchFPCCalendar } = await fixtureModule('../app/lib/scrapers/fpc.js');
+const { scrapeStopAndGo } = await fixtureModule('../app/lib/scrapers/stopandgo.js', { '../logger.js': { logInfo: async () => {}, logError: async () => {} } });
 import { readStopAndGoHeader } from '../app/lib/scrapers/stopandgoParser.js';
 import { getAmbito } from '../app/lib/scrapers/utils.js';
 import { getEventDiscipline, getEventRaceType, getEventRaceTypes, getEventDisciplineFamilies, isStageRace } from '../app/utils/eventClassifier.js';
@@ -27,13 +27,6 @@ test('FPC submits the hidden marker and all twelve months, including next season
     });
     const events = await fetchFPCCalendar(2027);
     assert.equal(events[0].sortDate.toISOString(), '2027-01-10T00:00:00.000Z');
-});
-
-test('FPC rich detail requests stay blocked during the minimal-metadata pilot', async t => {
-    let requests = 0;
-    t.mock.method(globalThis, 'fetch', async () => { requests++; throw new Error('Unexpected network'); });
-    await assert.rejects(deepScrapeFPCWithRetry('https://www.fpciclismo.pt/prova'), { code: 'CONTENT_RIGHTS_REVIEW_REQUIRED' });
-    assert.equal(requests, 0);
 });
 
 test('FPC rejects the silent current-month fallback and wrong seasons', () => {
@@ -93,27 +86,26 @@ test('Quarantined events cannot absorb newly imported cycling events', () => {
     assert.equal(isSameEvent(event, { ...event, source: 'Stop and Go' }), false);
 });
 
-test('Stop and Go uses the event modality, ignoring cycling navigation and recommendations', () => {
+test('Stop and Go reads modality from the event header, ignoring navigation and recommendations', () => {
     for (const modality of ['Trail', 'Urban Trail', 'Atletismo', 'TT', 'SkyRunning', 'Triathlon', 'Natação', 'Caminhada']) {
-        assert.equal(parseStopAndGoEvent(sgPage({ title: 'Desafio Bike', modality }), url, { years: [2026] }), null, modality);
+        assert.equal(readStopAndGoHeader(sgPage({ title: 'Desafio Bike', modality })).cycling, false, modality);
     }
-    assert.equal(parseStopAndGoEvent(sgPage({ modality: '' }), url, { years: [2026] }), null);
+    assert.equal(readStopAndGoHeader(sgPage({ modality: '' })).cycling, false);
     for (const modality of ['BTT', 'Ciclismo', 'Cycling', 'Gravel', 'Downhill MTB', 'Trail/BTT']) {
-        const event = parseStopAndGoEvent(sgPage({ title: 'Trilhos da Serra', modality }), url, { years: [2026] });
-        assert.ok(event, modality);
-        assert.equal(event.details, 'Maia');
-        assert.notEqual(event.ambito, 'Campeonato Nacional');
+        const header = readStopAndGoHeader(sgPage({ title: 'Trilhos da Serra', modality }));
+        assert.equal(header.cycling, true, modality);
+        assert.equal(header.location, 'Maia, Portugal');
+        assert.equal(header.title, 'Trilhos da Serra');
     }
 });
-
-test('Stop and Go reads exact header years and ranges, never inventing a current-year date', () => {
+test('Stop and Go preserves exact header years and ranges instead of inventing current dates', () => {
     const historical = sgPage({ dates: '<div>24 <span>mar 2017</span></div><div>30 <span>mar 2017</span></div>' });
     assert.equal(readStopAndGoHeader(historical).year, '2017');
-    assert.equal(parseStopAndGoEvent(historical, url, { years: [2026] }), null);
-    assert.equal(parseStopAndGoEvent(sgPage({ dates: '' }), url, { years: [2026] }), null);
-    const event = parseStopAndGoEvent(sgPage({ dates: '<div>31 <span>jul 2026</span></div><div>2 <span>ago 2026</span></div>' }), url, { years: [2026] });
-    assert.equal(event.sortDate.toISOString(), '2026-07-31T00:00:00.000Z');
-    assert.equal(event.date, '31 JUL 2026 a 02 AGO 2026');
+    assert.equal(readStopAndGoHeader(historical).date, '24 MAR 2017 a 30 MAR 2017');
+    assert.equal(readStopAndGoHeader(sgPage({ dates: '' })).sortDate, null);
+    const header = readStopAndGoHeader(sgPage({ dates: '<div>31 <span>jul 2026</span></div><div>2 <span>ago 2026</span></div>' }));
+    assert.equal(header.sortDate.toISOString(), '2026-07-31T00:00:00.000Z');
+    assert.equal(header.date, '31 JUL 2026 a 02 AGO 2026');
 });
 
 test('Discipline comes from the official class when the title is generic', () => {
@@ -183,5 +175,5 @@ test('A national championship weekend is not a stage race', () => {
 
 test('Stop and Go rate limiting is reported, never treated as an empty valid event', async t => {
     t.mock.method(globalThis, 'fetch', async () => new Response('Too many requests', { status: 429 }));
-    await assert.rejects(() => scrapeEventPage(url), /HTTP 429/);
+    await assert.rejects(() => scrapeStopAndGo(), /HTTP 429/);
 });

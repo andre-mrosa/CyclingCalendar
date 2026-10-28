@@ -1,5 +1,7 @@
 "use client";
-import { formatEventLocation } from '../utils/eventLocation';
+import Link from 'next/link';
+import { eventPath } from '../lib/eventDiscovery';
+import { formatEventLocation, cleanLocation } from '../utils/eventLocation';
 import { useClientReady, useOnline, useStoredString, writeStored } from '../hooks/useBrowserState';
 import { useToday } from '../hooks/useToday';
 import { FavoriteChanges, FavoriteSubscription } from './FavoritePlanning';
@@ -24,7 +26,6 @@ import { trackEvent } from './AnalyticsTracker';
 import { useTranslation } from '../i18n/useTranslation';
 import { translateDateString, translateEscalao, translateAmbito, translateLicenca, translateTag, MONTH_FULL } from '../i18n/formatters';
 import { isStageRace, getEventDiscipline } from '../utils/eventClassifier';
-import { usePathname } from 'next/navigation';
 import PageHeading from './PageHeading';
 import MonthCalendar from './MonthCalendar';
 import RegistrationBadge from './RegistrationBadge';
@@ -77,11 +78,11 @@ export default function CalendarView({
     filterByAgenda = false,
     activeFilters = ['search', 'year', 'month', 'escalao', 'ambito', 'licenca', 'regiao'],
     applyDefaultRegiao = false,
-    initialEvents = null
+    initialEvents = null,
+    hero = false
 }) {
     const { t, language } = useTranslation();
 
-    const pathname = usePathname();
     const {
         defaultEscalao,
         defaultRegiao,
@@ -269,7 +270,7 @@ export default function CalendarView({
         'AC Beira Interior', 'AC Santarém', 'AC Setúbal', 'AC Algarve', 'AC Madeira', 'AC Açores'
     ];
     const uniqueRegioes = ['Todas', ...new Set([...TODAS_AS_REGIOES, ...events.map(e => e.regiao).filter(r => r)])];
-    const distritosList = [...new Set(events.map(e => e.distrito).filter(d => d))].sort();
+    const distritosList = [...new Set(events.map(e => e.distrito).filter(d => cleanLocation(d)))].sort();
     const uniqueDistritos = ['Todos', ...distritosList];
     const availableTags = [...new Set(events.map(e => getEventDiscipline(e)).filter(Boolean))].sort();
 
@@ -360,7 +361,7 @@ export default function CalendarView({
 
     return (
         <div className={styles.page}>
-            <PageHeading title={pageTitle} subtitle={t('minimal_calendar_intro')} hero={pathname === '/'} icon={filterByAgenda ? CalendarCheck : filterByFavorites ? Star : Calendar} />
+            <PageHeading title={pageTitle} subtitle={t('minimal_calendar_intro')} hero={hero} icon={filterByAgenda ? CalendarCheck : filterByFavorites ? Star : Calendar} />
             <header className={styles.calendarControls} data-expanded={showFilters}>
                 {isOffline && (
                     <div className="mb-3.5 py-2 px-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs sm:text-sm font-medium flex items-center justify-center gap-2 animate-fade-in shadow-sm">
@@ -778,7 +779,7 @@ export default function CalendarView({
                                         <div className="flex flex-col justify-center min-w-0 flex-1">
                                             <div className={styles.eventHeadingRow}>
                                                 <h3>
-                                                    <a href={originalEventUrl(event.link)} target="_blank" rel="noopener noreferrer" className={styles.eventTitle} onClick={() => trackEvent('EVENT_OPEN', { targetId: event.id })}>{displayTitle}</a>
+                                                    <Link prefetch={false} href={eventPath(event)} className={styles.eventTitle} onClick={() => trackEvent('EVENT_OPEN', { targetId: event.id })}>{displayTitle}</Link>
                                                 </h3>
                                             </div>
                                             <div className={styles.eventMeta}>
@@ -867,7 +868,7 @@ export default function CalendarView({
                                             e.stopPropagation();
                                             e.preventDefault();
                                             import('../utils/calendarExport').then(m => m.autoAddToGoogleCalendar(event, 'race', m.generateGoogleCalendarUrl(event, 'race')));
-                                            trackEvent('CALENDAR_EXPORT_SINGLE', { targetId: event.id, targetTitle: event.title });
+                                            trackEvent('ICS_EXPORT');
                                         }}
                                         className={`${styles.eventExportBtn} sm:ml-0 ml-auto`}
                                         aria-label={t('export_calendar')}

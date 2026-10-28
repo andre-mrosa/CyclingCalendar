@@ -1,5 +1,10 @@
 # Pesquisas, alertas e verificação de fontes
 
+> Estado atual: as pesquisas guardadas estão disponíveis; o envio automático de
+> alertas por email está desativado. `/api/cron/alerts` devolve 410 e não consta
+> dos agendamentos atuais. As instruções de publicação de alertas abaixo são
+> históricas. Ver a [revisão de limpeza](CLEANUP-2026-10-28.md).
+
 ## Publicação
 
 1. Aplicar a migração `20260925000000_search_alert_freshness` pelo procedimento em `maintenance/DATABASE.md`, antes de publicar o código.

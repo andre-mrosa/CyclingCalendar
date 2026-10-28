@@ -22,6 +22,7 @@ export default function Home({ initialEvents }) {
 
     return (
         <CalendarView
+            hero={true}
             pageTitle={t('page_home_title')}
             pageSubtitle={t('page_home_subtitle')}
             activeFilters={['search', 'year', 'month', 'escalao', 'distrito']}

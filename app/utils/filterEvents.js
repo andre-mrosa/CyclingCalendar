@@ -122,7 +122,8 @@ export function filterEvents(events, filters) {
 
     if (selectedAmbito && selectedAmbito !== 'Todos') {
         filtered = filtered.filter(event => selectedAmbito === 'Campeonato Nacional'
-            ? (event.ambito === 'Campeonato Nacional' || isOfficialNationalChampionship(event))
+            ? (isOfficialNationalChampionship(event) || (!event.details && event.ambito === 'Campeonato Nacional' &&
+                (event.source || '').split(',').some(source => source.trim() === 'FPC')))
             : event.ambito === selectedAmbito);
     }
 

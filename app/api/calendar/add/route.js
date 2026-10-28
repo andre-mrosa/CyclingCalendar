@@ -40,21 +40,6 @@ async function getTargetCalendarId(token) {
     return 'primary';
 }
 
-function parsePtDate(dateStr) {
-    if (!dateStr || typeof dateStr !== 'string') return null;
-    if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) return dateStr.slice(0, 10);
-    const months = { 'JAN': '01', 'FEV': '02', 'MAR': '03', 'ABR': '04', 'MAI': '05', 'JUN': '06', 'JUL': '07', 'AGO': '08', 'SET': '09', 'OUT': '10', 'NOV': '11', 'DEZ': '12' };
-    const parts = dateStr.toUpperCase().trim().split(' ');
-    const mIdx = parts.findIndex(p => months[p] || months[p.replace('Ç','C').replace('Ç','C').substring(0, 3)]);
-    if (mIdx !== -1 && mIdx >= 1 && mIdx + 1 < parts.length) {
-        const day = parts[mIdx - 1].padStart(2, '0');
-        const month = months[parts[mIdx]] || months[parts[mIdx].substring(0, 3)];
-        const year = parts[mIdx + 1];
-        return `${year}-${month}-${day}`;
-    }
-    return null;
-}
-
 export async function POST(req) {
     try {
         const authCtx = auth();
@@ -69,6 +54,15 @@ export async function POST(req) {
 
         if (!event || !event.id) {
             return NextResponse.json({ error: 'Dados do evento em falta' }, { status: 400 });
+        }
+
+        if (!['race', 'reg_open', 'reg_close'].includes(type)) {
+            return NextResponse.json({ error: 'Tipo de evento inválido' }, { status: 400 });
+        }
+        const raceDates = type === 'race' ? detectRaceDate(event) : null;
+        const registrationDate = type === 'reg_open' ? event.registrationOpensAt : event.registrationClosesAt;
+        if ((type === 'race' && !raceDates) || (type !== 'race' && (!registrationDate || !Number.isFinite(new Date(registrationDate).getTime())))) {
+            return NextResponse.json({ error: 'Data por confirmar na fonte' }, { status: 400 });
         }
 
         let token;
@@ -106,14 +100,10 @@ export async function POST(req) {
         };
 
         if (type === 'race') {
-            const detected = detectRaceDate(event);
-            const startDateStr = detected?.raceDateISO || parsePtDate(event.date) || (event.sortDate ? new Date(event.sortDate).toISOString().slice(0, 10) : null);
-            let endDateStr = detected?.raceEndDateISO || parsePtDate(event.endDate) || startDateStr;
-            if (!startDateStr) return NextResponse.json({ error: 'Invalid date' }, { status: 400 });
-            
-            const endDt = new Date(endDateStr);
-            endDt.setDate(endDt.getDate() + 1);
-            
+            const startDateStr = raceDates.raceDateISO;
+            const endDt = new Date(raceDates.raceEndDateISO + 'T00:00:00Z');
+            endDt.setUTCDate(endDt.getUTCDate() + 1);
+
             gEvent.summary = event.title;
             gEvent.description = `Mais informações: ${event.link || 'App CyclingCalendar'}\n\nModalidade: ${event.tag || '-'}\nÂmbito: ${event.ambito || '-'}`;
             gEvent.location = (event.distrito && event.distrito !== 'A definir') ? event.distrito + ', Portugal' : 'Portugal';

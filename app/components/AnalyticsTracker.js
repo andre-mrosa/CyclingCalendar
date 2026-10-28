@@ -36,7 +36,7 @@ export default function AnalyticsTracker() {
         } catch { /* If the admin exclusion marker cannot be checked, leave tracking off. */ return; }
 
         const send = (type, extra = {}) => {
-            const payload = { type, path: pathname };
+            const payload = { type, path: normalizeAnalyticsPath(pathname) };
             if (type === 'EVENT_OPEN' && typeof extra.targetId === 'string') payload.targetId = extra.targetId;
             fetch('/api/analytics/track', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },

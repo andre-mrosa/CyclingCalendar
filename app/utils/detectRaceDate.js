@@ -52,6 +52,9 @@ export function detectRaceDate(event) {
         return null;
     }
     if (!start || !end || end < start) return null;
+    // A race spanning more than a month needs review. Preserve the raw source
+    // label, but do not turn a suspected year/range error into calendar dates.
+    if (new Date(end) - new Date(start) > 31 * 86400000) return null;
     if (/\s+e\s+/i.test(raw)) {
         const diff = new Date(end) - new Date(start);
         if (!raw.includes(',') && diff > 86400000) return null;

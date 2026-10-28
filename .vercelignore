@@ -1,0 +1,16 @@
+# Local tools, recoverable archives and old QA outputs are not deployment inputs.
+.qa-tools/
+maintenance/backups/
+maintenance/mobile-review/
+_legacy_backup/
+scripts/
+.agents/
+.claude/
+.windsurf/
+.clerk/
+.swc/
+.env*
+dev.db
+qa-*
+*-output.txt
+public/media/events/

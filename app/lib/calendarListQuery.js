@@ -1,4 +1,12 @@
 import { PUBLIC_EVENT_SELECT, toPublicEvent } from './publicEvent.js';
+export async function queryPublicEvent(db, id, sources) {
+    if (typeof id !== 'string' || !id || id.length > 1000) return null;
+    const event = await db.event.findFirst({ where: { id,
+        NOT: { source: { contains: 'Quarentena' } },
+        OR: sources.map(source => ({ source: { contains: source, mode: 'insensitive' } })),
+    }, select: PUBLIC_EVENT_SELECT });
+    return toPublicEvent(event);
+}
 export function parseListQuery(params, currentYear = new Date().getFullYear()) {
     const raw = params.get('years') || params.get('year') || String(currentYear);
     if (raw === 'all') return [];

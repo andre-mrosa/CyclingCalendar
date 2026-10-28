@@ -1,14 +1,19 @@
+import { DISCIPLINES, REGIONS, eventIdFromSlug } from './eventDiscovery.js';
+
 export const ANALYTICS_AGGREGATE_TYPES = Object.freeze([
     'SESSION_START', 'PAGE_VIEW', 'SEARCH', 'ICS_EXPORT', 'FAVORITE_TOGGLE', 'EVENT_OPEN',
 ]);
 
 const PUBLIC_PATHS = new Set([
     '/', '/nacionais', '/internacionais', '/tacas', '/regionais', '/lazer',
-    '/ajuda', '/contacto', '/privacy-policy', '/terms-of-service',
+    '/ajuda', '/contacto', '/privacy-policy', '/terms-of-service', '/provas',
 ]);
 
 export function normalizeAnalyticsPath(value) {
-    if (typeof value !== 'string' || value.length > 200 || value.includes('?') || value.includes('#')) return null;
+    if (typeof value !== 'string' || value.length > 2100 || value.includes('?') || value.includes('#')) return null;
+    // Group detail page views: never store event URLs or IDs in page dimensions.
+    if (value.startsWith('/provas/') && eventIdFromSlug(value.slice('/provas/'.length))) return '/provas';
+    if (DISCIPLINES.some(item => value === '/modalidades/' + item.slug) || REGIONS.some(item => value === '/regioes/' + item.slug)) return value;
     return PUBLIC_PATHS.has(value) ? value : null;
 }
 
