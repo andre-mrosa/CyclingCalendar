@@ -1,16 +1,9 @@
-"use client";
+import LazerClient from './LazerClient';
+import { getPublicCalendarEvents } from '../lib/getPublicCalendarEvents';
 
-import CalendarView from '../components/CalendarView';
-import { useTranslation } from '../i18n/useTranslation';
+export const revalidate = 300;
 
-export default function Lazer() {
-    const { t } = useTranslation();
-    return (
-        <CalendarView 
-            pageTitle={t('page_leisure_title')} 
-            pageSubtitle={t('page_leisure_subtitle')}
-            forceLicenca="CPT / Lazer"
-            activeFilters={['search', 'year', 'month', 'distrito', 'modalidade']}
-        />
-    );
+export default async function LazerPage() {
+    const events = await getPublicCalendarEvents();
+    return <LazerClient initialEvents={events} />;
 }

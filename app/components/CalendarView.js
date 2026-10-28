@@ -76,7 +76,8 @@ export default function CalendarView({
     filterByFavorites = false,
     filterByAgenda = false,
     activeFilters = ['search', 'year', 'month', 'escalao', 'ambito', 'licenca', 'regiao'],
-    applyDefaultRegiao = false
+    applyDefaultRegiao = false,
+    initialEvents = null
 }) {
     const { t, language } = useTranslation();
 
@@ -140,6 +141,7 @@ export default function CalendarView({
         eventsUrl,
         fetcher,
         {
+            fallbackData: initialEvents || undefined,
             revalidateOnFocus: false, // Don't refetch on tab switch
             revalidateIfStale: false,
             dedupingInterval: 120000 // Cache for 2 minutes in memory
@@ -204,7 +206,7 @@ export default function CalendarView({
         return () => clearTimeout(timer);
     }, [serializedSearch, urlReady]);
 
-    const isInitialLoading = !mounted || (loading && events.length === 0);
+    const isInitialLoading = (loading && events.length === 0) || (!initialEvents && !mounted && events.length === 0);
 
     // Track search queries with debounce
     useEffect(() => {

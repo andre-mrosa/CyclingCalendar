@@ -5,10 +5,26 @@ import { useTranslation } from '../i18n/useTranslation';
 import styles from './site.module.css';
 
 const copy = {
-    pt: { title: 'Encontra a tua próxima prova.', description: 'Todas as datas. Toda a informação. Num só lugar.', eyebrow: 'Ciclismo em Portugal' },
-    en: { title: 'Find your next race.', description: 'Every date. All the information. In one place.', eyebrow: 'Cycling in Portugal' },
-    es: { title: 'Encuentra tu próxima prueba.', description: 'Todas las fechas. Toda la información. En un solo lugar.', eyebrow: 'Ciclismo en Portugal' },
-    fr: { title: 'Trouve ta prochaine course.', description: 'Toutes les dates. Toutes les informations. Au même endroit.', eyebrow: 'Cyclisme au Portugal' },
+    pt: {
+        title: 'Calendário de Provas de Ciclismo em Portugal 2026',
+        description: 'Consulta todas as provas de estrada, BTT, gravel e granfondos. Datas oficiais, locais e inscrições num só lugar.',
+        eyebrow: 'Cycling Calendar Portugal'
+    },
+    en: {
+        title: 'Cycling Calendar Portugal 2026',
+        description: 'Find all road races, MTB, gravel and granfondos in Portugal. Official dates, locations and registrations.',
+        eyebrow: 'Cycling Calendar Portugal'
+    },
+    es: {
+        title: 'Calendario de Pruebas de Ciclismo en Portugal 2026',
+        description: 'Encuentra todas las pruebas de carretera, BTT, gravel y granfondos en Portugal. Fechas, lugares e inscripciones.',
+        eyebrow: 'Cycling Calendar Portugal'
+    },
+    fr: {
+        title: 'Calendrier des Courses Cyclistes au Portugal 2026',
+        description: 'Trouvez toutes les courses de route, VTT, gravel et granfondos au Portugal. Dates officielles, lieux et inscriptions.',
+        eyebrow: 'Cycling Calendar Portugal'
+    },
 };
 
 export default function PageHeading({ title, subtitle, icon: Icon = Flag, hero = false }) {

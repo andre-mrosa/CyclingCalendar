@@ -1,16 +1,9 @@
-"use client";
+import NacionaisClient from './NacionaisClient';
+import { getPublicCalendarEvents } from '../lib/getPublicCalendarEvents';
 
-import CalendarView from '../components/CalendarView';
-import { useTranslation } from '../i18n/useTranslation';
+export const revalidate = 300;
 
-export default function Nacionais() {
-    const { t } = useTranslation();
-    return (
-        <CalendarView 
-            pageTitle={t('page_nationals_title')} 
-            pageSubtitle={t('page_nationals_subtitle')}
-            forceAmbito="Campeonato Nacional"
-            activeFilters={['search', 'year', 'month', 'escalao', 'distrito', 'modalidade']}
-        />
-    );
+export default async function NacionaisPage() {
+    const events = await getPublicCalendarEvents();
+    return <NacionaisClient initialEvents={events} />;
 }

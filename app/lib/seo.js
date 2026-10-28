@@ -2,15 +2,15 @@ import { eventDateDisplay } from '../utils/eventDateDisplay.js';
 import { formatEventLocation } from '../utils/eventLocation.js';
 
 export const SITE_URL = 'https://www.cyclingcalendar.pt';
-export const SITE_TITLE = 'Cycling Calendar — Provas de ciclismo em Portugal';
-export const SITE_DESCRIPTION = 'Calendário de provas de ciclismo em Portugal: estrada, BTT, gravel, BMX e cicloturismo. Consulta datas, locais e ligações para as páginas originais das provas.';
+export const SITE_TITLE = 'Calendário de Ciclismo Portugal 2026 — BTT, Estrada, Gravel | Cycling Calendar';
+export const SITE_DESCRIPTION = 'Calendário completo de provas de ciclismo em Portugal para 2026: estrada, maratonas BTT (XCM/XCO), granfondos, gravel e cicloturismo. Consulta datas oficiais, locais e inscrições.';
 export const PUBLIC_PAGES = [
     ['/', SITE_TITLE, SITE_DESCRIPTION],
-    ['/nacionais', 'Campeonatos nacionais de ciclismo | Cycling Calendar', 'Datas e informação dos campeonatos nacionais de ciclismo em Portugal.'],
-    ['/internacionais', 'Provas internacionais de ciclismo | Cycling Calendar', 'Consulta as provas internacionais de ciclismo no calendário português.'],
-    ['/tacas', 'Taças de ciclismo em Portugal | Cycling Calendar', 'Calendário das taças de ciclismo: datas, locais e informação das provas.'],
-    ['/regionais', 'Provas regionais de ciclismo | Cycling Calendar', 'Descobre provas regionais de ciclismo e planeia a tua época.'],
-    ['/lazer', 'Passeios e ciclismo de lazer | Cycling Calendar', 'Passeios, cicloturismo e provas abertas de ciclismo em Portugal.'],
+    ['/nacionais', 'Campeonatos Nacionais de Ciclismo 2026 em Portugal | Cycling Calendar', 'Datas e calendário oficial dos Campeonatos Nacionais de Ciclismo em Portugal 2026: estrada, contrarrelógio, BTT XCO/XCM, downhill DHI e ciclocrosse.'],
+    ['/internacionais', 'Provas Internacionais de Ciclismo em Portugal 2026 | Cycling Calendar', 'Volta ao Algarve, Figueira Champions Classic, eventos UCI e provas internacionais de ciclismo realizadas em Portugal.'],
+    ['/tacas', 'Taça de Portugal de Ciclismo 2026 — Calendário e Etapas | Cycling Calendar', 'Calendário das etapas da Taça de Portugal de Ciclismo 2026: Taça de Portugal de Estrada, XCO, Maratonas XCM, Downhill DHI e Ciclocrosse.'],
+    ['/regionais', 'Provas Regionais de Ciclismo em Portugal 2026 | Cycling Calendar', 'Descobre provas regionais de ciclismo em Portugal das associações do Minho, Porto, Beiras, Lisboa, Alentejo, Algarve e Ilhas.'],
+    ['/lazer', 'Granfondos, Meiofondos e Cicloturismo em Portugal 2026 | Cycling Calendar', 'Calendário de Granfondos, Meiofondos, passeios e ciclismo de lazer em Portugal. Planeia a tua próxima marcha desportiva.'],
     ['/ajuda', 'Ajuda | Cycling Calendar', 'Como pesquisar provas, guardar favoritos e utilizar a integração de calendário.'],
     ['/contacto', 'Contacto | Cycling Calendar', 'Contacta a equipa do Cycling Calendar para sugestões, correções ou questões sobre os teus dados.'],
     ['/privacy-policy', 'Política de Privacidade | Cycling Calendar', 'Que dados tratamos, para quê, com quem são partilhados e como exercer os teus direitos.'],
@@ -18,9 +18,30 @@ export const PUBLIC_PAGES = [
 ];
 export function pageMetadata(path, title, description) {
     const url = SITE_URL + (path === '/' ? '/' : path);
-    return { title, description, alternates: { canonical: url },
-        openGraph: { title, description, url, siteName: 'Cycling Calendar', locale: 'pt_PT', type: 'website', images: [{ url: SITE_URL + '/icon-512x512.png', width: 512, height: 512, alt: 'Cycling Calendar' }] },
-        twitter: { card: 'summary', title, description, images: [SITE_URL + '/icon-512x512.png'] },
+    return {
+        title,
+        description,
+        alternates: { canonical: url },
+        openGraph: {
+            title,
+            description,
+            url,
+            siteName: 'Cycling Calendar',
+            locale: 'pt_PT',
+            type: 'website',
+            images: [{
+                url: SITE_URL + '/icon-512x512.png',
+                width: 512,
+                height: 512,
+                alt: 'Cycling Calendar'
+            }]
+        },
+        twitter: {
+            card: 'summary',
+            title,
+            description,
+            images: [SITE_URL + '/icon-512x512.png']
+        },
     };
 }
 export function publicImage(value) {
@@ -32,10 +53,38 @@ export function eventStructuredData(event) {
     if (!dates.start) return null;
     const location = formatEventLocation(event);
 
-    return { '@context': 'https://schema.org', '@type': 'SportsEvent', name: event.title,
-        url: SITE_URL + '/events/' + encodeURIComponent(event.id), startDate: dates.start, endDate: dates.end,
-        ...(location ? { location: { '@type': 'Place', name: location } } : {}),
-
+    return {
+        '@context': 'https://schema.org',
+        '@type': 'SportsEvent',
+        name: event.title,
+        url: SITE_URL + '/events/' + encodeURIComponent(event.id),
+        startDate: dates.start,
+        endDate: dates.end || dates.start,
+        ...(location ? {
+            location: {
+                '@type': 'Place',
+                name: location,
+                address: {
+                    '@type': 'PostalAddress',
+                    addressCountry: 'PT',
+                    addressRegion: event.distrito || event.regiao || 'Portugal'
+                }
+            }
+        } : {}),
+        sport: event.tag || 'Cycling',
+        eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+        eventStatus: 'https://schema.org/EventScheduled',
+        organizer: {
+            '@type': 'Organization',
+            name: event.source || 'Federação Portuguesa de Ciclismo',
+            url: SITE_URL
+        }
     };
+}
+export function filterUpcomingEvents(events, limit = 40) {
+    const now = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    return (events || [])
+        .filter(event => (event.sortDate && event.sortDate >= now) || (!event.sortDate && event.date))
+        .slice(0, limit);
 }
 export const jsonLd = value => JSON.stringify(value).replace(/</g, '\\u003c');

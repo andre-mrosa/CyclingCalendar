@@ -6,7 +6,7 @@ import { useSettingsStore } from './store/useSettingsStore';
 import { useTranslation } from './i18n/useTranslation';
 import CalendarView from './components/CalendarView';
 
-export default function Home() {
+export default function Home({ initialEvents }) {
     const { t } = useTranslation();
     const router = useRouter();
     const { defaultPage } = useSettingsStore();
@@ -25,6 +25,7 @@ export default function Home() {
             pageTitle={t('page_home_title')}
             pageSubtitle={t('page_home_subtitle')}
             activeFilters={['search', 'year', 'month', 'escalao', 'distrito']}
+            initialEvents={initialEvents}
         />
     );
 }

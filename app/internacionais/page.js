@@ -1,16 +1,9 @@
-"use client";
+import InternacionaisClient from './InternacionaisClient';
+import { getPublicCalendarEvents } from '../lib/getPublicCalendarEvents';
 
-import CalendarView from '../components/CalendarView';
-import { useTranslation } from '../i18n/useTranslation';
+export const revalidate = 300;
 
-export default function Internacionais() {
-    const { t } = useTranslation();
-    return (
-        <CalendarView 
-            pageTitle={t('page_internationals_title')} 
-            pageSubtitle={t('page_internationals_subtitle')}
-            forceAmbito="Internacional"
-            activeFilters={['search', 'year', 'month', 'distrito', 'modalidade']}
-        />
-    );
+export default async function InternacionaisPage() {
+    const events = await getPublicCalendarEvents();
+    return <InternacionaisClient initialEvents={events} />;
 }

@@ -4,7 +4,7 @@ import { useSyncExternalStore } from 'react';
 import { lisbonWallClock } from '../utils/planning';
 
 const getToday = () => lisbonWallClock().slice(0, 10);
-const getServerToday = () => '';
+const getServerToday = () => lisbonWallClock().slice(0, 10);
 const subscribe = callback => {
     const timer = window.setInterval(callback, 1000);
     window.addEventListener('focus', callback);

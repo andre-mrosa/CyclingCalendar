@@ -1,17 +1,9 @@
-"use client";
+import RegionaisClient from './RegionaisClient';
+import { getPublicCalendarEvents } from '../lib/getPublicCalendarEvents';
 
-import CalendarView from '../components/CalendarView';
-import { useTranslation } from '../i18n/useTranslation';
+export const revalidate = 300;
 
-export default function Regionais() {
-    const { t } = useTranslation();
-    return (
-        <CalendarView 
-            pageTitle={t('page_regionals_title')} 
-            pageSubtitle={t('page_regionals_subtitle')}
-            forceAmbito="Regional"
-            activeFilters={['search', 'year', 'month', 'escalao', 'regiao', 'modalidade']}
-            applyDefaultRegiao={true}
-        />
-    );
+export default async function RegionaisPage() {
+    const events = await getPublicCalendarEvents();
+    return <RegionaisClient initialEvents={events} />;
 }

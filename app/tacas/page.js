@@ -1,16 +1,9 @@
-"use client";
+import TacasClient from './TacasClient';
+import { getPublicCalendarEvents } from '../lib/getPublicCalendarEvents';
 
-import CalendarView from '../components/CalendarView';
-import { useTranslation } from '../i18n/useTranslation';
+export const revalidate = 300;
 
-export default function Tacas() {
-    const { t } = useTranslation();
-    return (
-        <CalendarView 
-            pageTitle={t('page_cups_title')} 
-            pageSubtitle={t('page_cups_subtitle')}
-            forceAmbito="Taça de Portugal"
-            activeFilters={['search', 'year', 'month', 'escalao', 'distrito', 'modalidade']}
-        />
-    );
+export default async function TacasPage() {
+    const events = await getPublicCalendarEvents();
+    return <TacasClient initialEvents={events} />;
 }
