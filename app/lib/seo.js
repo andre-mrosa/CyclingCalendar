@@ -51,35 +51,59 @@ export function publicImage(value) {
 export function eventStructuredData(event) {
     const dates = eventDateDisplay(event);
     if (!dates.start) return null;
-    const location = formatEventLocation(event);
+    const rawLocation = formatEventLocation(event);
+    const locationName = rawLocation || event.distrito || event.regiao || 'Portugal';
+    const locationRegion = event.distrito || event.regiao || 'Portugal';
+    const publicImg = publicImage(event.image);
+    const image = publicImg ? [publicImg] : (event.image ? undefined : [SITE_URL + '/icon-512x512.png']);
+    const eventUrl = SITE_URL + '/events/' + encodeURIComponent(event.id);
 
-    return {
+    const description = `${event.title} - Prova de ciclismo${event.tag ? ` (${event.tag})` : ''} em ${locationName}, Portugal. Data: ${dates.start}${dates.end && dates.end !== dates.start ? ` a ${dates.end}` : ''}. Consulta informação oficial no Cycling Calendar.`;
+
+    const data = {
         '@context': 'https://schema.org',
         '@type': 'SportsEvent',
         name: event.title,
-        url: SITE_URL + '/events/' + encodeURIComponent(event.id),
+        description,
+        url: eventUrl,
         startDate: dates.start,
         endDate: dates.end || dates.start,
-        ...(location ? {
-            location: {
-                '@type': 'Place',
-                name: location,
-                address: {
-                    '@type': 'PostalAddress',
-                    addressCountry: 'PT',
-                    addressRegion: event.distrito || event.regiao || 'Portugal'
-                }
-            }
-        } : {}),
+        location: {
+            '@type': 'Place',
+            name: locationName,
+            address: {
+                '@type': 'PostalAddress',
+                addressCountry: 'PT',
+                addressRegion: locationRegion,
+            },
+        },
         sport: event.tag || 'Cycling',
         eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
         eventStatus: 'https://schema.org/EventScheduled',
         organizer: {
             '@type': 'Organization',
             name: event.source || 'Federação Portuguesa de Ciclismo',
-            url: SITE_URL
-        }
+            url: SITE_URL,
+        },
+        performer: {
+            '@type': 'PerformingGroup',
+            name: 'Atletas e Participantes',
+        },
+        offers: {
+            '@type': 'Offer',
+            url: eventUrl,
+            price: '0',
+            priceCurrency: 'EUR',
+            availability: 'https://schema.org/InStock',
+            validFrom: dates.start,
+        },
     };
+
+    if (image) {
+        data.image = image;
+    }
+
+    return data;
 }
 export function filterUpcomingEvents(events, limit = 40) {
     const now = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
