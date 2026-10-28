@@ -4,6 +4,7 @@ export async function eraseAccountActivity(db, userId) {
     if (typeof userId !== 'string' || !/^user_[A-Za-z0-9]+$/.test(userId)) throw new Error('Invalid user ID');
     await db.$transaction(async tx => {
         await tx.favoriteAlert.deleteMany({ where: { userId } });
+        await tx.favoriteEditionPreference.deleteMany({ where: { userId } });
         // Deleting sessions also deletes their events through the database FK.
         await tx.analyticsSession.deleteMany({ where: { userId } });
         await tx.systemLog.deleteMany({ where: { userId } });

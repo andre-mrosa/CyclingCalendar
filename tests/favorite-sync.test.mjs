@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createFavoriteSynchronizer, favoriteCacheKey, favoritePendingKey } from '../app/utils/favoriteSync.js';
+import { createFavoriteSynchronizer, favoriteCacheKey, favoritePendingKey, favoriteExclusionKey } from '../app/utils/favoriteSync.js';
 function fixture() {
     const values = new Map(); let online = true;
     const sync = createFavoriteSynchronizer({read:(key,fallback)=>values.get(key)??fallback, write:(key,value)=>values.set(key,value), online:()=>online});
@@ -15,6 +15,17 @@ test('rapid account edits are serialized and the latest favorite list wins', asy
     f.save('one',['b']);const second=f.sync(user);release();await Promise.all([first,second]);
     assert.deepEqual(writes.map(data=>data.unsafeMetadata.favorites),[['a'],['b']]);
     assert.equal(writes[1].unsafeMetadata.other,'preserved');assert.equal(f.values.get(favoritePendingKey('one')),'false');
+});
+
+test('automatic edition exclusions survive offline changes and preserve unrelated metadata', async()=>{
+    const f=fixture(); const writes=[];
+    const user={id:'one',unsafeMetadata:{other:'kept'},update:async value=>writes.push(value)};
+    f.setOnline(false); f.save('one',['manual']);
+    f.values.set(favoriteExclusionKey('one'),JSON.stringify(['granfondo:medio tejo:2027']));
+    await f.sync(user); assert.equal(writes.length,0);
+    f.setOnline(true); await f.sync(user);
+    assert.deepEqual(writes[0].unsafeMetadata,{other:'kept',favorites:['manual'],favoriteEditionExclusions:['granfondo:medio tejo:2027']});
+    assert.equal(f.values.get(favoritePendingKey('one')),'false');
 });
 test('offline edits remain pending and sync when the connection returns',async()=>{
     const f=fixture();let calls=0;const user={id:'one',update:async()=>{calls++;}};

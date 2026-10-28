@@ -55,9 +55,13 @@ não ciclísticos confirmados passam para a fonte `Quarentena`, preservando IDs
 e dados para recuperação. Falhas HTTP e dados ambíguos ficam sem alteração.
 Os ficheiros de recuperação são locais e estão excluídos do Git.
 
-As pesquisas guardadas estão disponíveis. O envio automático de alertas por email
-está desativado; as instruções antigas estão identificadas como históricas em
+As pesquisas guardadas estão disponíveis. Os antigos alertas de alterações e prazos
+continuam desativados; as instruções antigas estão identificadas como históricas em
 [maintenance/SEARCH-ALERTS.md](maintenance/SEARCH-ALERTS.md).
+
+O seguimento global de novas edições dos favoritos e os seus avisos opcionais
+estão documentados em [maintenance/FAVORITE-EDITIONS.md](maintenance/FAVORITE-EDITIONS.md).
+O email exige configuração própria e consentimento explícito de cada conta.
 
 ## SEO e informação pública
 

@@ -53,8 +53,8 @@ test('feed reads only the authenticated capability owner favorites and rejects i
     const token='a'.repeat(64);
     const route=await isolated('../app/api/calendar/feed/[userId]/[token]/route.js',{
         clerkClient:async()=>({users:{getUser:async()=>({privateMetadata:{calendarSubscriptionToken:token},unsafeMetadata:{favorites:['saved']}})}}),
-        prisma:{event:{findMany:async({where})=>{queries++;assert.deepEqual(where.id.in,['saved']);return [event('saved')];}}},
-        validSubscriptionToken,subscriptionIcs,PUBLIC_EVENT_SELECT
+        prisma:{favoriteEditionPreference:{findUnique:async()=>null},event:{findMany:async({where})=>{queries++;assert.deepEqual(where.id.in,['saved']);return [event('saved')];}}},
+        validSubscriptionToken,subscriptionIcs,PUBLIC_EVENT_SELECT,editionFeedEvents:events=>events
     });
     const denied=await route.GET(null,{params:Promise.resolve({userId:'user_123',token:'b'.repeat(64)})});
     assert.equal(denied.status,404); assert.equal(queries,0);

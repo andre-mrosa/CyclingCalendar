@@ -1,5 +1,6 @@
 export const favoriteCacheKey = id => `cycling_favorites_${id || 'guest'}`;
 export const favoritePendingKey = id => `cycling_pending_favs_sync_${id}`;
+export const favoriteExclusionKey = id => `cycling_favorite_edition_exclusions_${id || 'guest'}`;
 export function parseFavorites(raw) {
     try { const value = JSON.parse(raw); return Array.isArray(value) ? value : []; }
     catch { return []; }
@@ -13,8 +14,9 @@ export function createFavoriteSynchronizer({ read, write, online }) {
         const task = previous.catch(() => {}).then(async () => {
             if (!online() || read(favoritePendingKey(id)) !== 'true') return;
             const raw = read(favoriteCacheKey(id), '[]');
-            await user.update({ unsafeMetadata: { ...user.unsafeMetadata, favorites: parseFavorites(raw) } });
-            if (read(favoriteCacheKey(id), '[]') === raw) write(favoritePendingKey(id), 'false');
+            const excluded = read(favoriteExclusionKey(id), JSON.stringify(user.unsafeMetadata?.favoriteEditionExclusions || []));
+            await user.update({ unsafeMetadata: { ...user.unsafeMetadata, favorites: parseFavorites(raw), favoriteEditionExclusions: parseFavorites(excluded) } });
+            if (read(favoriteCacheKey(id), '[]') === raw && read(favoriteExclusionKey(id), excluded) === excluded) write(favoritePendingKey(id), 'false');
         }).catch(() => { /* Retry the saved pending list on reconnect. */ });
         queues.set(id, task);
         task.finally(() => { if (queues.get(id) === task) queues.delete(id); });

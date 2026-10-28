@@ -6,10 +6,11 @@ import { useFavorites } from '../hooks/useFavorites';
 import { useTranslation } from '../i18n/useTranslation';
 import { FavoriteSubscription } from '../components/FavoritePlanning';
 import CalendarEmptyState from '../components/CalendarEmptyState';
+import FavoriteEditionControls from '../components/FavoriteEditionControls';
 
 export default function Favoritos() {
     const { t } = useTranslation();
-    const { favorites, isLoaded } = useFavorites();
+    const { favorites, isLoaded, isSignedIn, editionPreferences } = useFavorites();
 
     if (!isLoaded) {
         return (
@@ -21,7 +22,7 @@ export default function Favoritos() {
 
 
 
-    if (favorites.length === 0) return <><CalendarEmptyState /><div className="mx-auto max-w-5xl px-4 pb-8"><FavoriteSubscription /></div></>;
+    if (favorites.length === 0) return <><CalendarEmptyState /><div className="mx-auto max-w-5xl px-4 pb-8"><FavoriteEditionControls preferences={editionPreferences} isSignedIn={isSignedIn} /><FavoriteSubscription /></div></>;
 
     return (
         <CalendarView

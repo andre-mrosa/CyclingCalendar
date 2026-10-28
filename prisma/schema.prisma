@@ -207,3 +207,18 @@ model FavoriteAlert {
 
   @@index([enabled, checkedAt])
 }
+
+model FavoriteEditionPreference {
+  userId       String   @id
+  follow       Boolean  @default(false)
+  email        Boolean  @default(false)
+  language     String   @default("pt")
+  state        Json     @default("{}")
+  pending      Json?
+  checkedAt    DateTime @default(now())
+  lastSentAt   DateTime?
+  leaseUntil   DateTime?
+  updatedAt    DateTime @updatedAt
+
+  @@index([follow, checkedAt])
+}

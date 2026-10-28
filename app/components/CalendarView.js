@@ -12,6 +12,7 @@ import useSWR from 'swr';
 
 import { Calendar, CalendarPlus, MapPin, Search, X, ChevronLeft, ChevronRight, Users, Heart, Star, LayoutGrid, List, HelpCircle, Filter, Bike, AlertTriangle, Check, CalendarCheck, History, WifiOff, Download, Clock, Globe } from 'lucide-react';
 import { useFavorites } from '../hooks/useFavorites';
+import FavoriteEditionControls from './FavoriteEditionControls';
 import { useCalendarEvents } from '../hooks/useCalendarEvents';
 import { filterEvents } from '../utils/filterEvents';
 import { mergeEvents } from '../utils/mergeEvents';
@@ -119,7 +120,6 @@ export default function CalendarView({
     };
     const isOffline = !useOnline();
 
-    const { favorites, toggleFavorite, isSignedIn } = useFavorites();
     const { markedSet, isMarked, getDateConflict } = useCalendarEvents();
 
     // Reset editable defaults only when their source settings actually change.
@@ -162,6 +162,8 @@ export default function CalendarView({
         const records = chooseCalendarEvents(fetchedEvents, localCachedEvents, { offline: isOffline, failed: !!error });
         return records.length ? mergeEvents(records.map(toCalendarListEvent).filter(Boolean)) : EMPTY_EVENTS;
     }, [fetchedEvents, localCachedEvents, isOffline, error]);
+
+    const { favorites, manualFavorites, automaticFavorites, toggleFavorite, isSignedIn, editionPreferences } = useFavorites(events);
 
     const selectedYears = useMemo(() => explicitYears || Array.from(new Set([
         String(currentYear), String(currentYear + 1),
@@ -362,6 +364,7 @@ export default function CalendarView({
     return (
         <div className={styles.page}>
             <PageHeading title={pageTitle} subtitle={t('minimal_calendar_intro')} hero={hero} icon={filterByAgenda ? CalendarCheck : filterByFavorites ? Star : Calendar} />
+            {filterByFavorites && <FavoriteEditionControls preferences={editionPreferences} isSignedIn={isSignedIn} />}
             <header className={styles.calendarControls} data-expanded={showFilters}>
                 {isOffline && (
                     <div className="mb-3.5 py-2 px-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs sm:text-sm font-medium flex items-center justify-center gap-2 animate-fade-in shadow-sm">
@@ -781,6 +784,7 @@ export default function CalendarView({
                                                 <h3>
                                                     <Link prefetch={false} href={eventPath(event)} className={styles.eventTitle} onClick={() => trackEvent('EVENT_OPEN', { targetId: event.id })}>{displayTitle}</Link>
                                                 </h3>
+                                                {automaticFavorites.some(id => allIds.includes(id)) && !manualFavorites.some(id => allIds.includes(id)) && <span className="text-xs text-muted">{({ pt: 'Nova edição · adicionada automaticamente', en: 'New edition · added automatically', es: 'Nueva edición · añadida automáticamente', fr: 'Nouvelle édition · ajoutée automatiquement' })[language] || 'New edition · added automatically'}</span>}
                                             </div>
                                             <div className={styles.eventMeta}>
                                                 <span className="flex items-center flex-wrap">
