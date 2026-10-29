@@ -180,6 +180,8 @@ const messages = {
     page_regionals_subtitle: "Compétitions organisées par les Associations Régionales",
     page_internationals_title: "Épreuves Internationales",
     page_internationals_subtitle: "Événements internationaux présents dans les sources disponibles",
+    page_internationals_archive_title: "Archives internationales",
+    page_internationals_archive_desc: "Aucune prochaine épreuve internationale datée ne figure actuellement dans ce calendrier. Les archives comprennent des fiches de {year}. Utilisez les filtres pour choisir une saison et vérifiez les changements auprès de la source.",
     page_leisure_title: "Randonnées et Loisirs",
     page_leisure_subtitle: "Granfondos, Randonnées et Épreuves Ouvertes (CPT)",
 

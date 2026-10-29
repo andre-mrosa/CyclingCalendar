@@ -80,7 +80,10 @@ export default function CalendarView({
     activeFilters = ['search', 'year', 'month', 'escalao', 'ambito', 'licenca', 'regiao'],
     applyDefaultRegiao = false,
     initialEvents = null,
-    hero = false
+    hero = false,
+    defaultPastEventsFilter = 'futuros',
+    defaultYears = null,
+    pageIntro = null
 }) {
     const { t, language } = useTranslation();
 
@@ -111,7 +114,6 @@ export default function CalendarView({
     const [showFilters, setShowFilters] = useState(false);
     const [quickPeriod, setQuickPeriod] = useState('');
     const [selectedType, setSelectedType] = useState('Todos');
-    const defaultPastEventsFilter = 'futuros';
     const [pastEventsFilter, setPastEventsFilter] = useState(defaultPastEventsFilter);
     const [pagination, setPagination] = useState({ list: null, count: 100 });
     const setSelectedEvent = event => {
@@ -165,10 +167,10 @@ export default function CalendarView({
 
     const { favorites, manualFavorites, automaticFavorites, toggleFavorite, isSignedIn, editionPreferences } = useFavorites(events);
 
-    const selectedYears = useMemo(() => explicitYears || Array.from(new Set([
+    const selectedYears = useMemo(() => explicitYears || defaultYears || Array.from(new Set([
         String(currentYear), String(currentYear + 1),
         ...events.map(event => event.sortDate?.slice(0, 4)).filter(year => Number(year) >= currentYear),
-    ])).sort(), [explicitYears, currentYear, events]);
+    ])).sort(), [explicitYears, defaultYears, currentYear, events]);
     const searchFilters = { searchTerm, selectedYears: explicitYears, selectedEscaloes, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, quickPeriod, selectedMonth, selectedDay, viewMode, sources: effectiveSources };
     function applySearch(raw) {
         const value = normalizeSearch(raw);
@@ -178,7 +180,7 @@ export default function CalendarView({
         setSelectedAmbito(forceAmbito || value.selectedAmbito || 'Todos'); setSelectedLicenca(forceLicenca || value.selectedLicenca || 'Todas');
         setSelectedRegiao(value.selectedRegiao || 'Todas'); setSelectedDistrito(value.selectedDistrito || 'Todos');
         setMonthFrom(value.monthFrom || 1); setMonthTo(value.monthTo || 12); setSelectedTags(value.selectedTags || []);
-        setSelectedType(value.selectedType || 'Todos'); setPastEventsFilter(value.pastEventsFilter || 'futuros'); setQuickPeriod(['weekend', 'month'].includes(value.quickPeriod) ? value.quickPeriod : '');
+        setSelectedType(value.selectedType || 'Todos'); setPastEventsFilter(value.pastEventsFilter || defaultPastEventsFilter); setQuickPeriod(['weekend', 'month'].includes(value.quickPeriod) ? value.quickPeriod : '');
         setSelectedMonth(value.selectedMonth || null); setSelectedDay(value.selectedDay || null); setViewMode(value.viewMode || 'list');
         setSearchSources(value.sources?.length ? value.sources : null);
     }
@@ -294,6 +296,7 @@ export default function CalendarView({
     }, [defaultYearsList, eventYears]);
 
     const getDefaultSelectedYears = (evYears = eventYears) => {
+        if (defaultYears) return [...defaultYears];
         const currYr = new Date().getFullYear();
         const futureAndCurrentYears = (evYears || [])
             .filter(y => {
@@ -364,6 +367,7 @@ export default function CalendarView({
     return (
         <div className={styles.page}>
             <PageHeading title={pageTitle} subtitle={t('minimal_calendar_intro')} hero={hero} icon={filterByAgenda ? CalendarCheck : filterByFavorites ? Star : Calendar} />
+            {pageIntro}
             {filterByFavorites && <FavoriteEditionControls preferences={editionPreferences} isSignedIn={isSignedIn} />}
             <header className={styles.calendarControls} data-expanded={showFilters}>
                 {isOffline && (

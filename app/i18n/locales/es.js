@@ -180,6 +180,8 @@ const messages = {
     page_regionals_subtitle: "Competiciones organizadas por las Asociaciones Regionales",
     page_internationals_title: "Pruebas Internacionales",
     page_internationals_subtitle: "Eventos internacionales presentes en las fuentes disponibles",
+    page_internationals_archive_title: "Archivo internacional",
+    page_internationals_archive_desc: "No hay próximas pruebas internacionales con fecha publicada en este calendario. El archivo incluye registros de {year}. Usa los filtros para elegir la temporada y confirma los cambios en la fuente.",
     page_leisure_title: "Paseos y Ocio",
     page_leisure_subtitle: "Granfondos, Paseos y Pruebas Abiertas (CPT)",
 

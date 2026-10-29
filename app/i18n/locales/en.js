@@ -180,6 +180,8 @@ const messages = {
     page_regionals_subtitle: "Competitions organized by Regional Associations",
     page_internationals_title: "International Events",
     page_internationals_subtitle: "International events present in the available sources",
+    page_internationals_archive_title: "International archive",
+    page_internationals_archive_desc: "No upcoming dated international events are currently listed in this calendar. The archive includes {year} records. Use the filters to choose a season and confirm changes with the source.",
     page_leisure_title: "Leisure & Granfondos",
     page_leisure_subtitle: "Granfondos, Tours and Open Races (CPT)",
 
