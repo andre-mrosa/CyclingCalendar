@@ -43,6 +43,7 @@ Foram aplicadas 79 correções de metadados confirmáveis: âmbito, modalidade, 
 - Completadas traduções das definições, descrições de fontes, contacto, rodapé, textos legais e secção de exploração/ajuda da página principal em português, inglês, espanhol e francês. Nomes próprios e nomes originais das provas são preservados. URLs e metadados SEO mantêm a língua principal portuguesa.
 - Corrigidas traduções de modalidades/especialidades presentes nos dados e nomes de escalões.
 - Controlos de visibilidade passaram a botões acessíveis por teclado com estado de interruptor.
+- Os assistentes em diálogo são identificados como modais para suspender atualizações automáticas. No telemóvel, o assistente de escalões usa uma única área de deslocamento, sem duplicar a moldura e o espaço interior do diálogo.
 - Separadas as caches do calendário geral e das coleções para impedir que dados iniciais de uma coleção contaminem outra.
 - A versão dos dados integra também a chave da cache no servidor, evitando guardar uma resposta antiga sob o URL de uma versão nova.
 - Next.js atualizado para 16.4.3 e dependências compatíveis corrigidas. `npm audit` completo: **0 vulnerabilidades reportadas** na verificação de 29/10/2026.

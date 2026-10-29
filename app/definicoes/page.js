@@ -467,9 +467,9 @@ export default function Conta() {
                             className="absolute top-3.5 right-3.5 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors text-2xl leading-none z-10 cursor-pointer"
                         >×</button>
 
-                        <div className="max-h-[90vh] overflow-y-auto p-5 sm:p-6">
+                        <div className={`max-h-[90vh] overflow-y-auto ${activeModal === 'escalao' ? '' : 'p-5 sm:p-6'}`}>
                             {activeModal === 'regiao' && <RegionAssistant onApply={(val) => { setDefaultRegiao(val); setActiveModal(null); }} />}
-                            {activeModal === 'escalao' && <EscalaoAssistant onApply={(val) => { setDefaultEscalao(val); setActiveModal(null); }} />}
+                            {activeModal === 'escalao' && <EscalaoAssistant embedded onApply={(val) => { setDefaultEscalao(val); setActiveModal(null); }} />}
 
                             {activeModal === 'delete_request' && (
                                 <div className="space-y-4">

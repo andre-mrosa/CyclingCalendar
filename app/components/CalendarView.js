@@ -932,7 +932,7 @@ export default function CalendarView({
                     <div className="relative w-full max-w-[500px] bg-surface rounded-xl shadow-2xl border border-line flex flex-col max-h-[90vh] text-ink transition-colors duration-200" onClick={(e) => e.stopPropagation()}>
                         <button className="absolute top-4 right-4 text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 z-10 p-1 cursor-pointer" onClick={() => setShowEscalaoHelp(false)} aria-label={t('action_close')}><X size={20} aria-hidden="true" /></button>
                         <div className="overflow-y-auto flex-1 p-0 rounded-xl">
-                            <EscalaoAssistant onApply={(esc) => {
+                            <EscalaoAssistant embedded onApply={(esc) => {
                                 if (!selectedEscaloes.includes(esc)) {
                                     setSelectedEscaloes([...selectedEscaloes, esc]);
                                 }
