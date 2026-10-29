@@ -1,6 +1,7 @@
 import { eventDateDisplay } from './eventDateDisplay.js';
 import { originalEventUrl } from '../lib/publicEvent.js';
 import { isCancelled } from './planning.js';
+import { getEventDiscipline } from './eventClassifier.js';
 
 const normal = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 export const safeFavoriteIds = value => Array.isArray(value) ? [...new Set(value.filter(id => typeof id === 'string' && id.length > 0 && id.length <= 1000))].slice(0, 1000) : [];
@@ -21,7 +22,9 @@ export function editionIdentity(event) {
     // strip arbitrary trailing numbers from other events.
     if (name === 'granfondo medio tejo 2' && year === 2027 &&
         /cabreirasolutions\.com\/evento\/granfondo-medio-tejo-2\/?$/.test(event.link)) name = 'granfondo medio tejo';
-    const tag = normal(event.tag).replace(/[^a-z0-9]+/g,' ').trim();
+    const storedTag = normal(event.tag);
+    const discipline = !storedTag || ['btt','estrada','ciclismo'].includes(storedTag) ? getEventDiscipline(event) || event.tag : event.tag;
+    const tag = normal(discipline).replace(/[^a-z0-9]+/g,' ').trim();
     if (!tag || !name.split(' ').some(word => word.length >= 4 && !generic.has(word) && !/^\d+$/.test(word))) return null;
     const sport = /\bxcm\b/.test(tag) ? 'btt xcm' : tag;
     const series = sport + ':' + name;

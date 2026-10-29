@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixtureModule } from './fixtureModule.mjs';
 const { parseFPCCalendar, fetchFPCCalendar } = await fixtureModule('../app/lib/scrapers/fpc.js');
+const { deepScrapeCabreira } = await fixtureModule('../app/lib/scrapers/cabreira.js');
 const { scrapeStopAndGo } = await fixtureModule('../app/lib/scrapers/stopandgo.js', { '../logger.js': { logInfo: async () => {}, logError: async () => {} } });
 import { readStopAndGoHeader } from '../app/lib/scrapers/stopandgoParser.js';
 import { getAmbito } from '../app/lib/scrapers/utils.js';
@@ -15,6 +16,12 @@ const fpcRow = (title, start, end = start, category = 'CN') => `<tr><th>${start}
 const fpcPage = (rows, year = '2026', from = '01') => `<form><select name="epoca_site"><option selected>${year}</option></select><select name="mes_de_new"><option selected>${from}</option></select><select name="mes_ate_new"><option selected>12</option></select></form><table class="dc_table_s12"><tbody>${rows}</tbody></table>`;
 const sgPage = ({ title = 'Prova', modality = 'BTT', dates = '5 set 2026' } = {}) => `<nav><a>BTT</a><a>Gravel</a></nav><section><div><h1>${title}</h1><div>Maia, Portugal</div><div>${dates}</div><div>${modality}</div></div></section><aside>Campeonato Nacional de Gravel <span>20 set 2026</span></aside>`;
 const url = 'https://stopandgo.net/events/prova-2026';
+
+test('Cabreira reads the published event name instead of deriving it from a duplicated URL slug', async t => {
+    t.mock.method(globalThis, 'fetch', async () => new Response('<h1>GRANFONDO MÉDIO TEJO</h1><p>Inscrições em breve</p>'));
+    const result = await deepScrapeCabreira('https://cabreirasolutions.com/evento/granfondo-medio-tejo-2/');
+    assert.equal(result.title, 'GRANFONDO MÉDIO TEJO');
+});
 
 test('FPC submits the hidden marker and all twelve months, including next season', async t => {
     t.mock.method(globalThis, 'fetch', async (_url, options) => {
@@ -52,7 +59,7 @@ test('FPC email-shaped and unsafe links never hide an otherwise valid race page'
     assert.equal(parseFPCCalendar(fpcPage(row),2026)[0].link,'https://www.fpciclismo.pt/pagina/passeio-seixo');
 });
 
-test('FPC parser returns only event name, date, locality and original source link', () => {
+test('FPC parser keeps minimal facts and structured classifications without imported creative content', () => {
     const events = parseFPCCalendar(fpcPage([
         fpcRow('Campeonatos Nacionais Pista', '23-01-2026', '25-01-2026', 'Pista CN'),
         fpcRow('Campeonato Nacional XCE', '26-06-2026', undefined, 'BTT XCE'),
@@ -63,10 +70,12 @@ test('FPC parser returns only event name, date, locality and original source lin
         fpcRow('Campeonato Nacional XCC', '18-07-2026', undefined, 'BTT XCC')
     ].join('')), 2026);
     assert.equal(events.length, 6);
-    assert.deepEqual(Object.keys(events[0]).sort(), ['date', 'details', 'distrito', 'id', 'link', 'regiao', 'sortDate', 'source', 'title'].sort());
+    assert.deepEqual(Object.keys(events[0]).sort(), ['ambito','tag','escaloes','date', 'details', 'distrito', 'id', 'link', 'regiao', 'sortDate', 'source', 'title'].sort());
     assert.equal(events[1].details, 'Fundão');
     assert.equal(events[1].source, 'FPC');
-    assert.ok(events.every(event => !('tag' in event) && !('description' in event) && !('image' in event)));
+    assert.ok(events.every(event => !('description' in event) && !('image' in event)));
+    assert.equal(events[0].tag, 'Pista');
+    assert.equal(events[0].ambito, 'Campeonato Nacional');
     assert.equal(events[4].sortDate.toISOString(), '2026-07-31T00:00:00.000Z');
     assert.match(events[4].date, /31 JUL 2026 a 02 AGO 2026/);
 });

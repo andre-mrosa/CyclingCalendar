@@ -75,6 +75,7 @@ const ESCALAO_MAP = {
     'profissional (uci)': { en: 'Professional (UCI)', es: 'Profesional (UCI)', fr: 'Professionnel (UCI)' },
     'todos (aberto)': { en: 'All (Open)', es: 'Todos (Abierto)', fr: 'Tous (Ouvert)' },
     'geral / vários': { en: 'General / Various', es: 'General / Varios', fr: 'Général / Divers' },
+    'geral / aberto': { en: 'All (Open)', es: 'Todos (Abierto)', fr: 'Tous (Ouvert)' },
     'geral / varios': { en: 'General / Various', es: 'General / Varios', fr: 'Général / Divers' },
     'geral/vários': { en: 'General / Various', es: 'General / Varios', fr: 'Général / Divers' },
     'geral/varios': { en: 'General / Various', es: 'General / Varios', fr: 'Général / Divers' },
@@ -156,6 +157,12 @@ export function translateLicenca(name, lang = 'pt') {
 }
 
 const TAG_MAP = {
+    'estrada fundo': { en:'Road Race', es:'Ruta en línea', fr:'Course en ligne' },
+    'estrada cri / itt': { en:'Individual Time Trial', es:'Contrarreloj individual', fr:'Contre-la-montre individuel' },
+    'estrada cre / ttt': { en:'Team Time Trial', es:'Contrarreloj por equipos', fr:'Contre-la-montre par équipes' },
+    'btt xcm / maratona': { en:'MTB XCM / Marathon', es:'BTT XCM / Maratón', fr:'VTT XCM / Marathon' },
+    'btt dhi / dhu': { en:'MTB DHI / DHU', es:'BTT DHI / DHU', fr:'VTT DHI / DHU' },
+    'e-sports': { en:'E-Sports', es:'Ciclismo virtual', fr:'Cyclisme virtuel' },
     'estrada': { en: 'Road', es: 'Carretera', fr: 'Route' },
     'estrada linha': { en: 'Road', es: 'Carretera', fr: 'Route' },
     'estrada circuito': { en: 'Road Circuit', es: 'Circuito Carretera', fr: 'Circuit Route' },

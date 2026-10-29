@@ -1,6 +1,7 @@
 const { withWorkflow } = require("workflow/next");
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  env: { NEXT_PUBLIC_APP_VERSION: process.env.VERCEL_GIT_COMMIT_SHA || process.env.APP_VERSION || require('./package.json').version },
   async redirects() {
     return [{ source: '/termos', destination: '/terms-of-service', permanent: true }, { source: '/privacidade', destination: '/privacy-policy', permanent: true }];
   },

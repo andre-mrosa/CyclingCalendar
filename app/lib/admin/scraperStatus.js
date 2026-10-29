@@ -6,7 +6,7 @@ const SOURCE_DEFS = {
     apedalar: ['Apedalar', 'Eventos de ciclismo — processados, não novos']
 };
 const STEP_DEFS = {
-    translation: ['Tradução Multilíngue', 'EN / ES / FR'],
+    translation: ['Validação dos idiomas', 'PT / EN / ES / FR; os nomes originais das provas são preservados.'],
     finalize: ['Finalização', 'Conclusão e contagem do calendário']
 };
 const METRICS = ['processed', 'created', 'updated', 'merged', 'quarantined'];

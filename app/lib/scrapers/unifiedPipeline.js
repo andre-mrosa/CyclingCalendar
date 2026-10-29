@@ -1,10 +1,11 @@
 import { randomUUID } from 'node:crypto';
+import { revalidateTag } from 'next/cache';
 import { scrapeFPC } from './fpc.js';
 import { scrapeCabreira } from './cabreira.js';
 import { scrapeStopAndGo } from './stopandgo.js';
 import { scrapeRecordePessoal } from './recordepessoal.js';
 import { scrapeApedalar } from './apedalar.js';
-import { translateAllPendingEvents } from '../translationService.js';
+import { validateCalendarTranslations } from '../validateCalendarTranslations.js';
 import { prisma } from '../db.js';
 import { logInfo, logError, withScraperLogContext } from '../logger.js';
 import { withScraperLock } from './runLock.js';
@@ -116,21 +117,17 @@ async function runPipeline(triggeredBy, options) {
                     await stage('recordepessoal', 'Recorde Pessoal', true, saveOptions => scrapeRecordePessoal({ years, ...saveOptions }));
                     break;
                 case 'apedalar':
-                    await stage('apedalar', 'Apedalar', true, saveOptions => scrapeApedalar(prisma, years[0], { ...saveOptions }));
+                    await stage('apedalar', 'Apedalar', true, saveOptions => scrapeApedalar(prisma, years, { ...saveOptions }));
                     break;
                 case 'translation':
-                    await stage('translation', 'Tradução Multilíngue', false, async () => {
-                        let total = 0;
-                        for (const lang of ['en', 'es', 'fr']) {
-                            const res = await translateAllPendingEvents(lang, 50);
-                            if (res && res.count) total += res.count;
-                        }
-                        stats.translations = { success: true, translatedCount: total };
-                        return total;
+                    await stage('translation', 'Validação dos idiomas da interface', false, async () => {
+                        stats.translations = validateCalendarTranslations();
+                        return stats.translations.validatedLanguages;
                     });
                     break;
                 case 'finalize':
                     await stage('finalize', 'Recolha mínima concluída', false, async () => {
+                        revalidateTag('calendar-events', { expire:0 });
                         return prisma.event.count();
                     });
                     break;
@@ -159,9 +156,11 @@ async function runPipeline(triggeredBy, options) {
 
             if (isLastStage && !retrying) {
                 const status = hadErrors || failed ? 'partial' : 'success';
-                await logInfo('SCRAPER', `Sincronização global concluída em ${durationSeconds}s.`, {
-                    ...stats, event: 'run-complete', status, durationSeconds,
-                    startedAt: now.toISOString(), completedAt: new Date().toISOString()
+                const runStart = options.startedAt && Number.isFinite(Date.parse(options.startedAt)) ? new Date(options.startedAt) : now;
+                const totalSeconds = Number(((Date.now() - runStart.getTime()) / 1000).toFixed(1));
+                await logInfo('SCRAPER', `Sincronização global concluída em ${totalSeconds}s.`, {
+                    ...stats, event: 'run-complete', status, durationSeconds:totalSeconds,
+                    startedAt: runStart.toISOString(), completedAt: new Date().toISOString()
                 });
             } else {
                 await logInfo('SCRAPER', `Etapa ${pipelineStage} concluída em ${durationSeconds}s.`,

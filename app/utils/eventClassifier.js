@@ -1,3 +1,4 @@
+import { eventDateDisplay } from './eventDateDisplay.js';
 export function hasNationalChampionshipTitle(title = '') {
     const text = title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     return !/\b(?:inter[ -]?)?regiona(?:l|is)\b/.test(text) &&
@@ -17,6 +18,9 @@ export function isStageRace(event) {
     const title = (event.title || '').toLowerCase();
     // Championship weekends span categories/disciplines, not race stages.
     if (hasNationalChampionshipTitle(title)) return false;
+    const dates = eventDateDisplay(event);
+    // A one-day GP or cycling tour is not a multi-stage race merely by name.
+    if (dates.start && dates.end === dates.start) return false;
     const details = (event.details || '').toLowerCase();
     const rawDate = (event.date || '').toLowerCase();
     const programa = (event.programa || '').toLowerCase();
@@ -29,7 +33,8 @@ export function isStageRace(event) {
         'challenge', '2 dias de', '3 dias de', '4 dias de', '5 dias de',
         'two days', 'three days', 'multi-stage'
     ];
-    if (stageKeywords.some(k => title.includes(k) || details.includes(k))) {
+    if (stageKeywords.some(k => title.includes(k) || details.includes(k)) &&
+        ((dates.start && dates.end > dates.start) || /por etapas|stage race|multi-stage/.test(title + ' ' + details))) {
         return true;
     }
 
@@ -76,7 +81,17 @@ export function getEventCategories(event) {
     if (event.source?.split(',').some(source => source.trim() === 'FPC') && /^[12]\.17$/.test(eventClass)) {
         return ['Sub-17 (Cadetes)', ...categories.filter(value => value === 'Femininas')];
     }
-    return categories;
+    return [...new Set(categories.map(value => value === 'Geral / Aberto' ? 'Todos (Aberto)' : value))];
+}
+
+export function publishedEventCategories(text = '') {
+    const value = text.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+    const result = [];
+    for (const [pattern, label] of [[/\b(?:sub[- ]?15|juvenis)\b/,'Sub-15 (Juvenis)'],
+        [/\b(?:sub[- ]?17|cadetes?)\b/,'Sub-17 (Cadetes)'], [/\b(?:sub[- ]?19|juniores?)\b/,'Sub-19 (Juniores)'],
+        [/\bsub[- ]?23\b/,'Sub-23'], [/\belites?\b/,'Elite'], [/\b(?:masters?|veteranos?)\b/,'Masters / Veteranos'],
+        [/\b(?:feminin[oa]s?|feminas?)\b/,'Femininas'], [/\bescolas\b/,'Escolas']]) if (pattern.test(value)) result.push(label);
+    return result;
 }
 
 export const RACE_TAXONOMY = [

@@ -2,7 +2,7 @@ import { assertMinimalCollectionEnabled } from '../contentReleasePolicy.js';
 import * as cheerio from 'cheerio';
 import { prisma } from '../db.js';
 import {
-    formatDateStr, parseSortDate, toTitleCase
+    formatDateStr, parseSortDate, toTitleCase, getTag, getAmbito
 } from './utils.js';
 import { logInfo, logError } from '../logger.js';
 import { saveOrMergeEvent } from '../merging/eventMerger.js';
@@ -12,9 +12,9 @@ import { detectRaceDate } from '../../utils/detectRaceDate.js';
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
 export const deepScrapeCabreira = async (link) => {
-    // We only fetch registration dates to respect minimal extraction policy (Rights Review)
-    let opensAt = null, closesAt = null;
-    if (!link) return { opensAt, closesAt };
+    // Read factual title and registration dates from the source, without importing its editorial content.
+    let opensAt = null, closesAt = null, title = null;
+    if (!link) return { opensAt, closesAt, title };
     try {
         await delay(500); // Polite rate limit
         const regUrl = link + (link.includes('?') ? '&' : '?') + 'tab=regulamento';
@@ -22,13 +22,14 @@ export const deepScrapeCabreira = async (link) => {
         if (regResponse.ok) {
             const regHtml = await regResponse.text();
             const $reg = cheerio.load(regHtml);
+            title = $reg('h1').first().text().replace(/\s+/g, ' ').trim() || null;
             const dates = parseRegistrationDates($reg('body').html());
             opensAt = dates.registrationOpensAt ? new Date(dates.registrationOpensAt) : null;
             closesAt = dates.registrationClosesAt ? new Date(dates.registrationClosesAt) : null;
         }
-        return { opensAt, closesAt };
+        return { opensAt, closesAt, title };
     } catch(e) {
-        return { opensAt: null, closesAt: null };
+        return { opensAt: null, closesAt: null, title: null };
     }
 };
 
@@ -37,7 +38,7 @@ export const scrapeCabreira = async (year, options = {}) => {
     try {
         logInfo('SCRAPER', `Início da sincronização Cabreira Solutions (Ano: ${year || 'Todos'})`);
         const response = await fetch(`https://cabreirasolutions.com/eventos/`, {
-            headers: { 'User-Agent': 'Mozilla/5.0' }
+            headers: { 'User-Agent': 'Mozilla/5.0' }, signal:AbortSignal.timeout(15000)
         });
 
         if (!response.ok) {
@@ -92,10 +93,12 @@ export const scrapeCabreira = async (year, options = {}) => {
                 try {
                     const id = 'cabreira-' + ev.title.replace(/\s+/g, '-').toLowerCase() + '-' + ev.eventYear;
                     
-                    const { opensAt, closesAt } = await deepScrapeCabreira(ev.href);
+                    const { opensAt, closesAt, title } = await deepScrapeCabreira(ev.href);
+                    const publishedTitle = title || ev.title;
 
                     const eventData = {
-                        title: ev.title,
+                        tag: getTag(publishedTitle), ambito:getAmbito(publishedTitle, '', '', 'Cabreira'),
+                        title: publishedTitle,
                         date: ev.dateText,
                         sortDate: ev.sortDate,
                         details: ev.locText,

@@ -1,5 +1,5 @@
 import { isSameEvent } from './eventMatcher.js';
-import { getEventDiscipline, isOfficialNationalChampionship } from '../../utils/eventClassifier.js';
+import { getEventDiscipline, RACE_TAXONOMY, isOfficialNationalChampionship } from '../../utils/eventClassifier.js';
 import { getAmbito } from '../scrapers/utils.js';
 import { originalEventUrl, getPreferredEventLink, isFpcUrl } from '../publicEvent.js';
 import { SOURCE_REVIEWS } from '../contentReleasePolicy.js';
@@ -269,7 +269,41 @@ export function toMinimalScrapedEvent(event) {
         id: String(event.id), title, date, sortDate, details: location || null,
         regiao: location || null, distrito: location || null,
         source, link,
+        ...minimalClassification(event),
     };
+}
+
+function minimalClassification(event) {
+    const facts = {};
+    if (RACE_TAXONOMY.some(group => group.discipline === event.tag || group.specialities.includes(event.tag))) facts.tag = event.tag;
+    if (['Prova Aberta','Regional','Nacional','Taça de Portugal','Internacional'].includes(event.ambito) ||
+        (event.ambito === 'Campeonato Nacional' && isOfficialNationalChampionship(event))) facts.ambito = event.ambito;
+    if (['Competição','CPT / Lazer','Lazer'].includes(event.licenca)) facts.licenca = event.licenca;
+    let categories = event.escaloes;
+    if (typeof categories === 'string') { try { categories = JSON.parse(categories); } catch { categories = []; } }
+    const allowed = new Set(['Elite','Elite Amador','Sub-23','Sub-19 (Juniores)','Sub-17 (Cadetes)','Sub-15 (Juvenis)',
+        'Masters / Veteranos','Femininas','Escolas','Profissional (UCI)','Todos (Aberto)','Geral / Vários','Geral / Aberto']);
+    const accepted = Array.isArray(categories) ? [...new Set(categories.filter(value => allowed.has(value)))] : [];
+    if (accepted.length) facts.escaloes = JSON.stringify(accepted);
+    for (const field of ['registrationOpensAt','registrationClosesAt']) {
+        const date = event[field] ? new Date(event[field]) : null;
+        if (date && Number.isFinite(date.getTime())) facts[field] = date;
+    }
+    return facts;
+}
+function mergeMinimalClassification(existing, incoming) {
+    const incomingOfficial = incoming.source === 'FPC';
+    const existingOfficial = (existing.source || '').split(',').some(source => source.trim() === 'FPC');
+    const facts = Object.fromEntries(Object.entries(minimalClassification(incoming)).filter(([key]) =>
+        incomingOfficial || !existingOfficial || !existing[key]));
+    if (facts.escaloes && existing.escaloes) {
+        let before = []; try { before = JSON.parse(existing.escaloes); } catch {}
+        const after = JSON.parse(facts.escaloes);
+        const retained = after.includes('Sub-17 (Cadetes)') && !after.includes('Masters / Veteranos')
+            ? before.filter(value => value === 'Femininas') : before.filter(value => !['Geral / Vários','Geral / Aberto','Todos (Aberto)'].includes(value));
+        facts.escaloes = JSON.stringify([...new Set([...retained,...after])]);
+    }
+    return facts;
 }
 
 export const normalizeLocation = value => String(value || '').normalize('NFD')
@@ -418,6 +452,7 @@ export async function saveOrMergeEvent(prisma, eventData, options = {}) {
         );
 
         const mergedData = {
+            ...mergeMinimalClassification(existingById, eventData),
             title: eventData.title, date: eventData.date, sortDate: eventData.sortDate,
             details: eventData.details, regiao: eventData.regiao, distrito: eventData.distrito,
             source: mergeSources(existingById.source, eventData.source),
@@ -462,7 +497,9 @@ export async function saveOrMergeEvent(prisma, eventData, options = {}) {
                 );
 
                 const mergedData = {
-                    title: candidate.title || eventData.title,
+                    ...mergeMinimalClassification(candidate, eventData),
+                    title: candidate.source?.split(',').some(source => source.trim() === 'FPC')
+                        ? candidate.title : eventData.title || candidate.title,
                     date: eventData.date, sortDate: eventData.sortDate,
                     details: eventData.details || candidate.details,
                     regiao: eventData.regiao || candidate.regiao,

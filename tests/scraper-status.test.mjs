@@ -313,12 +313,13 @@ async function pipelineFixture(overrides = {}) {
     return isolatedModule('../app/lib/scrapers/unifiedPipeline.js', {
         assertContentProcessingApproved: () => {},
         randomUUID: () => 'fixture-run', withScraperLogContext, logInfo, logError,
+        revalidateTag: () => {},
         withScraperLock: work => work(),
         scrapeFPC: async (_year, { onResult }) => { await onResult({ action: 'updated' }); return 1; },
         scrapeCabreira: async (_year, { onResult }) => { await onResult({ action: 'created' }); return 1; },
         scrapeStopAndGo: async ({ onResult }) => { await onResult({ action: 'quarantined' }); return 1; },
         scrapeRecordePessoal: async () => 0, scrapeApedalar: async () => 0,
-        translateAllPendingEvents: async () => ({ success: true, count: 0, translatedCount: 0 }),
+        validateCalendarTranslations: () => ({ success:true, validatedLanguages:4, validatedLabels:508 }),
         prisma: { event: { findMany: async () => [], count: async () => 0 } },
         isSameEvent: () => false, mergeEventRecords: () => ({}), ...overrides
     });
@@ -373,7 +374,7 @@ test('pipeline cannot label swallowed/logged source and enrichment errors as suc
     const logs = captureLogs(t);
     const pipeline = await pipelineFixture({
         scrapeCabreira: async () => { await logError('SCRAPER', 'Cabreira: event failed'); return 0; },
-        translateAllPendingEvents: async () => { await logError('SCRAPER', 'Tradução: offline'); return { success: false, error: 'offline' }; },
+        validateCalendarTranslations: () => { throw new Error('Tradução: etiqueta em falta'); },
     });
     const result = await runPipelinePlan(pipeline);
     assert.equal(result.success, false);

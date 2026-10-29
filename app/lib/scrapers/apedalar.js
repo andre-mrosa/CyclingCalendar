@@ -2,16 +2,18 @@ import { assertMinimalCollectionEnabled } from '../contentReleasePolicy.js';
 import * as cheerio from 'cheerio';
 import { logInfo, logError } from '../logger.js';
 import { saveOrMergeEvent } from '../merging/eventMerger.js';
+import { getTag, getAmbito } from './utils.js';
 
 const BASE_URL = 'https://apedalar.pt';
 
 export async function scrapeApedalar(prisma, year, options = {}) {
+    const years = (Array.isArray(year) ? year : [year]).map(String);
     assertMinimalCollectionEnabled("Apedalar");
     logInfo('SCRAPER', 'Início da sincronização Apedalar');
 
     try {
         const sitemapRes = await fetch(`${BASE_URL}/sitemap.xml`, {
-            headers: { 'User-Agent': 'Mozilla/5.0' }
+            headers: { 'User-Agent': 'Mozilla/5.0' }, signal:AbortSignal.timeout(15000)
         });
 
         if (!sitemapRes.ok) throw new Error(`HTTP ${sitemapRes.status}`);
@@ -32,7 +34,7 @@ export async function scrapeApedalar(prisma, year, options = {}) {
                 await new Promise(r => setTimeout(r, 1000));
 
                 const eventRes = await fetch(url, {
-                    headers: { 'User-Agent': 'Mozilla/5.0' }
+                    headers: { 'User-Agent': 'Mozilla/5.0' }, signal:AbortSignal.timeout(10000)
                 });
 
                 if (!eventRes.ok) continue;
@@ -44,7 +46,7 @@ export async function scrapeApedalar(prisma, year, options = {}) {
                 if (!title) continue;
 
                 const rawDate = $('h2:contains("QUANDO?")').next('div').text().trim();
-                if (!rawDate || !rawDate.includes(year)) continue; // Only current year
+                if (!rawDate || !years.some(value => rawDate.includes(value))) continue;
 
                 const dateMatches = rawDate.match(/(\d{1,2})\s+de\s+([a-zA-Zç]+)\s+de\s+(\d{4})/i);
                 if (!dateMatches) continue;
@@ -61,6 +63,7 @@ export async function scrapeApedalar(prisma, year, options = {}) {
 
                 const local = $('h2:contains("ONDE?")').next('div').text().trim().replace(/\s+/g, ' ');
                 const eventObj = {
+                    tag:getTag(title), ambito:getAmbito(title, '', '', 'Apedalar'),
                     id: `apedalar-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${day}-${month}-${yearStr}`,
                     title,
                     date,

@@ -93,7 +93,7 @@ test('favicon has useful browser and search sizes', () => {
     assert.deepEqual(sizes, [16, 32, 48, 64]);
 });
 test('privacy identifies the controller only there and directs requests to the form', () => {
-    const policy = readFileSync(new URL('../app/privacy-policy/page.js', import.meta.url), 'utf8');
+    const policy = readFileSync(new URL('../app/privacy-policy/PrivacyPolicyClient.js', import.meta.url), 'utf8');
     assert.match(policy, /responsável pelo tratamento/);
     assert.match(policy, /href="\/contacto"/);
     assert.doesNotMatch(policy, /mailto:|@outlook|@gmail|Supabase/);

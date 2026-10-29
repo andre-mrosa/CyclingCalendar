@@ -42,8 +42,9 @@ test('similar names, cup rounds, disciplines and ambiguous dates never carry fav
     const cup = race(2026, { title: '1ª Taça de Portugal XCO - Melgaço', tag: 'BTT XCO' });
     assert.equal(editionMatches([cup, race(2027, { title: '2ª Taça de Portugal XCO - Melgaço', tag: 'BTT XCO' })], [cup.id]).length, 0);
     assert.equal(editionMatches([first, second, race(2027, { id: 'other-date', date: '30 MAI 2027' })], [first.id]).length, 0);
-    for (const extra of [{ title: 'Granfondo' }, { date: 'Data a definir' }, { tag: '' }, { source: 'Quarentena' }, { title: 'Granfondo Médio Tejo cancelado' }])
+    for (const extra of [{ title: 'Granfondo' }, { date: 'Data a definir' }, { tag: '', title:'Prova sem modalidade' }, { source: 'Quarentena' }, { title: 'Granfondo Médio Tejo cancelado' }])
         assert.equal(editionIdentity(race(2027, extra)), null);
+    assert.equal(editionIdentity(race(2027, {tag:''})).series, editionIdentity(first).series);
 });
 test('unstarred automatic editions are excluded across sources; categories and numbered formats stay distinct', () => {
     const key = editionIdentity(second).key;

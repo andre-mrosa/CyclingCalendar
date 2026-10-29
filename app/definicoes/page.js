@@ -76,7 +76,7 @@ export default function Conta() {
             const data = await res.json();
             if (data.success) {
                 setDeletionRequest(data.request);
-                setDeleteFeedback({ type: 'success', text: data.message });
+                setDeleteFeedback({ type: 'success', text: t('settings_request_success') });
                 if (typeof window !== 'undefined') {
                     window.dispatchEvent(new Event('admin-notif-update'));
                 }
@@ -86,10 +86,10 @@ export default function Conta() {
                     setDeleteReason('');
                 }, 1500);
             } else {
-                setDeleteFeedback({ type: 'error', text: data.error || 'Erro ao submeter pedido.' });
+                setDeleteFeedback({ type: 'error', text: data.error || t('settings_request_error') });
             }
         } catch (e) {
-            setDeleteFeedback({ type: 'error', text: e.message || 'Erro de ligação.' });
+            setDeleteFeedback({ type: 'error', text: e.message || t('settings_connection_error') });
         } finally {
             setIsDeletingAccount(false);
         }
@@ -97,8 +97,8 @@ export default function Conta() {
 
     const handleCancelDeletionRequest = async () => {
         const confirmMsg = deletionRequest?.type === 'DELETE_DATA'
-            ? 'Tem a certeza que deseja cancelar o pedido de eliminação dos seus dados?'
-            : 'Tem a certeza que deseja cancelar o pedido de eliminação da sua conta?';
+            ? t('settings_cancel_data_confirm')
+            : t('settings_cancel_account_confirm');
         if (!window.confirm(confirmMsg)) return;
         setIsLoadingDeletion(true);
         try {
@@ -130,17 +130,15 @@ export default function Conta() {
                                 <Shield size={22} />
                             </div>
                             <div>
-                                <h3 className="font-bold text-ink text-base">Painel de Gestão & Backoffice</h3>
-                                <p className="text-xs text-muted mt-0.5">Gere utilizadores, consulta os logs do sistema e executa scrapers.</p>
+                                <h3 className="font-bold text-ink text-base">{t('settings_admin_title')}</h3>
+                                <p className="text-xs text-muted mt-0.5">{t('settings_admin_desc')}</p>
                             </div>
                         </div>
                         <Link
                             href="/admin"
                             className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-brand hover:brightness-110 text-surface text-xs sm:text-sm font-bold shadow-md transition-all !no-underline shrink-0"
                         >
-                            <Shield size={16} />
-                            Abrir Gestão
-                        </Link>
+                            <Shield size={16} />{t('settings_admin_open')}</Link>
                     </section>
                 )}
                 <section className="bg-surface border border-line rounded-2xl p-6 sm:p-8 shadow-sm">
@@ -314,7 +312,7 @@ export default function Conta() {
                                                 onClick={() => moveTab(idx, -1)}
                                                 disabled={isFirst}
                                                 className={`p-1 rounded transition-colors ${isFirst ? 'opacity-25 cursor-not-allowed' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-brand cursor-pointer'}`}
-                                                title="Mover para cima"
+                                                title={t('settings_move_up')}
                                             >
                                                 <ChevronUp size={15} />
                                             </button>
@@ -322,7 +320,7 @@ export default function Conta() {
                                                 onClick={() => moveTab(idx, 1)}
                                                 disabled={isLast}
                                                 className={`p-1 rounded transition-colors ${isLast ? 'opacity-25 cursor-not-allowed' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-brand cursor-pointer'}`}
-                                                title="Mover para baixo"
+                                                title={t('settings_move_down')}
                                             >
                                                 <ChevronDown size={15} />
                                             </button>
@@ -336,13 +334,13 @@ export default function Conta() {
                                     {/* Visibility Toggle */}
                                     <div className="flex items-center gap-2.5 shrink-0">
                                         <span className="text-xs text-slate-400 hidden sm:inline">{isVisible ? t('settings_tab_active') : t('settings_tab_hidden')}</span>
-                                        <div
+                                        <button type="button" role="switch" aria-checked={isVisible} aria-label={localizedTab}
                                             className={`w-11 h-6 shrink-0 rounded-full transition-all flex items-center px-1 cursor-pointer border ${isVisible ? 'bg-brand-soft border-brand' : 'bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-700'}`}
                                             onClick={() => toggleHiddenTab(tab)}
                                             title={isVisible ? t('settings_tab_hidden') : t('settings_tab_active')}
                                         >
                                             <div className={`w-4 h-4 rounded-full transition-all ${isVisible ? 'translate-x-5 bg-brand' : 'translate-x-0 bg-slate-400 dark:bg-slate-500'}`}/>
-                                        </div>
+                                        </button>
                                     </div>
                                 </div>
                             );
@@ -358,12 +356,12 @@ export default function Conta() {
 
                     <div className="pt-2 flex flex-col gap-3">
                         {[
-                            { id: 'FPC', name: 'Federação Portuguesa de Ciclismo (FPC)', desc: 'Provas nacionais, regionais, taças e campeonatos oficiais.' },
-                            { id: 'Cabreira', name: 'Cabreira Solutions', desc: 'Granfondos, eventos de lazer e turismo desportivo.' },
-                            { id: 'Stop and Go', name: 'Stop and Go', desc: 'Provas de BTT, Ciclismo, Granfondos e cronometragens oficiais.' },
-                            { id: 'Recorde Pessoal', name: 'Recorde Pessoal', desc: 'Inscrições, Passeios BTT, Maratonas e eventos desportivos.' },
-                            { id: 'Apedalar', name: 'Apedalar', desc: 'Inscrições, Gestão de eventos, Cronometragem.' },
-                            { id: 'Classificações.net', name: 'Classificações.net', desc: 'Volta a Portugal, GPs, 24h BTT, Taças e classificações oficiais.' }
+                            { id: 'FPC', name: 'Federação Portuguesa de Ciclismo (FPC)', desc: t('settings_source_fpc') },
+                            { id: 'Cabreira', name: 'Cabreira Solutions', desc: t('settings_source_cabreira') },
+                            { id: 'Stop and Go', name: 'Stop and Go', desc: t('settings_source_stop') },
+                            { id: 'Recorde Pessoal', name: 'Recorde Pessoal', desc: t('settings_source_recorde') },
+                            { id: 'Apedalar', name: 'Apedalar', desc: t('settings_source_apedalar') },
+                            { id: 'Classificações.net', name: 'Classificações.net', desc: t('settings_source_classificacoes') }
                         ].map(source => {
                             const isSelected = selectedSources.includes(source.id);
                             return (
@@ -376,12 +374,12 @@ export default function Conta() {
                                             {source.desc}
                                         </span>
                                     </div>
-                                    <div
+                                    <button type="button" role="switch" aria-checked={isSelected} aria-label={source.name}
                                         className={`w-11 h-6 shrink-0 rounded-full transition-all flex items-center px-1 cursor-pointer border ${isSelected ? 'bg-brand-soft border-brand' : 'bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-700'}`}
                                         onClick={() => toggleSource(source.id)}
                                     >
                                         <div className={`w-4 h-4 rounded-full transition-all ${isSelected ? 'translate-x-5 bg-brand' : 'translate-x-0 bg-slate-400 dark:bg-slate-500'}`}/>
-                                    </div>
+                                    </button>
                                 </div>
                             );
                         })}
@@ -482,10 +480,10 @@ export default function Conta() {
                                         </div>
                                         <div>
                                             <h3 className="text-base font-bold text-ink">
-                                                {deleteModalType === 'DELETE_DATA' ? 'Requisitar Eliminação de Dados' : 'Requisitar Eliminação de Conta'}
+                                                {deleteModalType === 'DELETE_DATA' ? t('settings_delete_data_title') : t('settings_delete_account_title')}
                                             </h3>
                                             <p className="text-xs text-slate-500">
-                                                {deleteModalType === 'DELETE_DATA' ? 'Limpeza de favoritos e preferências' : 'Encerramento definitivo de conta'}
+                                                {deleteModalType === 'DELETE_DATA' ? t('settings_delete_data_subtitle') : t('settings_delete_account_subtitle')}
                                             </p>
                                         </div>
                                     </div>
@@ -497,24 +495,22 @@ export default function Conta() {
                                     }`}>
                                         <p className="font-bold m-0">
                                             {deleteModalType === 'DELETE_DATA'
-                                                ? 'O que acontece ao eliminar os dados?'
-                                                : 'Atenção: A eliminação de conta é irreversível.'}
+                                                ? t('settings_delete_data_warning')
+                                                : t('settings_delete_account_warning')}
                                         </p>
                                         <p className="m-0">
                                             {deleteModalType === 'DELETE_DATA'
-                                                ? 'Todos os teus favoritos, histórico de eventos e configurações salvas serão eliminados. A tua conta permanecerá ativa para poderes continuar a utilizar a plataforma.'
-                                                : 'Após o processamento pela administração, o teu perfil, favoritos e permissões serão apagados permanentemente do sistema de autenticação.'}
+                                                ? t('settings_delete_data_body')
+                                                : t('settings_delete_account_body')}
                                         </p>
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-semibold text-ink mb-1.5">
-                                            Justificação / Motivo (opcional):
-                                        </label>
+                                        <label className="block text-xs font-semibold text-ink mb-1.5">{t('settings_delete_reason')}</label>
                                         <textarea
                                             value={deleteReason}
                                             onChange={(e) => setDeleteReason(e.target.value)}
-                                            placeholder={deleteModalType === 'DELETE_DATA' ? "Ex: Pretendo reiniciar a minha lista de favoritos do zero..." : "Ex: Não pretendo continuar a utilizar o calendário..."}
+                                            placeholder={deleteModalType === 'DELETE_DATA' ? t('settings_delete_data_placeholder') : t('settings_delete_account_placeholder')}
                                             rows={3}
                                             className="w-full p-3 rounded-xl bg-canvas border border-line text-xs sm:text-sm text-ink focus:outline-none focus:border-brand transition-colors"
                                         />
@@ -533,9 +529,7 @@ export default function Conta() {
                                             onClick={() => setActiveModal(null)}
                                             disabled={isDeletingAccount}
                                             className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                                        >
-                                            Cancelar
-                                        </button>
+                                        >{t('settings_cancel_action')}</button>
                                         <button
                                             onClick={handleConfirmDeletionRequest}
                                             disabled={isDeletingAccount}
@@ -546,7 +540,7 @@ export default function Conta() {
                                             }`}
                                         >
                                             {isDeletingAccount && <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
-                                            <span>Submeter Pedido</span>
+                                            <span>{t('settings_submit_request')}</span>
                                         </button>
                                     </div>
                                 </div>

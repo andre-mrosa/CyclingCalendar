@@ -77,6 +77,7 @@ export default function CalendarView({
     forceEscalao = null,
     filterByFavorites = false,
     filterByAgenda = false,
+    filterLeisure = false,
     activeFilters = ['search', 'year', 'month', 'escalao', 'ambito', 'licenca', 'regiao'],
     applyDefaultRegiao = false,
     initialEvents = null,
@@ -139,17 +140,23 @@ export default function CalendarView({
 
     const effectiveSources = [...((searchSources?.length ? searchSources : selectedSources)?.length > 0 ? (searchSources || selectedSources) : ['FPC', 'Cabreira', 'Stop and Go', 'Classificações.net', 'Recorde Pessoal', 'Apedalar'])].sort();
     const eventsUrl = `/api/events?view=minimal-v4&years=all&sources=${effectiveSources.join(',')}`;
-    const eventsCacheKey = `cycling_calendar_minimal_v4_${[...effectiveSources].sort().join(',')}`;
+    const eventsCacheKey = `cycling_calendar_minimal_v5_${forceAmbito || 'Todos'}_${[...effectiveSources].sort().join(',')}`;
+    const syncVersion = useRef(null);
     const { data: fetchedEvents, error, isLoading: loading, mutate } = useSWR(
-        eventsUrl,
-        fetcher,
+        [eventsUrl, forceAmbito || 'Todos'],
+        ([url]) => fetcher(url + (syncVersion.current ? '&sync=' + encodeURIComponent(syncVersion.current) : '')),
         {
             fallbackData: initialEvents || undefined,
-            revalidateOnFocus: false, // Don't refetch on tab switch
+            revalidateOnFocus: false, // The lightweight sync check refreshes only changed data.
             revalidateIfStale: false,
             dedupingInterval: 120000 // Cache for 2 minutes in memory
         }
     );
+    useEffect(() => {
+        const refresh = event => { syncVersion.current = event.detail; mutate().catch(() => {}); };
+        window.addEventListener('calendar-data-updated', refresh);
+        return () => window.removeEventListener('calendar-data-updated', refresh);
+    }, [mutate]);
 
     const mounted = useClientReady();
     const cachedRaw = useStoredString(eventsCacheKey, '[]');
@@ -228,7 +235,7 @@ export default function CalendarView({
     const matchingEvents = useMemo(() => {
         let filtered = filterEvents(events, {
             filterByFavorites, favorites,
-            filterByAgenda, markedSet,
+            filterByAgenda, markedSet, filterLeisure,
             searchTerm,
             selectedYears,
             selectedEscaloes: forceEscalao ? [forceEscalao] : selectedEscaloes,
@@ -246,7 +253,7 @@ export default function CalendarView({
         filtered = filtered.filter(event => matchesPeriod(event, quickPeriod));
 
         return sortCalendarEvents(filtered, favorites);
-    }, [events, searchTerm, selectedYears, selectedEscaloes, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, filterByFavorites, filterByAgenda, markedSet, favorites, forceEscalao, forceAmbito, forceLicenca, quickPeriod, today]);
+    }, [events, searchTerm, selectedYears, selectedEscaloes, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, filterByFavorites, filterByAgenda, filterLeisure, markedSet, favorites, forceEscalao, forceAmbito, forceLicenca, quickPeriod, today]);
 
     const filteredEvents = useMemo(() => eventsInPeriod(matchingEvents, selectedMonth, selectedDay), [matchingEvents, selectedMonth, selectedDay]);
     const calendarMonth = selectedMonth || matchingEvents.map(event => eventDateDisplay(event).start).find(Boolean)?.slice(0, 7) || new Date().toISOString().slice(0, 7);

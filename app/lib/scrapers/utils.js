@@ -36,9 +36,10 @@ export const getAmbito = (name = '', det = '', tag = '', source = '') => {
     }
 
     // 2. TAÇAS DE PORTUGAL (Taça de Portugal / Taça Portugal / Taças Nacionais)
+    if (/\b(tacas?\s*(do\s*mundo|da\s*europa|das\s*nacoes)|copa\s*do\s*mundo)\b/.test(titleClean)) return 'Internacional';
     if (/\btacas?\b/.test(titleClean) || /\btacas?\s+de\s+portugal\b/.test(clean) || /\btacas?\s+portugal\b/.test(clean)) {
         const isRegionalCup = /\b(regional|minho|porto|lisboa|algarve|aveiro|setubal|santarem|beira|madeira|acores|inter\s*regional|concelhio|distrital)\b/.test(titleClean);
-        const isNationalCup = /\b(portugal|nacional|feminina|femininas|masters?|veteranos?|juniores?|cadetes?|sub\s*23|sub\s*19|sub\s*17|sub\s*15|paraciclismo|esperancas?|shiman|dhi|xco|xcm|xce|enduro|ciclocrosse|pista|estrada|gravel|bmx)\b/.test(clean);
+        const isNationalCup = /\b(tacas?\s+(?:de\s+)?portugal|tacas?\s+naciona(?:l|is))\b/.test(titleClean);
         
         if (isRegionalCup && !isNationalCup) {
             return 'Regional';

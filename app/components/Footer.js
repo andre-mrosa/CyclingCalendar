@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { translateTag } from '../i18n/formatters';
 import { useTranslation } from "../i18n/useTranslation";
 import { ArrowUpRight } from 'lucide-react';
 import DynamicLogo from './DynamicLogo';
 import styles from './site.module.css';
 
 export default function Footer() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
 
   return (
     <footer className={styles.footer}>
@@ -15,7 +16,7 @@ export default function Footer() {
         <div className={styles.footerTop}>
           <div>
             <Link prefetch={false} href="/" className="flex items-center gap-2 font-bold tracking-tight"><DynamicLogo className="w-8 h-8" />Cycling Calendar</Link>
-            <p>Estrada · BTT · Gravel · BMX · Pista</p>
+            <p>{['Estrada', 'BTT', 'Gravel', 'BMX', 'Pista'].map(tag => translateTag(tag, language)).join(' · ')}</p>
           </div>
           <div className={styles.footerLinks}>
             <Link prefetch={false} href="/ajuda">{t('nav_help')}</Link>

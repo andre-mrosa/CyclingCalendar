@@ -9,7 +9,7 @@ export default function LazerClient({ initialEvents }) {
         <CalendarView 
             pageTitle={t('page_leisure_title')} 
             pageSubtitle={t('page_leisure_subtitle')}
-            forceLicenca="CPT / Lazer"
+            filterLeisure
             activeFilters={['search', 'year', 'month', 'distrito', 'modalidade']}
             initialEvents={initialEvents}
         />

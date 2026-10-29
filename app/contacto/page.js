@@ -6,12 +6,13 @@ import { Mail } from 'lucide-react';
 import { useTranslation } from '../i18n/useTranslation';
 import PageHeading from '../components/PageHeading';
 import styles from '../components/site.module.css';
+import { eventPath } from '../lib/eventDiscovery';
 
 export default function ContactoPage() {
     const ready = useClientReady();
     const params = ready ? new URLSearchParams(window.location.search) : new URLSearchParams();
     const id = params.get('event');
-    const initialMessage = id ? (params.get('title') || 'Prova') + '\nhttps://cyclingcalendar.pt/events/' + encodeURIComponent(id) + '\n\n' : '';
+    const initialMessage = id ? (params.get('title') || 'Cycling Calendar') + '\nhttps://www.cyclingcalendar.pt' + eventPath({ id, title:params.get('title') || 'Cycling Calendar' }) + '\n\n' : '';
     return <ContactForm key={initialMessage} initialMessage={initialMessage} />;
 }
 function ContactForm({ initialMessage }) {
@@ -51,7 +52,7 @@ function ContactForm({ initialMessage }) {
 
             <div className={styles.panel}>
                 <form onSubmit={handleContactSubmit} className="flex flex-col gap-5">
-                    <p className="text-sm text-muted">Usamos os dados enviados para responder ao teu pedido. Para questões de privacidade, indica o teu email de resposta. <Link href="/privacy-policy" className="underline">Política de privacidade</Link>.</p>
+                    <p className="text-sm text-muted">{t('contact_privacy_notice')}  <Link href="/privacy-policy" className="underline">{t('footer_privacy')}</Link>.</p>
                     {submitStatus === 'success' ? (
                         <div role="status" className="p-6 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl text-center border border-emerald-500/20 text-base font-medium">
                             <strong className="font-semibold block mb-1">{t('contact_form_thank_you')}</strong> {t('contact_form_success')}

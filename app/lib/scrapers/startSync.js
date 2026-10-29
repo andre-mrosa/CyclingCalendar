@@ -21,7 +21,7 @@ export async function startCalendarSync({ scope = 'manual', fullHistorical = fal
         }
         const startedAt = new Date().toISOString();
         const currentYear = new Date().getFullYear();
-        let years = [currentYear, currentYear + 1, ...(fullHistorical ? [currentYear - 1, currentYear - 2] : [])].map(String);
+        let years = [currentYear, currentYear + 1].map(String);
         let pipelineStage;
         let resumedFrom;
         if (resume) {
@@ -45,6 +45,8 @@ export async function startCalendarSync({ scope = 'manual', fullHistorical = fal
         if (!['daily', 'weekly', 'manual'].includes(scope) || !Array.isArray(years) ||
             !years.every(year => /^\d{4}$/.test(year)) ||
             (pipelineStage && !getPipelineStages(scope, years).includes(pipelineStage))) throw new Error('Plano de sincronização inválido.');
+        // Historical collection is retired; keep old callers compatible without claiming to run it.
+        fullHistorical = false;
         const runId = randomUUID();
         const input = { scope, fullHistorical, years, runId, triggeredBy, pipelineStage, startedAt, resumedFrom };
         const queued = await withScraperLogContext({ runId }, () => logInfo('SCRAPER',

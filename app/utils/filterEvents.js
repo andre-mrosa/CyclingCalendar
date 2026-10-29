@@ -1,4 +1,5 @@
-import { isStageRace, getEventDiscipline, getEventRaceTypes, getEventDisciplineFamilies, getRaceTypeFamily, isOfficialNationalChampionship } from './eventClassifier.js';
+import { isStageRace, getEventCategories, getEventDiscipline, getEventRaceTypes, getEventDisciplineFamilies, getRaceTypeFamily, isOfficialNationalChampionship } from './eventClassifier.js';
+import { eventDateDisplay } from './eventDateDisplay.js';
 
 export function normalizeSearchString(str) {
     if (!str) return '';
@@ -13,7 +14,7 @@ export function filterEvents(events, filters) {
     let filtered = events;
     const {
         filterByFavorites, favorites,
-        filterByAgenda, markedSet,
+        filterByAgenda, markedSet, filterLeisure,
         searchTerm,
         selectedYears,
         selectedEscaloes,
@@ -27,10 +28,12 @@ export function filterEvents(events, filters) {
         selectedTags,
         selectedType
     } = filters;
+    if (filterLeisure) filtered = filtered.filter(event => ['CPT / Lazer','Lazer'].includes(event.licenca) ||
+        getEventRaceTypes(event).some(type => ['Granfondo','Passeio / Lazer'].includes(type)));
 
     if (selectedYears && selectedYears.length > 0 && !filterByFavorites && !filterByAgenda) {
         filtered = filtered.filter(event => {
-            const y = event.sortDate ? new Date(event.sortDate).getFullYear().toString() : null;
+            const y = eventDateDisplay(event).start?.slice(0,4);
             return selectedYears.some(selYear => (y && y === selYear) || (event.date && event.date.includes(selYear)));
         });
     }
@@ -91,7 +94,7 @@ export function filterEvents(events, filters) {
 
     if (selectedEscaloes && selectedEscaloes.length > 0) {
         filtered = filtered.filter(event => {
-            const evEscaloes = event.escaloes || [];
+            const evEscaloes = getEventCategories(event);
             
             // Se o único escalão selecionado for Profissional UCI, apenas mostrar eventos UCI
             if (selectedEscaloes.length === 1 && selectedEscaloes[0] === 'Profissional (UCI)') {
@@ -142,16 +145,17 @@ export function filterEvents(events, filters) {
     }
 
     if (monthFrom !== undefined && monthTo !== undefined) {
-        const monthMap = {'JAN':1, 'FEV':2, 'MAR':3, 'ABR':4, 'MAI':5, 'JUN':6, 'JUL':7, 'AGO':8, 'SET':9, 'OUT':10, 'NOV':11, 'DEZ':12};
-        
         filtered = filtered.filter(event => {
-            const dateStr = (event.date || '').toUpperCase();
-            for (const [mStr, mNum] of Object.entries(monthMap)) {
-                if (dateStr.includes(mStr)) {
-                    return mNum >= monthFrom && mNum <= monthTo;
-                }
+            const { start, end } = eventDateDisplay(event);
+            if (!start) return true;
+            let cursor = new Date(start.slice(0,7) + '-01T12:00:00Z');
+            const last = (end || start).slice(0,7);
+            for (let checked = 0; checked < 13 && cursor.toISOString().slice(0,7) <= last; checked++) {
+                const month = cursor.getUTCMonth() + 1;
+                if (monthFrom <= monthTo ? month >= monthFrom && month <= monthTo : month >= monthFrom || month <= monthTo) return true;
+                cursor.setUTCMonth(cursor.getUTCMonth() + 1);
             }
-            return true;
+            return false;
         });
     }
 
@@ -179,7 +183,7 @@ export function filterEvents(events, filters) {
             if (selectedType === 'Etapas') {
                 return isStage;
             } else if (selectedType === 'Um Dia') {
-                return !isStage;
+                return !isStage && eventDateDisplay(event).singleDay;
             }
             return true;
         });

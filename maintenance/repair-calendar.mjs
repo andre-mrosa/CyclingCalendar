@@ -5,9 +5,8 @@ import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { prisma } from '../app/lib/db.js';
 import { fetchFPCCalendar } from '../app/lib/scrapers/fpc.js';
-import { parseStopAndGoEvent } from '../app/lib/scrapers/stopandgo.js';
 import { readStopAndGoHeader, stopAndGoEventUrl } from '../app/lib/scrapers/stopandgoParser.js';
-import { getAmbito } from '../app/lib/scrapers/utils.js';
+import { getAmbito, getTag } from '../app/lib/scrapers/utils.js';
 import { saveOrMergeEvent } from '../app/lib/merging/eventMerger.js';
 import { isOfficialNationalChampionship } from '../app/utils/eventClassifier.js';
 
@@ -60,8 +59,10 @@ try {
                 }
                 // Preserve actual historical cycling events; fix their year rather
                 // than assigning them to this year's calendar or deleting them.
-                const fresh = parseStopAndGoEvent(html, url, { years: [header.year] });
-                if (!fresh) throw new Error('Data não confirmada');
+                if (!header.sortDate) throw new Error('Data não confirmada');
+                const fresh = { title:header.title, date:header.date, sortDate:header.sortDate, details:header.location,
+                    regiao:header.location, distrito:header.location, tag:getTag(header.title,header.modality),
+                    ambito:getAmbito(header.title,'','','Stop and Go') };
                 updates.push({ id: event.id, data: {
                     title: fresh.title, date: fresh.date, sortDate: fresh.sortDate,
                     details: fresh.details, tag: fresh.tag, ambito: fresh.ambito,

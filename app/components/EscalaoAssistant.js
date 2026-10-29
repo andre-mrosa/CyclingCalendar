@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Users } from 'lucide-react';
 import { useTranslation } from '../i18n/useTranslation';
 import { translateEscalao } from '../i18n/formatters';
+import { suggestEscalao } from '../utils/suggestEscalao';
 
 export default function EscalaoAssistant({ onApply }) {
     const { t, language } = useTranslation();
@@ -13,6 +14,14 @@ export default function EscalaoAssistant({ onApply }) {
     const [teamLevel, setTeamLevel] = useState('Clube');
     const [escalaoMessage, setEscalaoMessage] = useState('');
     const [suggestedEscalao, setSuggestedEscalao] = useState(null);
+    const currentYear = new Date().getFullYear();
+    const [season, setSeason] = useState(currentYear);
+    const extra = {
+        pt:['Época','Sugestão de filtro. Confirma o escalão e as condições de participação no regulamento da prova.'],
+        en:['Season','Filter suggestion. Confirm the category and entry requirements in the event rules.'],
+        es:['Temporada','Sugerencia de filtro. Confirma la categoría y los requisitos de participación en el reglamento de la prueba.'],
+        fr:['Saison','Suggestion de filtre. Vérifiez la catégorie et les conditions de participation dans le règlement de l’épreuve.'],
+    }[language] || ['Época','Confirma o escalão no regulamento da prova.'];
 
     const calculateEscalao = () => {
         if (!birthYear || isNaN(birthYear) || birthYear.length !== 4) {
@@ -20,8 +29,7 @@ export default function EscalaoAssistant({ onApply }) {
             setSuggestedEscalao(null);
             return;
         }
-        const currentYear = new Date().getFullYear();
-        const age = currentYear - parseInt(birthYear);
+        const age = season - parseInt(birthYear);
         
         if (age < 5 || age > 100) {
             setEscalaoMessage(t('escalao_invalid_age'));
@@ -29,29 +37,7 @@ export default function EscalaoAssistant({ onApply }) {
             return;
         }
         
-        let result = '';
-        
-        if (gender === 'F') {
-            result = 'Femininas';
-        } else if (licenseType === 'CPT') {
-            result = 'Todos (Aberto)'; 
-        } else {
-            if (age <= 14) result = 'Escolas';
-            else if (age <= 16) result = 'Sub-17 (Cadetes)';
-            else if (age <= 18) result = 'Sub-19 (Juniores)';
-            else if (age <= 22) {
-                if (teamLevel === 'Individual') result = 'Elite Amador';
-                else result = 'Sub-23';
-            }
-            else if (age <= 29) {
-                if (teamLevel === 'Individual') result = 'Elite Amador';
-                else result = 'Elite'; 
-            }
-            else {
-                if (teamLevel === 'Profissional') result = 'Elite';
-                else result = 'Masters / Veteranos';
-            }
-        }
+        const result = suggestEscalao({ birthYear, season, gender, licenseType, teamLevel });
         
         setSuggestedEscalao(result);
         setEscalaoMessage(`${t('escalao_detected_title')} ${translateEscalao(result, language)}`);
@@ -83,6 +69,10 @@ export default function EscalaoAssistant({ onApply }) {
             
             <div className="flex flex-col gap-5">
                 <div className="flex flex-col gap-2">
+                    <label className="text-xs font-bold text-muted uppercase tracking-wider">{extra[0]}<select className="ml-3 rounded-lg border border-line bg-soft p-2 text-ink" value={season} onChange={event => setSeason(Number(event.target.value))}>
+                        {[currentYear,currentYear+1].map(year => <option key={year} value={year}>{year}</option>)}
+                    </select></label>
+                    <p className="my-2 text-xs text-muted">{extra[1]}</p>
                     <label className="text-xs font-bold text-muted uppercase tracking-wider">{t('escalao_year_label')}</label>
                     <input 
                         type="number" 

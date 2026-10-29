@@ -6,11 +6,13 @@ import { logInfo, logError } from '../logger.js';
 import { saveOrMergeEvent } from '../merging/eventMerger.js';
 import { detectRaceDate } from '../../utils/detectRaceDate.js';
 import { originalEventUrl } from '../publicEvent.js';
+import { getEventDiscipline, getEventCategories, publishedEventCategories } from '../../utils/eventClassifier.js';
+import { getAmbito } from './utils.js';
 
 export const fetchFPCCalendar = async (year) => {
         year = String(year);
         if (!/^\d{4}$/.test(year)) throw new Error('A época FPC inválida');
-        
+
         const formData = new URLSearchParams({
             epoca_site: year, epoca_site2: year,
             mes_de_new: '01', mes_ate_new: '12',
@@ -63,13 +65,14 @@ export const parseFPCCalendar = (html, year) => {
                 const endDateText = ths.length > 1 ? $(ths[1]).text().trim() : '';
                 const nameText = $(cols[0]).text().trim();
                 let locText = toTitleCase($(cols[1]).text().trim());
+                const officialClass = $(cols[2]).text().trim();
                 if (nameText && /^\d{2}-\d{2}-\d{4}$/.test(dateText)) {
                     const parts = dateText.split('-');
                     if (parts[2] !== String(year)) throw new Error(`Época incorreta na linha FPC: ${dateText}`);
                     const sortDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00Z`);
-                    if (Number.isNaN(sortDate.getTime())) throw new Error(`Data FPC inválida: ${dateText}`);
+                    if (Number.isNaN(sortDate.getTime()) || sortDate.getUTCDate() !== Number(parts[0]) || sortDate.getUTCMonth()+1 !== Number(parts[1])) throw new Error(`Data FPC inválida: ${dateText}`);
                     const months = {'01':'JAN', '02':'FEV', '03':'MAR', '04':'ABR', '05':'MAI', '06':'JUN', '07':'JUL', '08':'AGO', '09':'SET', '10':'OUT', '11':'NOV', '12':'DEZ'};
-                    if (parts.length === 3) dateText = `${parts[0]} ${months[parts[1]] || parts[1]} ${parts[2]}`;
+                    if (parts.length === 3) dateText = `${parts[0]} ${months[parts[1]] || parts[1]} ${parts[2]}`;
                     if (endDateText && endDateText !== $(ths[0]).text().trim() && endDateText.length > 2) {
                         const eParts = endDateText.split('-');
                         if (eParts.length === 3) {
@@ -100,12 +103,17 @@ export const parseFPCCalendar = (html, year) => {
                     const eventData = {
                         title: nameText,
                         date: dateText,
-                        sortDate,
+                        sortDate,
                         details: locText,
                         regiao: locText,
                         distrito: locText,
                         source: 'FPC',
                         link: sourceLink,
+                        tag: getEventDiscipline({ title:nameText, details:officialClass, source:'FPC' }),
+                        ambito: getAmbito(nameText, officialClass, '', 'FPC'),
+                        escaloes: getEventCategories({ source:'FPC', details:officialClass, escaloes:publishedEventCategories(nameText + ' ' + officialClass) }),
+                        ...(/\bCPT\b/i.test(officialClass) ? { licenca:'CPT / Lazer' } :
+                            /^(?:[12]\.|CN\b|TP\b)/i.test(officialClass) ? { licenca:'Competição' } : {}),
                     };
 
                     events.set(id, { id, ...eventData });

@@ -3,6 +3,7 @@ import * as cheerio from 'cheerio';
 import { logInfo, logError } from '../logger.js';
 import { prisma } from '../db.js';
 import { saveOrMergeEvent } from '../merging/eventMerger.js';
+import { getTag, getAmbito } from './utils.js';
 
 const BASE_URL = 'https://www.recordepessoal.pt';
 
@@ -19,7 +20,7 @@ export async function scrapeRecordePessoal(options = {}) {
 
         for (const cat of categories) {
             const res = await fetch(`${BASE_URL}/eventos?cat=${cat}&pagina=-1`, {
-                headers: { 'User-Agent': 'Mozilla/5.0' }
+                headers: { 'User-Agent': 'Mozilla/5.0' }, signal:AbortSignal.timeout(15000)
             });
 
             if (!res.ok) {
@@ -48,7 +49,7 @@ export async function scrapeRecordePessoal(options = {}) {
                 // Throttle
                 await new Promise(r => setTimeout(r, 1000));
 
-                const pageRes = await fetch(link, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+                const pageRes = await fetch(link, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal:AbortSignal.timeout(10000) });
                 if (!pageRes.ok) continue;
 
                 const pageHtml = await pageRes.text();
@@ -74,6 +75,7 @@ export async function scrapeRecordePessoal(options = {}) {
                 if (!title || !sortDateStr.includes('T00:00:00')) continue;
 
                 const eventObj = {
+                    tag:getTag(title), ambito:getAmbito(title, '', '', 'Recorde Pessoal'),
                     id: `recordepessoal-${link.split('/').pop()}-${cleanDate.replace(/ /g, '-')}`.toLowerCase(),
                     title,
                     date: cleanDate,

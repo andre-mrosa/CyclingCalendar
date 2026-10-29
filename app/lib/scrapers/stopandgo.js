@@ -4,7 +4,8 @@ import { prisma } from '../db.js';
 import { toTitleCase, parsePTDateToISO, getAmbito, getTag } from './utils.js';
 import { logInfo, logError } from '../logger.js';
 import { saveOrMergeEvent } from '../merging/eventMerger.js';
-import { CYCLING_MODALITIES, readStopAndGoHeader } from './stopandgoParser.js';
+import { CYCLING_MODALITIES, readStopAndGoHeader, stopAndGoEventUrl } from './stopandgoParser.js';
+import { fetchStopAndGoCyclingLinks } from './stopandgoListing.js';
 import { parseRegistrationDates } from '../../utils/registrationDates.js';
 import { detectRaceDate } from '../../utils/detectRaceDate.js';
 
@@ -48,15 +49,20 @@ export const scrapeStopAndGo = async (options = {}) => {
         const sitemapUrls = [];
         $('url loc').each((_, el) => {
             const u = $(el).text();
-            if (u.includes('/events/') && !u.includes('/results')) sitemapUrls.push(u);
+            if (u.includes('/events/') && !u.includes('/results')) {
+                const canonical = stopAndGoEventUrl(u); if (canonical) sitemapUrls.push(canonical);
+            }
         });
 
-        const cyclingListingUrls = new Set();
+        let cyclingListingUrls = new Set();
+        try { cyclingListingUrls = await fetchStopAndGoCyclingLinks(); }
+        catch (error) { await logError('SCRAPER', error.message); }
         
-        const CYCLING_TERMS = ['btt', 'gravel', 'downhill', 'cycling', 'bike', 'granfondo', 'racenature', 'maratona', 'resistencia', 'raid', 'xcm', 'xco', 'dhi', 'dhu', 'ciclocrosse', 'ciclismo'];
-        const targetUrls = sitemapUrls.filter(u => {
+        const CYCLING_TERMS = ['btt', 'gravel', 'downhill', 'cycling', 'bike', 'granfondo', 'grandfondo', 'racenature', 'maratona', 'resistencia', 'raid', 'xcm', 'xco', 'dhi', 'dhu', 'ciclocrosse', 'ciclismo'];
+        const years = [new Date().getFullYear(),new Date().getFullYear()+1].map(String);
+        const targetUrls = [...new Set([...sitemapUrls,...cyclingListingUrls])].filter(u => {
             const lower = u.toLowerCase();
-            const hasExplicitYear = /202\d/.test(lower);
+            const hasExplicitYear = years.some(year => lower.includes(year));
             const isCycling = CYCLING_TERMS.some(term => lower.includes(term));
             const isExcluded = NON_CYCLING.some(kw => lower.includes(kw) && !CYCLING_TERMS.some(term => lower.includes(term)));
             return (cyclingListingUrls.has(u) || (hasExplicitYear && isCycling && !isExcluded));
@@ -83,7 +89,9 @@ export const scrapeStopAndGo = async (options = {}) => {
                                 header = readStopAndGoHeader(evtHtml);
                                 break;
                             }
-                        } catch(e) {}
+                            if ([401,403,429].includes(evtRes.status)) throw Object.assign(new Error(`Stop and Go recusou acesso (HTTP ${evtRes.status})`), { code:'SOURCE_ACCESS_DENIED' });
+                            if (evtRes.status === 404) break;
+                        } catch(e) { if (e.code === 'SOURCE_ACCESS_DENIED') throw e; }
                         await delay(500);
                     }
                     
@@ -99,6 +107,7 @@ export const scrapeStopAndGo = async (options = {}) => {
                     const { opensAt, closesAt } = await deepScrapeStopAndGo(url);
                     
                     const eventData = {
+                        tag:getTag(header.title, header.modality), ambito:getAmbito(header.title, '', '', 'Stop and Go'),
                         title: toTitleCase(header.title),
                         date: header.date,
                         sortDate: header.sortDate,
@@ -113,6 +122,7 @@ export const scrapeStopAndGo = async (options = {}) => {
                     processedCount++;
                 } catch (err) {
                     await logError('SCRAPER', `Erro a processar Stop and Go url ${url}: ${err.message}`);
+                    if (err.code === 'SOURCE_ACCESS_DENIED') throw err;
                 }
             }));
             await delay(1000); // Polite delay between batches
