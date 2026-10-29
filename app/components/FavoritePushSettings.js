@@ -1,8 +1,10 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import Link from 'next/link';
 import { Bell } from 'lucide-react';
+import { useSWRConfig } from 'swr';
 import { useTranslation } from '../i18n/useTranslation';
+import { activatePushDevice } from '../utils/pushOnboarding';
 
 const copy = {
     pt: { title:'Notificações neste dispositivo', detail:'Recebe um resumo diário quando aparecerem novas edições das tuas provas favoritas. Só enviamos se houver novidades.',
@@ -37,16 +39,23 @@ const copy = {
 };
 const idFor = async subscription => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',
     new TextEncoder().encode(subscription.endpoint))), byte => byte.toString(16).padStart(2,'0')).join('');
-const keyBytes = value => Uint8Array.from(atob(value.replace(/-/g,'+').replace(/_/g,'/') + '='.repeat((4 - value.length % 4) % 4)), char => char.charCodeAt(0));
+const followConsent = {
+    pt:'Ao ativar, as novas edições são adicionadas aos teus favoritos e recebes um resumo à hora escolhida (10:00 por defeito). O email mantém a tua escolha atual.',
+    en:'Enabling this adds new editions to your favorites and sends a summary at your chosen time (default: 10:00). Your email preference stays as chosen.',
+    es:'Al activar, las nuevas ediciones se añaden a tus favoritos y recibes un resumen a la hora elegida (10:00 por defecto). Se mantiene tu preferencia de email.',
+    fr:'L’activation ajoute les nouvelles éditions à vos favoris et envoie un résumé à l’heure choisie (10:00 par défaut). Votre choix d’email est conservé.',
+};
 const testCopy = {
     pt:['Enviar notificação de teste','Teste enviado. Confirma se recebeste a notificação neste dispositivo.'],
     en:['Send test notification','Test sent. Check whether the notification arrived on this device.'],
     es:['Enviar notificación de prueba','Prueba enviada. Comprueba si recibiste la notificación en este dispositivo.'],
     fr:['Envoyer une notification de test','Test envoyé. Vérifiez la réception sur cet appareil.'],
 };
-export default function FavoritePushSettings({ isSignedIn, userId }) {
+export default function FavoritePushSettings({ isSignedIn, userId, onboarding = false, onEnabled, onDenied }) {
     const { language } = useTranslation();
+    const { mutate } = useSWRConfig();
     const text = copy[language] || copy.pt;
+    const headingId = useId();
     const [device, setDevice] = useState(null);
     const [hour, setHour] = useState(10);
     const [timeZone, setTimeZone] = useState('Europe/Lisbon');
@@ -79,22 +88,14 @@ export default function FavoritePushSettings({ isSignedIn, userId }) {
     const current = device?.userId === userId ? device : null;
     async function save() {
         setBusy(true); setMessage('');
-        let subscription = current.subscription;
-        let created = false;
         try {
-            // Call subscribe directly from the tap: Safari requires a user gesture.
-            if (!subscription) {
-                subscription = await current.registration.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:keyBytes(current.publicKey) });
-                created = true;
-            }
-            const response = await fetch('/api/notifications/push', { method:'PUT', headers:{ 'Content-Type':'application/json' },
-                body:JSON.stringify({ subscription:subscription.toJSON(), hour, timeZone, language }) });
-            if (!response.ok) throw new Error();
-            const result = await response.json();
-            setDevice({ ...current, ...result, subscription }); setMessage(created ? 'ready' : 'saved');
+            const result = await activatePushDevice({ ...current, hour, timeZone, language, enableFollowing:onboarding });
+            setDevice({ ...current, ...result }); setMessage(current.enabled ? 'saved' : 'ready');
+            if (onboarding && !current.follow) mutate(['/api/favorites/editions', userId]).catch(() => {});
+            onEnabled?.();
         } catch {
-            if (created) await subscription.unsubscribe().catch(() => {});
             setMessage(Notification.permission === 'denied' ? 'denied' : 'error');
+            if (Notification.permission === 'denied') onDenied?.();
         } finally { setBusy(false); }
     }
     async function disable() {
@@ -118,15 +119,16 @@ export default function FavoritePushSettings({ isSignedIn, userId }) {
     }
     const zones = [...new Set([timeZone, 'Europe/Lisbon', 'Atlantic/Azores', 'Atlantic/Madeira', 'UTC'])];
     const button = 'px-4 py-2.5 rounded-xl border border-line text-sm font-semibold disabled:opacity-50';
-    return <section className="bg-surface border border-line rounded-2xl p-6 sm:p-8 shadow-sm" aria-labelledby="push-settings-title">
-        <h2 id="push-settings-title" className="font-semibold text-ink flex items-center gap-2"><Bell size={18} className="text-brand" />{text.title}</h2>
+    return <section className="bg-surface border border-line rounded-2xl p-6 sm:p-8 shadow-sm" aria-labelledby={headingId}>
+        <h2 id={headingId} className="font-semibold text-ink flex items-center gap-2"><Bell size={18} className="text-brand" />{text.title}</h2>
         <p className="text-sm text-muted mt-2">{text.detail}</p>
         {!isSignedIn ? <Link href="/sign-in?redirect_url=%2Fdefinicoes" className="text-brand block mt-4">{text.login}</Link> :
             !current ? <p role="status" className="mt-4">…</p> : current.failed ?
                 <button type="button" className={button + ' mt-4'} onClick={() => { setMessage(''); setRetry(retry + 1); }}>{text.retry}</button> :
                 !current.supported ? <p className="text-sm mt-4">{text.unsupported}</p> : <>
                     {!current.available && <p className="text-sm mt-4">{text.setup}</p>}
-                    {!current.follow && <p className="text-sm mt-4">{text.follow} <Link href="/favoritos" className="text-brand underline">{text.favorites}</Link></p>}
+                    {onboarding ? <p className="text-sm mt-4">{followConsent[language] || followConsent.pt}</p> :
+                        !current.follow && <p className="text-sm mt-4">{text.follow} <Link href="/favoritos" className="text-brand underline">{text.favorites}</Link></p>}
                     <div className="flex flex-wrap gap-4 my-4">
                         <label className="text-sm font-medium">{text.hour}<select className="block mt-2 rounded-lg border border-line bg-soft p-2 text-ink" value={hour} onChange={event => setHour(Number(event.target.value))}>
                             {Array.from({ length:24 }, (_, value) => <option key={value} value={value}>{String(value).padStart(2,'0')}:00</option>)}
@@ -136,7 +138,7 @@ export default function FavoritePushSettings({ isSignedIn, userId }) {
                         </select></label>
                     </div>
                     <div className="flex flex-wrap gap-3">
-                        <button type="button" onClick={save} disabled={busy || !current.available || !current.follow} className={button + ' bg-brand text-white'}>{current.enabled ? text.save : text.enable}</button>
+                        <button type="button" onClick={save} disabled={busy || !current.available || (!current.follow && !onboarding)} className={button + ' bg-brand text-white'}>{current.enabled ? text.save : text.enable}</button>
                         {current.enabled && current.subscription && <button type="button" onClick={disable} disabled={busy} className={button}>{text.disable}</button>}
                         {current.enabled && current.subscription && <button type="button" onClick={sendTest} disabled={busy} className={button}>{(testCopy[language] || testCopy.pt)[0]}</button>}
                     </div>

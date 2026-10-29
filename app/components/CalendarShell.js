@@ -5,6 +5,7 @@ import Navigation from './Navigation';
 import Footer from './Footer';
 import AnalyticsTracker from './AnalyticsTracker';
 import { AnalyticsConsentBanner } from './AnalyticsConsent';
+import PushOnboarding from './PushOnboarding';
 
 export default function CalendarShell({ children }) {
     const pathname = usePathname();
@@ -13,6 +14,7 @@ export default function CalendarShell({ children }) {
         <a href="#conteudo" className="skip-link">Saltar para o conteúdo</a>
         <AnalyticsTracker />
         <AnalyticsConsentBanner />
+        <PushOnboarding />
         <Navigation />
         <main id="conteudo" tabIndex={-1} className="min-h-[calc(100vh-240px)] w-full">{children}</main>
         <Footer />

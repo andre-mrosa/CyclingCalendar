@@ -17,7 +17,7 @@ export async function GET(request) {
             id && /^[a-f0-9]{64}$/.test(id) ? prisma.favoritePushSubscription.findFirst({ where: { id, userId } }) : null,
             prisma.favoriteEditionPreference.findUnique({ where: { userId } }),
         ]);
-        return response({ ...settings(row), follow: !!preferences?.follow, available: pushAvailable(),
+        return response({ ...settings(row), follow: !!preferences?.follow, email: !!preferences?.email, available: pushAvailable(),
             publicKey: pushAvailable() ? process.env.VAPID_PUBLIC_KEY : null });
     } catch { return response({ error: 'Push preferences unavailable' }, 503); }
 }
