@@ -72,9 +72,22 @@ export function planFavoriteEditions(events, manualIds, excludedKeys, previous =
     const noticeKeys = new Set(notices.map(item => item.key));
     const state = { addedIds: safeFavoriteIds([...retained, ...matches.flatMap(item => item.ids)]),
         seenKeys: safeFavoriteIds([...before.seenKeys, ...matches.map(item => item.key)]),
+        ...(Array.isArray(previous?.notifiedKeys) ? { notifiedKeys: safeFavoriteIds(previous.notifiedKeys) } : {}),
         series: safeFavoriteIds([...before.series, ...seeds.map(id => editionIdentity(byId.get(id))?.series).filter(Boolean)]) };
     return { state, notices, matches,
         deferredState: { ...state, seenKeys: state.seenKeys.filter(key => !noticeKeys.has(key)) } };
+}
+
+// Discovery is not delivery: editions already in the catalogue must stay
+// eligible until this channel has actually sent an alert about them.
+export function planEditionNotifications(events, manualIds, excludedKeys, previous = {}, { legacySent = false } = {}) {
+    const plan = planFavoriteEditions(events, manualIds, excludedKeys, previous);
+    const notifiedKeys = safeFavoriteIds(Array.isArray(previous?.notifiedKeys) ? previous.notifiedKeys : legacySent ? previous?.seenKeys : []);
+    const delivered = new Set(notifiedKeys);
+    const notices = plan.matches.filter(match => !delivered.has(match.key));
+    const state = { ...plan.state, notifiedKeys };
+    return { ...plan, notices, state,
+        sentState: { ...state, notifiedKeys: safeFavoriteIds([...notifiedKeys, ...notices.map(match => match.key)]) } };
 }
 export function effectiveEditionIds(events, manualIds, excludedKeys, previous, follow) {
     const state = follow ? planFavoriteEditions(events, manualIds, excludedKeys, previous).state : editionState(previous);

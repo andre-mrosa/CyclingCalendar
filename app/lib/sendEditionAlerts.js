@@ -1,5 +1,5 @@
 import { randomUUID, createHash } from 'node:crypto';
-import { planFavoriteEditions, safeFavoriteIds } from '../utils/favoriteEditions.js';
+import { planEditionNotifications, safeFavoriteIds } from '../utils/favoriteEditions.js';
 import { verifiedEmail } from '../utils/favoriteAlerts.js';
 import { lisbonWallClock } from '../utils/planning.js';
 import { eventPath } from './eventDiscovery.js';
@@ -49,13 +49,13 @@ export async function processFavoriteEditions({ db, users, events, row, send, js
         }
         if (pending && now.getTime() - new Date(pending.createdAt).getTime() >= 23 * 3600000) return 'needs-review';
         if (!pending) {
-            const plan = planFavoriteEditions(events, manual, excluded, row.state);
+            const plan = planEditionNotifications(events, manual, excluded, row.state, { legacySent: !!row.lastSentAt });
             if (!row.email) {
                 await db.favoriteEditionPreference.update({ where: { userId: row.userId }, data: { state: plan.state } });
                 return 'updated';
             }
             if (!email || !emailAvailable) {
-                await db.favoriteEditionPreference.update({ where: { userId: row.userId }, data: { state: plan.deferredState } });
+                await db.favoriteEditionPreference.update({ where: { userId: row.userId }, data: { state: plan.state } });
                 return email ? 'unavailable' : 'unverified';
             }
             if (!plan.notices.length) {
@@ -63,12 +63,12 @@ export async function processFavoriteEditions({ db, users, events, row, send, js
                 return 'unchanged';
             }
             if (row.lastSentAt && lisbonWallClock(now).slice(0,10) === lisbonWallClock(new Date(row.lastSentAt)).slice(0,10)) {
-                await db.favoriteEditionPreference.update({ where: { userId: row.userId }, data: { state: plan.deferredState } });
+                await db.favoriteEditionPreference.update({ where: { userId: row.userId }, data: { state: plan.state } });
                 return 'limited';
             }
             pending = { id: randomUUID(), createdAt: now.toISOString(), to: email, signature: currentSignature,
-                ...editionAlertEmail(plan.notices, row.language), state: plan.state };
-            await db.favoriteEditionPreference.update({ where: { userId: row.userId }, data: { pending, state: plan.deferredState } });
+                ...editionAlertEmail(plan.notices, row.language), state: plan.sentState };
+            await db.favoriteEditionPreference.update({ where: { userId: row.userId }, data: { pending, state: plan.state } });
         }
         if (!emailAvailable || !email || !row.email) return 'unavailable';
         const result = await send({ to: pending.to, subject: pending.subject, text: pending.text }, pending.id);

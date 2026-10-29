@@ -4,16 +4,16 @@ import { useTranslation } from '../i18n/useTranslation';
 import styles from './favoritePlanning.module.css';
 const copy = {
     pt: { title: 'Próximas edições dos favoritos', follow: 'Adicionar novas edições aos favoritos', detail: 'Aplica-se a todas as provas guardadas. As edições identificadas com segurança aparecem automaticamente. Se desligares, as já adicionadas mantêm-se.',
-        email: 'Avisar por email quando aparecer uma nova edição', explain: 'Resumo apenas com novidades, no máximo uma vez por dia. As edições que já existem quando ativas o aviso não geram emails.',
+        email: 'Avisar por email quando aparecer uma nova edição', explain: 'No máximo um resumo por dia. O primeiro inclui as novas edições já disponíveis no calendário; depois, só as que ainda não foram notificadas.',
         setup: 'Os avisos por email ainda precisam de configuração do remetente.', login: 'Inicia sessão para sincronizar esta opção e ativar avisos por email.', error: 'Não foi possível guardar ou carregar estas opções. Tenta novamente.', verified: 'É necessário verificar o email principal da conta.' },
     en: { title: 'Future editions of your favorites', follow: 'Add new editions to favorites', detail: 'Applies to all saved events. Confidently matched editions appear automatically. Turning this off keeps editions already added.',
-        email: 'Email me when a new edition appears', explain: 'Updates only, at most once a day. Editions already available when you enable this do not trigger emails.',
+        email: 'Email me when a new edition appears', explain: 'At most one summary per day. The first includes newer editions already in the calendar; later summaries include only editions not yet notified.',
         setup: 'Email alerts still need a configured sender.', login: 'Sign in to sync this setting and enable email alerts.', error: 'Could not save or load these settings. Try again.', verified: 'Verify the primary email address on your account first.' },
     es: { title: 'Próximas ediciones de tus favoritos', follow: 'Añadir nuevas ediciones a favoritos', detail: 'Se aplica a todas las pruebas guardadas. Las ediciones identificadas con suficiente confianza aparecen automáticamente. Al desactivarlo, se conservan las ya añadidas.',
-        email: 'Avisarme por email cuando aparezca otra edición', explain: 'Solo novedades, como máximo una vez al día. Las ediciones ya disponibles al activarlo no generan emails.',
+        email: 'Avisarme por email cuando aparezca otra edición', explain: 'Como máximo un resumen al día. El primero incluye las nuevas ediciones ya disponibles; después, solo las que aún no se han notificado.',
         setup: 'Los avisos necesitan configurar el remitente.', login: 'Inicia sesión para sincronizar esta opción y activar avisos por email.', error: 'No se pudieron guardar o cargar estas opciones.', verified: 'Verifica el email principal de tu cuenta.' },
     fr: { title: 'Prochaines éditions de vos favoris', follow: 'Ajouter les nouvelles éditions aux favoris', detail: 'Pour toutes les épreuves enregistrées. Les éditions associées avec suffisamment de certitude apparaissent automatiquement. La désactivation conserve celles déjà ajoutées.',
-        email: 'Me prévenir par email pour une nouvelle édition', explain: 'Uniquement des nouveautés, au maximum une fois par jour. Les éditions déjà disponibles lors de l’activation ne déclenchent pas d’email.',
+        email: 'Me prévenir par email pour une nouvelle édition', explain: 'Un résumé par jour au maximum. Le premier inclut les nouvelles éditions déjà disponibles ; ensuite, seules les éditions non encore notifiées sont incluses.',
         setup: 'Les alertes nécessitent encore la configuration de l’expéditeur.', login: 'Connectez-vous pour synchroniser ce choix et activer les emails.', error: 'Impossible de charger ou enregistrer ces options.', verified: 'Vérifiez l’adresse principale de votre compte.' },
 };
 export default function FavoriteEditionControls({ preferences, isSignedIn }) {

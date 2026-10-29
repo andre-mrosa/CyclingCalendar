@@ -34,10 +34,12 @@ export async function PUT(request) {
         if (existing?.leaseUntil && existing.leaseUntil > new Date()) return response({ error: 'Try again shortly' }, 409);
         const manual = safeFavoriteIds(user.unsafeMetadata?.favorites);
         const exclusions = safeFavoriteIds(user.unsafeMetadata?.favoriteEditionExclusions);
+        const previous = { ...existing?.state, notifiedKeys: safeFavoriteIds(existing?.state?.notifiedKeys ??
+            (existing?.lastSentAt ? existing?.state?.seenKeys || [] : [])) };
         // Materialise discoveries before turning following off, retaining favorites.
         const state = (existing?.follow || body.follow)
-            ? planFavoriteEditions(events, manual, exclusions, existing?.state, { baseline: true }).state
-            : existing?.state || {};
+            ? planFavoriteEditions(events, manual, exclusions, previous, { baseline: true }).state
+            : previous;
         const data = { follow: body.follow, email: body.email,
             language: ['pt','en','es','fr'].includes(body.language) ? body.language : 'pt',
             state, pending: Prisma.DbNull };

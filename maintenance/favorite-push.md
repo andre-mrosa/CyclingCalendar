@@ -1,6 +1,6 @@
 # Favorite edition push notifications
 
-Users enable push per device in `/definicoes`. Following new editions must already be enabled in `/favoritos`; email remains independent. The default digest time is 10:00 in the device's detected time zone. Users can choose another hour and use Lisbon/Azores/Madeira/UTC or keep their detected zone. Existing editions form a baseline and never generate a signup burst.
+Users enable push per device in `/definicoes`. Following new editions must already be enabled in `/favoritos`; email remains independent. The default digest time is 10:00 in the device's detected time zone. Users can choose another hour and use Lisbon/Azores/Madeira/UTC or keep their detected zone. The first scheduled digest includes matching newer editions already in the catalogue. Discovery state is separate from confirmed notification history (`notifiedKeys`), so saving settings or a failed delivery cannot consume an unsent alert. Subsequent digests exclude editions already sent by that channel.
 
 Required server environment variables: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `CRON_SECRET`. Generate one persistent VAPID key pair with the `web-push` library; keep the private key only in secret environment storage. Changing the key pair invalidates existing subscriptions. The public key is returned by the authenticated preferences endpoint, so it does not require a `NEXT_PUBLIC_` build variable. Resend is not involved in push delivery.
 

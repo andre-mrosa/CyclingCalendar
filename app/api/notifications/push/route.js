@@ -2,7 +2,7 @@ import { auth, clerkClient } from '@clerk/nextjs/server';
 import { prisma } from '@/app/lib/db';
 import { getPublicCalendarEvents } from '@/app/lib/getPublicCalendarEvents';
 import { planFavoriteEditions, safeFavoriteIds } from '@/app/utils/favoriteEditions';
-import { pushAvailable, pushId, validPushSubscription, validPushSchedule } from '@/app/lib/favoritePush';
+import { pushAvailable, pushId, pushClock, validPushSubscription, validPushSchedule } from '@/app/lib/favoritePush';
 import { sendPush } from '@/app/lib/sendPush';
 
 export const dynamic = 'force-dynamic';
@@ -45,8 +45,13 @@ export async function PUT(request) {
             language: ['pt', 'en', 'es', 'fr'].includes(body.language) ? body.language : 'pt',
             endpoint: body.subscription.endpoint, p256dh: body.subscription.keys.p256dh, auth: body.subscription.keys.auth };
         // Changing the hour does not consume undelivered discoveries.
-        if (!existing) data.state = planFavoriteEditions(events, safeFavoriteIds(user.unsafeMetadata?.favorites),
-            safeFavoriteIds(user.unsafeMetadata?.favoriteEditionExclusions), {}, { baseline: true }).state;
+        if (!existing) {
+            data.state = planFavoriteEditions(events, safeFavoriteIds(user.unsafeMetadata?.favorites),
+                safeFavoriteIds(user.unsafeMetadata?.favoriteEditionExclusions), {}, { baseline: true }).state;
+            const clock = pushClock(new Date(), body.timeZone);
+            // If today's chosen hour has passed, deliver the first digest tomorrow.
+            data.lastDeliveryDay = clock.hour >= body.hour ? clock.day : null;
+        }
         let row;
         if (existing) {
             const result = await prisma.favoritePushSubscription.updateMany({ where: { id, userId, updatedAt: existing.updatedAt,

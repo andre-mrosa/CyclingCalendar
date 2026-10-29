@@ -55,10 +55,22 @@ test('new editions send once per device, with a real event link; the email curso
     assert.equal(f.sent.length,1);
     const other=fixture(); assert.equal(await processFavoritePush(other.options),'sent');
 });
-test('existing editions, unfollowed events, exclusions and a disabled global toggle generate no pushes', async () => {
-    for (const mode of ['existing','removed','excluded','off','busy','before-hour']) {
+test('the first scheduled push includes editions already discovered when notifications were enabled', async () => {
+    const f=fixture();
+    f.row().state=planFavoriteEditions([first,second],[first.id],[],{},{baseline:true}).state;
+    f.options.now=new Date('2026-10-29T09:59:00Z');
+    assert.equal(await processFavoritePush(f.options),'waiting');assert.equal(f.sent.length,0);
+    f.options.now=new Date('2026-10-29T10:00:00Z');
+    assert.equal(await processFavoritePush(f.options),'sent');assert.match(f.sent[0].message.body,/2027/);
+    assert.deepEqual(f.row().state.notifiedKeys,['granfondo:granfondo serra da estrela:2027']);
+    assert.equal(await processFavoritePush({...f.options,row:f.row(),now:new Date('2026-10-30T10:00:00Z')}),'unchanged');
+    assert.equal(f.sent.length,1);
+});
+test('already notified editions, unfollowed events, exclusions and a disabled global toggle generate no pushes', async () => {
+    for (const mode of ['notified','removed','excluded','off','busy','before-hour']) {
         const f=fixture();
-        if (mode==='existing') f.row().state=planFavoriteEditions([first,second],[first.id],[],{},{baseline:true}).state;
+        if (mode==='notified') f.row().state={...planFavoriteEditions([first,second],[first.id],[],{},{baseline:true}).state,
+            notifiedKeys:['granfondo:granfondo serra da estrela:2027']};
         if (mode==='removed') f.options.users={getUser:async()=>({unsafeMetadata:{favorites:[]}})};
         if (mode==='excluded') f.options.users={getUser:async()=>({unsafeMetadata:{favorites:[first.id],favoriteEditionExclusions:['granfondo:granfondo serra da estrela:2027']}})};
         if (mode==='off') f.follow(false);
@@ -91,7 +103,7 @@ async function loadRoute(deps) {
 test('push routes scope reads and deletion to the owner and require authentication, origin and explicit following', async () => {
     let userId=null;let follow=false;let saved;let deleted;
     const deps={auth:async()=>({userId}),clerkClient:async()=>({users:{getUser:async()=>user}}),getPublicCalendarEvents:async()=>[first,second],
-        pushAvailable:()=>true,pushId,validPushSubscription,validPushSchedule,planFavoriteEditions,safeFavoriteIds,
+        pushAvailable:()=>true,pushId,pushClock:()=>({day:'2026-10-29',hour:12}),validPushSubscription,validPushSchedule,planFavoriteEditions,safeFavoriteIds,
         prisma:{favoriteEditionPreference:{findUnique:async()=>({follow})},favoritePushSubscription:{
             findFirst:async({where})=>{assert.equal(where.userId,'user_owner');return null;},findUnique:async()=>null,count:async()=>0,
             create:async({data})=>(saved=data),deleteMany:async({where})=>{deleted=where;},
@@ -108,6 +120,7 @@ test('push routes scope reads and deletion to the owner and require authenticati
     assert.equal((await route.PUT(request('PUT',body))).status,409);
     follow=true;assert.equal((await route.PUT(request('PUT',body))).status,200);
     assert.equal(saved.userId,userId);assert.equal(saved.hour,10);
+    assert.equal(saved.lastDeliveryDay,'2026-10-29');
     assert.deepEqual(saved.state.seenKeys,['granfondo:granfondo serra da estrela:2027']);
     const id=pushId(subscription.endpoint);
     assert.equal((await route.GET(new Request('https://calendar.test/api/notifications/push?id='+id))).status,200);

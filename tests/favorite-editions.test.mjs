@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { editionIdentity, editionMatches, planFavoriteEditions, effectiveEditionIds, editionFeedEvents } from '../app/utils/favoriteEditions.js';
+import { editionIdentity, editionMatches, planFavoriteEditions, planEditionNotifications, effectiveEditionIds, editionFeedEvents } from '../app/utils/favoriteEditions.js';
 import { processFavoriteEditions, editionAlertEmail } from '../app/lib/sendEditionAlerts.js';
 import { favoriteEditionSettings, editionEmailAvailable } from '../app/lib/favoriteEditionSettings.js';
 import { verifiedEmail } from '../app/utils/favoriteAlerts.js';
@@ -78,7 +78,7 @@ test('saving global preferences establishes a baseline and retains editions when
         assert.deepEqual(saved.inheritedIds,[second.id]);
     } finally { delete globalThis[key]; }
 });
-test('enabling emails establishes a baseline, then alerts only once for a newly discovered edition', () => {
+test('discovery baselines identify subsequent editions without mixing unrelated favorite series', () => {
     const baseline = planFavoriteEditions([first, second], [first.id], [], {}, { baseline: true });
     assert.equal(baseline.notices.length, 0);
     const next = planFavoriteEditions([first, second, third], [first.id], [], baseline.state);
@@ -98,6 +98,17 @@ test('email notices link to factual event pages, include preference management a
         assert.doesNotMatch(email.text, /0 €|InStock|\/events\//);
     }
 });
+
+test('first notifications include existing newer editions and preserve delivery history across settings saves', () => {
+    const discovered = planFavoriteEditions([first, second], [first.id], [], {}, { baseline: true }).state;
+    const initial = planEditionNotifications([first, second], [first.id], [], discovered);
+    assert.deepEqual(initial.notices.map(notice => notice.event.id), [second.id]);
+    assert.deepEqual(initial.state.notifiedKeys, []);
+    const saved = planFavoriteEditions([first, second, third], [first.id], [], initial.sentState, { baseline: true }).state;
+    const next = planEditionNotifications([first, second, third], [first.id], [], saved);
+    assert.deepEqual(next.notices.map(notice => notice.event.id), [third.id]);
+    assert.deepEqual(planEditionNotifications([first, second, third], [first.id], [], next.sentState).notices, []);
+});
 function fixture() {
     let row = { userId: user.id, follow: true, email: true, language: 'pt', state:
         planFavoriteEditions([first, second], [first.id], [], {}, { baseline: true }).state,
@@ -114,6 +125,28 @@ function fixture() {
         row, jsonNull: null, now, emailAvailable: true,
         send: async (message, key) => { writes.push({ message, key }); return { data: { id: 'mock-id' } }; } } };
 }
+
+test('email opt-in sends already listed newer editions once, even after following without email', async () => {
+    const f = fixture();
+    f.options.events = [first,second];
+    f.row().email = false;
+    assert.equal(await processFavoriteEditions(f.options), 'updated');
+    assert.equal(f.writes.length, 0);
+    f.row().email = true;
+    assert.equal(await processFavoriteEditions({ ...f.options, row:f.row() }), 'sent');
+    assert.match(f.writes[0].message.text, /23 MAI 2027/);
+    assert.deepEqual(f.row().state.notifiedKeys, [editionIdentity(second).key]);
+    assert.equal(await processFavoriteEditions({ ...f.options, row:f.row(), now:new Date('2026-10-29T04:00:00Z') }), 'unchanged');
+    assert.equal(f.writes.length, 1);
+});
+
+test('legacy email delivery history prevents resending editions previously sent', async () => {
+    const f = fixture();
+    f.row().lastSentAt = new Date('2026-10-27T04:00:00Z');
+    assert.equal(await processFavoriteEditions(f.options), 'sent');
+    assert.doesNotMatch(f.writes[0].message.text, /23 MAI 2027/);
+    assert.match(f.writes[0].message.text, /23 MAI 2028/);
+});
 test('delivery failures retain one persisted message and idempotency key; retry never duplicates successful mail', async () => {
     const f = fixture();
     let attempts = 0;

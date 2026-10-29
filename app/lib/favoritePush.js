@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { planFavoriteEditions, safeFavoriteIds } from '../utils/favoriteEditions.js';
+import { planEditionNotifications, safeFavoriteIds } from '../utils/favoriteEditions.js';
 import { eventPath } from './eventDiscovery.js';
 
 export const pushAvailable = () => !!(process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY && process.env.CRON_SECRET);
@@ -67,7 +67,7 @@ export async function processFavoritePush({ db, users, events, row, send, now = 
         const manual = safeFavoriteIds(user.unsafeMetadata?.favorites);
         const excluded = safeFavoriteIds(user.unsafeMetadata?.favoriteEditionExclusions);
         const day = pushClock(now, row.timeZone).day;
-        const plan = planFavoriteEditions(events, manual, excluded, row.state, { baseline: !preferences?.follow });
+        const plan = planEditionNotifications(events, manual, excluded, row.state);
         if (preferences?.follow && plan.notices.length) {
             const message = editionPushMessage(plan.notices, row.language, 'favorite-editions-' + day);
             try { await send({ endpoint: row.endpoint, keys: { p256dh: row.p256dh, auth: row.auth } }, message); }
@@ -79,7 +79,8 @@ export async function processFavoritePush({ db, users, events, row, send, now = 
                 throw error;
             }
         }
-        await db.favoritePushSubscription.update({ where: { id: row.id }, data: { state: plan.state, lastDeliveryDay: day } });
+        await db.favoritePushSubscription.update({ where: { id: row.id }, data: {
+            state: preferences?.follow && plan.notices.length ? plan.sentState : plan.state, lastDeliveryDay: day } });
         return preferences?.follow && plan.notices.length ? 'sent' : 'unchanged';
     } finally {
         await db.favoritePushSubscription.updateMany({ where: { id: row.id, leaseUntil }, data: { leaseUntil: null, checkedAt: now } });
