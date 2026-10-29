@@ -61,12 +61,12 @@ export function generateGoogleCalendarUrl(event, type = 'race') {
         title = 'Abertura Inscrições: ' + title;
         const d = new Date(event.registrationOpensAt);
         const end = new Date(d.getTime() + 60*60*1000);
-        dates = { start: formatIcsDate(d), end: formatIcsDate(end) };
+        dates = { start: formatIcsDate(d).replace(/Z$/, ''), end: formatIcsDate(end).replace(/Z$/, '') };
     } else if (type === 'reg_close' && event.registrationClosesAt) {
         title = 'Fim Inscrições: ' + title;
         const d = new Date(event.registrationClosesAt);
         const end = new Date(d.getTime() + 60*60*1000);
-        dates = { start: formatIcsDate(d), end: formatIcsDate(end) };
+        dates = { start: formatIcsDate(d).replace(/Z$/, ''), end: formatIcsDate(end).replace(/Z$/, '') };
     }
     if (!dates) return null;
 
@@ -77,7 +77,7 @@ export function generateGoogleCalendarUrl(event, type = 'race') {
     );
 
     const datesParam = '&dates=' + dates.start + '/' + dates.end;
-    return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encTitle + '&location=' + encLocation + '&details=' + encDetails + datesParam;
+    return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encTitle + '&location=' + encLocation + '&details=' + encDetails + datesParam + '&ctz=Europe%2FLisbon';
 }
 
 export function buildIcsContent(event, origin = 'https://cyclingcalendar.pt') {
@@ -121,8 +121,8 @@ export function buildIcsContent(event, origin = 'https://cyclingcalendar.pt') {
                 'BEGIN:VEVENT',
                 `UID:reg-open-${encodeURIComponent(event.id)}@cyclingcalendar.pt`,
                 `DTSTAMP:${nowStr}`,
-                `DTSTART:${formatIcsDate(d)}`,
-                `DTEND:${formatIcsDate(new Date(d.getTime() + 60*60*1000))}`,
+                `DTSTART;TZID=Europe/Lisbon:${formatIcsDate(d).replace(/Z$/, '')}`,
+                `DTEND;TZID=Europe/Lisbon:${formatIcsDate(new Date(d.getTime() + 60*60*1000)).replace(/Z$/, '')}`,
                 `SUMMARY:Abertura Inscrições: ${cleanTitle}`,
                 `DESCRIPTION:${cleanDescription}`,
                 `URL:${eventUrl}`,
@@ -144,8 +144,8 @@ export function buildIcsContent(event, origin = 'https://cyclingcalendar.pt') {
                 'BEGIN:VEVENT',
                 `UID:reg-close-${encodeURIComponent(event.id)}@cyclingcalendar.pt`,
                 `DTSTAMP:${nowStr}`,
-                `DTSTART:${formatIcsDate(d)}`,
-                `DTEND:${formatIcsDate(new Date(d.getTime() + 60*60*1000))}`,
+                `DTSTART;TZID=Europe/Lisbon:${formatIcsDate(d).replace(/Z$/, '')}`,
+                `DTEND;TZID=Europe/Lisbon:${formatIcsDate(new Date(d.getTime() + 60*60*1000)).replace(/Z$/, '')}`,
                 `SUMMARY:Fim Inscrições: ${cleanTitle}`,
                 `DESCRIPTION:${cleanDescription}`,
                 `URL:${eventUrl}`,
@@ -184,6 +184,14 @@ export function downloadIcsFile(event) {
 
 
 export async function autoAddToGoogleCalendar(event, type = 'race', gcalUrl) {
+    const language = typeof document !== 'undefined' ? document.documentElement.lang.split('-')[0] : 'pt';
+    const messages = {
+        pt:['Adicionado com sucesso ao teu Cycling Calendar!','Esta prova já está no teu Cycling Calendar.','Confirma a data na fonte antes de exportar.'],
+        en:['Added to your Cycling Calendar!','This event is already in your Cycling Calendar.','Confirm the date at the source before exporting.'],
+        es:['Añadido a tu Cycling Calendar.','Esta prueba ya está en tu Cycling Calendar.','Confirma la fecha en la fuente antes de exportar.'],
+        fr:['Ajouté à votre Cycling Calendar.','Cette épreuve figure déjà dans votre Cycling Calendar.','Confirmez la date à la source avant d’exporter.'],
+    }[language] || ['Adicionado ao Cycling Calendar.','Esta prova já está no Cycling Calendar.','Confirma a data na fonte antes de exportar.'];
+    if (!gcalUrl) { window.alert(messages[2]); return false; }
     const popup = window.open('about:blank', '_blank');
     try {
         const res = await fetch('/api/calendar/add', {
@@ -192,17 +200,18 @@ export async function autoAddToGoogleCalendar(event, type = 'race', gcalUrl) {
             body: JSON.stringify({ event, type })
         });
         const data = await res.json();
-        if (data.success) {
-            popup.close();
-            console.log('Sucesso ao adicionar magicamente ao calendário Cycling Calendar');
-            await new Promise(r => setTimeout(r, 100));
-            alert('Adicionado com sucesso ao teu Cycling Calendar!');
-            return;
+        if (res.ok && data.success) {
+            popup?.close();
+            window.dispatchEvent(new Event('cycling-calendar-updated'));
+            window.alert(data.message === 'exists' ? messages[1] : messages[0]);
+            return true;
         }
     } catch (e) {
         console.warn('OAuth API failed, falling back to web:', e);
     }
     
     // Fallback para o link web normal (OAuth falhou ou não tem token)
-    popup.location.href = gcalUrl;
+    if (popup) popup.location.href = gcalUrl;
+    else window.location.assign(gcalUrl);
+    return false;
 }

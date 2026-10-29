@@ -122,7 +122,7 @@ export function ConfirmDialog({ title, children, onClose, onConfirm, busy, messa
         >
             <div className="px-6 py-4 border-b border-line flex items-center justify-between">
                 <h2 id="admin-confirm-title" className="text-lg font-semibold tracking-tight">{title}</h2>
-                <button onClick={onClose} disabled={busy} className="p-1.5 text-muted hover:text-ink rounded-md hover:bg-soft transition-colors disabled:opacity-50">
+                <button type="button" aria-label="Fechar confirmação" onClick={onClose} disabled={busy} className="p-1.5 text-muted hover:text-ink rounded-md hover:bg-soft transition-colors disabled:opacity-50">
                     <X size={18} />
                 </button>
             </div>
@@ -131,7 +131,7 @@ export function ConfirmDialog({ title, children, onClose, onConfirm, busy, messa
                 {message && <Notice error={message.type === 'error'}>{message.text}</Notice>}
             </div>
             <div className="px-6 py-4 bg-soft border-t border-line flex items-center justify-end gap-3">
-                <Button autoFocus disabled={busy} onClick={onClose}>Cancelar</Button>
+                <Button autoFocus disabled={busy} onClick={onClose}>{message?.type === 'success' ? 'Fechar' : 'Cancelar'}</Button>
                 <Button tone={danger ? 'danger' : 'primary'} disabled={busy || message?.type === 'success'} onClick={onConfirm}>
                     {busy ? 'A processar…' : confirmLabel}
                 </Button>

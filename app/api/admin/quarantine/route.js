@@ -1,8 +1,23 @@
 import { prisma } from '@/app/lib/db';
 import { requireAdmin } from '@/app/lib/auth-helpers';
 import { logInfo, logError } from '@/app/lib/logger';
+import { revalidateTag } from 'next/cache';
 
 export const dynamic = 'force-dynamic';
+
+async function readEventId(request, allowQuery = false) {
+    const queryId = allowQuery ? new URL(request.url).searchParams.get('id') : null;
+    let bodyId;
+    if (request.body) {
+        try { bodyId = (await request.json())?.id; }
+        catch { return null; }
+    }
+    if (queryId && bodyId && queryId !== bodyId) return null;
+    const id = bodyId ?? queryId;
+    return typeof id === 'string' && id.trim() === id && id.length > 0 && id.length <= 1000 ? id : null;
+}
+
+const mutationResponse = (body, status = 200) => Response.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
 
 export function classifyQuarantineReason(event) {
     const text = `${event.title || ''} ${event.details || ''} ${event.tag || ''}`.toLowerCase();
@@ -134,26 +149,29 @@ export async function PATCH(request) {
     }
 
     try {
-        const body = await request.json();
-        const { id, targetSource = 'Stop and Go' } = body || {};
+        const id = await readEventId(request);
         if (!id) {
-            return Response.json({ success: false, error: 'ID da prova obrigatório.' }, { status: 400 });
+            return mutationResponse({ success: false, error: 'ID da prova válido obrigatório.' }, 400);
         }
 
         const event = await prisma.event.findUnique({ where: { id } });
         if (!event) {
             return Response.json({ success: false, error: 'Prova não encontrada.' }, { status: 404 });
         }
+        if (!event.source.includes('Quarentena')) return mutationResponse({ success:false, error:'A prova já não está em quarentena. Atualiza a lista.' },409);
 
         // Clean source by removing 'Quarentena'
         let newSource = event.source.replace(/Quarentena/g, '').replace(/,\s*,/g, ',').trim();
         newSource = newSource.replace(/^,\s*|,\s*$/g, '');
-        if (!newSource) newSource = targetSource || 'Stop and Go';
+        if (!newSource) newSource = 'Stop and Go';
 
-        const updated = await prisma.event.update({
-            where: { id },
+        const result = await prisma.event.updateMany({
+            where: { id, source: { contains:'Quarentena' } },
             data: { source: newSource }
         });
+        if (!result.count) return mutationResponse({success:false,error:'O registo foi alterado entretanto. Atualiza a lista.'},409);
+        revalidateTag('calendar-events', { expire:0 });
+        const updated = { ...event, source:newSource };
 
         await logInfo('ADMIN', `Prova "${event.title}" restaurada da Quarentena por ${adminCheck.userEmail || adminCheck.userId}. Nova fonte: ${newSource}`, {
             eventId: id,
@@ -162,7 +180,7 @@ export async function PATCH(request) {
             userEmail: adminCheck.userEmail
         });
 
-        return Response.json({ success: true, message: `Prova "${event.title}" restaurada com sucesso.`, event: updated });
+        return mutationResponse({ success: true, message: `Prova "${event.title}" restaurada com sucesso.`, event: updated });
     } catch (error) {
         console.error('Error restoring event from quarantine:', error);
         return Response.json({ success: false, error: 'Erro ao restaurar prova da quarentena.' }, { status: 500 });
@@ -177,18 +195,19 @@ export async function DELETE(request) {
     }
 
     try {
-        const body = await request.json();
-        const { id } = body || {};
+        const id = await readEventId(request, true);
         if (!id) {
-            return Response.json({ success: false, error: 'ID da prova obrigatório.' }, { status: 400 });
+            return mutationResponse({ success: false, error: 'ID da prova válido obrigatório.' }, 400);
         }
 
         const event = await prisma.event.findUnique({ where: { id } });
         if (!event) {
             return Response.json({ success: false, error: 'Prova não encontrada.' }, { status: 404 });
         }
+        if (!event.source.includes('Quarentena')) return mutationResponse({ success:false, error:'Só é possível eliminar provas que continuam em quarentena.' },409);
 
-        await prisma.event.delete({ where: { id } });
+        const result = await prisma.event.deleteMany({ where: { id, source:{ contains:'Quarentena' } } });
+        if (!result.count) return mutationResponse({success:false,error:'O registo foi alterado entretanto. Atualiza a lista.'},409);
 
         await logInfo('ADMIN', `Prova "${event.title}" em Quarentena eliminada definitivamente por ${adminCheck.userEmail || adminCheck.userId}`, {
             eventId: id,
@@ -197,7 +216,7 @@ export async function DELETE(request) {
             userEmail: adminCheck.userEmail
         });
 
-        return Response.json({ success: true, message: `Prova "${event.title}" eliminada definitivamente.` });
+        return mutationResponse({ success: true, message: `Prova "${event.title}" eliminada definitivamente.` });
     } catch (error) {
         console.error('Error deleting quarantined event:', error);
         return Response.json({ success: false, error: 'Erro ao eliminar prova.' }, { status: 500 });

@@ -24,6 +24,11 @@ export function useCalendarEvents() {
     );
 
     const online = useOnline();
+    useEffect(() => {
+        const refresh = () => { void mutate(); };
+        window.addEventListener('cycling-calendar-updated', refresh);
+        return () => window.removeEventListener('cycling-calendar-updated', refresh);
+    }, [mutate]);
     const cached = useStoredString(cacheKey || 'cycling_agenda_guest', '{}');
     useEffect(() => {
         if (cacheKey && remoteData?.success) writeStored(cacheKey, JSON.stringify(remoteData));

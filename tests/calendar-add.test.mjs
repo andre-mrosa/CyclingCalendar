@@ -60,3 +60,22 @@ test('missing Google authorisation returns a permission error without writing a 
     const { route } = await calendarRoute('test-user', null);
     assert.equal((await route.POST(request({ event: { id: 'x', date: '31 OUT 2026' } }))).status, 403);
 });
+
+test('failure to find the dedicated calendar never writes into the personal primary calendar',async t=>{
+    let writes=0;t.mock.method(globalThis,'fetch',async(_url,options={})=>{if(options.method==='POST')writes++;return Response.json({error:'Unavailable'},{status:503});});
+    const {route}=await calendarRoute('test-user');assert.equal((await route.POST(request({event:{id:'fixture',date:'23 MAI 2027'}}))).status,503);assert.equal(writes,0);
+});
+test('failed duplicate checks never create a second Google event',async t=>{
+    let writes=0;t.mock.method(globalThis,'fetch',async(url,options={})=>{if(url.endsWith('/users/me/calendarList'))return Response.json({items:[{summary:'Cycling Calendar',id:'calendar'}]});if(options.method==='POST')writes++;return Response.json({error:'Unavailable'},{status:503});});
+    const {route}=await calendarRoute('test-user');assert.equal((await route.POST(request({event:{id:'fixture',date:'23 MAI 2027'}}))).status,503);assert.equal(writes,0);
+});
+test('registration exports preserve Lisbon wall-clock deadlines and encode event identifiers',async t=>{
+    let written;
+    t.mock.method(globalThis,'fetch',async(url,options={})=>{
+        if(url.endsWith('/users/me/calendarList'))return Response.json({items:[{summary:'Cycling Calendar',id:'calendar'}]});
+        if(options.method==='POST'){written=JSON.parse(options.body);return Response.json({id:'created'});}
+        assert.equal(new URL(url).searchParams.get('privateExtendedProperty'),'cyclingCalendarEventId=fixture&a-reg_close');return Response.json({items:[]});
+    });
+    const {route}=await calendarRoute('test-user');const result=await route.POST(request({event:{id:'fixture&a',registrationClosesAt:'2027-05-18T23:59:00.000Z'},type:'reg_close'}));
+    assert.equal(result.status,200);assert.deepEqual(written.start,{dateTime:'2027-05-18T23:59:00',timeZone:'Europe/Lisbon'});
+});

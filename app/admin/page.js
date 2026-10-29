@@ -406,8 +406,10 @@ export default function AdminDashboardPage() {
                         body: JSON.stringify({ id: quarantineTarget.event.id }),
                     });
                 } else {
-                    response = await authFetch(`/api/admin/quarantine?id=${encodeURIComponent(quarantineTarget.event.id)}`, {
+                    response = await authFetch('/api/admin/quarantine', {
                         method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: quarantineTarget.event.id }),
                     });
                 }
             } else return;
@@ -454,7 +456,7 @@ export default function AdminDashboardPage() {
                 ) : (
                     <>
                         <p>Tens a certeza de que desejas eliminar <strong>{quarantineTarget.event.title}</strong>?</p>
-                        <Notice error>Esta prova será removida permanentemente da base de dados e não voltará a aparecer.</Notice>
+                        <Notice error>Esta prova será removida permanentemente da base de dados. Não poderás restaurá-la através deste painel.</Notice>
                     </>
                 )
             )}

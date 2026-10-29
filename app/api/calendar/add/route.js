@@ -37,7 +37,7 @@ async function getTargetCalendarId(token) {
         console.warn("Cannot create/fetch secondary calendar, fallback to primary:", e);
     }
     
-    return 'primary';
+    return null;
 }
 
 export async function POST(req) {
@@ -82,10 +82,12 @@ export async function POST(req) {
         }
 
         const targetCalendarId = await getTargetCalendarId(token);
+        if (!targetCalendarId) return NextResponse.json({error:'Não foi possível aceder ao calendário Cycling Calendar.'},{status:503});
         const eventKey = type === 'race' ? event.id : `${event.id}-${type}`;
         
-        const checkUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(targetCalendarId)}/events?privateExtendedProperty=cyclingCalendarEventId=${eventKey}`;
+        const checkUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(targetCalendarId)}/events?privateExtendedProperty=${encodeURIComponent('cyclingCalendarEventId=' + eventKey)}`;
         const checkRes = await fetch(checkUrl, { headers: { 'Authorization': `Bearer ${token}` } });
+        if (!checkRes.ok) return NextResponse.json({error:'Não foi possível verificar se a prova já está na agenda.'},{status:503});
 
         if (checkRes.ok) {
             const checkData = await checkRes.json();
@@ -111,13 +113,13 @@ export async function POST(req) {
             gEvent.end = { date: endDt.toISOString().split('T')[0] };
         } else if (type === 'reg_open' && event.registrationOpensAt) {
             gEvent.summary = 'Abertura Inscrições: ' + event.title;
-            gEvent.start = { dateTime: new Date(event.registrationOpensAt).toISOString() };
-            gEvent.end = { dateTime: new Date(new Date(event.registrationOpensAt).getTime() + 3600000).toISOString() };
+            gEvent.start = { dateTime: new Date(event.registrationOpensAt).toISOString().slice(0,19), timeZone:'Europe/Lisbon' };
+            gEvent.end = { dateTime: new Date(new Date(event.registrationOpensAt).getTime() + 3600000).toISOString().slice(0,19), timeZone:'Europe/Lisbon' };
             gEvent.reminders.overrides = [{ method: 'popup', minutes: 60 }];
         } else if (type === 'reg_close' && event.registrationClosesAt) {
             gEvent.summary = 'Fim Inscrições: ' + event.title;
-            gEvent.start = { dateTime: new Date(event.registrationClosesAt).toISOString() };
-            gEvent.end = { dateTime: new Date(new Date(event.registrationClosesAt).getTime() + 3600000).toISOString() };
+            gEvent.start = { dateTime: new Date(event.registrationClosesAt).toISOString().slice(0,19), timeZone:'Europe/Lisbon' };
+            gEvent.end = { dateTime: new Date(new Date(event.registrationClosesAt).getTime() + 3600000).toISOString().slice(0,19), timeZone:'Europe/Lisbon' };
             gEvent.reminders.overrides = [{ method: 'popup', minutes: 1440 }];
         } else {
             return NextResponse.json({ error: 'Missing dates for this type' }, { status: 400 });

@@ -68,6 +68,18 @@ export function isSameEvent(existingEvent, candidateEvent) {
     // 1. Verificação de ID direto
     if (existingEvent.id === candidateEvent.id) return true;
 
+    // A spelling-only correction must not duplicate the same official cup round.
+    // Keep round numbers, categories, exact day and venue; never use fuzzy FPC matches.
+    if (existingEvent.source?.includes('FPC') && candidateEvent.source?.includes('FPC')) {
+        const literal = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim();
+        const a = literal(existingEvent.title), b = literal(candidateEvent.title);
+        const canonical = value => value.replace(/\bciclocrosse\b/g,'ciclocross');
+        const placeA = literal(existingEvent.details || existingEvent.distrito);
+        const placeB = literal(candidateEvent.details || candidateEvent.distrito);
+        const day = event => { const date = new Date(event.sortDate); return event.sortDate && Number.isFinite(date.getTime()) ? date.toISOString().slice(0,10) : null; };
+        if (a !== b && canonical(a) === canonical(b) && placeA && placeA === placeB && day(existingEvent) && day(existingEvent) === day(candidateEvent)) return true;
+    }
+
     // 2. Se ambos os eventos vêm da FPC (IDs começam por fpc-), são linhas oficiais distintas
     if (existingEvent.id?.startsWith('fpc-') && candidateEvent.id?.startsWith('fpc-')) {
         return false;

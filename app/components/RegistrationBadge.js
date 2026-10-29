@@ -2,15 +2,19 @@
 import { CalendarDays, CalendarClock, CalendarX, CalendarCheck, CalendarPlus } from 'lucide-react';
 import { useTranslation } from '../i18n/useTranslation';
 import { generateGoogleCalendarUrl } from '../utils/calendarExport';
+import { formatRegistrationDay } from '../utils/registrationDates';
+import { lisbonWallClock } from '../utils/planning';
+import { useClientReady } from '../hooks/useBrowserState';
 
 export default function RegistrationBadge({ event, isCancelled }) {
     const { language, t } = useTranslation();
+    const mounted = useClientReady();
     
-    if (isCancelled || !event.sortDate) return null;
+    if (!mounted || isCancelled || !event.sortDate) return null;
     
-    const now = new Date();
+    const now = new Date(lisbonWallClock());
     const eventDate = new Date(event.sortDate);
-    eventDate.setHours(23, 59, 59, 999);
+    eventDate.setUTCHours(23, 59, 59, 999);
     
     if (eventDate < now) return null; // Event has passed
 
@@ -20,15 +24,7 @@ export default function RegistrationBadge({ event, isCancelled }) {
     let text = '';
     let type = 'reg_open';
 
-    const formatDate = (dateStr) => {
-        const localeMap = {
-            en: 'en-US',
-            es: 'es-ES',
-            fr: 'fr-FR',
-            pt: 'pt-PT'
-        };
-        return new Date(dateStr).toLocaleDateString(localeMap[language] || 'pt-PT', { day: '2-digit', month: 'short' });
-    };
+    const formatDate = value => formatRegistrationDay(value, language);
 
     if (event.registrationClosesAt && new Date(event.registrationClosesAt) < now) {
         status = 'closed';

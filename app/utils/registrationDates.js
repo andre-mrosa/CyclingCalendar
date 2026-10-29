@@ -1,5 +1,12 @@
 // Dates in the existing schema encode Lisbon wall-clock time in UTC fields.
 // Calendar integration supplies Europe/Lisbon when exporting these fields.
+export function formatRegistrationDay(value, language = 'pt') {
+    const date = new Date(value);
+    if (!Number.isFinite(date.getTime())) return '';
+    const locale = {pt:'pt-PT',en:'en-US',es:'es-ES',fr:'fr-FR'}[language] || 'pt-PT';
+    return new Intl.DateTimeFormat(locale,{day:'2-digit',month:'short',timeZone:'UTC'}).format(date);
+}
+
 export function parseRegistrationDates(html = '') {
     const text = String(html).replace(/<[^>]*>/g, ' ').replace(/&nbsp;|&#160;/g, ' ')
         .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ');

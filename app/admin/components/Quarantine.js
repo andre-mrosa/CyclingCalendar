@@ -67,10 +67,11 @@ export default function Quarantine({
     };
 
     const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+    const currentPage = Math.min(page, totalPages);
     const paginated = useMemo(() => {
-        const start = (page - 1) * pageSize;
+        const start = (currentPage - 1) * pageSize;
         return filtered.slice(start, start + pageSize);
-    }, [filtered, page, pageSize]);
+    }, [filtered, currentPage, pageSize]);
 
     const getBadgeStyle = (color) => {
         switch (color) {
@@ -330,23 +331,23 @@ export default function Quarantine({
                         {filtered.length > pageSize && (
                             <div className="px-4 sm:px-6 py-3 border-t border-line flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted bg-soft/20">
                                 <div>
-                                    A mostrar <strong>{(page - 1) * pageSize + 1}</strong> a <strong>{Math.min(page * pageSize, filtered.length)}</strong> de <strong>{number(filtered.length)}</strong> provas
+                                    A mostrar <strong>{(currentPage - 1) * pageSize + 1}</strong> a <strong>{Math.min(currentPage * pageSize, filtered.length)}</strong> de <strong>{number(filtered.length)}</strong> provas
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Button
-                                        onClick={() => setPage(p => Math.max(1, p - 1))}
-                                        disabled={page === 1}
+                                        onClick={() => setPage(Math.max(1, currentPage - 1))}
+                                        disabled={currentPage === 1}
                                         className="py-1 px-2.5 text-xs"
                                     >
                                         <ChevronLeft size={14} />
                                         Anterior
                                     </Button>
                                     <span className="px-2 font-medium text-ink">
-                                        Página {page} de {totalPages}
+                                        Página {currentPage} de {totalPages}
                                     </span>
                                     <Button
-                                        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                                        disabled={page === totalPages}
+                                        onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
+                                        disabled={currentPage === totalPages}
                                         className="py-1 px-2.5 text-xs"
                                     >
                                         Seguinte
