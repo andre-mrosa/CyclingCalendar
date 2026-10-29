@@ -11,6 +11,12 @@ import { detectRaceDate } from '../../utils/detectRaceDate.js';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
+export function isCabreiraCyclingEvent(title) {
+    const text = String(title || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const cycling = /\b(btt|bike|ciclismo|cicloturismo|gravel|granfondo|grandfondo|xco|xcm)\b/.test(text);
+    return cycling || !/\b(silvestre|trail|running|run|caminhada|atletismo)\b/.test(text);
+}
+
 export const deepScrapeCabreira = async (link) => {
     // Read factual title and registration dates from the source, without importing its editorial content.
     let opensAt = null, closesAt = null, title = null;
@@ -80,6 +86,7 @@ export const scrapeCabreira = async (year, options = {}) => {
 
             return { href, title, dateText, sortDate, locText, eventYear };
         }).filter(ev => {
+            if (!isCabreiraCyclingEvent(ev.title)) return false;
             const detected = detectRaceDate({ date: ev.dateText, sortDate: ev.sortDate });
             const effectiveEnd = detected?.raceEndDateISO ? new Date(detected.raceEndDateISO + 'T23:59:59.999Z') : ev.sortDate;
             if (effectiveEnd < todayZero) return false;
@@ -95,6 +102,7 @@ export const scrapeCabreira = async (year, options = {}) => {
                     
                     const { opensAt, closesAt, title } = await deepScrapeCabreira(ev.href);
                     const publishedTitle = title || ev.title;
+                    if (!isCabreiraCyclingEvent(publishedTitle)) return;
 
                     const eventData = {
                         tag: getTag(publishedTitle), ambito:getAmbito(publishedTitle, '', '', 'Cabreira'),

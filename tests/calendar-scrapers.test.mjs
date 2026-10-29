@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixtureModule } from './fixtureModule.mjs';
 const { parseFPCCalendar, fetchFPCCalendar } = await fixtureModule('../app/lib/scrapers/fpc.js');
-const { deepScrapeCabreira } = await fixtureModule('../app/lib/scrapers/cabreira.js');
+const { deepScrapeCabreira, isCabreiraCyclingEvent } = await fixtureModule('../app/lib/scrapers/cabreira.js');
 const { scrapeStopAndGo } = await fixtureModule('../app/lib/scrapers/stopandgo.js', { '../logger.js': { logInfo: async () => {}, logError: async () => {} } });
 import { readStopAndGoHeader } from '../app/lib/scrapers/stopandgoParser.js';
 import { getAmbito } from '../app/lib/scrapers/utils.js';
@@ -16,6 +16,15 @@ const fpcRow = (title, start, end = start, category = 'CN') => `<tr><th>${start}
 const fpcPage = (rows, year = '2026', from = '01') => `<form><select name="epoca_site"><option selected>${year}</option></select><select name="mes_de_new"><option selected>${from}</option></select><select name="mes_ate_new"><option selected>12</option></select></form><table class="dc_table_s12"><tbody>${rows}</tbody></table>`;
 const sgPage = ({ title = 'Prova', modality = 'BTT', dates = '5 set 2026' } = {}) => `<nav><a>BTT</a><a>Gravel</a></nav><section><div><h1>${title}</h1><div>Maia, Portugal</div><div>${dates}</div><div>${modality}</div></div></section><aside>Campeonato Nacional de Gravel <span>20 set 2026</span></aside>`;
 const url = 'https://stopandgo.net/events/prova-2026';
+
+test('Cabreira excludes running events while retaining cycling and mixed cycling events', () => {
+    assert.equal(isCabreiraCyclingEvent('São Silvestre do Algarve'), false);
+    assert.equal(isCabreiraCyclingEvent('São Silvestre do Oeste'), false);
+    assert.equal(isCabreiraCyclingEvent('Trail running da serra'), false);
+    assert.equal(isCabreiraCyclingEvent('BTT e caminhada'), true);
+    assert.equal(isCabreiraCyclingEvent('Racenature E Bike'), true);
+    assert.equal(isCabreiraCyclingEvent('Vila do Conde Peneda Gerês Extreme'), true);
+});
 
 test('Cabreira reads the published event name instead of deriving it from a duplicated URL slug', async t => {
     t.mock.method(globalThis, 'fetch', async () => new Response('<h1>GRANFONDO MÉDIO TEJO</h1><p>Inscrições em breve</p>'));

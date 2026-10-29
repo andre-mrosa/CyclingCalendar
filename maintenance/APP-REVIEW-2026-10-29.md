@@ -27,6 +27,7 @@ Foram aplicadas 79 correções de metadados confirmáveis: âmbito, modalidade, 
 - FPC: verificados os calendários completos de 2026 (435 entradas na fonte) e 2027 (ainda sem entradas). Mantida a validação que rejeita respostas da época errada ou apenas do mês atual.
 - Apedalar: consulta o ano atual e o seguinte; anteriormente podia perder a época seguinte.
 - Cabreira: lê o título publicado em vez de depender de números/sufixos do URL; mantém os IDs existentes nas fusões.
+- Cabreira: exclui provas explicitamente pedestres. As duas São Silvestre (Oeste e Algarve), confirmadas na origem como corrida/caminhada, passaram para quarentena reversível. Corrigidas também as modalidades de Gravel Montijo e Granfondo Serra d’Ossa; valores anteriores em `cabreira-facts-plan.json` na pasta local de diagnóstico.
 - Stop and Go: descobre modalidades de ciclismo pela listagem pública, incluindo URLs sem ano, e normaliza URLs de inscrição antes de deduplicar. Paginação e pedidos têm limites; 401/403/429 interrompem a recolha bloqueada em vez de insistir indefinidamente.
 - Cabreira, Recorde Pessoal e Apedalar: tempos máximos de pedidos limitados para evitar execuções presas.
 - A duração final corresponde ao workflow completo. Erros de fontes permanecem visíveis como execução parcial.
@@ -45,7 +46,7 @@ Foram aplicadas 79 correções de metadados confirmáveis: âmbito, modalidade, 
 
 ## Verificação
 
-- `npm test`: **244 testes aprovados**, zero falhas.
+- `npm test`: **245 testes aprovados**, zero falhas.
 - `npm run lint`: aprovado.
 - `npm run build`: aprovado com acesso à base de dados, sem falhas de geração das páginas.
 - Verificação no browser das definições, calendário e textos legais, incluindo formato mobile e quatro idiomas; sem transbordo horizontal nas páginas verificadas.
