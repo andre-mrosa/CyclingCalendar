@@ -42,6 +42,16 @@ test('An unpublished future season is empty only with its confirmed complete for
     assert.throws(() => parseFPCCalendar(html.replace('</html>', ''), year), /Tabela/);
 });
 
+test('FPC email-shaped and unsafe links never hide an otherwise valid race page', () => {
+    for (const href of ['http://geral@acrseixo.com','mailto:geral@acrseixo.com','javascript:alert(1)','https://user:password@example.com/event']) {
+        const row=fpcRow('XVII Passeio Cicloturístico ACR Seixo','09-08-2026').replace('</td></tr>',`<a href="${href}">Contacto</a></td></tr>`);
+        const [event]=parseFPCCalendar(fpcPage(row),2026);
+        assert.equal(event.link,'https://www.fpciclismo.pt/calendario');
+    }
+    const row=fpcRow('Passeio Seixo','09-08-2026').replace('</td></tr>','<a href="http://geral@acrseixo.com">Email</a><a href="https://www.fpciclismo.pt/pagina/passeio-seixo">Prova</a></td></tr>');
+    assert.equal(parseFPCCalendar(fpcPage(row),2026)[0].link,'https://www.fpciclismo.pt/pagina/passeio-seixo');
+});
+
 test('FPC parser returns only event name, date, locality and original source link', () => {
     const events = parseFPCCalendar(fpcPage([
         fpcRow('Campeonatos Nacionais Pista', '23-01-2026', '25-01-2026', 'Pista CN'),

@@ -5,6 +5,7 @@ import { toTitleCase } from './utils.js';
 import { logInfo, logError } from '../logger.js';
 import { saveOrMergeEvent } from '../merging/eventMerger.js';
 import { detectRaceDate } from '../../utils/detectRaceDate.js';
+import { originalEventUrl } from '../publicEvent.js';
 
 export const fetchFPCCalendar = async (year) => {
         year = String(year);
@@ -88,8 +89,9 @@ export const parseFPCCalendar = (html, year) => {
                         } else if (href.startsWith('http') && !href.endsWith('fpciclismo.pt') && !href.endsWith('fpciclismo.pt/')) {
                             extracted = href;
                         }
-                        if (extracted && sourceLink === 'https://www.fpciclismo.pt/calendario') {
-                            sourceLink = extracted;
+                        const validLink = originalEventUrl(extracted);
+                        if (validLink && sourceLink === 'https://www.fpciclismo.pt/calendario') {
+                            sourceLink = validLink;
                         }
                     });
 
