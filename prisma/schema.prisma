@@ -222,3 +222,29 @@ model FavoriteEditionPreference {
 
   @@index([follow, checkedAt])
 }
+
+model FavoritePushSubscription {
+  id              String   @id
+  userId          String
+  endpoint        String   @unique
+  p256dh          String
+  auth            String
+  enabled         Boolean  @default(true)
+  hour            Int      @default(10)
+  timeZone        String   @default("Europe/Lisbon")
+  language        String   @default("pt")
+  state           Json     @default("{}")
+  lastDeliveryDay String?
+  lastTestAt      DateTime?
+  checkedAt       DateTime @default(now())
+  leaseUntil      DateTime?
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@index([enabled, id])
+}
+
+model PushScheduleRun {
+  day       String   @id
+  createdAt DateTime @default(now())
+}

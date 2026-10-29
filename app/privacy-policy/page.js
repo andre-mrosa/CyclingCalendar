@@ -46,10 +46,18 @@ export default function PrivacyPolicy() {
               </section>
             );
           })}
+          <section className="p-6 sm:p-8 bg-slate-50 dark:bg-slate-950/80 rounded-3xl border border-slate-300 dark:border-slate-800/60">
+            <h2 className="text-xl font-bold mb-5">8. Notificações no dispositivo</h2>
+            <div className="space-y-3 text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+              <p>As notificações push são opcionais e exigem a tua ativação e a permissão do navegador ou do sistema. Guardamos o identificador da conta, o endereço técnico da subscrição e as suas chaves de entrega, o idioma, a hora, o fuso horário e o estado necessário para evitar avisos repetidos. Este registo é independente do email e de outros dispositivos.</p>
+              <p>Quando existem novas edições das tuas provas favoritas, enviamos a notificação através do serviço push do teu navegador, como Apple, Google, Mozilla ou Microsoft. O conteúdo da mensagem é cifrado para o dispositivo. A receção pode atrasar por falta de ligação ou por restrições do sistema.</p>
+              <p>Podes desativar esta subscrição nas definições da app e revogar a permissão nas definições do dispositivo. Ao desativares na app ou eliminares a conta, removemos o respetivo registo de subscrição. Também removemos subscrições que o fornecedor indique como expiradas.</p>
+            </div>
+          </section>
         </div>
 
         <footer className="mt-16 text-center border-t border-slate-300 dark:border-slate-800/60 pt-8">
-          <p className="text-xs text-slate-500 font-mono mb-4">Última atualização: 28 de outubro de 2026</p>
+          <p className="text-xs text-slate-500 font-mono mb-4">Última atualização: 29 de outubro de 2026</p>
           <Link href="/contacto" className="inline-flex items-center gap-2 underline text-sm"><Mail size={16} /> Contactar através do formulário</Link>
         </footer>
       </div>

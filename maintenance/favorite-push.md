@@ -1,0 +1,11 @@
+# Favorite edition push notifications
+
+Users enable push per device in `/definicoes`. Following new editions must already be enabled in `/favoritos`; email remains independent. The default digest time is 10:00 in the device's detected time zone. Users can choose another hour and use Lisbon/Azores/Madeira/UTC or keep their detected zone. Existing editions form a baseline and never generate a signup burst.
+
+Required server environment variables: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `CRON_SECRET`. Generate one persistent VAPID key pair with the `web-push` library; keep the private key only in secret environment storage. Changing the key pair invalidates existing subscriptions. The public key is returned by the authenticated preferences endpoint, so it does not require a `NEXT_PUBLIC_` build variable. Resend is not involved in push delivery.
+
+Deploy the Prisma migration before publishing the new code. The daily `/api/cron/favorite-push` starter uses the existing Vercel Workflow runtime to wake every 15 minutes for 25 hours. This keeps the Vercel cron itself within the Hobby daily frequency limit and covers time zones and daylight-saving changes. Overlapping daily runs are protected by device leases and local-day cursors. Pending delivery failures retry; provider acceptance followed by a lost database write may replace the same notification tag rather than provide strict exactly-once transport.
+
+The service worker clears old offline caches and does not cache scraped content. It displays visible push notifications and opens only same-origin `/provas/` or `/favoritos` links. iOS/iPadOS requires an installed Home Screen web app and explicit user interaction for subscribing. Users must authorize notifications themselves; no permission prompt is triggered on page load. Delivery timing is subject to device connectivity, browser/system policies and workflow availability.
+
+Test with an opted-in device after deployment, then introduce a real new edition or use isolated test fixtures. Never manufacture public race data to trigger a test. Check Vercel Workflow execution history for failures. Revoked/expired endpoints (404/410) and deleted accounts are cleaned up without sending further notifications.

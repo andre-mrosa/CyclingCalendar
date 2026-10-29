@@ -7,7 +7,6 @@ export default function proxy(request, event) {
   const url = new URL(request.url);
   // These resources stay retired even if a later, separately approved release opens.
   if (url.pathname.startsWith('/media/events/')) return retiredContentResponse();
-  if (url.pathname === '/sw.js') return maintenanceResponse(request.url);
   if (!PUBLIC_RELEASE_APPROVED) return maintenanceResponse(request.url);
   return authenticatedMiddleware(request, event);
 }

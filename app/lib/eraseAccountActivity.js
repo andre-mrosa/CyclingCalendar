@@ -5,6 +5,7 @@ export async function eraseAccountActivity(db, userId) {
     await db.$transaction(async tx => {
         await tx.favoriteAlert.deleteMany({ where: { userId } });
         await tx.favoriteEditionPreference.deleteMany({ where: { userId } });
+        await tx.favoritePushSubscription.deleteMany({ where: { userId } });
         // Deleting sessions also deletes their events through the database FK.
         await tx.analyticsSession.deleteMany({ where: { userId } });
         await tx.systemLog.deleteMany({ where: { userId } });
