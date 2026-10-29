@@ -453,6 +453,8 @@ export default function Conta() {
             {/* Modals */}
             {activeModal && (
                 <div
+                    role="dialog" aria-modal="true"
+                    aria-label={activeModal === 'regiao' ? t('region_modal_title') : activeModal === 'escalao' ? t('escalao_modal_title') : deleteModalType === 'DELETE_DATA' ? t('settings_delete_data_title') : t('settings_delete_account_title')}
                     className="fixed inset-0 bg-black/60 flex items-center justify-center z-[1000] p-4 backdrop-blur-sm animate-fade-in"
                     onClick={(e) => {
                         if (e.target === e.currentTarget && !isDeletingAccount) setActiveModal(null);
@@ -460,6 +462,7 @@ export default function Conta() {
                 >
                     <div className="bg-surface border border-line rounded-2xl relative max-w-[480px] w-full shadow-2xl overflow-hidden text-ink transition-colors duration-200">
                         <button
+                            type="button" aria-label={t('action_close')}
                             onClick={() => !isDeletingAccount && setActiveModal(null)}
                             className="absolute top-3.5 right-3.5 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors text-2xl leading-none z-10 cursor-pointer"
                         >×</button>

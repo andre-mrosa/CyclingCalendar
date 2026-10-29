@@ -87,6 +87,8 @@ export function parseScraperStatus({ startLog = null, completionLog = null, logs
     const years = [...new Set(Array.isArray(rawYears) ? rawYears.map(String) : [])];
     sources.fpc.desc = `Calendários FPC${years.length ? ` ${years.join(', ')}` : ''} · processados, não novos`;
     const yearCounts = new Map();
+    const yearMetrics = new Map();
+    const yearDurations = new Map();
     const errors = new Map();
     let hasErrors = false;
     const recordError = (id, message) => {
@@ -102,12 +104,19 @@ export function parseScraperStatus({ startLog = null, completionLog = null, logs
         if (log.level === 'ERROR') recordError(id, message);
         if (typeof details.event === 'string' && details.event.startsWith('stage-')) {
             applySnapshot(target, details);
+            if (id === 'fpc' && details.event === 'stage-complete' && details.year != null && typeof details.duration === 'string') {
+                const seconds = Number.parseFloat(details.duration);
+                if (Number.isFinite(seconds)) yearDurations.set(String(details.year), seconds);
+            }
             if (details.status === 'error') recordError(id, details.message || message);
             continue;
         }
         if (details.event === 'source-year-complete' && id === 'fpc') {
             if (details.year != null && validCount(details.processed) !== null) yearCounts.set(String(details.year), details.processed);
-            if (details.metrics) applySnapshot(target, { metrics: details.metrics });
+            if (details.metrics) {
+                applySnapshot(target, { metrics: details.metrics });
+                if (details.year != null) yearMetrics.set(String(details.year), details.metrics);
+            }
             if (details.status === 'error') recordError(id, message);
             continue;
         }
@@ -154,6 +163,14 @@ export function parseScraperStatus({ startLog = null, completionLog = null, logs
             }
             if (years.length && years.every(year => validCount(stats.fpcEvents[year]) !== null) && sources.fpc.status !== 'error') sources.fpc.status = 'done';
         }
+    }
+    if (yearMetrics.size && !stats.sources?.fpc?.metrics) {
+        const expected = years.length ? years : [...yearCounts.keys()];
+        sources.fpc.metrics = Object.fromEntries(METRICS.map(key => {
+            const values = expected.map(year => validCount(yearMetrics.get(year)?.[key]));
+            return [key, values.length && values.every(value => value !== null) ? values.reduce((sum,value) => sum + value, 0) : null];
+        }));
+        if (expected.every(year => yearDurations.has(year))) sources.fpc.duration = `${expected.reduce((sum,year) => sum + yearDurations.get(year),0).toFixed(1)}s`;
     }
     if (validCount(stats.translations?.translatedCount) !== null && steps.translation) {
         steps.translation.count = stats.translations.translatedCount;

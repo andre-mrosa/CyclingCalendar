@@ -412,7 +412,7 @@ const messages = {
     escalao_team_club: "Équipe de Club / Amateur",
     escalao_team_pro: "Équipe Professionnelle (Continentale / WT)",
     escalao_team_indiv: "Individuel (Sans Équipe)",
-    escalao_detected_title: "Votre catégorie officielle :",
+    escalao_detected_title: "Filtre suggéré :",
     escalao_btn_calc: "Calculer la Catégorie",
     escalao_btn_apply: "Filtrer par cette catégorie",
     escalao_btn_close: "Fermer",

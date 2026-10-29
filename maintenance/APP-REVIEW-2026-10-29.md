@@ -21,6 +21,7 @@ Foram aplicadas 79 correções de metadados confirmáveis: âmbito, modalidade, 
 - O assistente permite escolher a época e corrige as fronteiras etárias de Juvenis, Cadetes e Sub-23. A sugestão é um filtro, devendo as regras de participação ser confirmadas na fonte.
 - A recolha mínima preserva classificações factuais validadas e datas publicadas de inscrições. Não importa descrições, imagens, preços ou programas.
 - Favoritos reconhecem uma nova edição mesmo quando um registo antigo tinha apenas uma modalidade genérica, mantendo a separação entre especialidades explícitas.
+- A grafia «Grandfondo» publicada por algumas fontes é reconhecida como a mesma série «Granfondo», preservando o título original apresentado.
 
 ## Scrapers e manutenção
 
@@ -31,10 +32,11 @@ Foram aplicadas 79 correções de metadados confirmáveis: âmbito, modalidade, 
 - Stop and Go: descobre modalidades de ciclismo pela listagem pública, incluindo URLs sem ano, e normaliza URLs de inscrição antes de deduplicar. Paginação e pedidos têm limites; 401/403/429 interrompem a recolha bloqueada em vez de insistir indefinidamente.
 - Cabreira, Recorde Pessoal e Apedalar: tempos máximos de pedidos limitados para evitar execuções presas.
 - A duração final corresponde ao workflow completo. Erros de fontes permanecem visíveis como execução parcial.
+- O painel soma também os detalhes de criados, atualizados e fundidos da FPC entre épocas; uma época seguinte vazia já não apaga os números da anterior. Resumos repetidos não duplicam as contagens.
 - Removido o tradutor automático de conteúdo de provas que já não é publicado. A etapa passa a validar os quatro idiomas da interface.
 - Removida a opção administrativa de recolha histórica que já não tinha efeito. O script de reparação foi ajustado ao parser atual.
 
-**Limitações verificadas:** algumas listagens/páginas do Stop and Go devolveram HTTP 403 neste ambiente; não se contornou o bloqueio. Três registos têm intervalos incoerentes ou de duração excessiva na fonte e continuam com data a confirmar: `sg_taca-regional-de-xcm-trofeu-meia`, `sg_race-nature-vieira-minho` e `sg_desafio-acdl-2027`. Não foram inventadas datas.
+**Limitações verificadas:** algumas listagens/páginas do Stop and Go devolveram HTTP 403 no ambiente local; não se contornou o bloqueio. Na execução em produção, a fonte respondeu normalmente e processou 15 provas sem erros. Três registos têm intervalos incoerentes ou de duração excessiva na fonte e continuam com data a confirmar: `sg_taca-regional-de-xcm-trofeu-meia`, `sg_race-nature-vieira-minho` e `sg_desafio-acdl-2027`. Não foram inventadas datas.
 
 ## Idiomas, interface e segurança
 
@@ -42,14 +44,32 @@ Foram aplicadas 79 correções de metadados confirmáveis: âmbito, modalidade, 
 - Corrigidas traduções de modalidades/especialidades presentes nos dados e nomes de escalões.
 - Controlos de visibilidade passaram a botões acessíveis por teclado com estado de interruptor.
 - Separadas as caches do calendário geral e das coleções para impedir que dados iniciais de uma coleção contaminem outra.
+- A versão dos dados integra também a chave da cache no servidor, evitando guardar uma resposta antiga sob o URL de uma versão nova.
 - Next.js atualizado para 16.4.3 e dependências compatíveis corrigidas. `npm audit` completo: **0 vulnerabilidades reportadas** na verificação de 29/10/2026.
 
 ## Verificação
 
-- `npm test`: **245 testes aprovados**, zero falhas.
+- `npm test`: **248 testes aprovados**, zero falhas.
 - `npm run lint`: aprovado.
 - `npm run build`: aprovado com acesso à base de dados, sem falhas de geração das páginas.
 - Verificação no browser das definições, calendário e textos legais, incluindo formato mobile e quatro idiomas; sem transbordo horizontal nas páginas verificadas.
 - A permissão e entrega reais de notificações num iPhone/Android instalado exigem teste nesse dispositivo; não se considera uma emulação de largura como prova de entrega push.
+
+## Execução real em produção
+
+Workflow `30217c50-700f-4b56-8a2b-e560119c0abc`: iniciado às 14:10:20 UTC, concluído às 14:15:22 UTC com estado **success**, duração 302,6 segundos e zero erros.
+
+| Fonte | Registos processados | Novos registos |
+| --- | ---: | ---: |
+| FPC 2026 | 17 | 2 |
+| FPC 2027 | 0 | 0 |
+| Cabreira | 10 | 1 |
+| Stop and Go | 15 | 1 |
+| Recorde Pessoal | 2 | 0 |
+| Apedalar | 14 | 3 |
+
+A recolha FPC processa nesta execução as provas ativas/futuras; 435 corresponde às entradas da época completa consultadas na auditoria, não a novas provas importadas. As atualizações e fusões preservaram os identificadores existentes.
+
+As etapas de validação dos quatro idiomas e invalidação da cache concluíram com sucesso. Verificação pública após a execução: 1 667 entradas e 1 667 IDs únicos, sem registos de quarentena, sem as São Silvestre e sem conteúdo editorial/imagens antigas. O Médio Tejo 2027 manteve o ID anterior, com título e intervalo de datas atualizados da fonte.
 
 Os ficheiros de diagnóstico e cópias anteriores permanecem em `.qa-tools`, ignorados pelo Git. Não contêm novas credenciais nem são publicados no site.

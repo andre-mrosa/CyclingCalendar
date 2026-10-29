@@ -100,6 +100,21 @@ test('authoritative completion count also replaces an earlier progress processed
     assert.equal(result.sources.fpc.metrics.updated, null);
 });
 
+test('durable FPC seasons retain the action breakdown when the following season is empty', () => {
+    const metrics = {processed:17,created:2,updated:12,merged:3,quarantined:0};
+    const year = row(20,'FPC 2026',{runId:'a',sourceId:'fpc',year:'2026',event:'source-year-complete',processed:17,metrics,status:'done'});
+    const emptyMetrics = {processed:0,created:0,updated:0,merged:0,quarantined:0};
+    const result = parse(start('a'), [year,year,
+        row(21,'FPC 2026',{runId:'a',sourceId:'fpc',year:'2026',event:'stage-complete',duration:'12.3s',metrics,status:'done'}),
+        row(30,'FPC 2027',{runId:'a',sourceId:'fpc',year:'2027',event:'source-year-complete',processed:0,metrics:emptyMetrics,status:'done'}),
+        row(31,'FPC 2027',{runId:'a',sourceId:'fpc',year:'2027',event:'stage-complete',duration:'2.2s',metrics:emptyMetrics,status:'done'}),
+        finish(100,{runId:'a',event:'run-complete',status:'success',sources:{},fpcEvents:{}}),
+    ]);
+    assert.deepEqual(result.sources.fpc.metrics,metrics);
+    assert.equal(result.sources.fpc.count,17);
+    assert.equal(result.sources.fpc.duration,'14.5s');
+});
+
 test('structured completion alone restores stages, metrics and partial outcomes', () => {
     const fpcMetrics = { processed: 375, created: 10, updated: 350, merged: 10, quarantined: 5 };
     const result = parse(start('a'), [finish(100, {

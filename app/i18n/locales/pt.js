@@ -412,7 +412,7 @@ const messages = {
     escalao_team_club: "Equipa de Clube / Amadora",
     escalao_team_pro: "Equipa Profissional (Continental / WT)",
     escalao_team_indiv: "Individual (Sem Equipa)",
-    escalao_detected_title: "O teu escalão oficial:",
+    escalao_detected_title: "Sugestão de filtro:",
     escalao_btn_calc: "Calcular Escalão",
     escalao_btn_apply: "Filtrar por este escalão",
     escalao_btn_close: "Fechar",

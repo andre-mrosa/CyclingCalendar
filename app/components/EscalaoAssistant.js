@@ -16,6 +16,7 @@ export default function EscalaoAssistant({ onApply }) {
     const [suggestedEscalao, setSuggestedEscalao] = useState(null);
     const currentYear = new Date().getFullYear();
     const [season, setSeason] = useState(currentYear);
+    const resetSuggestion = () => { setSuggestedEscalao(null); setEscalaoMessage(''); };
     const extra = {
         pt:['Época','Sugestão de filtro. Confirma o escalão e as condições de participação no regulamento da prova.'],
         en:['Season','Filter suggestion. Confirm the category and entry requirements in the event rules.'],
@@ -69,7 +70,7 @@ export default function EscalaoAssistant({ onApply }) {
             
             <div className="flex flex-col gap-5">
                 <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-muted uppercase tracking-wider">{extra[0]}<select className="ml-3 rounded-lg border border-line bg-soft p-2 text-ink" value={season} onChange={event => setSeason(Number(event.target.value))}>
+                    <label className="text-xs font-bold text-muted uppercase tracking-wider">{extra[0]}<select className="ml-3 rounded-lg border border-line bg-soft p-2 text-ink" value={season} onChange={event => { setSeason(Number(event.target.value)); resetSuggestion(); }}>
                         {[currentYear,currentYear+1].map(year => <option key={year} value={year}>{year}</option>)}
                     </select></label>
                     <p className="my-2 text-xs text-muted">{extra[1]}</p>
@@ -79,7 +80,7 @@ export default function EscalaoAssistant({ onApply }) {
                         placeholder="Ex: 1990"
                         value={birthYear}
                         aria-label={t('escalao_year_label')}
-                        onChange={e => setBirthYear(e.target.value)}
+                        onChange={e => { setBirthYear(e.target.value); resetSuggestion(); }}
                         className="w-full py-3 px-4 rounded-xl border border-line bg-soft text-ink text-sm outline-none focus:border-blue-500 transition-colors shadow-inner"
                     />
                 </div>
@@ -90,7 +91,7 @@ export default function EscalaoAssistant({ onApply }) {
                         <select 
                             value={gender} 
                             aria-label={t('escalao_gender_label')}
-                            onChange={e => setGender(e.target.value)}
+                            onChange={e => { setGender(e.target.value); resetSuggestion(); }}
                             className="w-full py-3 px-4 rounded-xl border border-line bg-soft text-ink text-sm outline-none focus:border-blue-500 transition-colors shadow-inner font-medium cursor-pointer"
                         >
                             <option value="M">{t('escalao_gender_male')}</option>
@@ -102,7 +103,7 @@ export default function EscalaoAssistant({ onApply }) {
                         <select 
                             value={licenseType} 
                             aria-label={t('escalao_license_type')}
-                            onChange={e => setLicenseType(e.target.value)}
+                            onChange={e => { setLicenseType(e.target.value); resetSuggestion(); }}
                             className="w-full py-3 px-4 rounded-xl border border-line bg-soft text-ink text-sm outline-none focus:border-blue-500 transition-colors shadow-inner font-medium cursor-pointer"
                         >
                             <option value="Competição">{t('escalao_license_competition')}</option>
@@ -116,7 +117,7 @@ export default function EscalaoAssistant({ onApply }) {
                     <select 
                         value={teamLevel} 
                         aria-label={t('escalao_team_level')}
-                        onChange={e => setTeamLevel(e.target.value)}
+                        onChange={e => { setTeamLevel(e.target.value); resetSuggestion(); }}
                         className="w-full py-3 px-4 rounded-xl border border-line bg-soft text-ink text-sm outline-none focus:border-blue-500 transition-colors shadow-inner font-medium cursor-pointer"
                     >
                         <option value="Clube">{t('escalao_team_club')}</option>

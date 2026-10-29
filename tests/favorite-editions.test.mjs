@@ -29,6 +29,13 @@ test('the actual Médio Tejo 2026 and 2027 source formats match across accents, 
     assert.equal(matches[0].event.id, second.id);
     assert.equal(editionIdentity(first).series, editionIdentity(second).series);
 });
+
+test('the published Grandfondo spelling still follows the same Granfondo edition series', () => {
+    const published = race(2027, {title:'Grandfondo Médio Tejo 2027',source:'Cabreira, Stop and Go',link:'https://stopandgo.net/events/grandfondo-medio-tejo-2027'});
+    assert.equal(editionMatches([first,published],[first.id]).length,1);
+    assert.equal(editionIdentity(first).series,editionIdentity(published).series);
+    assert.equal(published.title,'Grandfondo Médio Tejo 2027');
+});
 test('following is global and opt-in; manual stars remain and discoveries survive disabling', () => {
     assert.deepEqual(effectiveEditionIds([first, second], [first.id], [], {}, false), []);
     const initial = planFavoriteEditions([first, second], [first.id], [], {}, { baseline: true });

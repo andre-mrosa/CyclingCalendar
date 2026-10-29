@@ -11,7 +11,7 @@ export function editionIdentity(event) {
     const dates = eventDateDisplay(event);
     if (!dates.start) return null;
     const year = Number(dates.start.slice(0, 4));
-    let name = normal(event.title).replace(/\b20\d{2}\b/g, '').trim();
+    let name = normal(event.title).replace(/\b20\d{2}\b/g, '').replace(/\bgrandfondo\b/g, 'granfondo').trim();
     // Preserve cup rounds, categories, distances and place names.
     if (!/\b(?:taca|campeonato|etapa|ronda)\b/.test(name)) {
         name = name.replace(/^\s*\d+\s*[.ªº]+\s*(?:edicao\s*)?/, '')
