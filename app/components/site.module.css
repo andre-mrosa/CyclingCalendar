@@ -365,8 +365,7 @@
 .mobileFilterButton { display: none; }
 @media (max-width: 1180px) {
   .navInner { min-height: 64px; }
-  .mobileNav { flex: 1; justify-content: space-between; }
-  .mobileNav .brand { order: -1; }
+  .mobileNav { flex: 1; justify-content: flex-start; }
   .mobileNav .brand strong { font-size: 15px; }
   .navActions { grid-column: auto; grid-row: auto; }
   .drawer .activeLink { color: var(--site-accent); background: var(--site-accent-soft); box-shadow: none; border-radius: 5px; }
