@@ -70,6 +70,14 @@ O site inspecionado é apresentado como projeto gratuito e não comercial. Não 
 
 ## Validação técnica desta alteração
 
+### Redução de acessos redundantes — complemento de 30/10
+
+A Stop and Go passava duas vezes pela mesma página de cada prova futura/decorrente validada: uma para os dados do cabeçalho e outra para os prazos de inscrição. Agora os dois leitores reutilizam a mesma resposta, temporariamente em memória durante o processamento dessa prova. Não se criou uma cópia persistente do HTML. O modo de leitura autónoma continua disponível para não quebrar outros chamadores. Teste de integração com respostas simuladas confirma um pedido à página da prova, preservando nome, data, local e os dois prazos; um HTML vazio já disponível não provoca novo acesso. Os 288 testes passaram.
+
+A FPC já solicita a época completa por pedido; a pipeline semanal consulta o ano atual e o seguinte. Cabreira usa uma listagem e páginas necessárias para nome publicado/prazos; Recorde Pessoal usa duas categorias com ligações deduplicadas e as páginas com datas/locais; Apedalar usa sitemap e páginas com os factos; Stop and Go mantém sitemap/listagens paginadas e validação de cada página candidata. Não se eliminaram esses acessos distintos sem uma resposta completa equivalente: isso poderia perder provas, classificação ou atualizações. Não foi executado um scraper em produção como teste.
+
+Reduzir acessos é uma melhoria técnica e de carga sobre as fontes, não uma autorização de reutilização nem garantia contra sanções/indemnizações. Uma extração única de parte substancial de uma base protegida também pode ser relevante; não é uma alternativa jurídica automaticamente segura à recolha repetida. Mantém-se a análise delimitada das fontes acima.
+
 `npm test`: 286 testes aprovados, incluindo o comportamento efetivo do cliente PostgreSQL, minimização das respostas geográficas, reserva global entre instâncias, cache, falhas do fornecedor e rejeição de pedidos de outra origem. `npm run lint` e `npm run build` concluídos sem erros. A ligação real de leitura à BD confirmou validação TLS e a limpeza autorizada; o Resend mostrou a opção guardada «Enforced». Não foi enviado email nem testada a localização real de uma pessoa.
 
 ## Limites da avaliação

@@ -12,14 +12,18 @@ import { detectRaceDate } from '../../utils/detectRaceDate.js';
 const delay = ms => new Promise(res => setTimeout(res, ms));
 const NON_CYCLING = ['atletismo', 'trail', 'tt', 'skyrunning', 'urban trail', 'triathlon', 'triatlo', 'canoagem', 'natacao', 'trichallenge', 'caminhada', 'multisport', 'obstaculos'];
 
-export const deepScrapeStopAndGo = async (url) => {
+export const deepScrapeStopAndGo = async (url, existingHtml = null) => {
     let opensAt = null, closesAt = null;
     try {
-        await delay(500); // Polite delay
-        const response = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(10000) });
-        if (!response.ok) return { opensAt, closesAt };
-        
-        const html = await response.text();
+        // The main scraper already downloaded this page: reuse it for deadlines.
+        // Standalone callers can still request the page when no HTML is available.
+        let html = existingHtml;
+        if (html === null) {
+            await delay(500);
+            const response = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(10000) });
+            if (!response.ok) return { opensAt, closesAt };
+            html = await response.text();
+        }
         const $ = cheerio.load(html);
         
         const dates = parseRegistrationDates($('body').html());
@@ -80,6 +84,7 @@ export const scrapeStopAndGo = async (options = {}) => {
             await Promise.all(batchUrls.map(async (url) => {
                 try {
                     let header = null;
+                    let eventHtml = null;
                     let retries = 1;
                     for (let attempt = 0; attempt <= retries; attempt++) {
                         try {
@@ -87,6 +92,7 @@ export const scrapeStopAndGo = async (options = {}) => {
                             if (evtRes.ok) {
                                 const evtHtml = await evtRes.text();
                                 header = readStopAndGoHeader(evtHtml);
+                                eventHtml = evtHtml;
                                 break;
                             }
                             if ([401,403,429].includes(evtRes.status)) throw Object.assign(new Error(`Stop and Go recusou acesso (HTTP ${evtRes.status})`), { code:'SOURCE_ACCESS_DENIED' });
@@ -104,7 +110,7 @@ export const scrapeStopAndGo = async (options = {}) => {
                     const slug = url.split('/').filter(Boolean).pop();
                     const id = 'stopandgo-' + slug;
                     
-                    const { opensAt, closesAt } = await deepScrapeStopAndGo(url);
+                    const { opensAt, closesAt } = await deepScrapeStopAndGo(url, eventHtml);
                     
                     const eventData = {
                         tag:getTag(header.title, header.modality), ambito:getAmbito(header.title, '', '', 'Stop and Go'),
