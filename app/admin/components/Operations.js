@@ -1,6 +1,8 @@
 import { Play, RefreshCw } from 'lucide-react';
 import { Button, Empty, Notice, Panel, RefreshButton, Status, dateTime, entries, number } from './ui';
 import styles from '../admin.module.css';
+import SourceQuality from './SourceQuality';
+import Submissions from './Submissions';
 
 const metricLabels = { processed: 'Processados', created: 'Criados', updated: 'Atualizados', merged: 'Fundidos', quarantined: 'Em quarentena' };
 function RunMetrics({ metrics }) {
@@ -24,9 +26,11 @@ export default function Operations({ running, output, sources, steps, activeStep
     return <div className={styles.stack}>
         <div className={styles.sectionHeading}><div><h2>Operações</h2><p>Sincronização das fontes, processamento e manutenção.</p></div><RefreshButton onClick={onRefresh} /></div>
         <Panel title="Sincronizar calendário" description="Recolhe as fontes ativas, atualiza o calendário e valida os idiomas da interface." action={<Status value={status} />}>
-            <div className={styles.operationAction}><div><p>O processamento pode criar, atualizar ou fundir registos existentes. O total processado não corresponde ao crescimento do calendário.</p><small className={styles.muted}>Cabreira, Stop and Go, Recorde Pessoal e Apedalar: diariamente às 02:00 UTC. FPC: domingos às 01:00 UTC, uma época de cada vez. Os pedidos FPC são sequenciais e repetidos até 3 vezes antes de ficarem pendentes para a execução seguinte.</small><p className={styles.muted}>Consulta o ano atual e o seguinte.</p></div><Button tone="primary" disabled={!!running} onClick={() => onRun(false)}>{running ? <RefreshCw size={16} className={styles.spin} /> : <Play size={16} />}{running ? 'Sincronização em curso' : status === 'interrupted' ? 'Executar novamente' : 'Executar sincronização'}</Button></div>
+            <div className={styles.operationAction}><div><p>O processamento pode criar, atualizar ou fundir registos existentes. O total processado não corresponde ao crescimento do calendário.</p><small className={styles.muted}>Todas as fontes: diariamente às 02:00 UTC. A FPC é consultada uma época de cada vez. As recusas de acesso não provocam novas tentativas imediatas. O controlo de qualidade assinala recolhas incompletas e alterações anormais.</small><p className={styles.muted}>Consulta o ano atual e o seguinte.</p></div><Button tone="primary" disabled={!!running} onClick={() => onRun(false)}>{running ? <RefreshCw size={16} className={styles.spin} /> : <Play size={16} />}{running ? 'Sincronização em curso' : status === 'interrupted' ? 'Executar novamente' : 'Executar sincronização'}</Button></div>
             {!running && ['error', 'interrupted'].includes(status) && <p><Button onClick={() => onRun(false, true)}>Retomar etapas pendentes</Button> <small className={styles.muted}>Continua a partir da última etapa registada, sem repetir as anteriores.</small></p>}
         </Panel>
+        <SourceQuality />
+        <Submissions />
         {statusError && <Notice error>{statusError}</Notice>}
         {output && <Notice error={['error', 'interrupted', 'partial', 'unknown'].includes(output.status)}><Status value={output.status} /><span>{output.message}</span></Notice>}
         <Panel title={running ? 'Execução atual' : 'Última execução'} description={running ? `Tempo decorrido: ${number(elapsed)} s · Etapa ativa: ${activeStep || 'a iniciar'}` : 'Resumo persistido pelo servidor.'} action={run && <Status value={run.status} />}>

@@ -1,5 +1,6 @@
 import { isStageRace, getEventCategories, getEventDiscipline, getEventRaceTypes, getEventDisciplineFamilies, getRaceTypeFamily, isOfficialNationalChampionship } from './eventClassifier.js';
 import { eventDateDisplay } from './eventDateDisplay.js';
+import {categoryStatus} from './categoryEvidence.js';
 
 export function normalizeSearchString(str) {
     if (!str) return '';
@@ -18,6 +19,7 @@ export function filterEvents(events, filters) {
         searchTerm,
         selectedYears,
         selectedEscaloes,
+        includeUnknownCategories = true,
         selectedAmbito,
         selectedLicenca,
         selectedRegiao,
@@ -94,7 +96,8 @@ export function filterEvents(events, filters) {
 
     if (selectedEscaloes && selectedEscaloes.length > 0) {
         filtered = filtered.filter(event => {
-            const evEscaloes = getEventCategories(event);
+            if(categoryStatus(event).status!=='published')return includeUnknownCategories;
+            const evEscaloes = categoryStatus(event).labels;
             
             // Se o único escalão selecionado for Profissional UCI, apenas mostrar eventos UCI
             if (selectedEscaloes.length === 1 && selectedEscaloes[0] === 'Profissional (UCI)') {

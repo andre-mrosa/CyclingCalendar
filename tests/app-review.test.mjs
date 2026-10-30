@@ -10,11 +10,12 @@ import {toMinimalScrapedEvent} from '../app/lib/merging/eventMerger.js';
 import {readStopAndGoListing} from '../app/lib/scrapers/stopandgoListing.js';
 import {validateCalendarTranslations} from '../app/lib/validateCalendarTranslations.js';
 import {legalCopy} from '../app/i18n/legalCopy.js';
-test('open category aliases and serialized categories remain visible under age filters',()=>{
+test('legacy open labels remain visible by default without asserting confirmed eligibility',()=>{
     const event={escaloes:'["Geral / Aberto"]'};
     assert.deepEqual(getEventCategories(event),['Todos (Aberto)']);
     assert.equal(filterEvents([event],{selectedEscaloes:['Sub-17 (Cadetes)']}).length,1);
-    assert.equal(filterEvents([event],{selectedEscaloes:['Profissional (UCI)']}).length,0);
+    assert.equal(filterEvents([event],{selectedEscaloes:['Profissional (UCI)']}).length,1);
+    assert.equal(filterEvents([event],{selectedEscaloes:['Profissional (UCI)'],includeUnknownCategories:false}).length,0);
 });
 test('month filtering includes cross-month and cross-year races in each affected month',()=>{
     const race={date:'31 JUL 2026 a 02 AGO 2026',sortDate:'2026-07-31'};
@@ -46,7 +47,7 @@ test('category suggestions use the chosen season and distinguish juveniles, yout
     assert.equal(suggestEscalao({...base,birthYear:2012,season:2027}),'Sub-17 (Cadetes)');
     assert.equal(suggestEscalao({...base,birthYear:2004,teamLevel:'Individual'}),'Sub-23');
     assert.equal(suggestEscalao({...base,birthYear:1990,teamLevel:'Profissional'}),'Profissional (UCI)');
-    assert.equal(suggestEscalao({...base,birthYear:1990,gender:'F',licenseType:'CPT'}),'Todos (Aberto)');
+    assert.equal(suggestEscalao({...base,birthYear:1990,gender:'F',licenseType:'CPT'}),'Masters / Veteranos');
     assert.equal(suggestEscalao({...base,birthYear:2030}),null);
 });
 test('minimal persistence retains validated classifications and registration facts but rejects arbitrary metadata',()=>{

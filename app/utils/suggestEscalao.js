@@ -1,8 +1,8 @@
 export function suggestEscalao({ birthYear, season, gender, licenseType, teamLevel }) {
     const age = Number(season) - Number(birthYear);
     if (!/^\d{4}$/.test(String(birthYear)) || !Number.isInteger(age) || age < 5 || age > 100) return null;
-    if (licenseType === 'CPT') return 'Todos (Aberto)';
-    if (gender === 'F') return 'Femininas';
+    // A leisure licence does not establish that an event accepts every age.
+    // Gender is a separate participation condition, not an age category.
     if (age <= 12) return 'Escolas';
     if (age <= 14) return 'Sub-15 (Juvenis)';
     if (age <= 16) return 'Sub-17 (Cadetes)';

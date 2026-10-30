@@ -6,6 +6,7 @@ import { getTag, getAmbito } from './utils.js';
 import { isCyclingCandidate } from './cyclingEvidence.js';
 import { assertSourceAccess, SOURCE_USER_AGENT } from './sourceAccess.js';
 import { parsePublishedRaceDate } from './publishedDates.js';
+import {categoryOptions} from './publishedCategories.js';
 
 const BASE_URL = 'https://apedalar.pt';
 
@@ -67,6 +68,7 @@ export async function scrapeApedalar(prisma, year, options = {}) {
 
                 const local = $('h2:contains("ONDE?")').next('div').text().trim().replace(/\s+/g, ' ');
                 const eventObj = {
+                    publishedCategories:categoryOptions(html),
                     tag:getTag(title), ambito:getAmbito(title, '', '', 'Apedalar'),
                     id: `apedalar-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${day}-${month}-${yearStr}`,
                     title,

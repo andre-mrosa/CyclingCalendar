@@ -89,7 +89,7 @@ test('FPC parser keeps minimal facts and structured classifications without impo
         fpcRow('Campeonato Nacional XCC', '18-07-2026', undefined, 'BTT XCC')
     ].join('')), 2026);
     assert.equal(events.length, 6);
-    assert.deepEqual(Object.keys(events[0]).sort(), ['ambito','tag','escaloes','date', 'details', 'distrito', 'id', 'link', 'regiao', 'sortDate', 'source', 'title'].sort());
+    assert.deepEqual(Object.keys(events[0]).sort(), ['ambito','tag','escaloes','publishedCategories','date', 'details', 'distrito', 'id', 'link', 'regiao', 'sortDate', 'source', 'title'].sort());
     assert.equal(events[1].details, 'Fundão');
     assert.equal(events[1].source, 'FPC');
     assert.ok(events.every(event => !('description' in event) && !('image' in event)));

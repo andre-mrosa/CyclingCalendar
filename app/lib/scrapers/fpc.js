@@ -114,6 +114,7 @@ export const parseFPCCalendar = (html, year) => {
                         tag: getEventDiscipline({ title:nameText, details:officialClass, source:'FPC' }),
                         ambito: getAmbito(nameText, officialClass, '', 'FPC'),
                         escaloes: getEventCategories({ source:'FPC', details:officialClass, escaloes:publishedEventCategories(nameText + ' ' + officialClass) }),
+                        publishedCategories: getEventCategories({source:'FPC',details:officialClass,escaloes:publishedEventCategories(nameText+' '+officialClass)}),
                         ...(/\bCPT\b/i.test(officialClass) ? { licenca:'CPT / Lazer' } :
                             /^(?:[12]\.|CN\b|TP\b)/i.test(officialClass) ? { licenca:'Competição' } : {}),
                     };

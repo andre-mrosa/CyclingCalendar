@@ -20,6 +20,9 @@ import { mergeEvents } from '../utils/mergeEvents';
 import { chooseCalendarEvents, toCalendarListEvent, sortCalendarEvents, filterCalendarByDate } from '../utils/calendarList';
 import { exportEventsToICS } from '../utils/exportCalendar';
 import SavedSearches from './SavedSearches';
+import EventTrust from './EventTrust';
+import {trustText} from '../i18n/trustCopy';
+import {SPECIFIC_CATEGORIES} from '../utils/categoryEvidence';
 
 import { decodeSearch, normalizeSearch, searchUrl } from '../utils/savedSearches';
 import { originalEventUrl } from '../lib/publicEvent';
@@ -103,6 +106,7 @@ export default function CalendarView({
     const [selectedDay, setSelectedDay] = useState(null); // formato 'YYYY-MM-DD'
     const [showEscalaoHelp, setShowEscalaoHelp] = useState(false);
     const [selectedEscaloes, setSelectedEscaloes] = useState(forceEscalao ? [forceEscalao] : []);
+    const [includeUnknownCategories,setIncludeUnknownCategories]=useState(true);
     const [selectedAmbito, setSelectedAmbito] = useState(forceAmbito || 'Todos');
     const [selectedLicenca, setSelectedLicenca] = useState(forceLicenca || 'Todas');
     const [selectedRegiao, setSelectedRegiao] = useState('Todas');
@@ -140,7 +144,7 @@ export default function CalendarView({
     }
 
     const effectiveSources = useMemo(() => normalizeCalendarSources(searchSources ?? selectedSources ?? CALENDAR_SOURCES), [searchSources, selectedSources]);
-    const eventsUrl = `/api/events?view=minimal-v4&years=all&sources=${effectiveSources.join(',')}`;
+    const eventsUrl = `/api/events?view=trust-v1&years=all&sources=${effectiveSources.join(',')}`;
     const initialSourceEvents = useMemo(() => selectCalendarSources(initialEvents, effectiveSources), [initialEvents, effectiveSources]);
     const eventsCacheKey = `cycling_calendar_minimal_v5_${forceAmbito || 'Todos'}_${[...effectiveSources].sort().join(',')}`;
     const syncVersion = useRef(null);
@@ -181,12 +185,13 @@ export default function CalendarView({
         String(currentYear), String(currentYear + 1),
         ...events.map(event => event.sortDate?.slice(0, 4)).filter(year => Number(year) >= currentYear),
     ])).sort(), [explicitYears, defaultYears, currentYear, events]);
-    const searchFilters = { searchTerm, selectedYears: explicitYears, selectedEscaloes, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, quickPeriod, selectedMonth, selectedDay, viewMode, sources: effectiveSources };
+    const searchFilters = { searchTerm, selectedYears: explicitYears, selectedEscaloes, includeUnknownCategories, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, quickPeriod, selectedMonth, selectedDay, viewMode, sources: effectiveSources };
     function applySearch(raw) {
         const value = normalizeSearch(raw);
         if (!value) return;
         setSearchTerm(value.searchTerm || ''); setSelectedYears(value.selectedYears?.length ? value.selectedYears : null);
         setSelectedEscaloes(forceEscalao ? [forceEscalao] : value.selectedEscaloes || []);
+        setIncludeUnknownCategories(value.includeUnknownCategories);
         setSelectedAmbito(forceAmbito || value.selectedAmbito || 'Todos'); setSelectedLicenca(forceLicenca || value.selectedLicenca || 'Todas');
         setSelectedRegiao(value.selectedRegiao || 'Todas'); setSelectedDistrito(value.selectedDistrito || 'Todos');
         setMonthFrom(value.monthFrom || 1); setMonthTo(value.monthTo || 12); setSelectedTags(value.selectedTags || []);
@@ -242,6 +247,7 @@ export default function CalendarView({
             searchTerm,
             selectedYears,
             selectedEscaloes: forceEscalao ? [forceEscalao] : selectedEscaloes,
+            includeUnknownCategories,
             selectedAmbito: forceAmbito || selectedAmbito,
             selectedLicenca: forceLicenca || selectedLicenca,
             selectedRegiao,
@@ -256,7 +262,7 @@ export default function CalendarView({
         filtered = filtered.filter(event => matchesPeriod(event, quickPeriod));
 
         return sortCalendarEvents(filtered, favorites);
-    }, [events, searchTerm, selectedYears, selectedEscaloes, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, filterByFavorites, filterByAgenda, filterLeisure, markedSet, favorites, forceEscalao, forceAmbito, forceLicenca, quickPeriod, today]);
+    }, [events, searchTerm, selectedYears, selectedEscaloes, includeUnknownCategories, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, filterByFavorites, filterByAgenda, filterLeisure, markedSet, favorites, forceEscalao, forceAmbito, forceLicenca, quickPeriod, today]);
 
     const filteredEvents = useMemo(() => eventsInPeriod(matchingEvents, selectedMonth, selectedDay), [matchingEvents, selectedMonth, selectedDay]);
     const calendarMonth = selectedMonth || matchingEvents.map(event => eventDateDisplay(event).start).find(Boolean)?.slice(0, 7) || new Date().toISOString().slice(0, 7);
@@ -275,7 +281,7 @@ export default function CalendarView({
     const visibleCount = pagination.list === filteredEvents ? pagination.count : 100;
     const setVisibleCount = count => setPagination({ list: filteredEvents, count: typeof count === 'function' ? count(visibleCount) : count });
 
-    const uniqueEscaloes = ['Elite', 'Elite Amador', 'Sub-23', 'Sub-19 (Juniores)', 'Sub-17 (Cadetes)', 'Sub-15 (Juvenis)', 'Masters / Veteranos', 'Femininas', 'Escolas', 'Profissional (UCI)', 'Todos (Aberto)', 'Geral / Vários'];
+    const uniqueEscaloes = SPECIFIC_CATEGORIES;
     const uniqueAmbitos = ['Todos', ...new Set(events.map(e => e.ambito).filter(Boolean))];
     const uniqueLicencas = ['Todas', ...new Set(events.map(e => e.licenca).filter(Boolean))];
 
@@ -354,6 +360,7 @@ export default function CalendarView({
     };
 
     const clearAllFilters = () => {
+        setIncludeUnknownCategories(true);
         setSelectedMonth(null);
         setSelectedDay(null);
         setQuickPeriod('');
@@ -428,7 +435,7 @@ export default function CalendarView({
                             <option value="passados">{t('filter_past_only')}</option>
                         </select>
 
-                        {(selectedMonth || selectedDay || quickPeriod || selectedEscaloes.length > 0 || selectedDistrito !== 'Todos' || selectedRegiao !== 'Todas' || selectedTags.length > 0 || selectedType !== 'Todos' || selectedAmbito !== (forceAmbito || 'Todos') || selectedLicenca !== (forceLicenca || 'Todas') || (explicitYears !== null && JSON.stringify([...selectedYears].sort()) !== JSON.stringify(getDefaultSelectedYears())) || monthFrom !== 1 || monthTo !== 12 || searchTerm !== '' || pastEventsFilter !== defaultPastEventsFilter) && (
+                        {(selectedMonth || selectedDay || quickPeriod || selectedEscaloes.length > 0 || !includeUnknownCategories || selectedDistrito !== 'Todos' || selectedRegiao !== 'Todas' || selectedTags.length > 0 || selectedType !== 'Todos' || selectedAmbito !== (forceAmbito || 'Todos') || selectedLicenca !== (forceLicenca || 'Todas') || (explicitYears !== null && JSON.stringify([...selectedYears].sort()) !== JSON.stringify(getDefaultSelectedYears())) || monthFrom !== 1 || monthTo !== 12 || searchTerm !== '' || pastEventsFilter !== defaultPastEventsFilter) && (
                             <button
                                 onClick={clearAllFilters}
                                 title={t('filter_clear_all')}
@@ -561,6 +568,7 @@ export default function CalendarView({
                                 </div>
                             )}
 
+                            {(activeFilters.includes('escalao')||forceEscalao)&&<div className="col-span-full"><label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={includeUnknownCategories} onChange={e=>setIncludeUnknownCategories(e.target.checked)}/>{trustText(language,'includeUnknown')}</label><p className="text-xs text-muted mt-1">{trustText(language,'unknownNote')}</p></div>}
                             {activeFilters.includes('ambito') && !forceAmbito && (
                                 <div className="flex flex-col gap-2">
                                     <label className="text-xs text-muted uppercase tracking-wider font-bold ml-1">{t('filter_scope')}</label>
@@ -799,6 +807,7 @@ export default function CalendarView({
                                                 <h3>
                                                     <Link prefetch={false} href={eventPath(event)} className={styles.eventTitle} onClick={() => trackEvent('EVENT_OPEN', { targetId: event.id })}>{displayTitle}</Link>
                                                 </h3>
+                                                {(selectedEscaloes.length>0||forceEscalao)&&<EventTrust event={event} compact/>}
                                                 {automaticFavorites.some(id => allIds.includes(id)) && !manualFavorites.some(id => allIds.includes(id)) && <span className="text-xs text-muted">{({ pt: 'Nova edição · adicionada automaticamente', en: 'New edition · added automatically', es: 'Nueva edición · añadida automáticamente', fr: 'Nouvelle édition · ajoutée automatiquement' })[language] || 'New edition · added automatically'}</span>}
                                             </div>
                                             <div className={styles.eventMeta}>

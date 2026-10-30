@@ -4,6 +4,7 @@ import { translateLegalText } from "../i18n/legalCopy";
 import { Shield, Eye, Lock, UserCheck, Database, Globe, Cookie, RefreshCw, Mail, Trash2, KeyRound, Calendar, Ban, Check, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { AnalyticsConsentSettings } from '../components/AnalyticsConsent';
+import {trustText} from '../i18n/trustCopy';
 
 
 export default function PrivacyPolicy() {
@@ -47,6 +48,7 @@ export default function PrivacyPolicy() {
               </section>
             );
           })}
+          <section className="p-6 sm:p-8 bg-slate-50 dark:bg-slate-950/80 rounded-3xl border border-slate-300 dark:border-slate-800/60"><h2 className="text-xl font-bold mb-4">{trustText(language,'alerts')} · {trustText(language,'sourceOrganizer')}</h2><p className="text-sm leading-relaxed text-muted">{trustText(language,'privacyNew')}</p><p className="text-sm leading-relaxed text-muted mt-3">{trustText(language,'retention')}</p></section>
           <section className="p-6 sm:p-8 bg-slate-50 dark:bg-slate-950/80 rounded-3xl border border-slate-300 dark:border-slate-800/60">
             <h2 className="text-xl font-bold mb-5">{l("8. Notificações no dispositivo")}</h2>
             <div className="space-y-3 text-slate-600 dark:text-slate-400 text-sm leading-relaxed">

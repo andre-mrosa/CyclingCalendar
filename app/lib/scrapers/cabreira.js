@@ -10,6 +10,7 @@ import { parseRegistrationDates } from '../../utils/registrationDates.js';
 import { detectRaceDate } from '../../utils/detectRaceDate.js';
 import { isCyclingCandidate, publishedRegulationDiscipline } from './cyclingEvidence.js';
 import { assertSourceAccess, SOURCE_USER_AGENT } from './sourceAccess.js';
+import {regulationCategories} from './publishedCategories.js';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
@@ -19,7 +20,7 @@ export function isCabreiraCyclingEvent(title) {
 
 export const deepScrapeCabreira = async (link) => {
     // Read factual title and registration dates from the source, without importing its editorial content.
-    let opensAt = null, closesAt = null, title = null, tag = '';
+    let opensAt = null, closesAt = null, title = null, tag = '', publishedCategories = [];
     if (!link) return { opensAt, closesAt, title, tag };
     try {
         await delay(500); // Polite rate limit
@@ -31,11 +32,12 @@ export const deepScrapeCabreira = async (link) => {
             const $reg = cheerio.load(regHtml);
             title = $reg('h1').first().text().replace(/\s+/g, ' ').trim() || null;
             tag = publishedRegulationDiscipline($reg('body').text());
+            publishedCategories = regulationCategories(regHtml);
             const dates = parseRegistrationDates($reg('body').html());
             opensAt = dates.registrationOpensAt ? new Date(dates.registrationOpensAt) : null;
             closesAt = dates.registrationClosesAt ? new Date(dates.registrationClosesAt) : null;
         }
-        return { opensAt, closesAt, title, tag };
+        return { opensAt, closesAt, title, tag, publishedCategories };
     } catch(e) {
         if (e.retryable === false) throw e;
         return { opensAt: null, closesAt: null, title: null, tag: '' };
@@ -105,12 +107,13 @@ export const scrapeCabreira = async (year, options = {}) => {
                 try {
                     const id = 'cabreira-' + ev.title.replace(/\s+/g, '-').toLowerCase() + '-' + ev.eventYear;
                     
-                    const { opensAt, closesAt, title, tag } = await deepScrapeCabreira(ev.href);
+                    const { opensAt, closesAt, title, tag, publishedCategories } = await deepScrapeCabreira(ev.href);
                     const publishedTitle = title || ev.title;
                     if (!isCabreiraCyclingEvent(publishedTitle)) return;
 
                     const eventData = {
                         tag: tag || getTag(publishedTitle), ambito:getAmbito(publishedTitle, '', '', 'Cabreira'),
+                        publishedCategories,
                         title: publishedTitle,
                         date: ev.dateText,
                         sortDate: ev.sortDate,

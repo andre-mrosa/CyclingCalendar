@@ -63,12 +63,13 @@ export const useSettingsStore = create(
         }),
         {
             name: SETTINGS_STORAGE_KEY,
-            version: 1,
+            version: 2,
             migrate: (state) => {
                 const previousDefault = ['FPC', 'Cabreira', 'Stop and Go', 'Classificações.net'];
+                const beforeOrganizers=CALENDAR_SOURCES.filter(source=>source!=='Organizador');
                 const selected = state.selectedSources;
                 // Upgrade the old default once, preserving deliberately selected subsets.
-                return { ...state, selectedSources: !selected || (selected.length === previousDefault.length && previousDefault.every(source => selected.includes(source))) ? CALENDAR_SOURCES : selected };
+                return { ...state, selectedSources: !selected || (selected.length === previousDefault.length && previousDefault.every(source => selected.includes(source))) || (selected.length===beforeOrganizers.length&&beforeOrganizers.every(source=>selected.includes(source))) ? CALENDAR_SOURCES : selected };
             }
         }
     )

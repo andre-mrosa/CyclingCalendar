@@ -6,6 +6,9 @@ export async function eraseAccountActivity(db, userId) {
         await tx.favoriteAlert.deleteMany({ where: { userId } });
         await tx.favoriteEditionPreference.deleteMany({ where: { userId } });
         await tx.favoritePushSubscription.deleteMany({ where: { userId } });
+        await tx.searchAlert.deleteMany({where:{userId}});
+        await tx.organizerSubmission.deleteMany({where:{userId,status:{not:'APPROVED'}}});
+        await tx.organizerSubmission.updateMany({where:{userId},data:{userId:null,userEmail:null,organizerName:null,reviewNote:null}});
         // Deleting sessions also deletes their events through the database FK.
         await tx.analyticsSession.deleteMany({ where: { userId } });
         await tx.systemLog.deleteMany({ where: { userId } });

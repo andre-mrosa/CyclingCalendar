@@ -5,6 +5,7 @@ import { Users } from 'lucide-react';
 import { useTranslation } from '../i18n/useTranslation';
 import { translateEscalao } from '../i18n/formatters';
 import { suggestEscalao } from '../utils/suggestEscalao';
+import {trustText} from '../i18n/trustCopy';
 
 export default function EscalaoAssistant({ onApply, embedded = false }) {
     const { t, language } = useTranslation();
@@ -58,6 +59,7 @@ export default function EscalaoAssistant({ onApply, embedded = false }) {
 
     return (
         <div className={`w-full max-w-lg p-6 sm:p-8 relative text-ink transition-colors duration-200 ${embedded ? '' : 'bg-surface border border-line rounded-2xl shadow-2xl'}`}>
+            <p className="text-xs text-muted mb-4">{trustText(language,'ageSuggestion')}</p>
             <div className="flex items-center gap-3 mb-6">
                 <div className="inline-flex shrink-0 items-center justify-center w-12 h-12 rounded-xl bg-brand-soft text-brand">
                     <Users size={23} aria-hidden="true" />

@@ -5,6 +5,7 @@ import { eventIdFromSlug, eventPath, DISCIPLINES, REGIONS } from '../../lib/even
 import { SITE_URL, pageMetadata, eventDescription, eventPageStructuredData, jsonLd } from '../../lib/seo';
 import { eventDateDisplay } from '../../utils/eventDateDisplay';
 import { cleanLocation } from '../../utils/eventLocation';
+import EventTrust from '../../components/EventTrust';
 export const dynamic = 'force-dynamic';
 async function resolveEvent(params) {
     const { slug } = await params;
@@ -34,7 +35,7 @@ export default async function EventPage({ params }) {
         [dates.start ? 'Data publicada' : 'Data no registo · por confirmar', event.date || 'Por confirmar'], ['Modalidade indicada', event.tag],
         ['Localização publicada', cleanLocation(event.distrito)], ['Classificação regional', event.regiao],
         ['Âmbito', event.ambito], ['Licença indicada', event.licenca],
-        ['Escalões indicados', event.escaloes?.join(', ')], ['Fonte do registo', event.source],
+        ['Fonte do registo', event.source],
     ].filter(([, value]) => value);
     return <article className="max-w-4xl mx-auto px-4 py-10 sm:py-16">
         <nav aria-label="Caminho da página" className="text-sm text-muted mb-8"><Link href="/" className="text-brand">Calendário</Link> / Prova</nav>
@@ -47,6 +48,7 @@ export default async function EventPage({ params }) {
         <dl className="grid sm:grid-cols-2 gap-5 bg-surface border border-line rounded-2xl p-6 mt-8">
             {fields.map(([label, value]) => <div key={label}><dt className="text-xs text-muted mb-1">{label}</dt><dd className="text-ink break-words">{value}</dd></div>)}
         </dl>
+        <div className="mt-5"><EventTrust event={event}/></div>
         <section className="mt-8 space-y-4">
             <h2 className="text-xl font-semibold text-ink">Confirmar detalhes e inscrições</h2>
             <p className="text-muted leading-relaxed">Esta ficha reúne dados básicos publicados na fonte. A data e a localização podem mudar. A localização indicada não identifica necessariamente o ponto de partida. O Cycling Calendar é independente e não organiza esta prova.</p>
@@ -59,6 +61,6 @@ export default async function EventPage({ params }) {
             {REGIONS.filter(item => item.match(event)).map(item => <Link key={item.slug} href={'/regioes/' + item.slug}>Mais provas · {item.name}</Link>)}
         </nav>
         {related.length > 0 && <section className="mt-10"><h2 className="text-xl font-semibold text-ink mb-4">Outras provas da mesma modalidade e época</h2><ul className="space-y-3">{related.map(({ event: other }) => <li key={other.id}><Link prefetch={false} href={eventPath(other)} className="text-brand">{other.title}</Link><span className="block text-sm text-muted">{other.date}</span></li>)}</ul></section>}
-        <p className="text-sm text-muted mt-10">Encontraste um erro? <Link href="/contacto" className="text-brand">Envia uma correção</Link>.</p>
+        <p className="text-sm text-muted mt-10">Encontraste um erro? <Link href={'/organizador?event='+encodeURIComponent(event.id)} className="text-brand">Organizadores: submeter uma correção</Link> · <Link href="/contacto" className="text-brand">Contacto</Link>.</p>
     </article>;
 }

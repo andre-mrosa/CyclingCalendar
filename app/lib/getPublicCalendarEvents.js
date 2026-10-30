@@ -9,7 +9,7 @@ export const getPublicCalendarEvents = unstable_cache(
         const events = await queryCalendarList(prisma, years, sources);
         return JSON.parse(JSON.stringify(events));
     },
-    ['calendar-minimal-links-v5'],
+    ['calendar-trust-v1'],
     { revalidate: 60, tags: ['calendar-events'] }
 );
 export const getPublicEvent = cache(async id => queryPublicEvent(prisma, id, CALENDAR_SOURCES));

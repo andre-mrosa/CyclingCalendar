@@ -3,6 +3,7 @@ import { useTranslation } from "../i18n/useTranslation";
 import { translateLegalText } from "../i18n/legalCopy";
 import { Shield, Scale, AlertTriangle, X, RefreshCw, Info, ArrowLeft, Terminal } from 'lucide-react';
 import Link from 'next/link';
+import {trustText} from '../i18n/trustCopy';
 
 
 export default function TermsOfService() {
@@ -106,6 +107,7 @@ export default function TermsOfService() {
               </section>
             );
           })}
+          <section className="p-6 sm:p-8 bg-slate-50 dark:bg-slate-950/80 rounded-3xl border border-slate-300 dark:border-slate-800/60"><h2 className="text-xl font-bold mb-4">{trustText(language,'organizer')}</h2><p className="text-sm leading-relaxed text-muted">{trustText(language,'organizerTerms')}</p></section>
         </div>
 
         <footer className="mt-16 text-center border-t border-slate-300 dark:border-slate-800/60 pt-8">

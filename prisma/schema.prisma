@@ -43,6 +43,7 @@ model Event {
   detailsCheckedAt     DateTime?
   lastVerifiedAt       DateTime?
   lastVerifiedSource   String?
+  categoryEvidence     Json?
   
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
@@ -245,6 +246,62 @@ model FavoritePushSubscription {
 }
 
 model PushScheduleRun {
+  day       String   @id
+  createdAt DateTime @default(now())
+}
+
+model SourceQualitySnapshot {
+  id         String   @id @default(cuid())
+  scopeKey   String
+  source     String
+  runId      String?
+  metrics    Json
+  issues     Json
+  createdAt  DateTime @default(now())
+
+  @@index([scopeKey, createdAt])
+  @@index([createdAt])
+}
+
+model OrganizerSubmission {
+  id             String   @id @default(cuid())
+  userId         String?
+  userEmail      String?
+  organizerName  String?
+  eventId        String?
+  payload        Json
+  status         String   @default("PENDING")
+  reviewNote     String?
+  reviewedAt     DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+}
+
+model SearchAlert {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  path        String   @default("/")
+  filters     Json
+  enabled     Boolean  @default(false)
+  language    String   @default("pt")
+  revision    Int      @default(1)
+  state       Json     @default("{}")
+  pending     Json?
+  lastSentAt  DateTime?
+  checkedAt   DateTime @default(now())
+  leaseUntil  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([enabled, checkedAt])
+}
+
+model SearchAlertRun {
   day       String   @id
   createdAt DateTime @default(now())
 }

@@ -3,6 +3,8 @@ import { getEventDiscipline, getEventCategories, publishedEventCategories, RACE_
 import { getAmbito } from '../scrapers/utils.js';
 import { originalEventUrl, getPreferredEventLink, isFpcUrl } from '../publicEvent.js';
 import { SOURCE_REVIEWS } from '../contentReleasePolicy.js';
+import { Prisma } from '@prisma/client';
+import { publishedCategoryEvidence, mergeCategoryEvidence } from '../../utils/categoryEvidence.js';
 
 /**
  * Combina duas listas de links extras sem duplicar URLs
@@ -270,6 +272,7 @@ export function toMinimalScrapedEvent(event) {
         regiao: location || null, distrito: location || null,
         source, link,
         ...classifyScrapedEvent({ ...event, title, source }),
+        ...(publishedCategoryEvidence({...event,title,link}) ? {categoryEvidence:publishedCategoryEvidence({...event,title,link})} : {}),
     };
 }
 
@@ -287,7 +290,7 @@ export function classifyScrapedEvent(event) {
     // Neither a generic cup nor an unknown event implies national/open status.
     else if (event.source !== 'FPC' && (facts.ambito === 'Taça de Portugal' || facts.ambito === 'Prova Aberta')) delete facts.ambito;
     const categories = getEventCategories({ ...event, escaloes: [
-        ...JSON.parse(facts.escaloes || '[]'), ...publishedEventCategories(event.title || ''),
+        ...JSON.parse(facts.escaloes || '[]'), ...publishedEventCategories(event.title || ''), ...(event.publishedCategories || []),
     ] });
     if (categories.length) facts.escaloes = JSON.stringify([...new Set(categories)]);
     return facts;
@@ -317,6 +320,9 @@ function mergeMinimalClassification(existing, incoming) {
     const existingOfficial = (existing.source || '').split(',').some(source => source.trim() === 'FPC');
     const facts = Object.fromEntries(Object.entries(minimalClassification(incoming)).filter(([key]) =>
         incomingOfficial || !existingOfficial || !existing[key]));
+    const evidence=mergeCategoryEvidence(existing.categoryEvidence,incoming.categoryEvidence,incoming.source);
+    if(evidence)facts.categoryEvidence=evidence;
+    else if(existing.categoryEvidence)facts.categoryEvidence=Prisma.DbNull;
     // Recollection must also remove obsolete guesses when current evidence is unknown.
     if (incomingOfficial || !existingOfficial) {
         for (const field of ['tag', 'ambito']) if (!incoming[field]) facts[field] = null;

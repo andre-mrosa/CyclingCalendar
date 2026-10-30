@@ -1,10 +1,11 @@
 import { CALENDAR_SOURCES } from '../lib/calendarSources.js';
 // Only recognised filters can enter the URL or a saved search.
 const strings = ['searchTerm', 'selectedAmbito', 'selectedLicenca', 'selectedRegiao', 'selectedDistrito', 'selectedType'];
-const lists = ['selectedYears', 'selectedEscaloes', 'selectedTags', 'sources'];
+const lists = ['selectedYears', 'selectedEscaloes', 'selectedTags', 'selectedDisciplines', 'sources'];
 export function normalizeSearch(value) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
     const result = {};
+    result.includeUnknownCategories = value.includeUnknownCategories !== false;
     for (const key of strings) if (typeof value[key] === 'string') result[key] = value[key].slice(0, 200);
     for (const key of lists) if (Array.isArray(value[key])) result[key] = [...new Set(value[key].filter(v => typeof v === 'string' && v.length <= 80))].slice(0, 30);
     for (const key of ['monthFrom', 'monthTo']) if (Number.isInteger(value[key]) && value[key] >= 1 && value[key] <= 12) result[key] = value[key];

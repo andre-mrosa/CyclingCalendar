@@ -9,6 +9,8 @@ import { validateCalendarTranslations } from '../validateCalendarTranslations.js
 import { prisma } from '../db.js';
 import { logInfo, logError, withScraperLogContext } from '../logger.js';
 import { withScraperLock } from './runLock.js';
+import {recordSourceQuality} from '../sourceQuality.js';
+import {cleanTrustData} from '../trustRetention.js';
 
 const VALID_SCOPES = new Set(['daily', 'weekly', 'manual']);
 
@@ -100,6 +102,10 @@ async function runPipeline(triggeredBy, options) {
                     await logError('SCRAPER', `${name}: ${error.message}`, error);
                 }
                 target.duration = `${((Date.now() - started) / 1000).toFixed(1)}s`;
+                if(source&&prisma.sourceQualitySnapshot){
+                    try {await recordSourceQuality({db:prisma,source:{fpc:'FPC',cabreira:'Cabreira',stopandgo:'Stop and Go',recordepessoal:'Recorde Pessoal',apedalar:'Apedalar'}[id]||name,year:id==='fpc'?years.find(year=>pipelineStage==='fpc-'+year):null,runId,startedAt:new Date(started),partial:target.status==='error'});}
+                    catch {await logInfo('SCRAPER',`${name}: controlo de qualidade indisponível.`,{event:'quality-unavailable',sourceId:id});}
+                }
                 await logInfo('SCRAPER', `${name}: ${target.status === 'error' ? 'concluído com erros' : 'concluído'} em ${target.duration}.`, snapshot('stage-complete'));
             });
         }
@@ -126,6 +132,7 @@ async function runPipeline(triggeredBy, options) {
                     break;
                 case 'finalize':
                     await stage('finalize', 'Recolha mínima concluída', false, async () => {
+                        if(prisma.organizerSubmission&&prisma.sourceQualitySnapshot&&prisma.searchAlertRun)await cleanTrustData(prisma);
                         revalidateTag('calendar-events', { expire:0 });
                         return prisma.event.count();
                     });

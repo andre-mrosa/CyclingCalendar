@@ -5,6 +5,7 @@ import { useStoredString, writeStored } from '../hooks/useBrowserState';
 import { normalizeSearch, searchUrl } from '../utils/savedSearches';
 import { useTranslation } from '../i18n/useTranslation';
 import styles from './favoritePlanning.module.css';
+import SearchAlerts from './SearchAlerts';
 
 export default function SavedSearches({ filters, apply }) {
     const { user, isLoaded } = useUser();
@@ -44,5 +45,6 @@ export default function SavedSearches({ filters, apply }) {
             <button type="button" aria-label={`${t('search_remove')}: ${s.name}`} onClick={() => writeStored(key, JSON.stringify(saved.filter(item => item.id !== s.id)))}>{t('search_remove')}</button>
         </li>)}</ul>}
         {message && <p role="status">{message}</p>}
+        <SearchAlerts filters={filters} apply={apply}/>
     </details>;
 }
