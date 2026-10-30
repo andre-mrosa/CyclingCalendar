@@ -1,5 +1,7 @@
 // Public calendar is open in minimal-metadata mode at the owner's request.
 export const PUBLIC_RELEASE_APPROVED = true;
+// Owner-selected runtime allowlist. These labels do not establish source licences
+// or certify that contractual/database-right questions have been resolved.
 export const SOURCE_REVIEWS = Object.freeze({
     FPC: 'approved-minimal',
     Cabreira: 'approved-minimal',

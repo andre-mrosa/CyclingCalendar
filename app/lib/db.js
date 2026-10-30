@@ -1,18 +1,12 @@
 import { PrismaClient } from '@prisma/client';
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
+import { databasePoolOptions } from './databaseConnection.js';
 
 const globalForPrisma = globalThis;
 
 const rawConn = process.env.POSTGRES_PRISMA_URL || process.env.DATABASE_URL || '';
-const connectionString = rawConn.replace('sslmode=require', '').replace('sslmode=prefer', '');
-
-const pool = globalForPrisma.pgPool || new Pool({ 
-    connectionString,
-    ssl: { rejectUnauthorized: false },
-    max: 10,
-    idleTimeoutMillis: 30000
-});
+const pool = globalForPrisma.pgPool || new Pool(databasePoolOptions(rawConn));
 
 const adapter = globalForPrisma.prismaAdapter || new PrismaPg(pool);
 

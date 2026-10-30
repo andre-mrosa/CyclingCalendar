@@ -423,7 +423,7 @@ const messages = {
     region_modal_title: "Asistente de Región",
     region_modal_desc: "Elige tu distrito o asociación regional de ciclismo para filtrar las pruebas locales.",
     region_btn_gps: "GPS / Localizarme",
-    region_privacy_notice: "Opcional: las búsquedas se envían a OpenStreetMap/Nominatim; el GPS envía tus coordenadas tras autorizarlo. El proveedor también recibe tu IP. Puedes elegir la región manualmente en los ajustes.",
+    region_privacy_notice: "Opcional: las consultas pasan por nuestro servidor. Con permiso GPS, se envían coordenadas aproximadas a OpenStreetMap/Nominatim; el proveedor recibe la IP del servidor. Puedes elegir la región manualmente en los ajustes.",
     region_or: "O",
     region_placeholder_city: "Ciudad, Municipio o Distrito...",
     region_btn_search: "Buscar",

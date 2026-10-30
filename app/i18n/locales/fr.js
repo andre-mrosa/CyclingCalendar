@@ -423,7 +423,7 @@ const messages = {
     region_modal_title: "Assistant de Région",
     region_modal_desc: "Choisissez votre département ou association régionale pour filtrer les courses locales.",
     region_btn_gps: "GPS / Me Localiser",
-    region_privacy_notice: "Facultatif : les recherches sont envoyées à OpenStreetMap/Nominatim ; le GPS transmet vos coordonnées après autorisation. Le fournisseur reçoit aussi votre adresse IP. Vous pouvez choisir la région manuellement dans les paramètres.",
+    region_privacy_notice: "Facultatif : les recherches passent par notre serveur. Avec votre autorisation GPS, des coordonnées approximatives sont envoyées à OpenStreetMap/Nominatim ; le fournisseur reçoit l’adresse IP du serveur. Vous pouvez choisir la région manuellement dans les paramètres.",
     region_or: "OU",
     region_placeholder_city: "Ville, Commune ou Département...",
     region_btn_search: "Rechercher",

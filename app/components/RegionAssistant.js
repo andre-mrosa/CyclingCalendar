@@ -29,6 +29,7 @@ export default function RegionAssistant({ onApply }) {
     };
 
     const handleGeolocation = () => {
+        if (isLocating) return;
         if (!navigator.geolocation) {
             setLocationMessage(t('region_no_gps'));
             return;
@@ -39,10 +40,11 @@ export default function RegionAssistant({ onApply }) {
         navigator.geolocation.getCurrentPosition(async (position) => {
             try {
                 const { latitude, longitude } = position.coords;
-                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                const res = await fetch('/api/region-lookup', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({mode:'reverse',latitude:Number(latitude.toFixed(2)),longitude:Number(longitude.toFixed(2))})});
+                if (!res.ok) throw new Error('Location unavailable');
                 const data = await res.json();
                 
-                const district = data.address?.county || data.address?.state_district || data.address?.city || data.address?.state || '';
+                const district = data?.address?.state_district || data?.address?.state || data?.address?.county || data?.address?.city || '';
                 const region = mapDistrictToRegion(district);
                 
                 setSuggestedRegiao(region);
@@ -59,12 +61,13 @@ export default function RegionAssistant({ onApply }) {
     };
 
     const handleAddressSearch = async () => {
-        if (!addressInput) return;
+        if (!addressInput || isLocating) return;
         setIsLocating(true);
         setLocationMessage(t('region_searching'));
         
         try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&countrycodes=pt&q=${encodeURIComponent(addressInput)}`);
+            const res = await fetch('/api/region-lookup', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({mode:'search',query:addressInput})});
+            if (!res.ok) throw new Error('Location unavailable');
             const data = await res.json();
             
             if (data && data.length > 0) {
@@ -112,6 +115,7 @@ export default function RegionAssistant({ onApply }) {
                     {t('region_privacy_notice')}{' '}
                     <a href="https://osmfoundation.org/wiki/Privacy_Policy" target="_blank" rel="noopener noreferrer" className="underline">OpenStreetMap</a>{' · '}
                     <Link href="/privacy-policy" className="underline">{t('footer_privacy')}</Link>
+                    {' · © '}<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" className="underline">OpenStreetMap contributors</a>
                 </p>
                 <button 
                     onClick={handleGeolocation} 
