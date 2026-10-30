@@ -446,6 +446,17 @@ async function assignEventCoordinates(prisma, event) {
     }
 }
 
+function sourcePageIdentity(event) {
+    const hosts = {Cabreira:'cabreirasolutions.com','Stop and Go':'stopandgo.net',Apedalar:'apedalar.pt','Recorde Pessoal':'recordepessoal.pt'};
+    const host = hosts[event.source];
+    if (!host) return null;
+    try {
+        const url = new URL(event.link);
+        if (url.hostname.replace(/^www\./,'') !== host || !/^\/(?:eventos?|events)\/[^/]+\/?$/.test(url.pathname.replace('/eventos/info/','/eventos/'))) return null;
+        return host + url.pathname.replace('/eventos/info/','/eventos/').replace(/\/$/,'');
+    } catch { return null; }
+}
+
 export async function saveOrMergeEvent(prisma, eventData, options = {}) {
     eventData = toMinimalScrapedEvent(eventData);
     if (!eventData) return null;
@@ -458,9 +469,24 @@ export async function saveOrMergeEvent(prisma, eventData, options = {}) {
     };
 
     // 1. Procurar por ID exato
-    const existingById = await prisma.event.findUnique({
+    let existingById = await prisma.event.findUnique({
         where: { id: eventData.id }
     });
+
+    // Several source IDs include the date/title. A postponement must update the
+    // same source page even outside the fuzzy ±4-day window, retaining favorites.
+    // FPC's shared calendar URL is deliberately ineligible for this identity.
+    const pageIdentity = sourcePageIdentity(eventData);
+    if (!existingById && pageIdentity) {
+        const linked = await prisma.event.findMany({where:{OR:[{link:eventData.link},{extraLinks:{contains:JSON.stringify(eventData.link)}}]}});
+        const year = eventData.sortDate.getUTCFullYear();
+        const matches = linked.filter(row => !row.source?.includes('Quarentena') &&
+            (row.source||'').split(',').some(source=>source.trim()===eventData.source) &&
+            new Date(row.sortDate).getUTCFullYear()===year &&
+            [row.link, ...(() => {try{return JSON.parse(row.extraLinks||'[]').map(item=>item.link);}catch{return [];}})()]
+                .some(link=>sourcePageIdentity({...eventData,link})===pageIdentity));
+        if (matches.length===1) existingById=matches[0];
+    }
 
     if (existingById) {
         if (existingById.source?.includes('Quarentena')) return report({ action: 'quarantined', event: existingById });

@@ -99,6 +99,11 @@ test('FPC parser keeps minimal facts and structured classifications without impo
     assert.match(events[4].date, /31 JUL 2026 a 02 AGO 2026/);
 });
 
+test('Stop and Go rejects conflicting years and series-wide date spans as individual race dates',()=>{
+    assert.equal(readStopAndGoHeader(sgPage({dates:'17 jul 2027 18 jul 2028'})).sortDate,null);
+    assert.equal(readStopAndGoHeader(sgPage({dates:'22 mar 2026 5 jul 2026'})).sortDate,null);
+});
+
 test('Only FPC title/class establishes national status, never promotional descriptions', () => {
     assert.equal(getAmbito('Gravel Para Todos', 'Coruche | CPT - Prova Aberta', '', 'Cabreira, FPC'), 'Prova Aberta');
     assert.notEqual(getAmbito('Gravel Para Todos', 'No fim de semana do Campeonato Nacional de Gravel'), 'Campeonato Nacional');

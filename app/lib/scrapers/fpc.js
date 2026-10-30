@@ -8,6 +8,7 @@ import { detectRaceDate } from '../../utils/detectRaceDate.js';
 import { originalEventUrl } from '../publicEvent.js';
 import { getEventDiscipline, getEventCategories, publishedEventCategories } from '../../utils/eventClassifier.js';
 import { getAmbito } from './utils.js';
+import { assertSourceAccess, SOURCE_USER_AGENT } from './sourceAccess.js';
 
 export const fetchFPCCalendar = async (year) => {
         year = String(year);
@@ -25,16 +26,17 @@ export const fetchFPCCalendar = async (year) => {
             try {
                 const response = await fetch('https://www.fpciclismo.pt/calendario', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'Mozilla/5.0' },
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': SOURCE_USER_AGENT },
                     body: formData.toString(),
                     cache: 'no-store',
                     signal: AbortSignal.timeout(20000)
                 });
+                assertSourceAccess(response, 'FPC');
                 if (!response.ok) throw new Error(`Falha ao aceder ao calendário FPC (HTTP ${response.status})`);
                 html = new TextDecoder('iso-8859-1').decode(await response.arrayBuffer());
                 break;
             } catch (error) {
-                if (attempt === 2) throw error;
+                if (error.retryable === false || attempt === 2) throw error;
                 await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
             }
         }

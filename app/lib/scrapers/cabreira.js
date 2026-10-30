@@ -8,34 +8,37 @@ import { logInfo, logError } from '../logger.js';
 import { saveOrMergeEvent } from '../merging/eventMerger.js';
 import { parseRegistrationDates } from '../../utils/registrationDates.js';
 import { detectRaceDate } from '../../utils/detectRaceDate.js';
+import { isCyclingCandidate, publishedRegulationDiscipline } from './cyclingEvidence.js';
+import { assertSourceAccess, SOURCE_USER_AGENT } from './sourceAccess.js';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
 export function isCabreiraCyclingEvent(title) {
-    const text = String(title || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-    const cycling = /\b(btt|bike|ciclismo|cicloturismo|gravel|granfondo|grandfondo|xco|xcm)\b/.test(text);
-    return cycling || !/\b(silvestre|trail|running|run|caminhada|atletismo)\b/.test(text);
+    return isCyclingCandidate(title, true);
 }
 
 export const deepScrapeCabreira = async (link) => {
     // Read factual title and registration dates from the source, without importing its editorial content.
-    let opensAt = null, closesAt = null, title = null;
-    if (!link) return { opensAt, closesAt, title };
+    let opensAt = null, closesAt = null, title = null, tag = '';
+    if (!link) return { opensAt, closesAt, title, tag };
     try {
         await delay(500); // Polite rate limit
         const regUrl = link + (link.includes('?') ? '&' : '?') + 'tab=regulamento';
-        const regResponse = await fetch(regUrl, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(10000) });
+        const regResponse = await fetch(regUrl, { headers: { 'User-Agent': SOURCE_USER_AGENT }, signal: AbortSignal.timeout(10000) });
+        assertSourceAccess(regResponse, 'Cabreira');
         if (regResponse.ok) {
             const regHtml = await regResponse.text();
             const $reg = cheerio.load(regHtml);
             title = $reg('h1').first().text().replace(/\s+/g, ' ').trim() || null;
+            tag = publishedRegulationDiscipline($reg('body').text());
             const dates = parseRegistrationDates($reg('body').html());
             opensAt = dates.registrationOpensAt ? new Date(dates.registrationOpensAt) : null;
             closesAt = dates.registrationClosesAt ? new Date(dates.registrationClosesAt) : null;
         }
-        return { opensAt, closesAt, title };
+        return { opensAt, closesAt, title, tag };
     } catch(e) {
-        return { opensAt: null, closesAt: null, title: null };
+        if (e.retryable === false) throw e;
+        return { opensAt: null, closesAt: null, title: null, tag: '' };
     }
 };
 
@@ -44,8 +47,9 @@ export const scrapeCabreira = async (year, options = {}) => {
     try {
         logInfo('SCRAPER', `Início da sincronização Cabreira Solutions (Ano: ${year || 'Todos'})`);
         const response = await fetch(`https://cabreirasolutions.com/eventos/`, {
-            headers: { 'User-Agent': 'Mozilla/5.0' }, signal:AbortSignal.timeout(15000)
+            headers: { 'User-Agent': SOURCE_USER_AGENT }, signal:AbortSignal.timeout(15000)
         });
+        assertSourceAccess(response, 'Cabreira');
 
         if (!response.ok) {
             throw new Error(`Falha ao aceder ao portal Cabreira Solutions (HTTP ${response.status})`);
@@ -54,6 +58,7 @@ export const scrapeCabreira = async (year, options = {}) => {
         const html = await response.text();
         const $ = cheerio.load(html);
         const items = $('.evento-grid-item').toArray();
+        if (!items.length) throw new Error('Cabreira: listagem de eventos não reconhecida; recolha incompleta');
         let processedCount = 0;
 
         const todayZero = new Date();
@@ -89,7 +94,7 @@ export const scrapeCabreira = async (year, options = {}) => {
             if (!isCabreiraCyclingEvent(ev.title)) return false;
             const detected = detectRaceDate({ date: ev.dateText, sortDate: ev.sortDate });
             const effectiveEnd = detected?.raceEndDateISO ? new Date(detected.raceEndDateISO + 'T23:59:59.999Z') : ev.sortDate;
-            if (effectiveEnd < todayZero) return false;
+            if (detected && effectiveEnd < todayZero) return false;
             return !year || ev.dateText.includes(year);
         });
 
@@ -100,12 +105,12 @@ export const scrapeCabreira = async (year, options = {}) => {
                 try {
                     const id = 'cabreira-' + ev.title.replace(/\s+/g, '-').toLowerCase() + '-' + ev.eventYear;
                     
-                    const { opensAt, closesAt, title } = await deepScrapeCabreira(ev.href);
+                    const { opensAt, closesAt, title, tag } = await deepScrapeCabreira(ev.href);
                     const publishedTitle = title || ev.title;
                     if (!isCabreiraCyclingEvent(publishedTitle)) return;
 
                     const eventData = {
-                        tag: getTag(publishedTitle), ambito:getAmbito(publishedTitle, '', '', 'Cabreira'),
+                        tag: tag || getTag(publishedTitle), ambito:getAmbito(publishedTitle, '', '', 'Cabreira'),
                         title: publishedTitle,
                         date: ev.dateText,
                         sortDate: ev.sortDate,
@@ -120,6 +125,7 @@ export const scrapeCabreira = async (year, options = {}) => {
                     processedCount++;
                 } catch (err) {
                     await logError('SCRAPER', `Erro ao processar prova Cabreira ${ev.title}: ${err.message}`, err);
+                    if (err.retryable === false) throw err;
                 }
             }));
             await delay(1000); // Polite delay between batches

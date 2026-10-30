@@ -86,7 +86,23 @@ export function isSameEvent(existingEvent, candidateEvent) {
     }
     if (existingEvent.source?.includes('FPC') && candidateEvent.source?.includes('FPC')) {
         const officialTitle = title => (title || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
-        if (officialTitle(existingEvent.title) !== officialTitle(candidateEvent.title)) return false;
+        if (officialTitle(existingEvent.title) !== officialTitle(candidateEvent.title)) {
+            // An organizer can rename an open ride already combined with FPC.
+            // The exact dated source event page is stronger than fuzzy names;
+            // two separate FPC rows were already rejected immediately above.
+            const page = event => {
+                try {
+                    const url=new URL(event.link);
+                    const host=url.hostname.replace(/^www\./,'');
+                    if (!['stopandgo.net','cabreirasolutions.com','apedalar.pt','recordepessoal.pt'].includes(host) || !/^\/(?:events|eventos?)\/[^/]+\/?$/.test(url.pathname)) return null;
+                    return host+url.pathname.replace(/\/$/,'');
+                } catch {return null;}
+            };
+            const day=event=>event.sortDate&&Number.isFinite(new Date(event.sortDate).getTime())?new Date(event.sortDate).toISOString().slice(0,10):null;
+            const linkedRide=existingEvent.ambito==='Prova Aberta'&&candidateEvent.ambito==='Prova Aberta'&&page(existingEvent)&&page(existingEvent)===page(candidateEvent)&&day(existingEvent)&&day(existingEvent)===day(candidateEvent);
+            if (!linkedRide) return false;
+            return true;
+        }
     }
 
     const championship1 = isOfficialNationalChampionship(existingEvent) || hasNationalChampionshipTitle(existingEvent.title);
@@ -119,6 +135,20 @@ export function isSameEvent(existingEvent, candidateEvent) {
         const num2 = roundMatch2[1] || roundMatch2[2] || roundMatch2[3];
         if (num1 !== num2) return false;
     }
+    const ordinalRound = title => title.match(/\b(\d+)\s*[ªºa.]\s*(?:taca|taça|etapa|prova|ronda)\b/i)?.[1];
+    const ordinal1 = ordinalRound(t1), ordinal2 = ordinalRound(t2);
+    if (ordinal1 && ordinal2 && ordinal1 !== ordinal2) return false;
+
+    // Distinct formats and distinct source pages must not disappear because
+    // generic names happen to have a high fuzzy similarity on the same weekend.
+    const formats = title => title.match(/\b(xco|xce|xcc|xcm|xcr|cri|itt|cre|ttt)\b/i)?.[1]?.replace('itt','cri').replace('ttt','cre');
+    const format1=formats(t1),format2=formats(t2);
+    if(format1&&format2&&format1!==format2)return false;
+    try {
+        const a=new URL(existingEvent.link),b=new URL(candidateEvent.link);
+        const sharedSource=(existingEvent.source||'').split(',').some(source=>(candidateEvent.source||'').split(',').map(s=>s.trim()).includes(source.trim()));
+        if(sharedSource&&a.hostname.replace(/^www\./,'')===b.hostname.replace(/^www\./,'')&&a.pathname.replace(/\/$/,'')!==b.pathname.replace(/\/$/,''))return false;
+    } catch { /* Missing URLs still use the conservative date/title checks below. */ }
 
     // 5. Verificação de Datas
     const existingDate = existingEvent.sortDate ? new Date(existingEvent.sortDate) : null;

@@ -1,7 +1,6 @@
 {
   "crons": [
     { "path": "/api/cron/scrape?scope=daily", "schedule": "0 2 * * *" },
-    { "path": "/api/cron/scrape?scope=weekly", "schedule": "0 1 * * 0" },
     { "path": "/api/cron/favorite-editions", "schedule": "30 3 * * *" },
     { "path": "/api/cron/favorite-push", "schedule": "0 0 * * *" }
   ]

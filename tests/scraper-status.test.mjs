@@ -360,7 +360,7 @@ async function runPipelinePlan(pipeline, options = {}) {
 
 test('daily and weekly plans isolate FPC into one bounded stage per season', async () => {
     const pipeline = await pipelineFixture();
-    assert.deepEqual(pipeline.getPipelineStages('daily', ['2026', '2027']), ['cabreira', 'stopandgo', 'recordepessoal', 'apedalar', 'translation', 'finalize']);
+    assert.deepEqual(pipeline.getPipelineStages('daily', ['2026', '2027']), ['fpc-2026', 'fpc-2027', 'cabreira', 'stopandgo', 'recordepessoal', 'apedalar', 'translation', 'finalize']);
     assert.deepEqual(pipeline.getPipelineStages('weekly', ['2026', '2027']), ['fpc-2026', 'fpc-2027', 'translation', 'finalize']);
 });
 
@@ -406,6 +406,22 @@ test('lock conflict propagates without writing a phantom start', async t => {
     const pipeline = await pipelineFixture({ withScraperLock: async () => { throw conflict; } });
     await assert.rejects(pipeline.runUnifiedScrapingPipeline(), error => error === conflict);
     assert.equal(logs.length, 0);
+});
+
+test('access refusal advances past the source without immediately retrying it', async t => {
+    captureLogs(t);
+    let calls=0;
+    const pipeline=await pipelineFixture({scrapeCabreira:async()=>{calls++;throw Object.assign(new Error('HTTP 429'),{retryable:false});}});
+    const result=await runPipelinePlan(pipeline,{scope:'daily'});
+    assert.equal(calls,1);assert.equal(result.success,false);
+});
+
+test('a partial source does not repeat all successful pages after one item fails', async t => {
+    captureLogs(t);
+    let calls=0;
+    const pipeline=await pipelineFixture({scrapeCabreira:async(_year,{onResult})=>{calls++;await onResult({action:'updated'});await logError('SCRAPER','One page failed');return 1;}});
+    const result=await runPipelinePlan(pipeline,{scope:'daily'});
+    assert.equal(calls,1);assert.equal(result.success,false);
 });
 
 test('finalization only counts rows and does not merge existing imported content', async t => {

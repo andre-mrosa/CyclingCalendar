@@ -14,7 +14,7 @@ const VALID_SCOPES = new Set(['daily', 'weekly', 'manual']);
 
 export function getPipelineStages(scope, years) {
     const fpcStages = years.map(year => `fpc-${year}`);
-    if (scope === 'daily') return ['cabreira', 'stopandgo', 'recordepessoal', 'apedalar', 'translation', 'finalize'];
+    if (scope === 'daily') return [...fpcStages, 'cabreira', 'stopandgo', 'recordepessoal', 'apedalar', 'translation', 'finalize'];
     if (scope === 'weekly') return [...fpcStages, 'translation', 'finalize'];
     return [...fpcStages, 'cabreira', 'stopandgo', 'recordepessoal', 'apedalar', 'translation', 'finalize'];
 }
@@ -48,9 +48,7 @@ async function runPipeline(triggeredBy, options) {
         mode: historical ? 'FULL_HISTORICAL' : 'DAILY_ACTIVE',
         pipelineStage,
         scope,
-        sourcesScraped: scope === 'daily'
-              ? ['Cabreira', 'Stop and Go', 'Recorde Pessoal', 'Apedalar']
-              : scope === 'weekly' ? ['FPC'] : ['FPC', 'Cabreira', 'Stop and Go', 'Recorde Pessoal', 'Apedalar'],
+        sourcesScraped: scope === 'weekly' ? ['FPC'] : ['FPC', 'Cabreira', 'Stop and Go', 'Recorde Pessoal', 'Apedalar'],
         yearsScraped: years, fpcEvents: {}, deepScrapedFpc: null, mergedEvents: null,
         sources: {}, steps: {}, errors: []
     };
@@ -98,6 +96,7 @@ async function runPipeline(triggeredBy, options) {
                         target.message = target.count === null ? 'Concluído; contagem indisponível' : `${target.count} ${source ? 'processados (não necessariamente novos)' : 'processados'}`;
                     }
                 } catch (error) {
+                    if (error.retryable === false) target.retryable = false;
                     await logError('SCRAPER', `${name}: ${error.message}`, error);
                 }
                 target.duration = `${((Date.now() - started) / 1000).toFixed(1)}s`;
@@ -147,7 +146,11 @@ async function runPipeline(triggeredBy, options) {
 
             const durationSeconds = Number(((Date.now() - startTime) / 1000).toFixed(1));
             const failed = stats.errors.length > 0;
-            const retrying = failed && attempt < 3;
+            // Do not refetch an entire partially processed source for one failed
+            // page, or retry an explicit access refusal in the same run.
+            const sourceStates = Object.values(stats.sources);
+            const retrying = failed && attempt < 3 && !sourceStates.some(target =>
+                target.retryable === false || target.metrics.processed > 0);
             const stageIndex = pipelineStages.indexOf(pipelineStage);
             const nextStage = retrying
                 ? pipelineStage

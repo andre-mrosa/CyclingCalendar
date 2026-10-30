@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio';
 
-export const CYCLING_MODALITIES = new Set(['btt', 'ciclismo', 'cycling', 'gravel', 'downhill mtb', 'downhill', 'dhi', 'dhu', 'trail/btt', 'granfondo']);
+export const CYCLING_MODALITIES = new Set(['btt', 'mtb', 'ciclismo', 'ciclismo de estrada', 'estrada', 'cycling', 'gravel', 'downhill mtb', 'downhill', 'dhi', 'dhu', 'trail/btt', 'btt/trail', 'granfondo', 'cicloturismo', 'bmx', 'ciclocross', 'ciclocrosse', 'enduro']);
 const OTHER_MODALITIES = new Set(['atletismo', 'trail', 'tt', 'skyrunning', 'urban trail', 'triathlon', 'triatlo', 'canoagem', 'natacao', 'trichallenge', 'caminhada', 'multisport', 'provas de obstaculos']);
 const normalize = value => value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s*\/\s*/g, '/').trim();
 const MONTHS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
@@ -32,7 +32,9 @@ export function readStopAndGoHeader(html) {
     const format = date => `${String(date.getUTCDate()).padStart(2, '0')} ${MONTHS[date.getUTCMonth()].toUpperCase()} ${date.getUTCFullYear()}`;
     const sortDate = dates[0] || null;
     const endDate = dates[1] || sortDate;
-    const validDates = dates.length >= 1 && dates.length <= 2 && endDate >= sortDate;
+    // A year-wide range or a whole cup series is not one continuous race.
+    // Reject it for review instead of manufacturing calendar/export dates.
+    const validDates = dates.length >= 1 && dates.length <= 2 && endDate >= sortDate && endDate - sortDate <= 31 * 86400000;
     return {
         title, modality, location,
         cycling: CYCLING_MODALITIES.has(modality),

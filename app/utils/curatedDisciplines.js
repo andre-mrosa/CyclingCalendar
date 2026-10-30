@@ -1,6 +1,7 @@
 /**
  * Curated registry of cycling events with non-standard or ambiguous titles.
- * Overrides heuristics and regex matching with 100% verified accuracy.
+ * Fallbacks for established names. Published disciplines take precedence;
+ * these entries are not a guarantee about every future edition or variant.
  */
 export const CURATED_DISCIPLINES = {
     // BTT / Mountain Bike

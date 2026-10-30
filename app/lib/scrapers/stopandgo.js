@@ -8,6 +8,7 @@ import { CYCLING_MODALITIES, readStopAndGoHeader, stopAndGoEventUrl } from './st
 import { fetchStopAndGoCyclingLinks } from './stopandgoListing.js';
 import { parseRegistrationDates } from '../../utils/registrationDates.js';
 import { detectRaceDate } from '../../utils/detectRaceDate.js';
+import { assertSourceAccess, SOURCE_USER_AGENT } from './sourceAccess.js';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 const NON_CYCLING = ['atletismo', 'trail', 'tt', 'skyrunning', 'urban trail', 'triathlon', 'triatlo', 'canoagem', 'natacao', 'trichallenge', 'caminhada', 'multisport', 'obstaculos'];
@@ -20,7 +21,8 @@ export const deepScrapeStopAndGo = async (url, existingHtml = null) => {
         let html = existingHtml;
         if (html === null) {
             await delay(500);
-            const response = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(10000) });
+            const response = await fetch(url, { headers: { 'User-Agent': SOURCE_USER_AGENT }, signal: AbortSignal.timeout(10000) });
+            assertSourceAccess(response, 'Stop and Go');
             if (!response.ok) return { opensAt, closesAt };
             html = await response.text();
         }
@@ -32,6 +34,7 @@ export const deepScrapeStopAndGo = async (url, existingHtml = null) => {
         
         return { opensAt, closesAt };
     } catch(e) {
+        if (e.retryable === false) throw e;
         return { opensAt: null, closesAt: null };
     }
 }
@@ -43,11 +46,13 @@ export const scrapeStopAndGo = async (options = {}) => {
         logInfo('SCRAPER', 'Início da sincronização Stop and Go (sitemap.xml + abas Downhill, Gravel, BTT, Estrada)');
 
         const res = await fetch('https://stopandgo.net/sitemap.xml', {
-            headers: { 'User-Agent': 'Mozilla/5.0' },
+            headers: { 'User-Agent': SOURCE_USER_AGENT },
             signal: AbortSignal.timeout(8000)
         });
+        assertSourceAccess(res, 'Stop and Go');
         if (!res.ok) throw new Error(`Falha no sitemap.xml: HTTP ${res.status}`);
         const xml = await res.text();
+        if (!/<(?:\w+:)?urlset[\s>]/i.test(xml)) throw new Error('Stop and Go: sitemap de eventos não reconhecido; recolha incompleta');
         const $ = cheerio.load(xml, { xmlMode: true });
 
         const sitemapUrls = [];
@@ -60,7 +65,7 @@ export const scrapeStopAndGo = async (options = {}) => {
 
         let cyclingListingUrls = new Set();
         try { cyclingListingUrls = await fetchStopAndGoCyclingLinks(); }
-        catch (error) { await logError('SCRAPER', error.message); }
+        catch (error) { if (error.retryable === false) throw error; await logError('SCRAPER', error.message); }
         
         const CYCLING_TERMS = ['btt', 'gravel', 'downhill', 'cycling', 'bike', 'granfondo', 'grandfondo', 'racenature', 'maratona', 'resistencia', 'raid', 'xcm', 'xco', 'dhi', 'dhu', 'ciclocrosse', 'ciclismo'];
         const years = [new Date().getFullYear(),new Date().getFullYear()+1].map(String);
@@ -88,20 +93,24 @@ export const scrapeStopAndGo = async (options = {}) => {
                     let retries = 1;
                     for (let attempt = 0; attempt <= retries; attempt++) {
                         try {
-                            const evtRes = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(6000) });
+                            const evtRes = await fetch(url, { headers: { 'User-Agent': SOURCE_USER_AGENT }, signal: AbortSignal.timeout(6000) });
                             if (evtRes.ok) {
                                 const evtHtml = await evtRes.text();
                                 header = readStopAndGoHeader(evtHtml);
                                 eventHtml = evtHtml;
                                 break;
                             }
-                            if ([401,403,429].includes(evtRes.status)) throw Object.assign(new Error(`Stop and Go recusou acesso (HTTP ${evtRes.status})`), { code:'SOURCE_ACCESS_DENIED' });
+                            assertSourceAccess(evtRes, 'Stop and Go');
                             if (evtRes.status === 404) break;
                         } catch(e) { if (e.code === 'SOURCE_ACCESS_DENIED') throw e; }
                         await delay(500);
                     }
                     
-                    if (!header || !header.cycling || !header.sortDate) return;
+                    if (!header || !header.knownModality || (header.cycling && !header.sortDate)) {
+                        await logError('SCRAPER', `Stop and Go: cabeçalho/modalidade/data não reconhecidos em ${url}`);
+                        return;
+                    }
+                    if (!header.cycling) return;
                     
                     const raceDates = detectRaceDate({ date: header.date, sortDate: header.sortDate });
                     const effectiveEnd = raceDates?.raceEndDateISO ? new Date(raceDates.raceEndDateISO + 'T23:59:59.999Z') : new Date(header.sortDate);

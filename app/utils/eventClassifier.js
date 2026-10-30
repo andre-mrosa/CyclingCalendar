@@ -10,7 +10,7 @@ export function isOfficialNationalChampionship(event) {
     // Only titles and the FPC class column establish championship status.
     // Descriptions often advertise a separate championship on the same weekend.
     const eventClass = (event.details || '').split('|').pop().trim();
-    return isFPC && (hasNationalChampionshipTitle(event.title) || /^(?:Pista\s+)?CN$/i.test(eventClass));
+    return isFPC && (hasNationalChampionshipTitle(event.title) || /^(?:(?:BTT\s+)?(?:XCO|XCM|XCC|XCE|XCR|DHI|Enduro|Pista|BMX)\s+)?CN$/i.test(eventClass));
 }
 
 export function isStageRace(event) {
@@ -143,9 +143,11 @@ export function getEventRaceTypes(eventOrTitle, details = '') {
         det = String(details || '');
     }
 
-    // 0. Curated Registry (100% verified ground truth for non-standard / ambiguous event names)
+    // Brand fallbacks help neutral names, but must never override an explicit
+    // discipline or speciality in a newly published title.
     const curated = getCuratedDiscipline(title, typeof eventOrTitle === 'object' ? eventOrTitle.id || '' : '');
-    if (curated) {
+    const explicitTitle = /\b(gravel|btt|mtb|xco|xcm|xcc|xce|xcr|dhi|dhu|enduro|downhill|pista|bmx|paraciclismo|estrada|granfondo|grandfondo)\b|ciclocross/i.test(title);
+    if (curated && !explicitTitle) {
         return [curated];
     }
 
@@ -170,6 +172,10 @@ export function getEventRaceTypes(eventOrTitle, details = '') {
         if (!types.includes(value)) types.push(value);
     };
 
+    const explicitBtt = /\b(btt|mtb|xco|xcm|xcc|xce|xcr|dhi|dhu|enduro|downhill)\b/.test(titleText);
+    if (!explicitBtt && /\bgravel\b/.test(titleText)) return ['Gravel'];
+    if (!explicitBtt && /granfondo|grandfondo|gran\s+fondo|mediofondo|minifondo/.test(titleText)) return ['Granfondo'];
+
     if (/\bxco\b/.test(extendedText)) add('BTT XCO');
     if (/\bxcm\b|maratona\s+(?:de\s+)?btt|meia[- ]maratona\s+(?:de\s+)?btt|raid\s+btt/.test(extendedText)) add('BTT XCM / Maratona');
     if (/\bxcc\b/.test(extendedText)) add('BTT XCC');
@@ -178,7 +184,6 @@ export function getEventRaceTypes(eventOrTitle, details = '') {
     if (/\b(dhi|dhu|downhill)\b/.test(extendedText)) add('BTT DHI / DHU');
     if (/\benduro\b/.test(extendedText)) add('BTT Enduro');
     if (/\b(urban\s*race|resistencia\s*urbana|resistência\s*urbana)\b/.test(extendedText)) add('BTT XCO');
-    if (/\b(trilhos?|raid|geotour|bike\s*challenge|racenature|race\s*nature|transportugal|iron\s*rider|gps\s*epic|maratona|meia[- ]maratona)\b/.test(extendedText)) add('BTT XCM / Maratona');
     if (types.length > 0) return types;
 
     // Standalone disciplines take precedence over generic words such as
@@ -194,7 +199,11 @@ export function getEventRaceTypes(eventOrTitle, details = '') {
     }
     if (/\bbmx\b|pump\s+track/.test(extendedText)) return ['BMX'];
     if (/ciclismo\s+virtual|e-sports|esports/.test(text)) return ['E-Sports'];
-    if (/granfondo|gran\s+fondo|mediofondo|minifondo/.test(text)) return ['Granfondo'];
+    if (/granfondo|grandfondo|gran\s+fondo|mediofondo|minifondo/.test(text)) return ['Granfondo'];
+
+    // A format/name such as "maratona" or "trilhos" cannot override an
+    // explicitly published Gravel, Granfondo, track or other discipline.
+    if (/\b(trilhos?|raid|geotour|bike\s*challenge|racenature|race\s*nature|transportugal|iron\s*rider|gps\s*epic|maratona|meia[- ]maratona)\b/.test(extendedText) && !/\bestrada\b/.test(text)) return ['BTT XCM / Maratona'];
 
     if (/\bbtt\b|\bmtb\b|mountain\s*bike|\burban\s*race\b|\bresist[eê]ncia\b|\btrilhos?\b|\braid\b|\bgeotour\b|\bbike\s*challenge\b|\bracenature\b|\btransportugal\b/.test(extendedText)) return ['BTT'];
 
@@ -204,9 +213,11 @@ export function getEventRaceTypes(eventOrTitle, details = '') {
     if (/\bfundo\b|road\s+race/.test(text)) add('Estrada Fundo');
     if (types.length > 0) return types;
 
+    if (/\bestrada\b/.test(text)) return ['Estrada'];
+
     const storedFamily = getRaceTypeFamily(existingTag);
     if (RACE_TAXONOMY.some(group => group.discipline === storedFamily)) return [storedFamily];
-    if (/passeio|cicloturismo|turismo\s+em\s+bicicleta|\brota\b/.test(titleText)) return ['Passeio / Lazer'];
+    if (/passeio|cicloturismo|cicloturistas?|turismo\s+em\s+bicicleta|\brota\b/.test(titleText)) return ['Passeio / Lazer'];
 
     return [];
 }
