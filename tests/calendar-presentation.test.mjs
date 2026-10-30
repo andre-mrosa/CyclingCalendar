@@ -1,6 +1,30 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { monthDays, shiftMonth, eventOccursOn, eventsInPeriod, sameDateGroup, groupEventsByDate, formatEventTitle } from '../app/utils/calendarPresentation.js';
+import { monthDays, shiftMonth, eventOccursOn, eventsInPeriod, sameDateGroup, groupEventsByDate, formatEventTitle, formatCalendarDateRange } from '../app/utils/calendarPresentation.js';
+
+test('calendar ranges normalize ICU whitespace differences that broke hydration', t => {
+    const variants = ['31 de outubro\u2009–\u20091 de novembro de 2026', '31 de outubro – 1 de novembro de 2026', '31 de outubro\u00a0–\u202f1 de novembro de 2026'];
+    t.mock.method(Intl, 'DateTimeFormat', function (language, options) {
+        assert.equal(language, 'pt');
+        assert.equal(options.timeZone, 'UTC');
+        return { formatRange: (start, end) => {
+            assert.equal(start.toISOString(), '2026-10-31T00:00:00.000Z');
+            assert.equal(end.toISOString(), '2026-11-01T00:00:00.000Z');
+            return variants.shift();
+        } };
+    });
+    for (let i = 0; i < 3; i++) assert.equal(formatCalendarDateRange('2026-10-31', '2026-11-01'), '31 de outubro – 1 de novembro de 2026');
+});
+
+test('calendar date labels retain localized single dates and ranges in all app languages', () => {
+    for (const language of ['pt', 'en', 'es', 'fr']) {
+        assert.equal(formatCalendarDateRange('2026-10-31', null, language), new Intl.DateTimeFormat(language, {dateStyle: 'long', timeZone: 'UTC'}).format(new Date('2026-10-31T00:00:00Z')).replace(/\s+/gu, ' '));
+        const range = formatCalendarDateRange('2026-10-31', '2026-11-01', language);
+        assert.match(range, /31/);
+        assert.match(range, /2026/);
+        assert.doesNotMatch(range, /[\u00a0\u2009\u202f]/u);
+    }
+});
 
 test('shared dates combine separated events, sort ranges and keep unknown dates separate', () => {
     const a = { id: 'a', date: '19 SET 2026' };

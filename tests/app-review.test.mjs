@@ -26,6 +26,8 @@ test('month filtering includes cross-month and cross-year races in each affected
 test('regional cycling cups and world cups do not become Portuguese Cups',()=>{
     assert.equal(getAmbito('Taça Regional de XCM','', 'BTT XCM'),'Regional');
     assert.equal(getAmbito('Taça do Minho XCO','', 'BTT XCO'),'Regional');
+    assert.equal(getAmbito('Taça Oeste XCM 2027 - Batalha do Vimeiro'),'Regional');
+    assert.equal(getAmbito('Taça de Portugal XCM - Oeste'),'Taça de Portugal');
     assert.equal(getAmbito('Taça de Portugal XCO - Minho'),'Taça de Portugal');
     assert.equal(getAmbito('Taça do Mundo BTT'),'Internacional');
 });

@@ -1,6 +1,7 @@
 "use client";
 import Link from 'next/link';
 import { eventPath } from '../lib/eventDiscovery';
+import { CALENDAR_SOURCES, normalizeCalendarSources, selectCalendarSources } from '../lib/calendarSources';
 import { formatEventLocation, cleanLocation } from '../utils/eventLocation';
 import { useClientReady, useOnline, useStoredString, writeStored } from '../hooks/useBrowserState';
 import { useToday } from '../hooks/useToday';
@@ -30,7 +31,7 @@ import { isStageRace, getEventDiscipline } from '../utils/eventClassifier';
 import PageHeading from './PageHeading';
 import MonthCalendar from './MonthCalendar';
 import RegistrationBadge from './RegistrationBadge';
-import { eventsInPeriod, shiftMonth, groupEventsByDate, formatEventTitle } from '../utils/calendarPresentation';
+import { eventsInPeriod, shiftMonth, groupEventsByDate, formatEventTitle, formatCalendarDateRange } from '../utils/calendarPresentation';
 import AgendaOverview from './AgendaOverview';
 import styles from './site.module.css';
 import { matchesPeriod, isCancelled, conciseEscaloes } from '../utils/planning';
@@ -138,15 +139,16 @@ export default function CalendarView({
         }
     }
 
-    const effectiveSources = [...((searchSources?.length ? searchSources : selectedSources)?.length > 0 ? (searchSources || selectedSources) : ['FPC', 'Cabreira', 'Stop and Go', 'Classificações.net', 'Recorde Pessoal', 'Apedalar'])].sort();
+    const effectiveSources = useMemo(() => normalizeCalendarSources(searchSources ?? selectedSources ?? CALENDAR_SOURCES), [searchSources, selectedSources]);
     const eventsUrl = `/api/events?view=minimal-v4&years=all&sources=${effectiveSources.join(',')}`;
+    const initialSourceEvents = useMemo(() => selectCalendarSources(initialEvents, effectiveSources), [initialEvents, effectiveSources]);
     const eventsCacheKey = `cycling_calendar_minimal_v5_${forceAmbito || 'Todos'}_${[...effectiveSources].sort().join(',')}`;
     const syncVersion = useRef(null);
     const { data: fetchedEvents, error, isLoading: loading, mutate } = useSWR(
-        [eventsUrl, forceAmbito || 'Todos'],
+        effectiveSources.length ? [eventsUrl, forceAmbito || 'Todos'] : null,
         ([url]) => fetcher(url + (syncVersion.current ? '&sync=' + encodeURIComponent(syncVersion.current) : '')),
         {
-            fallbackData: initialEvents || undefined,
+            fallbackData: initialSourceEvents,
             revalidateOnFocus: false, // The lightweight sync check refreshes only changed data.
             revalidateIfStale: false,
             dedupingInterval: 120000 // Cache for 2 minutes in memory
@@ -168,9 +170,10 @@ export default function CalendarView({
     }, [fetchedEvents, eventsCacheKey]);
 
     const events = useMemo(() => {
+        if (!effectiveSources.length) return EMPTY_EVENTS;
         const records = chooseCalendarEvents(fetchedEvents, localCachedEvents, { offline: isOffline, failed: !!error });
         return records.length ? mergeEvents(records.map(toCalendarListEvent).filter(Boolean)) : EMPTY_EVENTS;
-    }, [fetchedEvents, localCachedEvents, isOffline, error]);
+    }, [fetchedEvents, localCachedEvents, isOffline, error, effectiveSources.length]);
 
     const { favorites, manualFavorites, automaticFavorites, toggleFavorite, isSignedIn, editionPreferences } = useFavorites(events);
 
@@ -189,7 +192,7 @@ export default function CalendarView({
         setMonthFrom(value.monthFrom || 1); setMonthTo(value.monthTo || 12); setSelectedTags(value.selectedTags || []);
         setSelectedType(value.selectedType || 'Todos'); setPastEventsFilter(value.pastEventsFilter || defaultPastEventsFilter); setQuickPeriod(['weekend', 'month'].includes(value.quickPeriod) ? value.quickPeriod : '');
         setSelectedMonth(value.selectedMonth || null); setSelectedDay(value.selectedDay || null); setViewMode(value.viewMode || 'list');
-        setSearchSources(value.sources?.length ? value.sources : null);
+        setSearchSources(value.sources ?? null);
     }
     const urlReadyRef = useRef(false);
     const applySearchRef = useRef(applySearch);
@@ -748,14 +751,15 @@ export default function CalendarView({
                                 const isNewMonth = !prevMY || currentMY.key !== prevMY.key;
                                 const monthHeading = currentMY.key === 'unknown' ? t('planning_date_unconfirmed') : isNewMonth ? formatMonthHeading(currentMY.year, currentMY.monthIdx, language) : '';
                                 const { day, month, singleDay, start, end } = currentMY;
+                                const dateLabel = start ? formatCalendarDateRange(start, end, language) : t('planning_date_unconfirmed');
                                 return <Fragment key={group[0].id}>
                                     {isNewMonth && (idx > 0 || currentMY.key === 'unknown') && <div className={styles.monthHeading}><h2>{monthHeading}{' '}<span>{currentMY.year}</span></h2></div>}
-                                    <section className={styles.dateGroup} aria-label={start ? new Intl.DateTimeFormat(language, { dateStyle: 'long', timeZone: 'UTC' }).formatRange(new Date(start + 'T00:00:00Z'), new Date(end + 'T00:00:00Z')) : t('planning_date_unconfirmed')}>
+                                    <section className={styles.dateGroup} aria-label={dateLabel}>
                                         <div className={styles.groupDateColumn}>
                                         <div className={styles.date} data-cross-month={month.includes('/')}>
                                             <div className={`${styles.dateDay} ${start && !singleDay ? styles.dateRange : ''}`}>
                                                 {start && !singleDay ? <>
-                                                    <span className="sr-only">{new Intl.DateTimeFormat(language, { dateStyle: 'long', timeZone: 'UTC' }).formatRange(new Date(start + 'T00:00:00Z'), new Date(end + 'T00:00:00Z'))}</span>
+                                                    <span className="sr-only">{dateLabel}</span>
                                                     {[start, end].map((date, dateIndex) => <Fragment key={date}>
                                                         {dateIndex > 0 && <span className={styles.dateConnector} aria-hidden="true" />}
                                                         <time dateTime={date} aria-hidden="true">

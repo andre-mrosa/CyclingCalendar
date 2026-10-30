@@ -1,5 +1,13 @@
 import { eventDateDisplay } from './eventDateDisplay.js';
 
+export function formatCalendarDateRange(start, end, language = 'pt') {
+    // ICU versions differ in their use of thin/non-breaking spaces around ranges.
+    // Keep the server HTML and browser hydration text identical.
+    return new Intl.DateTimeFormat(language, { dateStyle: 'long', timeZone: 'UTC' })
+        .formatRange(new Date(`${start}T00:00:00Z`), new Date(`${end || start}T00:00:00Z`))
+        .replace(/\s+/gu, ' ');
+}
+
 // Some sources publish shouting capitals. Keep mixed-case names and race acronyms intact.
 export function formatEventTitle(title) {
     if (!title || title !== title.toLocaleUpperCase('pt-PT')) return title;
