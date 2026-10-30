@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
 import {filterEvents} from '../app/utils/filterEvents.js';
 import {isStageRace,getEventCategories} from '../app/utils/eventClassifier.js';
 import {suggestEscalao} from '../app/utils/suggestEscalao.js';
@@ -74,13 +75,20 @@ test('granfondos with no published licence are discoverable in leisure without i
     assert.equal(filterEvents([race],{filterLeisure:true}).length,1);assert.equal(race.licenca,null);
     assert.equal(filterEvents([{...race,title:'Campeonato XCO',tag:'BTT XCO'}],{filterLeisure:true}).length,0);
 });
-test('legal pages have complete translations and preserve dates and retention periods',()=>{
+test('legal pages have complete translations and preserve dates and retention periods',async()=>{
     const keys=Object.keys(legalCopy.en);
     for(const language of ['en','es','fr']){
         assert.deepEqual(Object.keys(legalCopy[language]),keys);
         for(const [original,translated]of Object.entries(legalCopy[language])){
             assert.ok(translated.trim());assert.equal(translated.includes('\uFFFD'),false);
             assert.deepEqual(original.match(/\b\d+\b/g),translated.match(/\b\d+\b/g));
+        }
+    }
+    for (const path of ['../app/privacy-policy/PrivacyPolicyClient.js','../app/terms-of-service/TermsOfServiceClient.js']) {
+        const source = await readFile(new URL(path, import.meta.url), 'utf8');
+        for (const [, literal] of source.matchAll(/\bl\(("(?:[^"\\]|\\.)*")\)/gu)) {
+            const text = JSON.parse(literal);
+            for (const language of ['en','es','fr']) assert.ok(legalCopy[language][text], `${language}: missing legal translation: ${text}`);
         }
     }
 });

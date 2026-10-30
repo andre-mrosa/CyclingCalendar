@@ -423,6 +423,7 @@ const messages = {
     region_modal_title: "Region Assistant",
     region_modal_desc: "Choose your district or regional cycling association to filter local events.",
     region_btn_gps: "GPS / Locate Me",
+    region_privacy_notice: "Optional: searches are sent to OpenStreetMap/Nominatim; using GPS sends your coordinates after permission. The provider also receives your IP address. You can select your region manually in settings.",
     region_or: "OR",
     region_placeholder_city: "City, County or District...",
     region_btn_search: "Search",

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { MapPin } from 'lucide-react';
 import { useTranslation } from '../i18n/useTranslation';
+import Link from 'next/link';
 
 export default function RegionAssistant({ onApply }) {
     const { t } = useTranslation();
@@ -107,6 +108,11 @@ export default function RegionAssistant({ onApply }) {
             </div>
             
             <div className="flex flex-col gap-5">
+                <p className="text-xs leading-relaxed text-muted">
+                    {t('region_privacy_notice')}{' '}
+                    <a href="https://osmfoundation.org/wiki/Privacy_Policy" target="_blank" rel="noopener noreferrer" className="underline">OpenStreetMap</a>{' · '}
+                    <Link href="/privacy-policy" className="underline">{t('footer_privacy')}</Link>
+                </p>
                 <button 
                     onClick={handleGeolocation} 
                     disabled={isLocating} 

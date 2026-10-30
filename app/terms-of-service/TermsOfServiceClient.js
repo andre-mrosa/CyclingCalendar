@@ -21,7 +21,7 @@ export default function TermsOfService() {
       title: l("2. Conteúdos e respetivos direitos"),
       content: (
         <ul className="space-y-3 text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-          <li className="flex gap-3"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0"></div><span>{l("O Cycling Calendar apresenta um índice de provas com informação factual resumida e ligações para as páginas de origem.")}</span></li>
+          <li className="flex gap-3"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0"></div><span>{l("O Cycling Calendar apresenta um índice de provas com informação factual resumida e ligações para as páginas de origem.")} {l("Datas, classificações e correspondências entre edições podem ser obtidas automaticamente a partir das fontes e podem conter erros ou estar incompletas. Favoritos, filtros e sugestões de escalão não são inscrições nem confirmam a elegibilidade para participar. Confirma sempre datas, regulamento, inscrições e condições junto do organizador. Os emails e as notificações são opcionais; a entrega e a hora de receção dependem também dos fornecedores, da ligação e do dispositivo e não são garantidas.")}</span></li>
           <li className="flex gap-3"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0"></div><span>{l("Não disponibilizamos cópias de descrições, cartazes, fotografias, logótipos, altimetrias ou ficheiros de percursos das provas. As ligações externas não implicam afiliação ou aprovação por parte dos organizadores. Para questões de atribuição, correção ou remoção de conteúdos, utilize o")} <Link href="/contacto" className="underline underline-offset-4">{l("formulário de contacto")}</Link>.</span></li>
         </ul>
       ),
@@ -37,6 +37,7 @@ export default function TermsOfService() {
             <li className="flex gap-2 items-start"><X size={16} className="text-rose-500 mt-0.5 shrink-0" /><span>{l("Falhas na plataforma, indisponibilidade temporária ou perda de dados de perfil.")}</span></li>
             <li className="flex gap-2 items-start"><X size={16} className="text-rose-500 mt-0.5 shrink-0" /><span>{l("Quaisquer prejuízos (deslocações, estadias, acidentes) resultantes da confiança exclusiva nos dados aqui apresentados.")} <strong>{l("Valide sempre a informação no site oficial.")}</strong></span></li>
           </ul>
+          <p className="mt-4 text-sm text-slate-600 dark:text-slate-400">{l("Estas limitações não excluem nem restringem responsabilidades ou direitos que a lei não permita afastar, incluindo os direitos de proteção de dados e os direitos dos consumidores quando aplicáveis. Procuramos corrigir informações inexatas quando nos são comunicadas.")}</p>
         </div>
       ),
     },
@@ -71,9 +72,10 @@ export default function TermsOfService() {
       icon: RefreshCw,
       title: l("5. Modificações do Serviço"),
       content: (
-        <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">{l("Sendo um projeto gerido no tempo livre do autor, reservamo-nos o direito de alterar o layout, adicionar/remover funcionalidades, ou mesmo encerrar o site a qualquer momento, sem aviso prévio. Os presentes Termos de Serviço podem também ser atualizados periodicamente.")}</p>
+        <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">{l("Podemos atualizar o serviço, alterar funcionalidades ou cessar a sua disponibilização. Sempre que possível, alterações relevantes serão comunicadas no site com antecedência razoável. A versão atual dos termos fica disponível nesta página, com a data de atualização. As alterações não afastam direitos imperativos nem validam retroativamente tratamentos de dados que exijam consentimento.")}</p>
       ),
     },
+    { icon: Info, title: l("6. Conta, favoritos e funções opcionais"), content: <div className="space-y-3 text-sm text-slate-600 dark:text-slate-400"><p>{l("A consulta do calendário é gratuita e não exige conta. Uma conta permite sincronizar favoritos e gerir integrações. Mantém as credenciais seguras. As funções opcionais são ativadas nos respetivos controlos; usar o site ou aceitar estes termos não substitui o consentimento exigido para estatísticas, emails, notificações ou localização. Os dados pessoais são tratados nos termos da Política de Privacidade.")}</p><Link href="/privacy-policy" className="underline">{l("Política de")} {l("Privacidade")}</Link></div> },
   ];
 
   return (
@@ -107,7 +109,7 @@ export default function TermsOfService() {
         </div>
 
         <footer className="mt-16 text-center border-t border-slate-300 dark:border-slate-800/60 pt-8">
-          <p className="text-xs text-slate-500 font-mono mb-4">{l("Última atualização: 30 de setembro de 2026")}</p>
+          <p className="text-xs text-slate-500 font-mono mb-4">{l("Última atualização: 30 de outubro de 2026")}</p>
         </footer>
       </div>
     </div>
