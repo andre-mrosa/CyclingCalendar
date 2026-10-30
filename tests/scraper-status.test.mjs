@@ -319,7 +319,7 @@ test('scraper persistence drops descriptions, posters, routes, prices and other 
     }, { verifiedSource: 'Apedalar' });
     assert.deepEqual(Object.keys(saved).sort(), [
         'date', 'details', 'distrito', 'id', 'lastVerifiedAt', 'lastVerifiedSource',
-        'link', 'regiao', 'sortDate', 'source', 'title',
+        'link', 'regiao', 'sortDate', 'source', 'title', 'tag', 'ambito',
     ].sort());
     assert.equal(saved.details, 'Viseu');
 });

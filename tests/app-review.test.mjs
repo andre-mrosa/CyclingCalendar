@@ -53,7 +53,7 @@ test('minimal persistence retains validated classifications and registration fac
     const event=toMinimalScrapedEvent({...base,tag:'BTT XCO',ambito:'Regional',escaloes:['Sub-17 (Cadetes)','INVALID'],licenca:'Competição',description:'not public',registrationOpensAt:'2026-01-01'});
     assert.equal(event.tag,'BTT XCO');assert.equal(event.ambito,'Regional');assert.equal(event.escaloes,'["Sub-17 (Cadetes)"]');assert.ok(event.registrationOpensAt instanceof Date);
     assert.equal(event.description,undefined);
-    const unknown=toMinimalScrapedEvent({...base,tag:'invented',ambito:'invented',escaloes:['invented'],licenca:'invented'});
+    const unknown=toMinimalScrapedEvent({...base,title:'Evento sem informação publicada',tag:'invented',ambito:'invented',escaloes:['invented'],licenca:'invented'});
     for(const field of ['tag','ambito','escaloes','licenca'])assert.equal(unknown[field],undefined);
 });
 test('cycling discovery uses the source modality even without a year in the URL',()=>{

@@ -35,6 +35,9 @@ export const getAmbito = (name = '', det = '', tag = '', source = '') => {
         return 'Campeonato Nacional';
     }
 
+    const officialClass = String(det || '').split('|').pop().trim();
+    if (source.split(',').some(value => value.trim() === 'FPC') && /^(?:(?:BTT\s+)?(?:XCO|XCM|XCC|XCE|XCR|DHI|Enduro|Pista|BMX)\s+)?TP$/i.test(officialClass)) return 'Taça de Portugal';
+
     // 2. TAÇAS DE PORTUGAL (Taça de Portugal / Taça Portugal / Taças Nacionais)
     if (/\b(tacas?\s*(do\s*mundo|da\s*europa|das\s*nacoes)|copa\s*do\s*mundo)\b/.test(titleClean)) return 'Internacional';
     if (/\btacas?\b/.test(titleClean) || /\btacas?\s+de\s+portugal\b/.test(clean) || /\btacas?\s+portugal\b/.test(clean)) {
@@ -44,7 +47,9 @@ export const getAmbito = (name = '', det = '', tag = '', source = '') => {
         if (isRegionalCup && !isNationalCup) {
             return 'Regional';
         }
-        return 'Taça de Portugal';
+        // A cup name alone does not establish a national competition.
+        if (isNationalCup || /\btacas?\s+(?:de\s+)?portugal\b/.test(clean)) return 'Taça de Portugal';
+        return '';
     }
 
     // 3. INTERNACIONAL (UCI WorldTour, ProSeries, 1.Pro, 2.Pro, 1.1, 2.1, 1.2, 2.2, C1, C2, HC, etc.)
@@ -60,13 +65,8 @@ export const getAmbito = (name = '', det = '', tag = '', source = '') => {
         return 'Internacional';
     }
 
-    // 4. NACIONAL (Volta a Portugal, GPs Nacionais, Clássicas Nacionais, Troféus)
-    const isVoltaNacional = /\b(volta\s*a\s*portugal|volta\s*a\s*albergaria|volta\s*as?\s*terras\s*de\s*santa\s*maria|volta\s*a\s*tras\s*os\s*montes|volta\s*ao\s*nordeste)\b/.test(clean);
-    const isGPNacional = /\b(grande\s*premio|gp\s+abimota|gp\s+anicolor|gp\s+jornal\s*de\s*noticias|gp\s+mortagua|gp\s+o\s*jogo|gp\s+portugal|gp\s+ciclismo|gp\s+[a-z]+)\b/.test(clean);
-    const isClassicaNacional = /\b(classica\s*(de|da|dos)?\s+[a-z]+|prova\s*(de\s*)?abertura|memorial\s+[a-z]+|trofeu\s*(ribeiro\s*da\s*silva|fernando\s*mendes|cidade\s*fafe|hm\s*motor|rui\s*costa))\b/.test(clean);
-    const isOutroNacional = /\b(circuito\s*nacional|encontro\s*nacional|torneio\s*nacional|taca\s*nacional)\b/.test(clean);
-
-    if (isVoltaNacional || isGPNacional || isClassicaNacional || isOutroNacional) {
+    // 4. A GP, classic, memorial or tour name alone does not establish scope.
+    if (/\bnaciona(l|is)\b/.test(clean)) {
         if (!/\b(regional|inter\s*regional|passeio|cpt|lazer|granfondo|maratona)\b/.test(titleClean)) {
             return 'Nacional';
         }
@@ -80,7 +80,7 @@ export const getAmbito = (name = '', det = '', tag = '', source = '') => {
         /\b(circuito\s*regional|trofeu\s*regional|pista\s*regional|escolas\s*regional)\b/.test(titleClean) ||
         /\b(associacao\s*de\s*ciclismo|ac\s*minho|ac\s*porto|ac\s*beira|ac\s*lisboa|ac\s*setubal|ac\s*santarem|ac\s*algarve|ac\s*vila\s*real)\b/.test(clean);
 
-    if (isRegional && !isVoltaNacional && !/\b(granfondo|passeio|maratona)\b/.test(titleClean)) {
+    if (isRegional && !/\b(granfondo|passeio|maratona)\b/.test(titleClean)) {
         return 'Regional';
     }
 
@@ -96,7 +96,7 @@ export const getAmbito = (name = '', det = '', tag = '', source = '') => {
     if (/\bnaciona(l|is)\b/.test(clean)) return 'Nacional';
     if (/\bregiona(l|is)\b/.test(clean)) return 'Regional';
 
-    return 'Prova Aberta';
+    return '';
 };
 
 export const getLicenca = (name = '', det = '', ambito = '') => {

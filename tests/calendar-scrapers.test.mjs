@@ -7,7 +7,7 @@ const { scrapeStopAndGo } = await fixtureModule('../app/lib/scrapers/stopandgo.j
 import { readStopAndGoHeader } from '../app/lib/scrapers/stopandgoParser.js';
 import { getAmbito } from '../app/lib/scrapers/utils.js';
 import { getEventDiscipline, getEventRaceType, getEventRaceTypes, getEventDisciplineFamilies, isStageRace } from '../app/utils/eventClassifier.js';
-import { mergeEventRecords } from '../app/lib/merging/eventMerger.js';
+import { mergeEventRecords, toMinimalScrapedEvent } from '../app/lib/merging/eventMerger.js';
 import { isSameEvent } from '../app/lib/merging/eventMatcher.js';
 import { mergeEvents } from '../app/utils/mergeEvents.js';
 import { filterEvents } from '../app/utils/filterEvents.js';
@@ -16,6 +16,16 @@ const fpcRow = (title, start, end = start, category = 'CN') => `<tr><th>${start}
 const fpcPage = (rows, year = '2026', from = '01') => `<form><select name="epoca_site"><option selected>${year}</option></select><select name="mes_de_new"><option selected>${from}</option></select><select name="mes_ate_new"><option selected>12</option></select></form><table class="dc_table_s12"><tbody>${rows}</tbody></table>`;
 const sgPage = ({ title = 'Prova', modality = 'BTT', dates = '5 set 2026' } = {}) => `<nav><a>BTT</a><a>Gravel</a></nav><section><div><h1>${title}</h1><div>Maia, Portugal</div><div>${dates}</div><div>${modality}</div></div></section><aside>Campeonato Nacional de Gravel <span>20 set 2026</span></aside>`;
 const url = 'https://stopandgo.net/events/prova-2026';
+
+test('FPC classifications from the class column survive the complete parse/storage boundary', () => {
+    for (const [category, scope, categories] of [['TP','Taça de Portugal',[]], ['CN','Campeonato Nacional',[]], ['1.17',null,['Sub-17 (Cadetes)']]]) {
+        const [parsed] = parseFPCCalendar(fpcPage(fpcRow('Prova oficial', '14-02-2026', undefined, category)), 2026);
+        const saved = toMinimalScrapedEvent(parsed);
+        if (scope) assert.equal(saved.ambito, scope);
+        if (categories.length) assert.deepEqual(JSON.parse(saved.escaloes), categories);
+        assert.equal(saved.details,'Fundão');
+    }
+});
 
 test('Cabreira excludes running events while retaining cycling and mixed cycling events', () => {
     assert.equal(isCabreiraCyclingEvent('São Silvestre do Algarve'), false);

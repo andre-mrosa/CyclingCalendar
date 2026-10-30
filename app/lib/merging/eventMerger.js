@@ -1,5 +1,5 @@
 import { isSameEvent } from './eventMatcher.js';
-import { getEventDiscipline, RACE_TAXONOMY, isOfficialNationalChampionship } from '../../utils/eventClassifier.js';
+import { getEventDiscipline, getEventCategories, publishedEventCategories, RACE_TAXONOMY, isOfficialNationalChampionship } from '../../utils/eventClassifier.js';
 import { getAmbito } from '../scrapers/utils.js';
 import { originalEventUrl, getPreferredEventLink, isFpcUrl } from '../publicEvent.js';
 import { SOURCE_REVIEWS } from '../contentReleasePolicy.js';
@@ -269,15 +269,36 @@ export function toMinimalScrapedEvent(event) {
         id: String(event.id), title, date, sortDate, details: location || null,
         regiao: location || null, distrito: location || null,
         source, link,
-        ...minimalClassification(event),
+        ...classifyScrapedEvent({ ...event, title, source }),
     };
+}
+
+// Every active scraper passes this boundary, for creates, updates and matches.
+// Use published titles/structured fields, never promotional descriptions.
+export function classifyScrapedEvent(event) {
+    const facts = minimalClassification(event);
+    const evidence = { ...event, description: '' };
+    const titleTag = getEventDiscipline({ ...evidence, tag: '' });
+    // A generic ride name must not erase the published modality (e.g. Rota + BTT).
+    const tag = titleTag && titleTag !== 'Passeio / Lazer' ? titleTag : getEventDiscipline(evidence);
+    if (tag) facts.tag = tag;
+    const scope = getAmbito(event.title, event.source === 'FPC' ? event.details || '' : '', tag, event.source);
+    if (scope) facts.ambito = scope;
+    // Neither a generic cup nor an unknown event implies national/open status.
+    else if (event.source !== 'FPC' && (facts.ambito === 'Taça de Portugal' || facts.ambito === 'Prova Aberta')) delete facts.ambito;
+    const categories = getEventCategories({ ...event, escaloes: [
+        ...JSON.parse(facts.escaloes || '[]'), ...publishedEventCategories(event.title || ''),
+    ] });
+    if (categories.length) facts.escaloes = JSON.stringify([...new Set(categories)]);
+    return facts;
 }
 
 function minimalClassification(event) {
     const facts = {};
     if (RACE_TAXONOMY.some(group => group.discipline === event.tag || group.specialities.includes(event.tag))) facts.tag = event.tag;
+    // The FPC parser also reads CN from its class column before discarding that column.
     if (['Prova Aberta','Regional','Nacional','Taça de Portugal','Internacional'].includes(event.ambito) ||
-        (event.ambito === 'Campeonato Nacional' && isOfficialNationalChampionship(event))) facts.ambito = event.ambito;
+        (event.ambito === 'Campeonato Nacional' && (event.source === 'FPC' || isOfficialNationalChampionship(event)))) facts.ambito = event.ambito;
     if (['Competição','CPT / Lazer','Lazer'].includes(event.licenca)) facts.licenca = event.licenca;
     let categories = event.escaloes;
     if (typeof categories === 'string') { try { categories = JSON.parse(categories); } catch { categories = []; } }
@@ -296,11 +317,16 @@ function mergeMinimalClassification(existing, incoming) {
     const existingOfficial = (existing.source || '').split(',').some(source => source.trim() === 'FPC');
     const facts = Object.fromEntries(Object.entries(minimalClassification(incoming)).filter(([key]) =>
         incomingOfficial || !existingOfficial || !existing[key]));
+    // Recollection must also remove obsolete guesses when current evidence is unknown.
+    if (incomingOfficial || !existingOfficial) {
+        for (const field of ['tag', 'ambito']) if (!incoming[field]) facts[field] = null;
+    }
     if (facts.escaloes && existing.escaloes) {
         let before = []; try { before = JSON.parse(existing.escaloes); } catch {}
+        if (!Array.isArray(before)) before = [];
         const after = JSON.parse(facts.escaloes);
-        const retained = after.includes('Sub-17 (Cadetes)') && !after.includes('Masters / Veteranos')
-            ? before.filter(value => value === 'Femininas') : before.filter(value => !['Geral / Vários','Geral / Aberto','Todos (Aberto)'].includes(value));
+        const sameSource = (existing.source || '').split(',').some(source => source.trim() === incoming.source);
+        const retained = incomingOfficial || sameSource ? [] : before.filter(value => !['Geral / Vários','Geral / Aberto','Todos (Aberto)'].includes(value));
         facts.escaloes = JSON.stringify([...new Set([...retained,...after])]);
     }
     return facts;
