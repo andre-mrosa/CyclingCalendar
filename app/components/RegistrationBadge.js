@@ -5,12 +5,14 @@ import { generateGoogleCalendarUrl } from '../utils/calendarExport';
 import { formatRegistrationDay } from '../utils/registrationDates';
 import { lisbonWallClock } from '../utils/planning';
 import { useClientReady } from '../hooks/useBrowserState';
+import {useParticipationStates,participationFor} from '../hooks/useParticipationStates';
 
 export default function RegistrationBadge({ event, isCancelled }) {
     const { language, t } = useTranslation();
     const mounted = useClientReady();
+    const {states}=useParticipationStates();
     
-    if (!mounted || isCancelled || !event.sortDate) return null;
+    if (!mounted || isCancelled || !event.sortDate || participationFor(event,states)?.status==='registered') return null;
     
     const now = new Date(lisbonWallClock());
     const eventDate = new Date(event.sortDate);
