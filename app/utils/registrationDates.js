@@ -8,7 +8,7 @@ export function formatRegistrationDay(value, language = 'pt') {
 }
 
 export function parseRegistrationDates(html = '') {
-    const text = String(html).replace(/<[^>]*>/g, ' ').replace(/&nbsp;|&#160;/g, ' ')
+    const text = String(html).replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>|<!--[\s\S]*?-->/gi,' ').replace(/<[^>]*>/g, ' ').replace(/&nbsp;|&#160;/g, ' ')
         .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ');
     const date = '(\\d{1,2})[-/.](\\d{1,2})[-/.](20\\d{2})';
     const time = '(?:\\s*(?:pelas|as)\\s*(\\d{1,2})[h:](\\d{2}))?';
@@ -26,6 +26,7 @@ export function parseRegistrationDates(html = '') {
     // Only an explicit overall registration closing statement is authoritative.
     // A phase deadline, cancellation/refund deadline or generic "até ao dia" is not.
     const closings = read('inscricoes\\s+(?:(?:encerram|terminam|fecham)\\s+(?:(?:no\\s+)?dia\\s+|a\\s+)?|(?:serao\\s+)?efetuadas\\s+ate\\s+(?:ao\\s+)?dia\\s+)', true);
+    if(openings.length&&closings.length===1&&openings[0]>closings[0])return {registrationOpensAt:null,registrationClosesAt:null};
     return {
         registrationOpensAt: openings[0] || null,
         registrationClosesAt: closings.length === 1 ? closings[0] : null,

@@ -364,6 +364,21 @@ test('daily and weekly plans isolate FPC into one bounded stage per season', asy
     assert.deepEqual(pipeline.getPipelineStages('weekly', ['2026', '2027']), ['fpc-2026', 'fpc-2027', 'translation', 'finalize']);
 });
 
+test('a durable stage retains its saved seasons across a calendar-year boundary', async () => {
+    let seen;
+    const pipeline=await pipelineFixture({scrapeFPC:async year=>{seen=year;return 0;}});
+    const result=await pipeline.runUnifiedScrapingPipeline('TEST',{scope:'daily',years:['2030','2031'],pipelineStage:'fpc-2030'});
+    assert.equal(seen,'2030');assert.deepEqual(result.years,['2030','2031']);assert.equal(result.nextStage,'fpc-2031');
+});
+
+test('a discovered but unread source is partial without immediately refetching the whole source',async()=>{
+    const pipeline=await pipelineFixture({scrapeCabreira:async(_year,{onCoverage})=>{
+        onCoverage({discovered:2,saved:0,failed:2,unresolved:0});await logError('SCRAPER','Cabreira: datas não reconhecidas');
+    }});
+    const result=await pipeline.runUnifiedScrapingPipeline('TEST',{scope:'daily',pipelineStage:'cabreira'});
+    assert.equal(result.nextStage,'stopandgo');assert.equal(result.hadErrors,true);assert.equal(result.stats.sources.cabreira.coverage.failed,2);
+});
+
 
 
 test('pipeline leases every bounded stage and publishes complete metrics', async t => {

@@ -7,15 +7,17 @@ import { getTag, getAmbito } from './utils.js';
 import { isCyclingCandidate } from './cyclingEvidence.js';
 import { assertSourceAccess, SOURCE_USER_AGENT } from './sourceAccess.js';
 import { parsePublishedRaceDate } from './publishedDates.js';
+import {createCollectionAudit} from './collectionAudit.js';
 
 const BASE_URL = 'https://www.recordepessoal.pt';
 
 export async function scrapeRecordePessoal(options = {}) {
     assertMinimalCollectionEnabled("Recorde Pessoal");
-    const { years = [new Date().getFullYear().toString()] } = options;
+    const years=(options.years || [new Date().getFullYear(),new Date().getFullYear()+1]).map(String);
+    const audit=createCollectionAudit('Recorde Pessoal',options,{logInfo,logError});
     const allEvents = [];
 
-    logInfo('SCRAPER', 'Início da sincronização Recorde Pessoal');
+    await logInfo('SCRAPER', 'Início da sincronização Recorde Pessoal');
 
     try {
         const categories = ['btt', 'ciclismo-de-estrada'];
@@ -28,12 +30,15 @@ export async function scrapeRecordePessoal(options = {}) {
 
             assertSourceAccess(res, 'Recorde Pessoal');
             if (!res.ok) {
-                logError('SCRAPER', `Falha ao aceder à categoria ${cat} (HTTP ${res.status})`);
+                await logError('SCRAPER', `Falha ao aceder à categoria ${cat} (HTTP ${res.status})`);
                 continue;
             }
 
             const html = await res.text();
             const $ = cheerio.load(html);
+            if (!$('.evento').length && !$('#eventosDiv').text().includes('Não existem eventos')) {
+                await logError('SCRAPER', `Recorde Pessoal: listagem ${cat} não reconhecida; recolha incompleta`);
+            }
 
             $('.evento').each((i, el) => {
                 const title = $(el).find('.titulo').first().text().trim();
@@ -42,14 +47,17 @@ export async function scrapeRecordePessoal(options = {}) {
                     const cleanLink = rawLink.replace(/"/g, '');
                     try {
                         const url = new URL(cleanLink, BASE_URL);
-                        if (url.origin === BASE_URL && url.pathname.startsWith('/evento/')) eventLinks.set(url.href, cat);
+                        if (url.origin === BASE_URL && /^\/evento\/[^/]+\/?$/.test(url.pathname)) {
+                            url.hash='';const categories=eventLinks.get(url.href)||new Set();categories.add(cat);eventLinks.set(url.href,categories);
+                        }
                     } catch { /* Ignore malformed links, not the remaining category. */ }
                 }
             });
         }
 
         const eventLinksArray = Array.from(eventLinks.keys());
-        logInfo('SCRAPER', `Encontrados ${eventLinksArray.length} eventos de Ciclismo na Recorde Pessoal`);
+        audit.discover(eventLinksArray);
+        await logInfo('SCRAPER', `Encontrados ${eventLinksArray.length} eventos de Ciclismo na Recorde Pessoal`);
 
         for (const link of eventLinksArray) {
             try {
@@ -59,7 +67,8 @@ export async function scrapeRecordePessoal(options = {}) {
                 const pageRes = await fetch(link, { headers: { 'User-Agent': SOURCE_USER_AGENT }, signal:AbortSignal.timeout(10000) });
                 assertSourceAccess(pageRes, 'Recorde Pessoal');
                 if (!pageRes.ok) {
-                    if (pageRes.status !== 404 && pageRes.status !== 410) await logError('SCRAPER', `Recorde Pessoal: HTTP ${pageRes.status} em ${link}`);
+                    if ([404,410].includes(pageRes.status)) audit.resolve(link,'unavailable');
+                    else await audit.fail(link,`HTTP ${pageRes.status}`);
                     continue;
                 }
 
@@ -71,12 +80,13 @@ export async function scrapeRecordePessoal(options = {}) {
                 const dataRaw = $p('.dataEvento div').eq(1).text().trim(); // ex: 11 Outubro 2026
 
                 const parsed = parsePublishedRaceDate(dataRaw);
-                if (!title || !parsed) continue;
-                if (parsed.endDate < new Date().toISOString().slice(0,10)) continue;
+                if (!title || !parsed) {await audit.fail(link,'título/data não reconhecidos');continue;}
+                if (!isCyclingCandidate(title,true)) {audit.resolve(link,'nonCycling');continue;}
+                if (parsed.endDate < new Date().toISOString().slice(0,10)) {audit.resolve(link,'past');continue;}
                 const cleanDate = parsed.date, sortDateStr = parsed.sortDate.toISOString();
 
                 const eventObj = {
-                    tag:getTag(title) || (eventLinks.get(link) === 'btt' ? 'BTT' : 'Estrada'), ambito:getAmbito(title, '', '', 'Recorde Pessoal'),
+                    tag:getTag(title) || (eventLinks.get(link).size===1 ? (eventLinks.get(link).has('btt') ? 'BTT' : 'Estrada') : ''), ambito:getAmbito(title, '', '', 'Recorde Pessoal'),
                     id: `recordepessoal-${link.split('/').pop()}-${cleanDate.replace(/ /g, '-')}`.toLowerCase(),
                     title,
                     date: cleanDate,
@@ -86,13 +96,14 @@ export async function scrapeRecordePessoal(options = {}) {
                     link,
                 };
 
-                if (years.includes(new Date(sortDateStr).getFullYear().toString())) {
+                if (years.some(value=>value>=parsed.sortDate.getUTCFullYear().toString()&&value<=parsed.endDate.slice(0,4))) {
                     await saveOrMergeEvent(prisma, eventObj, { ...options, verifiedSource: 'Recorde Pessoal' });
                     allEvents.push(eventObj);
-                }
+                    audit.resolve(link,'saved');
+                } else audit.resolve(link,'outsideYears');
 
             } catch(e) {
-                logError('SCRAPER', `Erro a processar prova Recorde Pessoal (${link}): ${e.message}`);
+                await audit.fail(link,e.message);
                 if (e.retryable === false) throw e;
             }
         }
@@ -100,8 +111,10 @@ export async function scrapeRecordePessoal(options = {}) {
         return allEvents.length;
 
     } catch (e) {
-        logError('SCRAPER', `Falha ao sincronizar Recorde Pessoal: ${e.message}`);
+        await logError('SCRAPER', `Falha ao sincronizar Recorde Pessoal: ${e.message}`);
         throw e;
+    } finally {
+        await audit.finish();
     }
 }
 

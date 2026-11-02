@@ -1,4 +1,4 @@
-import { hasNationalChampionshipTitle, isOfficialNationalChampionship } from '../../utils/eventClassifier.js';
+import { hasNationalChampionshipTitle, isOfficialNationalChampionship, getEventDisciplineFamilies } from '../../utils/eventClassifier.js';
 
 /**
  * Utilitários de normalização e comparação de eventos desportivos entre fontes (FPC, Cabreira, StopAndGo, etc.)
@@ -58,6 +58,12 @@ export function calculateTokenSimilarity(str1, str2) {
     return Math.min(1, Math.max(0, similarity));
 }
 
+export function hasIncompatibleDisciplines(a,b) {
+    const sports=event=>getEventDisciplineFamilies(event).filter(value=>!['Passeio / Lazer','Outros'].includes(value));
+    const first=sports(a),second=sports(b);
+    return first.length>0&&second.length>0&&!first.some(value=>second.includes(value));
+}
+
 /**
  * Verifica se dois eventos representam a mesma prova no mundo real
  */
@@ -67,6 +73,8 @@ export function isSameEvent(existingEvent, candidateEvent) {
 
     // 1. Verificação de ID direto
     if (existingEvent.id === candidateEvent.id) return true;
+    if(existingEvent.sortDate&&candidateEvent.sortDate&&
+        new Date(existingEvent.sortDate).getUTCFullYear()!==new Date(candidateEvent.sortDate).getUTCFullYear())return false;
 
     // A spelling-only correction must not duplicate the same official cup round.
     // Keep round numbers, categories, exact day and venue; never use fuzzy FPC matches.
@@ -90,16 +98,20 @@ export function isSameEvent(existingEvent, candidateEvent) {
             // An organizer can rename an open ride already combined with FPC.
             // The exact dated source event page is stronger than fuzzy names;
             // two separate FPC rows were already rejected immediately above.
-            const page = event => {
-                try {
-                    const url=new URL(event.link);
+            const pages = event => {
+                let extras=event.extraLinks||[];
+                if(typeof extras==='string'){try{extras=JSON.parse(extras);}catch{extras=[];}}
+                return [event.link,...(Array.isArray(extras)?extras.map(item=>item?.link):[])].flatMap(link=>{try {
+                    const url=new URL(link);
                     const host=url.hostname.replace(/^www\./,'');
-                    if (!['stopandgo.net','cabreirasolutions.com','apedalar.pt','recordepessoal.pt'].includes(host) || !/^\/(?:events|eventos?)\/[^/]+\/?$/.test(url.pathname)) return null;
-                    return host+url.pathname.replace(/\/$/,'');
-                } catch {return null;}
+                    const path=url.pathname.replace('/eventos/info/','/eventos/');
+                    if (!['stopandgo.net','cabreirasolutions.com','apedalar.pt','recordepessoal.pt'].includes(host) || !/^\/(?:events|eventos?)\/[^/]+\/?$/.test(path)) return [];
+                    return [host+path.replace(/\/$/,'')];
+                } catch {return [];}});
             };
             const day=event=>event.sortDate&&Number.isFinite(new Date(event.sortDate).getTime())?new Date(event.sortDate).toISOString().slice(0,10):null;
-            const linkedRide=existingEvent.ambito==='Prova Aberta'&&candidateEvent.ambito==='Prova Aberta'&&page(existingEvent)&&page(existingEvent)===page(candidateEvent)&&day(existingEvent)&&day(existingEvent)===day(candidateEvent);
+            const firstPages=pages(existingEvent),secondPages=pages(candidateEvent);
+            const linkedRide=existingEvent.ambito==='Prova Aberta'&&candidateEvent.ambito==='Prova Aberta'&&firstPages.some(page=>secondPages.includes(page))&&day(existingEvent)&&day(existingEvent)===day(candidateEvent);
             if (!linkedRide) return false;
             return true;
         }
@@ -116,6 +128,7 @@ export function isSameEvent(existingEvent, candidateEvent) {
     }
 
     // 3. Campeonatos vs Taças: NUNCA fundir um Campeonato Nacional com uma Taça de Portugal
+    if(hasIncompatibleDisciplines(existingEvent,candidateEvent))return false;
     const t1 = (existingEvent.title || '').toLowerCase();
     const t2 = (candidateEvent.title || '').toLowerCase();
     const isCamp1 = t1.includes('campeonato') || existingEvent.ambito === 'Campeonato Nacional';

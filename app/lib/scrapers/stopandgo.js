@@ -1,17 +1,18 @@
 import { assertMinimalCollectionEnabled } from '../contentReleasePolicy.js';
 import * as cheerio from 'cheerio';
 import { prisma } from '../db.js';
-import { toTitleCase, parsePTDateToISO, getAmbito, getTag } from './utils.js';
+import { toTitleCase, getAmbito, getTag } from './utils.js';
 import { logInfo, logError } from '../logger.js';
 import { saveOrMergeEvent } from '../merging/eventMerger.js';
-import { CYCLING_MODALITIES, readStopAndGoHeader, stopAndGoEventUrl } from './stopandgoParser.js';
+import { readStopAndGoHeader, stopAndGoEventUrl } from './stopandgoParser.js';
 import { fetchStopAndGoCyclingLinks } from './stopandgoListing.js';
 import { parseRegistrationDates } from '../../utils/registrationDates.js';
 import { detectRaceDate } from '../../utils/detectRaceDate.js';
 import { assertSourceAccess, SOURCE_USER_AGENT } from './sourceAccess.js';
+import {fetchSitemapUrls} from './sitemapDiscovery.js';
+import {createCollectionAudit,settleSourceBatch} from './collectionAudit.js';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
-const NON_CYCLING = ['atletismo', 'trail', 'tt', 'skyrunning', 'urban trail', 'triathlon', 'triatlo', 'canoagem', 'natacao', 'trichallenge', 'caminhada', 'multisport', 'obstaculos'];
 
 export const deepScrapeStopAndGo = async (url, existingHtml = null) => {
     let opensAt = null, closesAt = null;
@@ -41,44 +42,33 @@ export const deepScrapeStopAndGo = async (url, existingHtml = null) => {
 
 export const scrapeStopAndGo = async (options = {}) => {
     assertMinimalCollectionEnabled("Stop and Go");
+    const audit=createCollectionAudit('Stop and Go',options,{logInfo,logError});
     let processedCount = 0;
     try {
-        logInfo('SCRAPER', 'Início da sincronização Stop and Go (sitemap.xml + abas Downhill, Gravel, BTT, Estrada)');
-
-        const res = await fetch('https://stopandgo.net/sitemap.xml', {
-            headers: { 'User-Agent': SOURCE_USER_AGENT },
-            signal: AbortSignal.timeout(8000)
-        });
-        assertSourceAccess(res, 'Stop and Go');
-        if (!res.ok) throw new Error(`Falha no sitemap.xml: HTTP ${res.status}`);
-        const xml = await res.text();
-        if (!/<(?:\w+:)?urlset[\s>]/i.test(xml)) throw new Error('Stop and Go: sitemap de eventos não reconhecido; recolha incompleta');
-        const $ = cheerio.load(xml, { xmlMode: true });
-
-        const sitemapUrls = [];
-        $('url loc').each((_, el) => {
-            const u = $(el).text();
-            if (u.includes('/events/') && !u.includes('/results')) {
-                const canonical = stopAndGoEventUrl(u); if (canonical) sitemapUrls.push(canonical);
-            }
-        });
+        await logInfo('SCRAPER', 'Início da sincronização Stop and Go (sitemap.xml + modalidades de ciclismo)');
+        let sitemapUrls=new Set();
+        try {sitemapUrls=await fetchSitemapUrls('https://stopandgo.net/sitemap.xml',{source:'Stop and Go',eventUrl:stopAndGoEventUrl,onError:error=>logError('SCRAPER',`Stop and Go: ${error.message}`)});}
+        catch(error){if(error.retryable===false)throw error;await logError('SCRAPER',`Stop and Go: ${error.message}`);}
 
         let cyclingListingUrls = new Set();
-        try { cyclingListingUrls = await fetchStopAndGoCyclingLinks(); }
+        try { cyclingListingUrls = await fetchStopAndGoCyclingLinks(fetch,{onError:error=>logError('SCRAPER',error.message)}); }
         catch (error) { if (error.retryable === false) throw error; await logError('SCRAPER', error.message); }
         
         const CYCLING_TERMS = ['btt', 'gravel', 'downhill', 'cycling', 'bike', 'granfondo', 'grandfondo', 'racenature', 'maratona', 'resistencia', 'raid', 'xcm', 'xco', 'dhi', 'dhu', 'ciclocrosse', 'ciclismo'];
-        const years = [new Date().getFullYear(),new Date().getFullYear()+1].map(String);
+        const years = (options.years || [new Date().getFullYear(),new Date().getFullYear()+1]).map(String);
         const targetUrls = [...new Set([...sitemapUrls,...cyclingListingUrls])].filter(u => {
             const lower = u.toLowerCase();
             const hasExplicitYear = years.some(year => lower.includes(year));
             const isCycling = CYCLING_TERMS.some(term => lower.includes(term));
-            const isExcluded = NON_CYCLING.some(kw => lower.includes(kw) && !CYCLING_TERMS.some(term => lower.includes(term)));
-            return (cyclingListingUrls.has(u) || (hasExplicitYear && isCycling && !isExcluded));
+            const hasYear=/\b20\d{2}\b/.test(lower.replace(/[_-]/g,' '));
+            // Current-year neutral slugs and yearless cycling pages need their
+            // factual header checked, rather than exclusion by URL wording.
+            return cyclingListingUrls.has(u) || hasExplicitYear || (!hasYear && isCycling);
         });
 
         const urlsToScrape = targetUrls;
-        logInfo('SCRAPER', `Stop and Go: ${urlsToScrape.length} cabeçalhos de provas a validar...`);
+        audit.discover(urlsToScrape);
+        await logInfo('SCRAPER', `Stop and Go: ${urlsToScrape.length} cabeçalhos de provas a validar...`);
 
         const BATCH_SIZE = 4;
         const todayZero = new Date();
@@ -86,7 +76,7 @@ export const scrapeStopAndGo = async (options = {}) => {
 
         for (let i = 0; i < urlsToScrape.length; i += BATCH_SIZE) {
             const batchUrls = urlsToScrape.slice(i, i + BATCH_SIZE);
-            await Promise.all(batchUrls.map(async (url) => {
+            await settleSourceBatch(batchUrls,async (url) => {
                 try {
                     let header = null;
                     let eventHtml = null;
@@ -101,20 +91,20 @@ export const scrapeStopAndGo = async (options = {}) => {
                                 break;
                             }
                             assertSourceAccess(evtRes, 'Stop and Go');
-                            if (evtRes.status === 404) break;
+                            if ([404,410].includes(evtRes.status)) {audit.resolve(url,'unavailable');return;}
                         } catch(e) { if (e.code === 'SOURCE_ACCESS_DENIED') throw e; }
                         await delay(500);
                     }
                     
                     if (!header || !header.knownModality || (header.cycling && !header.sortDate)) {
-                        await logError('SCRAPER', `Stop and Go: cabeçalho/modalidade/data não reconhecidos em ${url}`);
+                        await audit.fail(url,'cabeçalho/modalidade/data não reconhecidos');
                         return;
                     }
-                    if (!header.cycling) return;
+                    if (!header.cycling) {audit.resolve(url,'nonCycling');return;}
                     
                     const raceDates = detectRaceDate({ date: header.date, sortDate: header.sortDate });
                     const effectiveEnd = raceDates?.raceEndDateISO ? new Date(raceDates.raceEndDateISO + 'T23:59:59.999Z') : new Date(header.sortDate);
-                    if (effectiveEnd < todayZero) return; // ONLY PROCESS FUTURE OR ONGOING EVENTS
+                    if (effectiveEnd < todayZero) {audit.resolve(url,'past');return;}
 
                     const slug = url.split('/').filter(Boolean).pop();
                     const id = 'stopandgo-' + slug;
@@ -135,11 +125,12 @@ export const scrapeStopAndGo = async (options = {}) => {
 
                     await saveOrMergeEvent(prisma, { id, ...eventData }, { ...options, verifiedSource: 'Stop and Go' });
                     processedCount++;
+                    audit.resolve(url,'saved');
                 } catch (err) {
-                    await logError('SCRAPER', `Erro a processar Stop and Go url ${url}: ${err.message}`);
+                    await audit.fail(url,err.message);
                     if (err.code === 'SOURCE_ACCESS_DENIED') throw err;
                 }
-            }));
+            });
             await delay(1000); // Polite delay between batches
         }
 
@@ -148,5 +139,7 @@ export const scrapeStopAndGo = async (options = {}) => {
     } catch (err) {
         await logError('SCRAPER', `Erro no scraping Stop and Go: ${err.message}`, err);
         throw err;
+    } finally {
+        await audit.finish();
     }
 };

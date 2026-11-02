@@ -21,6 +21,7 @@ export function categoryStatus(event) {
 
 export function mergeCategoryEvidence(existing, incoming, incomingSource) {
     const a=categoryStatus({categoryEvidence:existing}), b=categoryStatus({categoryEvidence:incoming});
+    if(a.status==='published'&&a.source==='FPC'&&incomingSource!=='FPC')return existing;
     if(b.status==='published')return incoming;
     // A source may remove/replace its published categories. Do not retain stale
     // confirmation for that same source; another source's evidence can remain.

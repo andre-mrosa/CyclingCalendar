@@ -16,6 +16,12 @@ export function sourceQualityMetrics(events) {
 export function qualityIssues(metrics,previous,partial=false) {
     const issues=[];
     if(partial)issues.push({code:'partial',severity:'error',value:1});
+    const coverage=metrics.coverage;
+    if(coverage){
+        if(coverage.failed||coverage.unresolved)issues.push({code:'unreadCandidates',severity:'error',value:coverage.failed+coverage.unresolved});
+        if(coverage.unavailable)issues.push({code:'unavailablePages',severity:'warning',value:coverage.unavailable});
+        if(previous?.coverage?.discovered>=5&&coverage.discovered<previous.coverage.discovered*0.5)issues.push({code:'discovery_drop',severity:'warning',value:coverage.discovered,previous:previous.coverage.discovered});
+    }
     if(previous?.processed>=5&&metrics.processed<previous.processed*0.5)issues.push({code:'volume_drop',severity:'warning',value:metrics.processed,previous:previous.processed});
     for(const code of ['unknownDiscipline','invalidDates','duplicatePages'])if(metrics[code]>0)issues.push({code,severity:'warning',value:metrics[code]});
     // Missing age categories are common in listings: surface the count without
@@ -23,13 +29,14 @@ export function qualityIssues(metrics,previous,partial=false) {
     if(metrics.unknownCategories)issues.push({code:'unknownCategories',severity:'info',value:metrics.unknownCategories});
     return issues;
 }
-export async function recordSourceQuality({db,source,year,runId,startedAt,partial=false}) {
+export async function recordSourceQuality({db,source,year,runId,startedAt,partial=false,coverage}) {
     const scopeKey=source+':'+(year||'active');
     const [events,previous]=await Promise.all([
         db.event.findMany({where:{lastVerifiedSource:source,lastVerifiedAt:{gte:startedAt},...(year?{sortDate:{gte:new Date(year+'-01-01'),lt:new Date((Number(year)+1)+'-01-01')}}:{})},select:{id:true,tag:true,date:true,sortDate:true,categoryEvidence:true,link:true}}),
         db.sourceQualitySnapshot.findFirst({where:{scopeKey},orderBy:{createdAt:'desc'}}),
     ]);
     const metrics=sourceQualityMetrics(events);
+    if(coverage)metrics.coverage=coverage;
     const issues=qualityIssues(metrics,previous?.metrics,partial);
     const result=await db.sourceQualitySnapshot.create({data:{scopeKey,source,runId,metrics,issues}});
     return result;

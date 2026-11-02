@@ -35,7 +35,8 @@ async function runPipeline(triggeredBy, options) {
     const currentYear = now.getFullYear();
     // By owner request, we only process current and future events to save resources
     const historical = false; 
-    const years = [currentYear.toString(), (currentYear + 1).toString()];
+    const years = options.years || [currentYear.toString(), (currentYear + 1).toString()];
+    if (!Array.isArray(years) || !years.length || !years.every(year=>/^\d{4}$/.test(year))) throw new Error('Épocas de sincronização inválidas');
 
     const scope = VALID_SCOPES.has(options.scope) ? options.scope : 'manual';
     const pipelineStages = getPipelineStages(scope, years);
@@ -91,7 +92,7 @@ async function runPipeline(triggeredBy, options) {
                     if (target.count % 25 === 0) await logInfo('SCRAPER', `${name}: ${target.count} provas processadas.`, snapshot('stage-progress'));
                 };
                 try {
-                    const count = await work({ onResult }, target);
+                    const count = await work({ onResult, onCoverage:coverage=>{target.coverage=coverage;} }, target);
                     target.count = source ? target.metrics.processed : (Number.isFinite(count) ? count : null);
                     if (target.status !== 'error') {
                         target.status = 'done';
@@ -103,7 +104,7 @@ async function runPipeline(triggeredBy, options) {
                 }
                 target.duration = `${((Date.now() - started) / 1000).toFixed(1)}s`;
                 if(source&&prisma.sourceQualitySnapshot){
-                    try {await recordSourceQuality({db:prisma,source:{fpc:'FPC',cabreira:'Cabreira',stopandgo:'Stop and Go',recordepessoal:'Recorde Pessoal',apedalar:'Apedalar'}[id]||name,year:id==='fpc'?years.find(year=>pipelineStage==='fpc-'+year):null,runId,startedAt:new Date(started),partial:target.status==='error'});}
+                    try {await recordSourceQuality({db:prisma,source:{fpc:'FPC',cabreira:'Cabreira',stopandgo:'Stop and Go',recordepessoal:'Recorde Pessoal',apedalar:'Apedalar'}[id]||name,year:id==='fpc'?years.find(year=>pipelineStage==='fpc-'+year):null,runId,startedAt:new Date(started),partial:target.status==='error',coverage:target.coverage});}
                     catch {await logInfo('SCRAPER',`${name}: controlo de qualidade indisponível.`,{event:'quality-unavailable',sourceId:id});}
                 }
                 await logInfo('SCRAPER', `${name}: ${target.status === 'error' ? 'concluído com erros' : 'concluído'} em ${target.duration}.`, snapshot('stage-complete'));
@@ -116,7 +117,7 @@ async function runPipeline(triggeredBy, options) {
                     await stage('cabreira', 'Cabreira', true, saveOptions => scrapeCabreira(null, saveOptions));
                     break;
                 case 'stopandgo':
-                    await stage('stopandgo', 'Stop and Go', true, saveOptions => scrapeStopAndGo(saveOptions));
+                    await stage('stopandgo', 'Stop and Go', true, saveOptions => scrapeStopAndGo({years,...saveOptions}));
                     break;
                 case 'recordepessoal':
                     await stage('recordepessoal', 'Recorde Pessoal', true, saveOptions => scrapeRecordePessoal({ years, ...saveOptions }));
@@ -157,7 +158,7 @@ async function runPipeline(triggeredBy, options) {
             // page, or retry an explicit access refusal in the same run.
             const sourceStates = Object.values(stats.sources);
             const retrying = failed && attempt < 3 && !sourceStates.some(target =>
-                target.retryable === false || target.metrics.processed > 0);
+                target.retryable === false || target.metrics.processed > 0 || target.coverage?.discovered > 0);
             const stageIndex = pipelineStages.indexOf(pipelineStage);
             const nextStage = retrying
                 ? pipelineStage

@@ -7,32 +7,24 @@ import { isCyclingCandidate } from './cyclingEvidence.js';
 import { assertSourceAccess, SOURCE_USER_AGENT } from './sourceAccess.js';
 import { parsePublishedRaceDate } from './publishedDates.js';
 import {categoryOptions} from './publishedCategories.js';
+import {fetchSitemapUrls} from './sitemapDiscovery.js';
+import {createCollectionAudit} from './collectionAudit.js';
 
 const BASE_URL = 'https://apedalar.pt';
 
 export async function scrapeApedalar(prisma, year, options = {}) {
     const years = (Array.isArray(year) ? year : [year]).map(String);
     assertMinimalCollectionEnabled("Apedalar");
-    logInfo('SCRAPER', 'Início da sincronização Apedalar');
+    const audit=createCollectionAudit('Apedalar',options,{logInfo,logError});
+    await logInfo('SCRAPER', 'Início da sincronização Apedalar');
 
     try {
-        const sitemapRes = await fetch(`${BASE_URL}/sitemap.xml`, {
-            headers: { 'User-Agent': SOURCE_USER_AGENT }, signal:AbortSignal.timeout(15000)
-        });
-
-        assertSourceAccess(sitemapRes, 'Apedalar');
-        if (!sitemapRes.ok) throw new Error(`HTTP ${sitemapRes.status}`);
-
-        const sitemapText = await sitemapRes.text();
-        if (!/<(?:\w+:)?urlset[\s>]/i.test(sitemapText)) throw new Error('Apedalar: sitemap de eventos não reconhecido; recolha incompleta');
-        const urls = new Set();
-        const regex = /<loc>(https:\/\/apedalar\.pt\/eventos\/[^<]+)<\/loc>/g;
-        let match;
-        while ((match = regex.exec(sitemapText)) !== null) {
-            urls.add(match[1]);
-        }
-
-        logInfo('SCRAPER', `Encontrados ${urls.size} eventos no sitemap da Apedalar`);
+        const urls = await fetchSitemapUrls(`${BASE_URL}/sitemap.xml`,{source:'Apedalar',onError:error=>logError('SCRAPER',`Apedalar: ${error.message}`),eventUrl:value=>{
+            const url=new URL(value); return /^\/eventos\/(?:info\/)?[^/]+\/?$/.test(url.pathname)?url.href:null;
+        }});
+        if (!urls.size) throw new Error('Apedalar: sitemap sem páginas de provas; confirmar estrutura');
+        audit.discover(urls);
+        await logInfo('SCRAPER', `Encontrados ${urls.size} eventos no sitemap da Apedalar`);
 
         for (const url of urls) {
             try {
@@ -45,7 +37,8 @@ export async function scrapeApedalar(prisma, year, options = {}) {
 
                 assertSourceAccess(eventRes, 'Apedalar');
                 if (!eventRes.ok) {
-                    if (eventRes.status !== 404 && eventRes.status !== 410) await logError('SCRAPER', `Apedalar: HTTP ${eventRes.status} em ${url}`);
+                    if ([404,410].includes(eventRes.status)) audit.resolve(url,'unavailable');
+                    else await audit.fail(url,`HTTP ${eventRes.status}`);
                     continue;
                 }
 
@@ -53,16 +46,16 @@ export async function scrapeApedalar(prisma, year, options = {}) {
                 const $ = cheerio.load(html);
 
                 const title = $('h1').first().text().trim();
-                if (!title) continue;
+                if (!title) {await audit.fail(url,'título não reconhecido');continue;}
+                if (!isCyclingEvent(title, true)) {audit.resolve(url,'nonCycling');continue;}
 
                 // Archived/result layouts can omit QUANDO but still publish
                 // the precise event date in their own Open Graph date label.
                 const rawDate = $('h2:contains("QUANDO?")').next('div').text().trim() || $('meta[property="og:description"]').attr('content') || '';
-                if (!rawDate || !years.some(value => rawDate.includes(value))) continue;
-
                 const parsed = parsePublishedRaceDate(rawDate);
-                if (!parsed) continue;
-                if (parsed.endDate < new Date().toISOString().slice(0,10)) continue;
+                if (!parsed) {await audit.fail(url,'data não reconhecida');continue;}
+                if (parsed.endDate < new Date().toISOString().slice(0,10)) {audit.resolve(url,'past');continue;}
+                if (!years.some(value=>value>=parsed.sortDate.getUTCFullYear().toString()&&value<=parsed.endDate.slice(0,4))) {audit.resolve(url,'outsideYears');continue;}
                 const {date,sortDate} = parsed;
                 const [yearStr,month,day] = sortDate.toISOString().slice(0,10).split('-');
 
@@ -83,9 +76,10 @@ export async function scrapeApedalar(prisma, year, options = {}) {
                 if (!isCyclingEvent(title, true)) continue;
 
                 await saveOrMergeEvent(prisma, eventObj, { ...options, verifiedSource: 'Apedalar' });
+                audit.resolve(url,'saved');
 
             } catch (err) {
-                await logError('SCRAPER', `Erro a processar Apedalar ${url}: ${err.message}`);
+                await audit.fail(url,err.message);
                 if (err.retryable === false) throw err;
             }
         }
@@ -93,6 +87,8 @@ export async function scrapeApedalar(prisma, year, options = {}) {
     } catch (e) {
         await logError('SCRAPER', 'Falha crítica em Apedalar: ' + e.message);
         throw e;
+    } finally {
+        await audit.finish();
     }
 }
 

@@ -9,6 +9,7 @@ import { originalEventUrl } from '../publicEvent.js';
 import { getEventDiscipline, getEventCategories, publishedEventCategories } from '../../utils/eventClassifier.js';
 import { getAmbito } from './utils.js';
 import { assertSourceAccess, SOURCE_USER_AGENT } from './sourceAccess.js';
+import {createCollectionAudit} from './collectionAudit.js';
 
 export const fetchFPCCalendar = async (year) => {
         year = String(year);
@@ -40,10 +41,13 @@ export const fetchFPCCalendar = async (year) => {
                 await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
             }
         }
-        return parseFPCCalendar(html, year);
+        const rejectedRows=[];
+        const events=parseFPCCalendar(html, year, {onInvalidRow:message=>rejectedRows.push(message)});
+        Object.defineProperty(events,'rejectedRows',{value:rejectedRows});
+        return events;
 };
 
-export const parseFPCCalendar = (html, year) => {
+export const parseFPCCalendar = (html, year, {onInvalidRow} = {}) => {
         const $ = cheerio.load(html);
         for (const [field, expected] of Object.entries({ epoca_site: String(year), mes_de_new: '01', mes_ate_new: '12' })) {
             if ($(`select[name="${field}"]`).val() !== expected) {
@@ -72,7 +76,10 @@ export const parseFPCCalendar = (html, year) => {
                     const parts = dateText.split('-');
                     if (parts[2] !== String(year)) throw new Error(`Época incorreta na linha FPC: ${dateText}`);
                     const sortDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00Z`);
-                    if (Number.isNaN(sortDate.getTime()) || sortDate.getUTCDate() !== Number(parts[0]) || sortDate.getUTCMonth()+1 !== Number(parts[1])) throw new Error(`Data FPC inválida: ${dateText}`);
+                    if (Number.isNaN(sortDate.getTime()) || sortDate.getUTCDate() !== Number(parts[0]) || sortDate.getUTCMonth()+1 !== Number(parts[1])) {
+                        const message=`Data FPC inválida: ${dateText} (${nameText})`;
+                        if(!onInvalidRow)throw new Error(message);onInvalidRow(message);continue;
+                    }
                     const months = {'01':'JAN', '02':'FEV', '03':'MAR', '04':'ABR', '05':'MAI', '06':'JUN', '07':'JUL', '08':'AGO', '09':'SET', '10':'OUT', '11':'NOV', '12':'DEZ'};
                     if (parts.length === 3) dateText = `${parts[0]} ${months[parts[1]] || parts[1]} ${parts[2]}`;
                     if (endDateText && endDateText !== $(ths[0]).text().trim() && endDateText.length > 2) {
@@ -120,6 +127,9 @@ export const parseFPCCalendar = (html, year) => {
                     };
 
                     events.set(id, { id, ...eventData });
+                } else if (nameText) {
+                    const message=`Linha FPC sem data reconhecida: ${nameText}`;
+                    if(!onInvalidRow)throw new Error(message);onInvalidRow(message);
                 }
             }
         }
@@ -129,9 +139,14 @@ export const parseFPCCalendar = (html, year) => {
 
 export const scrapeFPC = async (year, options = {}) => {
     assertMinimalCollectionEnabled("FPC");
+    const audit=createCollectionAudit('FPC',options,{logInfo,logError});
     try {
         await logInfo('SCRAPER', `FPC ${year}: a recolher janeiro a dezembro`);
         const events = await fetchFPCCalendar(year);
+        audit.discover(events.map(event=>event.id));
+        for(const [index,message] of (events.rejectedRows||[]).entries()) {
+            const key=`FPC ${year}: linha inválida ${index+1}`;audit.discover([key]);await audit.fail(key,message);
+        }
         const todayZero = new Date();
         todayZero.setHours(0,0,0,0);
         let processed = 0;
@@ -139,8 +154,10 @@ export const scrapeFPC = async (year, options = {}) => {
             // ONLY PROCESS FUTURE OR ONGOING EVENTS
             const raceDates = detectRaceDate(event);
             const effectiveEnd = raceDates?.raceEndDateISO ? new Date(raceDates.raceEndDateISO + 'T23:59:59.999Z') : event.sortDate;
-            if (effectiveEnd < todayZero) continue;
+            if (!raceDates) {await audit.fail(event.id,'intervalo de datas inválido');continue;}
+            if (effectiveEnd < todayZero) {audit.resolve(event.id,'past');continue;}
             await saveOrMergeEvent(prisma, event, { ...options, verifiedSource: 'FPC' });
+            audit.resolve(event.id,'saved');
             processed++;
         }
         await logInfo('SCRAPER', `Sincronização FPC ${year} concluída (${processed} provas futuras processadas)`);
@@ -148,5 +165,7 @@ export const scrapeFPC = async (year, options = {}) => {
     } catch (e) {
         await logError('SCRAPER', `Erro no scraping FPC ${year}: ${e.message}`, e);
         throw e;
+    } finally {
+        await audit.finish();
     }
 }

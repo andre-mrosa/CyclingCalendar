@@ -26,9 +26,9 @@ export function readStopAndGoListing(html, filtered = false, pageUrl = 'https://
             url.hash='';url.searchParams.sort();pages.push(url.href);
         } catch { /* Ignore unrelated or malformed navigation. */ }
     }
-    return { modalities:[...new Set(modalities)], urls:[...urls], pages:[...new Set(pages)] };
+    return { modalities:[...new Set(modalities)], urls:[...urls], pages:[...new Set(pages)], recognized:!!($('select[name="modality"]').length||urls.size||pages.length) };
 }
-export async function fetchStopAndGoCyclingLinks(fetcher = fetch) {
+export async function fetchStopAndGoCyclingLinks(fetcher = fetch, options = {}) {
     const read = async url => {
         const response = await fetcher(url, { headers:{'User-Agent':SOURCE_USER_AGENT}, signal:AbortSignal.timeout(10000) });
         assertSourceAccess(response, 'Stop and Go');
@@ -39,19 +39,25 @@ export async function fetchStopAndGoCyclingLinks(fetcher = fetch) {
     if (!first.modalities.length) throw new Error('Modalidades da listagem Stop and Go não confirmadas');
     const urls = new Set(first.urls);
     for (const modality of first.modalities) {
-        const queue = [`https://stopandgo.net/events?modality=${modality}&status=S`];
-        const visited = new Set();
-        while (queue.length && visited.size < 50) {
-            const url = queue.shift(); if (visited.has(url)) continue; visited.add(url);
-            await new Promise(resolve => setTimeout(resolve,250));
-            const page = readStopAndGoListing(await read(url), true, url);
-            for (const event of page.urls) urls.add(event);
-            for (const href of page.pages) {
-                const candidate = new URL(href, url);
-                if (candidate.searchParams.get('modality') === modality && candidate.searchParams.get('status') === 'S' && !visited.has(candidate.href)) queue.push(candidate.href);
+        try {
+            const queue = [`https://stopandgo.net/events?modality=${modality}&status=S`];
+            const visited = new Set();
+            while (queue.length && visited.size < 50) {
+                const url = queue.shift(); if (visited.has(url)) continue; visited.add(url);
+                await new Promise(resolve => setTimeout(resolve,250));
+                const page = readStopAndGoListing(await read(url), true, url);
+                if(!page.recognized)throw new Error('Stop and Go: listagem não reconhecida; recolha incompleta');
+                for (const event of page.urls) urls.add(event);
+                for (const href of page.pages) {
+                    const candidate = new URL(href, url);
+                    if (candidate.searchParams.get('modality') === modality && candidate.searchParams.get('status') === 'S' && !visited.has(candidate.href)) queue.push(candidate.href);
+                }
             }
+            if (queue.some(url => !visited.has(url))) throw new Error('Stop and Go: limite de paginação atingido; listagem incompleta');
+        } catch(error) {
+            if(error.retryable===false||!options.onError)throw error;
+            await options.onError(error);
         }
-        if (queue.some(url => !visited.has(url))) throw new Error('Stop and Go: limite de paginação atingido; listagem incompleta');
     }
     return urls;
 }

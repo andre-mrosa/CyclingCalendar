@@ -1,5 +1,5 @@
 import { getEventDiscipline } from './eventClassifier.js';
-import { isSameEvent } from '../lib/merging/eventMatcher.js';
+import { isSameEvent, hasIncompatibleDisciplines } from '../lib/merging/eventMatcher.js';
 import { normalizeText } from '../lib/merging/eventMatcher.js';
 import { getPreferredEventLink } from '../lib/publicEvent.js';
 import {categoryStatus} from './categoryEvidence.js';
@@ -7,6 +7,7 @@ import {categoryStatus} from './categoryEvidence.js';
 // Already aggregated sources may contain FPC without being an original FPC row.
 // Allow only exact open-ride identities at the same location in that case.
 function sameOpenRide(a, b) {
+    if(hasIncompatibleDisciplines(a,b))return false;
     if (a.ambito !== 'Prova Aberta' || b.ambito !== 'Prova Aberta') return false;
     if (a.id?.startsWith('fpc-') && b.id?.startsWith('fpc-')) return false;
     if ([a, b].some(e => e.source?.includes('Quarentena'))) return false;

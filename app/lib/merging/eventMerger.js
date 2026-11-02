@@ -319,13 +319,15 @@ function mergeMinimalClassification(existing, incoming) {
     const incomingOfficial = incoming.source === 'FPC';
     const existingOfficial = (existing.source || '').split(',').some(source => source.trim() === 'FPC');
     const facts = Object.fromEntries(Object.entries(minimalClassification(incoming)).filter(([key]) =>
-        incomingOfficial || !existingOfficial || !existing[key]));
+        key.startsWith('registration') || incomingOfficial || !existingOfficial || !existing[key]));
     const evidence=mergeCategoryEvidence(existing.categoryEvidence,incoming.categoryEvidence,incoming.source);
     if(evidence)facts.categoryEvidence=evidence;
     else if(existing.categoryEvidence)facts.categoryEvidence=Prisma.DbNull;
     // Recollection must also remove obsolete guesses when current evidence is unknown.
     if (incomingOfficial || !existingOfficial) {
         for (const field of ['tag', 'ambito']) if (!incoming[field]) facts[field] = null;
+        const sameSource=(existing.source||'').split(',').some(source=>source.trim()===incoming.source);
+        if((incomingOfficial||sameSource)&&!incoming.escaloes)facts.escaloes='[]';
     }
     if (facts.escaloes && existing.escaloes) {
         let before = []; try { before = JSON.parse(existing.escaloes); } catch {}
@@ -465,7 +467,7 @@ function sourcePageIdentity(event) {
 
 export async function saveOrMergeEvent(prisma, eventData, options = {}) {
     eventData = toMinimalScrapedEvent(eventData);
-    if (!eventData) return null;
+    if (!eventData) throw new Error('Prova rejeitada pela validação mínima; recolha incompleta');
     const verification = options.verifiedSource ? { lastVerifiedAt: new Date(), lastVerifiedSource: options.verifiedSource } : {};
     // Report only settled database outcomes; telemetry must never turn a saved
     // event into a failed save or trigger a retry of that write.
@@ -478,6 +480,13 @@ export async function saveOrMergeEvent(prisma, eventData, options = {}) {
     let existingById = await prisma.event.findUnique({
         where: { id: eventData.id }
     });
+    // Some providers reuse a yearless slug (and thus the scraper ID) for the
+    // next edition. Never replace the previous edition or its favorites.
+    if(existingById&&!existingById.source?.includes('Quarentena')&&
+        new Date(existingById.sortDate).getUTCFullYear()!==eventData.sortDate.getUTCFullYear()) {
+        eventData={...eventData,id:`${eventData.id}-${eventData.sortDate.getUTCFullYear()}`};
+        existingById=await prisma.event.findUnique({where:{id:eventData.id}});
+    }
 
     // Several source IDs include the date/title. A postponement must update the
     // same source page even outside the fuzzy ±4-day window, retaining favorites.
