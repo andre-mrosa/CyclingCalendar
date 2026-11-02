@@ -10,6 +10,8 @@ const messages = {
     search_name: "Nome da pesquisa",
     search_save: "Guardar pesquisa",
     search_saved: "Pesquisa guardada.",
+    search_active: "Ativa",
+    search_active_name: "Pesquisa ativa: {name}",
     search_remove: "Eliminar",
     alerts_heading: "Alertas por email",
     alerts_description: "Um resumo diário, apenas quando há novidades nos favoritos sincronizados com a tua conta. Enviado para o teu email principal verificado.",

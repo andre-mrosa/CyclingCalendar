@@ -23,3 +23,8 @@
 
 .searchPanel { padding: 4px 14px; margin: 12px 0; }
 .searchPanel[open] { padding-bottom: 14px; }
+.panel .activeSearch { background: var(--site-accent-soft); border-color: var(--site-accent); color: var(--site-accent-strong); font-weight: 700; box-shadow: inset 0 0 0 1px var(--site-accent); }
+.activeSearchBadge { margin-left: 8px; font-size: .75rem; font-weight: 600; }
+.activeSearchSummary { display: inline-block; margin-left: 12px; color: var(--site-accent-strong); font-size: .8rem; font-weight: 600; }
+.activeSearchNotice { color: var(--site-accent-strong); font-weight: 600; }
+.activeSearchNotice:empty { display: none; }

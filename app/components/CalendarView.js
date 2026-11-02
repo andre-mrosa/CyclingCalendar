@@ -447,7 +447,7 @@ export default function CalendarView({
                     </div>
 
                 </div>
-                <SavedSearches filters={searchFilters} apply={applySearch} />
+                <SavedSearches filters={searchFilters} apply={applySearch} defaultPastEventsFilter={defaultPastEventsFilter} />
                 {/* Expanded controls preserve every existing filter. */}
                 <div id="calendar-quick-filters" className={styles.quickFilters} data-expanded={showFilters}>
                     <div className={styles.periods}>

@@ -10,6 +10,8 @@ const messages = {
     search_name: "Nom de la recherche",
     search_save: "Enregistrer la recherche",
     search_saved: "Recherche enregistrée.",
+    search_active: "Active",
+    search_active_name: "Recherche active : {name}",
     search_remove: "Supprimer",
     alerts_heading: "Alertes par e-mail",
     alerts_description: "Un résumé quotidien uniquement en cas de nouveautés dans les favoris synchronisés avec votre compte. Envoyé à votre adresse principale vérifiée.",

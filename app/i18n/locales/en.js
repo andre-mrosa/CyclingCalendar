@@ -10,6 +10,8 @@ const messages = {
     search_name: "Search name",
     search_save: "Save search",
     search_saved: "Search saved.",
+    search_active: "Active",
+    search_active_name: "Active search: {name}",
     search_remove: "Delete",
     alerts_heading: "Email alerts",
     alerts_description: "A daily digest, only when your account’s synced favourites have updates. Sent to your verified primary email.",

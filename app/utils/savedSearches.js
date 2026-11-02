@@ -37,3 +37,20 @@ export function searchUrl(href, filters) {
     url.searchParams.set('filters', JSON.stringify(normalizeSearch(filters)));
     return url.toString();
 }
+
+// Compare effective filters rather than object key order or selection order.
+export function savedSearchMatches(current, saved, defaultSources = CALENDAR_SOURCES, defaultPast = 'futuros') {
+    const comparable = value => {
+        const filters = normalizeSearch(value);
+        if (!filters) return null;
+        const defaults = {searchTerm:'', selectedAmbito:'Todos', selectedLicenca:'Todas', selectedRegiao:'Todas', selectedDistrito:'Todos', selectedType:'Todos', monthFrom:1, monthTo:12, pastEventsFilter:defaultPast, quickPeriod:'', selectedMonth:null, selectedDay:null, viewMode:'list'};
+        const result = Object.fromEntries(Object.entries(defaults).map(([key, fallback]) => [key, filters[key] ?? fallback]));
+        for (const key of lists) result[key] = [...(filters[key] || (key === 'sources' ? defaultSources : []))].sort();
+        result.includeUnknownCategories = filters.includeUnknownCategories;
+        result.maxDistanceFilter = filters.maxDistanceFilter;
+        result.origin = filters.origin ? {lat:filters.origin.lat,lng:filters.origin.lng} : null;
+        return JSON.stringify(result);
+    };
+    const left = comparable(current);
+    return left !== null && left === comparable(saved);
+}
