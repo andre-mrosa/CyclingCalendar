@@ -33,7 +33,7 @@ test('webhook fails closed without secret/signature and never erases on forged r
 
 test('erasure is transactionally scoped to the requested account and minimises the request record', async () => {
     const calls = [];
-    const tx = Object.fromEntries(['favoriteAlert', 'favoriteEditionPreference', 'favoritePushSubscription', 'searchAlert','organizerSubmission','analyticsSession', 'systemLog', 'accountDeletionRequest'].map(name => [name, {
+    const tx = Object.fromEntries(['favoriteAlert', 'favoriteEditionPreference', 'favoritePushSubscription', 'searchAlert','savedSearch','eventParticipation','favoriteChangePreference','organizerSubmission','analyticsSession', 'systemLog', 'accountDeletionRequest'].map(name => [name, {
         deleteMany: async arg => calls.push({ name, arg }),
         updateMany: async arg => calls.push({ name, arg }),
     }]));
@@ -41,7 +41,7 @@ test('erasure is transactionally scoped to the requested account and minimises t
     for (const id of [undefined, '', 'user_', 'someone']) await assert.rejects(() => eraseAccountActivity(db, id));
     assert.equal(calls.length, 0);
     await eraseAccountActivity(db, 'user_target');
-    assert.equal(calls.length, 9);
+    assert.equal(calls.length, 12);
     for (const { arg } of calls) assert.equal(arg.where.userId,'user_target');
     assert.deepEqual(calls.find(c=>c.name==='organizerSubmission'&&c.arg.data)?.arg.data,{userId:null,userEmail:null,organizerName:null,reviewNote:null});
     const request=calls.find(c=>c.name==='accountDeletionRequest').arg.data;

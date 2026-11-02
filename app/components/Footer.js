@@ -7,6 +7,7 @@ import { ArrowUpRight } from 'lucide-react';
 import DynamicLogo from './DynamicLogo';
 import styles from './site.module.css';
 import {trustText} from '../i18n/trustCopy';
+import {experienceText} from '../i18n/experienceCopy';
 
 export default function Footer() {
   const { t, language } = useTranslation();
@@ -21,6 +22,7 @@ export default function Footer() {
           </div>
           <div className={styles.footerLinks}>
             <Link prefetch={false} href="/ajuda">{t('nav_help')}</Link>
+            <Link prefetch={false} href="/calendarios">{experienceText(language,'explore')}</Link>
             <Link prefetch={false} href="/organizador">{trustText(language,'organizer')}</Link>
             <Link prefetch={false} href="/avisos">{trustText(language,'alerts')}</Link>
             <Link prefetch={false} href="/privacy-policy">{t('footer_privacy')}</Link>

@@ -41,6 +41,10 @@ Referências: [CNPD — obrigações e formulários](https://www.cnpd.pt/organiz
 
 ## Verificação periódica do responsável
 
+Desde 02/11/2026, as pesquisas guardadas podem ser sincronizadas na conta (até 20, sem coordenadas GPS), e os estados pessoais de participação são privados. Ambos são apagados por utilizador ou pela eliminação da atividade da conta no servidor. As cópias anteriores e caches do navegador têm conservação separada e podem ser eliminadas nas definições do navegador.
+
+Os novos avisos de alterações dos favoritos exigem uma ativação própria e expressa, com email principal verificado. Guardam a referência atual de factos publicados e o envio pendente necessário para evitar duplicados, até desativação/eliminação conforme os controlos do serviço. As antigas preferências suspensas não são reativadas nem reutilizadas como consentimento. O marcador diário desta tarefa expira após 30 dias. Os estados «Já estou inscrito» são declarações do utilizador e não fazem inscrições em organizações.
+
 Os avisos de pesquisa são opcionais e exigem consentimento explícito e email principal verificado. Guardam filtros públicos, IDs de resultados já avisados e o envio pendente necessário para evitar duplicados; não guardam localização GPS nem filtros de favoritos/agenda. Podem ser pausados ou eliminados em `/avisos` e são abrangidos pela eliminação da atividade da conta. Não ativar avisos em nome de utilizadores durante testes.
 
 As submissões de organizadores guardam os factos propostos, contacto da conta e revisão privada. Email verificado não comprova representação: a publicação exige revisão humana. Pendentes/rejeitadas expiram em 90 dias; nas aprovadas, contacto, identificação do representante e notas são anonimizados após 90 dias. Os factos públicos da prova podem permanecer. As métricas de qualidade por fonte expiram em 90 dias, e os marcadores diários de início dos avisos em 30 dias. A limpeza corre na finalização das sincronizações.

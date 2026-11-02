@@ -20,7 +20,10 @@ import { mergeEvents } from '../utils/mergeEvents';
 import { chooseCalendarEvents, toCalendarListEvent, sortCalendarEvents, filterCalendarByDate } from '../utils/calendarList';
 import { exportEventsToICS } from '../utils/exportCalendar';
 import SavedSearches from './SavedSearches';
+import SearchSuggestions from './SearchSuggestions';
 import EventTrust from './EventTrust';
+import EventParticipation from './EventParticipation';
+import FavoriteChangeControls from './FavoriteChangeControls';
 import {trustText} from '../i18n/trustCopy';
 import {SPECIFIC_CATEGORIES} from '../utils/categoryEvidence';
 
@@ -386,6 +389,7 @@ export default function CalendarView({
             <PageHeading title={pageTitle} subtitle={t('minimal_calendar_intro')} hero={hero} icon={filterByAgenda ? CalendarCheck : filterByFavorites ? Star : Calendar} />
             {pageIntro}
             {filterByFavorites && <FavoriteEditionControls preferences={editionPreferences} isSignedIn={isSignedIn} />}
+            {filterByFavorites && <FavoriteChangeControls />}
             <header className={styles.calendarControls} data-expanded={showFilters}>
                 {isOffline && (
                     <div className="mb-3.5 py-2 px-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs sm:text-sm font-medium flex items-center justify-center gap-2 animate-fade-in shadow-sm">
@@ -723,6 +727,7 @@ export default function CalendarView({
                                 {t('filter_no_events')}
                             </p>
                             <button type="button" onClick={clearAllFilters} className={styles.filterButton}><X size={14} />{t('filter_clear_all')}</button>
+                            {!error&&!isOffline&&<SearchSuggestions events={events} filters={{...searchFilters,selectedYears}} context={{today,filterByFavorites,favorites,filterByAgenda,markedSet,filterLeisure,fixed:{...(forceEscalao?{selectedEscaloes:[forceEscalao]}:{}),...(forceAmbito?{selectedAmbito:forceAmbito}:{}),...(forceLicenca?{selectedLicenca:forceLicenca}:{})}}} apply={applySearch}/>}
 
                             {selectedRegiao !== 'Todas' && (
                                 <div className="bg-surface border border-line p-8 rounded-xl max-w-lg mx-auto">
@@ -808,6 +813,7 @@ export default function CalendarView({
                                                     <Link prefetch={false} href={eventPath(event)} className={styles.eventTitle} onClick={() => trackEvent('EVENT_OPEN', { targetId: event.id })}>{displayTitle}</Link>
                                                 </h3>
                                                 {(selectedEscaloes.length>0||forceEscalao)&&<EventTrust event={event} compact/>}
+                                                {filterByFavorites&&<EventParticipation event={event}/>}
                                                 {automaticFavorites.some(id => allIds.includes(id)) && !manualFavorites.some(id => allIds.includes(id)) && <span className="text-xs text-muted">{({ pt: 'Nova edição · adicionada automaticamente', en: 'New edition · added automatically', es: 'Nueva edición · añadida automáticamente', fr: 'Nouvelle édition · ajoutée automatiquement' })[language] || 'New edition · added automatically'}</span>}
                                             </div>
                                             <div className={styles.eventMeta}>

@@ -7,6 +7,7 @@ import { useTranslation } from '../i18n/useTranslation';
 import { FavoriteSubscription } from '../components/FavoritePlanning';
 import CalendarEmptyState from '../components/CalendarEmptyState';
 import FavoriteEditionControls from '../components/FavoriteEditionControls';
+import FavoriteChangeControls from '../components/FavoriteChangeControls';
 
 export default function Favoritos() {
     const { t } = useTranslation();
@@ -22,7 +23,7 @@ export default function Favoritos() {
 
 
 
-    if (favorites.length === 0) return <><CalendarEmptyState /><div className="mx-auto max-w-5xl px-4 pb-8"><FavoriteEditionControls preferences={editionPreferences} isSignedIn={isSignedIn} /><FavoriteSubscription /></div></>;
+    if (favorites.length === 0) return <><CalendarEmptyState /><div className="mx-auto max-w-5xl px-4 pb-8"><FavoriteEditionControls preferences={editionPreferences} isSignedIn={isSignedIn} /><FavoriteChangeControls /><FavoriteSubscription /></div></>;
 
     return (
         <CalendarView

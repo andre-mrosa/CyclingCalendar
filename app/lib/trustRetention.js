@@ -4,4 +4,5 @@ export async function cleanTrustData(db,now=new Date()){
     await db.organizerSubmission.updateMany({where:{status:'APPROVED',reviewedAt:{lt:cutoff}},data:{userEmail:null,organizerName:null,reviewNote:null}});
     await db.sourceQualitySnapshot.deleteMany({where:{createdAt:{lt:cutoff}}});
     await db.searchAlertRun.deleteMany({where:{createdAt:{lt:new Date(now.getTime()-30*86400000)}}});
+    if(db.favoriteChangeRun)await db.favoriteChangeRun.deleteMany({where:{createdAt:{lt:new Date(now.getTime()-30*86400000)}}});
 }

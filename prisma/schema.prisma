@@ -305,3 +305,40 @@ model SearchAlertRun {
   day       String   @id
   createdAt DateTime @default(now())
 }
+
+model SavedSearch {
+  userId String
+  id String
+  name String
+  path String
+  filters Json
+  updatedAt DateTime @updatedAt
+  @@id([userId, id])
+}
+
+model EventParticipation {
+  userId String
+  eventId String
+  status String
+  updatedAt DateTime @updatedAt
+  @@id([userId, eventId])
+}
+
+model FavoriteChangePreference {
+  userId String @id
+  enabled Boolean @default(false)
+  language String @default("pt")
+  revision Int @default(1)
+  state Json @default("{}")
+  pending Json?
+  lastSentAt DateTime?
+  checkedAt DateTime @default(now())
+  leaseUntil DateTime?
+  updatedAt DateTime @updatedAt
+  @@index([enabled, checkedAt])
+}
+
+model FavoriteChangeRun {
+  day String @id
+  createdAt DateTime @default(now())
+}

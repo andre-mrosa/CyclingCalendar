@@ -1,0 +1,15 @@
+import {start} from 'workflow/api';
+import {prisma} from '@/app/lib/db';
+import {editionEmailAvailable} from '@/app/lib/favoriteEditionSettings';
+import {favoriteChangeWorkflow} from '@/app/workflows/favoriteChanges';
+import {privateJson} from '@/app/lib/requestBody';
+export const dynamic='force-dynamic';export const maxDuration=300;
+export async function GET(request){
+    if(!process.env.CRON_SECRET)return privateJson({error:'Unavailable'},503);
+    if(request.headers.get('authorization')!=='Bearer '+process.env.CRON_SECRET)return privateJson({error:'Unauthorized'},401);
+    if(!editionEmailAvailable())return privateJson({error:'Email unavailable'},503);
+    try{const day=new Date().toISOString().slice(0,10);try{await prisma.favoriteChangeRun.create({data:{day}});}catch(e){if(e.code==='P2002')return privateJson({success:true,alreadyStarted:true});throw e;}
+        try{await start(favoriteChangeWorkflow,[]);}catch(e){await prisma.favoriteChangeRun.delete({where:{day}});throw e;}
+        await prisma.favoriteChangeRun.deleteMany({where:{createdAt:{lt:new Date(Date.now()-30*86400000)}}});return privateJson({success:true,scheduled:true},202);
+    }catch{return privateJson({error:'Unavailable'},503);}
+}
