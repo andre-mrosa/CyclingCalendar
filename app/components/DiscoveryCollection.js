@@ -23,7 +23,8 @@ export async function loadCollection(kind, params, searchParams) {
     if (typeof raw !== 'string' || !/^[1-9]\d{0,3}$/.test(raw)) notFound();
     const page = Number(raw);
     const today = lisbonWallClock().slice(0, 10);
-    const matching=mergeEvents(await getPublicCalendarEvents()).filter(base.match).filter(event=>facets.every(([,item])=>item.match(event)));
+    const collectionEvents=mergeEvents(await getPublicCalendarEvents()).filter(base.match);
+    const matching=collectionEvents.filter(event=>facets.every(([,item])=>item.match(event)));
     const events = matching.map(event => ({ event, dates: eventDateDisplay(event) }));
     // Upcoming first, then the most recent archive. Undated records follow.
     events.sort((a, b) => {
@@ -35,7 +36,8 @@ export async function loadCollection(kind, params, searchParams) {
     if (page > pages) notFound();
     const facetQuery=new URLSearchParams(facets.map(([key,item])=>[key,item.slug]));
     const path=collectionPath(kind,base),suffix=facetQuery.toString();
-    const months=kind==='meses'?[]:availableMonths(matching,today).map(item=>{const q=new URLSearchParams(facetQuery);q.set('mes',item.slug);return {...item,href:path+'?'+q};});
+    const otherMonths=collectionEvents.filter(event=>facets.filter(([key])=>key!=='mes').every(([,item])=>item.match(event)));
+    const months=kind==='meses'?[]:availableMonths(otherMonths,today).map(item=>{const q=new URLSearchParams(facetQuery);q.set('mes',item.slug);return {...item,href:path+'?'+q};});
     return { collection, page, pages, count: events.length, path,suffix,months,
         events: events.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map(item => item.event), kind, today };
 }
