@@ -104,6 +104,7 @@
 .dateEndpointMonth { font-size: 10px; font-weight: 400; letter-spacing: 0; color: var(--site-muted); text-transform: uppercase; }
 .eventTitle { position: static; color: var(--foreground); font-size: 17px; font-weight: 500; line-height: 1.4; letter-spacing: -.02em; text-align: left; cursor: pointer; }
 .eventTitle::after { content: ''; position: absolute; inset: 0; z-index: 1; }
+.eventCard :is(button, select, input, textarea, summary, a:not(.eventTitle)) { position: relative; z-index: 3; }
 .eventFavorite, .eventExportBtn { position: relative; z-index: 3; display: inline-grid; place-items: center; flex-shrink: 0; min-width: 40px; min-height: 40px; border-radius: 5px; color: var(--site-muted); cursor: pointer; }
 .eventFavorite:hover, .eventExportBtn:hover { background: var(--site-soft); }
 .eventFavorite[aria-pressed='true'], .eventExportBtn[aria-pressed='true'] { color: var(--site-accent); }

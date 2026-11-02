@@ -2,6 +2,7 @@ import { eventDateDisplay } from '../utils/eventDateDisplay';
 import { useTranslation } from '../i18n/useTranslation';
 import { isCancelled, lisbonWallClock } from '../utils/planning';
 import styles from './site.module.css';
+import {experienceText} from '../i18n/experienceCopy';
 
 export default function AgendaOverview({ events, onSelect, mode = "favorites" }) {
     const { t, language } = useTranslation();
@@ -13,7 +14,7 @@ export default function AgendaOverview({ events, onSelect, mode = "favorites" })
         .sort((a, b) => new Date(a.registrationClosesAt) - new Date(b.registrationClosesAt));
     const date = value => new Intl.DateTimeFormat(language, { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(value));
     return <aside className={styles.agendaOverview}>
-        <p>{t(mode === 'agenda' ? 'planning_marked_help' : 'planning_agenda_help')}</p>
+        <p>{mode==='agenda'?t('planning_marked_help'):experienceText(language,'personalNote')}</p>
         {upcoming[0] && <div><h2>{t('planning_next')}</h2><button onClick={() => onSelect(upcoming[0])}>{date(upcoming[0].sortDate)} · {upcoming[0].title}</button></div>}
         <div><h2>{t('planning_deadlines')}</h2>{closing.length ? <ul>{closing.map(e => <li key={e.id}><button onClick={() => onSelect(e)}>{date(e.registrationClosesAt)} · {e.title}</button></li>)}</ul> : <p>{t('planning_no_deadlines')}</p>}</div>
     </aside>;

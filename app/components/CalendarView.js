@@ -813,7 +813,6 @@ export default function CalendarView({
                                                     <Link prefetch={false} href={eventPath(event)} className={styles.eventTitle} onClick={() => trackEvent('EVENT_OPEN', { targetId: event.id })}>{displayTitle}</Link>
                                                 </h3>
                                                 {(selectedEscaloes.length>0||forceEscalao)&&<EventTrust event={event} compact/>}
-                                                {filterByFavorites&&<EventParticipation event={event}/>}
                                                 {automaticFavorites.some(id => allIds.includes(id)) && !manualFavorites.some(id => allIds.includes(id)) && <span className="text-xs text-muted">{({ pt: 'Nova edição · adicionada automaticamente', en: 'New edition · added automatically', es: 'Nueva edición · añadida automáticamente', fr: 'Nouvelle édition · ajoutée automatiquement' })[language] || 'New edition · added automatically'}</span>}
                                             </div>
                                             <div className={styles.eventMeta}>
@@ -825,6 +824,7 @@ export default function CalendarView({
                                                     <Bike size={12} className="text-slate-400 dark:text-slate-500 shrink-0" />
                                                     <span>{discipline ? translateTag(discipline, language) : conciseEscaloes(event.escaloes).map(esc => translateEscalao(esc, language)).join(' • ')}</span>
                                                 </span>
+                                                {filterByFavorites&&<EventParticipation event={event}/>}
                                             </div>
                                         </div>
                                     </div>
