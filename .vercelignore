@@ -14,3 +14,5 @@ dev.db
 qa-*
 *-output.txt
 public/media/events/
+
+exports/

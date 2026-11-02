@@ -1,114 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Cycling Calendar
 
-## Sincronização dos calendários
+Calendário de provas de ciclismo em Portugal, com pesquisa, favoritos, agenda pessoal e seguimento de novas edições. Aplicação Next.js, PostgreSQL/Prisma e autenticação Clerk.
 
-O `vercel.json` agenda `/api/cron/scrape` diariamente às 02:00 UTC. A recolha
-consulta janeiro–dezembro do ano atual e do seguinte; aos domingos e no primeiro
-dia do mês inclui também os dois anos anteriores. Não depende de abrir o site
-nem do botão de sincronização manual. O calendário futuro pode ainda estar vazio.
+## Desenvolvimento
 
-A FPC exige o campo oculto `epoca_site2` para aplicar os meses enviados. A resposta
-é validada para impedir que o mês corrente seja aceite como uma época completa.
-Campeonatos nacionais exigem confirmação FPC no nome ou na classe da prova;
-referências em descrições não contam. A Stop and Go usa a modalidade e as datas
-do cabeçalho da própria prova, com pedidos espaçados e erro explícito em HTTP 429.
-
-Testes: `npm test` (ou `node --test tests/*.test.mjs`).
-
-### Base de dados e listagem leve
-
-O histórico de migrações é PostgreSQL. A preparação de uma base nova, o baseline
-de instalações existentes e o preenchimento dos resumos estão documentados em
-[`maintenance/DATABASE.md`](maintenance/DATABASE.md). Executar as migrações antes
-de publicar esta versão. A listagem atual consulta apenas os campos básicos
-definidos em `PUBLIC_EVENT_SELECT`; não lê programas nem resumos históricos.
-Os resumos e os respetivos triggers permanecem no histórico da base de dados.
-O cache da origem tem 60 segundos e o do CDN 300 segundos.
-
-As dependências incluem overrides de segurança para dependências transitivas de
-Prisma e Workflow. Manter estes overrides até as dependências diretas
-incorporarem versões corrigidas, verificando com `npm audit`, build e testes.
-
-### Painel de administração e contagens
-
-O inventário distingue provas únicas publicadas, todos os registos guardados
-e quarentena. O detalhe por ano soma provas únicas; as fontes sobrepõem-se,
-e “várias fontes” é um subconjunto, não uma parcela a somar ao total.
-Uma sincronização apresenta operações processadas/criadas/atualizadas/fundidas,
-não o inventário acumulado. Métricas ausentes em logs antigos aparecem como
-indisponíveis, nunca como zero. Os novos logs identificam cada execução com
-`runId`; resumos antigos repetidos da mesma época não são somados duas vezes.
-
-Uma reserva atómica na BD impede execuções simultâneas entre instâncias.
-É guardada temporariamente no registo operacional `operational-scraper-lease`
-da tabela `SystemLog`, excluído das contagens e das limpezas de logs. Renova-se
-a cada 30 segundos e expira após 15 minutos sem renovação, permitindo recuperar
-de um processo terminado. A chamada manual devolve HTTP 409 se já existir uma
-execução; o cron ignora essa corrida. Não é necessária uma migração da BD.
-
-Para auditar dados antigos, executar
-`node --env-file=.env --env-file=.env.local maintenance/repair-calendar.mjs`.
-O script não altera a BD e guarda um plano em `maintenance/backups/`. Aplicar
-o plano revisto com o mesmo comando e `--apply-plan=CAMINHO_DO_PLANO`.
-Antes de alterar eventos é guardada uma cópia dos registos e traduções. Eventos
-não ciclísticos confirmados passam para a fonte `Quarentena`, preservando IDs
-e dados para recuperação. Falhas HTTP e dados ambíguos ficam sem alteração.
-Os ficheiros de recuperação são locais e estão excluídos do Git.
-
-As pesquisas guardadas estão disponíveis. Os antigos alertas de alterações e prazos
-continuam desativados; as instruções antigas estão identificadas como históricas em
-[maintenance/SEARCH-ALERTS.md](maintenance/SEARCH-ALERTS.md).
-
-O seguimento global de novas edições dos favoritos e os seus avisos opcionais
-estão documentados em [maintenance/FAVORITE-EDITIONS.md](maintenance/FAVORITE-EDITIONS.md).
-O email exige configuração própria e consentimento explícito de cada conta.
-
-## SEO e informação pública
-
-As fichas de provas usam apenas os campos básicos do calendário e ligam à fonte.
-Preços, vagas, organizadores e locais exatos desconhecidos não são inferidos.
-O sitemap inclui fichas próprias e coleções com dados disponíveis. A auditoria
-HTTP de leitura é `node maintenance/verify-seo.mjs` (servidor local na porta 3102,
-ou `SEO_TEST_URL` para outro destino). Detalhes e limites da revisão em
-[maintenance/SEO-2026-10-28.md](maintenance/SEO-2026-10-28.md).
-
-A limpeza de componentes, dependências, scripts e previews antigos, com os
-caminhos de recuperação, está registada em
-[maintenance/CLEANUP-2026-10-28.md](maintenance/CLEANUP-2026-10-28.md).
-
-## Desenvolvimento local
-
-First, run the development server:
-
-```bash
+```powershell
+npm ci
+# Configurar .env.local a partir de .env.example
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Validação antes de publicar:
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+```powershell
+npm test
+npm run lint
+npm run build
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+As migrações de produção são aplicadas com `npx prisma migrate deploy`, usando a ligação da base correta. Não executar operações de reset numa base existente. Ver [preparação da BD](maintenance/DATABASE.md).
 
-## Learn More
+## Sincronização
 
-To learn more about Next.js, take a look at the following resources:
+O cron consulta as cinco fontes diariamente às 02:00 UTC: FPC, Cabreira, Stop and Go, Recorde Pessoal e Apedalar. O plano cobre o ano atual e o seguinte; a recolha histórica está desativada. O workflow persiste as etapas e uma reserva na BD impede execuções simultâneas.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+A recolha guarda factos mínimos, respeita recusas de acesso e reutiliza páginas já descarregadas. A classificação e as correspondências entre fontes passam por regras partilhadas. Datas, modalidades e escalões sem evidência ficam por confirmar. O painel de qualidade distingue resultados válidos de falhas de leitura; processados não significa provas novas.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- [Classificação automática](maintenance/SCRAPER-CLASSIFICATION.md)
+- [Auditoria atual dos scrapers](maintenance/SCRAPER-AUDIT-2026-11-02.md)
+- [Favoritos e novas edições](maintenance/FAVORITE-EDITIONS.md)
+- [Agenda, estados pessoais e avisos de alterações](maintenance/PERSONAL-CALENDAR-2026-11-02.md)
+- [Notificações mobile](maintenance/favorite-push.md)
+- [Privacidade e retenção](maintenance/PRIVACY-OPERATIONS.md)
+- [Revisão legal e limites](maintenance/LEGAL-COMPLIANCE-2026-10-30.md)
+- [SEO](maintenance/SEO-2026-10-28.md)
 
-## Deploy on Vercel
+Emails e push exigem configuração do serviço e consentimento de cada utilizador. Um estado pessoal como «Já estou inscrito» não efetua uma inscrição na organização.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Organização
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `app/`: páginas, componentes, APIs, workflows e regras do calendário.
+- `prisma/`: schema e histórico completo de migrações.
+- `tests/`: testes e fixtures locais.
+- `public/`: recursos publicados, incluindo ícones e service worker.
+- `maintenance/`: ferramentas operacionais e relatórios técnicos com datas e limites de validação.
+- `.agents/skills/`: cópia canónica das ferramentas de apoio aos agentes.
 
-2026
+Os recursos da marca são gerados com `npm run brand:icons`. Para exportações destinadas ao Google, executar `node maintenance/export-google-logo.mjs`; a pasta `exports/` é gerada e não entra no Git nem no deploy.
+
+Credenciais, bases locais, backups e `.qa-tools/` ficam fora do Git. As rotas de compatibilidade e as migrações antigas são conservadas para instalações e clientes existentes.
