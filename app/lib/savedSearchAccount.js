@@ -1,7 +1,7 @@
 import {normalizeSearch} from '../utils/savedSearches.js';
 import {requestError} from './requestBody.js';
 export function normalizeSavedEntry(entry){
-    if(!entry||typeof entry.id!=='string'||!/^[\w-]{1,100}$/.test(entry.id)||typeof entry.name!=='string'||!entry.name.trim()||entry.name.length>80||/[<>\r\n]/.test(entry.name)||!/^\/(?:nacionais|internacionais|regionais|tacas|lazer|favoritos|agenda)?$/.test(entry.path))throw requestError(400,'Invalid saved search');
+    if(!entry||typeof entry.id!=='string'||!/^[\w-]{1,100}$/.test(entry.id)||typeof entry.name!=='string'||!entry.name.trim()||entry.name.length>80||/[<>\r\n]/.test(entry.name)||!/^\/(?:nacionais|internacionais|regionais|tacas|lazer|favoritos|agenda|minhas-provas)?$/.test(entry.path))throw requestError(400,'Invalid saved search');
     const filters=normalizeSearch(entry.filters);
     if(!filters||filters.origin||filters.maxDistanceFilter)throw requestError(400,'Private location filters cannot be synced');
     return {id:entry.id,name:entry.name.trim(),path:entry.path,filters};

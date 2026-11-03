@@ -1,6 +1,6 @@
 # Cycling Calendar
 
-Calendário de provas de ciclismo em Portugal, com pesquisa, favoritos, agenda pessoal e seguimento de novas edições. Aplicação Next.js, PostgreSQL/Prisma e autenticação Clerk.
+Calendário de provas de ciclismo em Portugal, com pesquisa, uma área «As minhas provas», estados de participação e seguimento de novas edições. Aplicação Next.js, PostgreSQL/Prisma e autenticação Clerk.
 
 ## Desenvolvimento
 

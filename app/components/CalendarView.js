@@ -12,9 +12,9 @@ import { useSettingsStore } from '../store/useSettingsStore';
 import useSWR from 'swr';
 
 import { Calendar, CalendarPlus, MapPin, Search, X, ChevronLeft, ChevronRight, Users, Heart, Star, LayoutGrid, List, HelpCircle, Filter, Bike, AlertTriangle, Check, CalendarCheck, History, WifiOff, Download, Clock, Globe } from 'lucide-react';
-import { useFavorites } from '../hooks/useFavorites';
+import { useMyEvents } from '../hooks/useMyEvents';
+import { myEventsText } from '../i18n/myEventsCopy';
 import FavoriteEditionControls from './FavoriteEditionControls';
-import { useCalendarEvents } from '../hooks/useCalendarEvents';
 import { filterEvents } from '../utils/filterEvents';
 import { mergeEvents } from '../utils/mergeEvents';
 import { chooseCalendarEvents, toCalendarListEvent, sortCalendarEvents, filterCalendarByDate } from '../utils/calendarList';
@@ -82,6 +82,7 @@ export default function CalendarView({
     forceAmbito = null,
     forceLicenca = null,
     forceEscalao = null,
+    personal = false,
     filterByFavorites = false,
     filterByAgenda = false,
     filterLeisure = false,
@@ -94,6 +95,8 @@ export default function CalendarView({
     pageIntro = null
 }) {
     const { t, language } = useTranslation();
+    const trPersonal = key => myEventsText(language, key);
+    const [personalFilter, setPersonalFilter] = useState('all');
 
     const {
         defaultEscalao,
@@ -131,7 +134,6 @@ export default function CalendarView({
     };
     const isOffline = !useOnline();
 
-    const { markedSet, isMarked, getDateConflict } = useCalendarEvents();
 
     // Reset editable defaults only when their source settings actually change.
     const defaultsKey = JSON.stringify([defaultEscalao, defaultRegiao, forceEscalao, forceAmbito, forceLicenca, applyDefaultRegiao]);
@@ -146,7 +148,7 @@ export default function CalendarView({
         }
     }
 
-    const effectiveSources = useMemo(() => normalizeCalendarSources(searchSources ?? selectedSources ?? CALENDAR_SOURCES), [searchSources, selectedSources]);
+    const effectiveSources = useMemo(() => normalizeCalendarSources(searchSources ?? (personal ? CALENDAR_SOURCES : selectedSources) ?? CALENDAR_SOURCES), [searchSources, selectedSources, personal]);
     const eventsUrl = `/api/events?view=trust-v1&years=all&sources=${effectiveSources.join(',')}`;
     const initialSourceEvents = useMemo(() => selectCalendarSources(initialEvents, effectiveSources), [initialEvents, effectiveSources]);
     const eventsCacheKey = `cycling_calendar_minimal_v5_${forceAmbito || 'Todos'}_${[...effectiveSources].sort().join(',')}`;
@@ -182,12 +184,17 @@ export default function CalendarView({
         return records.length ? mergeEvents(records.map(toCalendarListEvent).filter(Boolean)) : EMPTY_EVENTS;
     }, [fetchedEvents, localCachedEvents, isOffline, error, effectiveSources.length]);
 
-    const { favorites, manualFavorites, automaticFavorites, toggleFavorite, isSignedIn, editionPreferences } = useFavorites(events);
+    const collection = useMyEvents(events);
+    const { favorites, manualFavorites, automaticFavorites, isSignedIn, editionPreferences, markedSet, isMarked, getDateConflict, statusFor } = collection;
+    const scopedEvents = useMemo(() => personal ? events.filter(event => {
+        const status = statusFor(event);
+        return status && (personalFilter === 'all' || status === personalFilter);
+    }) : events, [personal, events, personalFilter, statusFor]);
 
     const selectedYears = useMemo(() => explicitYears || defaultYears || Array.from(new Set([
         String(currentYear), String(currentYear + 1),
-        ...events.map(event => event.sortDate?.slice(0, 4)).filter(year => Number(year) >= currentYear),
-    ])).sort(), [explicitYears, defaultYears, currentYear, events]);
+        ...events.map(event => event.sortDate?.slice(0, 4)).filter(year => year && (personal || Number(year) >= currentYear)),
+    ])).sort(), [explicitYears, defaultYears, currentYear, events, personal]);
     const searchFilters = { searchTerm, selectedYears: explicitYears, selectedEscaloes, includeUnknownCategories, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, quickPeriod, selectedMonth, selectedDay, viewMode, sources: effectiveSources };
     function applySearch(raw) {
         const value = normalizeSearch(raw);
@@ -229,7 +236,7 @@ export default function CalendarView({
         return () => clearTimeout(timer);
     }, [serializedSearch, urlReady]);
 
-    const isInitialLoading = (loading && events.length === 0) || (!initialEvents && !mounted && events.length === 0);
+    const isInitialLoading = (personal && collection.personalLoading) || (loading && events.length === 0) || (!initialEvents && !mounted && events.length === 0);
 
     // Track search queries with debounce
     useEffect(() => {
@@ -244,8 +251,8 @@ export default function CalendarView({
     }, [searchTerm]);
 
     const matchingEvents = useMemo(() => {
-        let filtered = filterEvents(events, {
-            filterByFavorites, favorites,
+        let filtered = filterEvents(scopedEvents, {
+            filterByFavorites: personal || filterByFavorites, favorites: personal ? scopedEvents.map(event => event.id) : favorites,
             filterByAgenda, markedSet, filterLeisure,
             searchTerm,
             selectedYears,
@@ -262,13 +269,14 @@ export default function CalendarView({
         });
 
         filtered = filterCalendarByDate(filtered, pastEventsFilter, today, selectedYears);
+        if (personal && explicitYears?.length) filtered = filterEvents(filtered, { selectedYears: explicitYears });
         filtered = filtered.filter(event => matchesPeriod(event, quickPeriod));
 
         return sortCalendarEvents(filtered, favorites);
-    }, [events, searchTerm, selectedYears, selectedEscaloes, includeUnknownCategories, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, filterByFavorites, filterByAgenda, filterLeisure, markedSet, favorites, forceEscalao, forceAmbito, forceLicenca, quickPeriod, today]);
+    }, [scopedEvents, personal, explicitYears, searchTerm, selectedYears, selectedEscaloes, includeUnknownCategories, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, filterByFavorites, filterByAgenda, filterLeisure, markedSet, favorites, forceEscalao, forceAmbito, forceLicenca, quickPeriod, today]);
 
     const filteredEvents = useMemo(() => eventsInPeriod(matchingEvents, selectedMonth, selectedDay), [matchingEvents, selectedMonth, selectedDay]);
-    const calendarMonth = selectedMonth || matchingEvents.map(event => eventDateDisplay(event).start).find(Boolean)?.slice(0, 7) || new Date().toISOString().slice(0, 7);
+    const calendarMonth = selectedMonth || (personal ? today.slice(0, 7) : null) || matchingEvents.map(event => eventDateDisplay(event).start).find(Boolean)?.slice(0, 7) || new Date().toISOString().slice(0, 7);
     const browseMonth = month => {
         setSelectedMonth(month);
         setSelectedDay(null);
@@ -380,14 +388,26 @@ export default function CalendarView({
         setPastEventsFilter(defaultPastEventsFilter);
         setSearchTerm('');
         setSearchSources(null);
+        setPersonalFilter('all');
     };
 
 
 
     return (
-        <div className={styles.page}>
-            <PageHeading title={pageTitle} subtitle={t('minimal_calendar_intro')} hero={hero} icon={filterByAgenda ? CalendarCheck : filterByFavorites ? Star : Calendar} />
+        <div className={`${styles.page} ${personal ? styles.personalPage : ''}`}>
+            <PageHeading title={pageTitle} subtitle={personal ? pageSubtitle : t('minimal_calendar_intro')} hero={hero} icon={personal || filterByAgenda ? CalendarCheck : filterByFavorites ? Star : Calendar} />
             {pageIntro}
+            {personal && <>
+                <div className={styles.personalStates} role="group" aria-label={trPersonal('status')}>
+                    {['all', 'interested', 'going', 'registered'].map(status => <button key={status} type="button" aria-pressed={personalFilter === status} onClick={() => setPersonalFilter(status)}>{trPersonal(status)}</button>)}
+                </div>
+                {collection.personalError && <p role="alert">{trPersonal('loadError')} <button type="button" onClick={collection.refreshPersonal}>{t('btn_try_again')}</button></p>}
+                <details className={styles.personalOptions}><summary>{trPersonal('options')}</summary>
+                    <FavoriteEditionControls preferences={editionPreferences} isSignedIn={isSignedIn} />
+                    <FavoriteChangeControls /><FavoriteSubscription />
+                    {!isInitialLoading && scopedEvents.length > 0 && <AgendaOverview events={scopedEvents} onSelect={setSelectedEvent} />}
+                </details>
+            </>}
             {filterByFavorites && <FavoriteEditionControls preferences={editionPreferences} isSignedIn={isSignedIn} />}
             {filterByFavorites && <FavoriteChangeControls />}
             <header className={styles.calendarControls} data-expanded={showFilters}>
@@ -451,7 +471,7 @@ export default function CalendarView({
                     </div>
 
                 </div>
-                <SavedSearches filters={searchFilters} apply={applySearch} defaultPastEventsFilter={defaultPastEventsFilter} />
+                {(!personal || showFilters) && <SavedSearches filters={searchFilters} apply={applySearch} defaultPastEventsFilter={defaultPastEventsFilter} />}
                 {/* Expanded controls preserve every existing filter. */}
                 <div id="calendar-quick-filters" className={styles.quickFilters} data-expanded={showFilters}>
                     <div className={styles.periods}>
@@ -471,16 +491,16 @@ export default function CalendarView({
                 <div className={styles.results}>
                     <div className="text-xs text-muted font-medium flex items-center gap-1.5">
                         <span>{t('filter_counter_showing')} <strong className="text-ink font-semibold">{Math.min(visibleCount, filteredEvents.length)}</strong> {t('filter_counter_of')} <strong className="text-ink font-semibold">{filteredEvents.length}</strong> {filteredEvents.length === 1 ? t('filter_counter_event') : t('filter_counter_events')}</span>
-                        {!filterByAgenda && !filterByFavorites && events.length > 0 && filteredEvents.length !== events.length && (
+                        {!personal && !filterByAgenda && !filterByFavorites && events.length > 0 && filteredEvents.length !== events.length && (
                             <span className="text-slate-400 dark:text-slate-500 font-normal">({events.length} {t('filter_counter_total')})</span>
                         )}
                     </div>
 
-                    {(filterByAgenda || filterByFavorites) && filteredEvents.length > 0 && (
+                    {(personal || filterByAgenda || filterByFavorites) && filteredEvents.length > 0 && (
                         <button
                             onClick={() => {
                                 if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(10);
-                                exportEventsToICS(filteredEvents, filterByAgenda ? 'minha_agenda.ics' : 'favoritos.ics');
+                                exportEventsToICS(filteredEvents, personal ? 'minhas_provas.ics' : filterByAgenda ? 'minha_agenda.ics' : 'favoritos.ics');
                                 trackEvent('ICS_EXPORT', {
                                     metadata: { page: pageTitle, count: filteredEvents.length }
                                 });
@@ -668,11 +688,11 @@ export default function CalendarView({
             <div className={styles.calendarWorkspace}>
             <section className={styles.calendarFeed} aria-label={pageTitle}>
                 <div className={styles.feedHeading}>
-                    <div className={styles.monthNavigation}>
+                    {viewMode !== 'calendar' && <div className={styles.monthNavigation}>
                         <button type="button" aria-label={t('ui_previous_month')} onClick={() => browseMonth(shiftMonth(calendarMonth, -1))}><ChevronLeft size={18} /></button>
                         <h2>{formatMonthHeading(Number(calendarMonth.slice(0, 4)), Number(calendarMonth.slice(5)) - 1, language)} {calendarMonth.slice(0, 4)}</h2>
                         <button type="button" aria-label={t('ui_next_month')} onClick={() => browseMonth(shiftMonth(calendarMonth, 1))}><ChevronRight size={18} /></button>
-                    </div>
+                    </div>}
                     <div className={styles.viewSwitch} role="group" aria-label={t('ui_view')}>
                         <button type="button" aria-pressed={viewMode === 'list'} onClick={() => setViewMode('list')}><List size={16} />{t('ui_list')}</button>
                         <button type="button" aria-pressed={viewMode === 'calendar'} onClick={() => setViewMode('calendar')}><Calendar size={16} />{t('ui_calendar')}</button>
@@ -724,10 +744,10 @@ export default function CalendarView({
                         <div className={styles.empty}>
                             <Search size={30} className="text-brand mx-auto mb-5" aria-hidden="true" />
                             <p className="text-muted mb-6 text-base">
-                                {t('filter_no_events')}
+                                {personal && !scopedEvents.length && personalFilter === 'all' ? trPersonal('empty') : t('filter_no_events')}
                             </p>
-                            <button type="button" onClick={clearAllFilters} className={styles.filterButton}><X size={14} />{t('filter_clear_all')}</button>
-                            {!error&&!isOffline&&<SearchSuggestions events={events} filters={{...searchFilters,selectedYears}} context={{today,filterByFavorites,favorites,filterByAgenda,markedSet,filterLeisure,fixed:{...(forceEscalao?{selectedEscaloes:[forceEscalao]}:{}),...(forceAmbito?{selectedAmbito:forceAmbito}:{}),...(forceLicenca?{selectedLicenca:forceLicenca}:{})}}} apply={applySearch}/>}
+                            {personal && !scopedEvents.length && personalFilter === 'all' ? <Link href="/" className={styles.primaryButton}>{t('page_favorites_explore_btn')}</Link> : <button type="button" onClick={clearAllFilters} className={styles.filterButton}><X size={14} />{t('filter_clear_all')}</button>}
+                            {!error&&!isOffline&&<SearchSuggestions events={scopedEvents} filters={{...searchFilters,selectedYears}} context={{today,filterByFavorites,favorites,filterByAgenda,markedSet,filterLeisure,fixed:{...(forceEscalao?{selectedEscaloes:[forceEscalao]}:{}),...(forceAmbito?{selectedAmbito:forceAmbito}:{}),...(forceLicenca?{selectedLicenca:forceLicenca}:{})}}} apply={applySearch}/>}
 
                             {selectedRegiao !== 'Todas' && (
                                 <div className="bg-surface border border-line p-8 rounded-xl max-w-lg mx-auto">
@@ -796,7 +816,7 @@ export default function CalendarView({
                                 const allIds = [event.id, ...(event._allIds || [])];
                                 const isEventMarked = isMarked(event.id, 'event', allIds);
                                 const dateConflict = getDateConflict(event);
-                                const isEventFavorited = favorites.includes(event.id) || (event._allIds && event._allIds.some(id => favorites.includes(id)));
+                                const isEventFavorited = !!collection.statusFor(event);
 
                                 const displayTitle = formatEventTitle(event.title);
                                 const location = formatEventLocation(event) || t('summary_location_tbd');
@@ -824,7 +844,6 @@ export default function CalendarView({
                                                     <Bike size={12} className="text-slate-400 dark:text-slate-500 shrink-0" />
                                                     <span>{discipline ? translateTag(discipline, language) : conciseEscaloes(event.escaloes).map(esc => translateEscalao(esc, language)).join(' • ')}</span>
                                                 </span>
-                                                {filterByFavorites&&<EventParticipation event={event}/>}
                                             </div>
                                         </div>
                                     </div>
@@ -834,7 +853,7 @@ export default function CalendarView({
                                             {isCancelled(event) && <span className={styles.cancelledBadge}><AlertTriangle size={12} />{t('planning_cancelled')}</span>}
                                             {isEventMarked && (
                                                 <span className={styles.eventStatus}>
-                                                    <Check size={13} /> {t('card_on_agenda')}
+                                                    <Check size={13} /> {trPersonal('google')}
                                                 </span>
                                             )}
                                             {dateConflict.hasConflict && !isEventMarked && (
@@ -905,28 +924,12 @@ export default function CalendarView({
                                             trackEvent('ICS_EXPORT');
                                         }}
                                         className={`${styles.eventExportBtn} sm:ml-0 ml-auto`}
-                                        aria-label={t('export_calendar')}
-                                        title={t('export_calendar')}
+                                        aria-label={trPersonal('export') + ': ' + event.title}
+                                        title={trPersonal('export')}
                                     >
                                         <CalendarPlus size={18} />
                                     </button>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            toggleFavorite(event.id);
-                                            trackEvent('FAVORITE_TOGGLE', {
-                                                targetId: event.id,
-                                                targetTitle: event.title
-                                            });
-                                        }}
-                                        className={styles.eventFavorite}
-                                        aria-pressed={isEventFavorited}
-                                        aria-label={isEventFavorited ? t('card_remove_favorite') : t('card_add_favorite')}
-                                        data-active={isEventFavorited}
-                                        title={isEventFavorited ? t('card_remove_favorite') : t('card_add_favorite')}
-                                    >
-                                        <Star size={18} fill={isEventFavorited ? "currentColor" : "none"} />
-                                    </button>
+                                    <EventParticipation event={event} collection={collection} />
                                 </div>
 
                                                 );

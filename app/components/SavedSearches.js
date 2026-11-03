@@ -8,22 +8,23 @@ import { useSettingsStore } from '../store/useSettingsStore';
 import { useTranslation } from '../i18n/useTranslation';
 import styles from './favoritePlanning.module.css';
 import SearchAlerts from './SearchAlerts';
+import { personalPath } from '../utils/personalCollection';
 
 export default function SavedSearches({ filters, apply, defaultPastEventsFilter = 'futuros' }) {
     const {entries:saved,isLoaded,busy,failure,synced,save:saveEntry,remove} = useSyncedSearches();
     const { t,language } = useTranslation(),tr=key=>experienceText(language,key);
-    const path = usePathname();
+    const path = personalPath(usePathname());
     const defaultSources = useSettingsStore(state => state.selectedSources);
     const [preferredId, setPreferredId] = useState(null);
     const [name, setName] = useState('');
     const [message, setMessage] = useState('');
     const [link, setLink] = useState('');
-    const matches = saved.filter(s => s.path === path && savedSearchMatches(filters, s.filters, defaultSources, defaultPastEventsFilter));
+    const matches = saved.filter(s => personalPath(s.path) === path && savedSearchMatches(filters, s.filters, defaultSources, defaultPastEventsFilter));
     const active = matches.find(s => s.id === preferredId) || matches[0];
     async function save(event) {
         event.preventDefault();
         if (!name.trim()) return;
-        const entry = { id: crypto.randomUUID(), name: name.trim().slice(0, 80), path: window.location.pathname, filters: normalizeSearch(filters) };
+        const entry = { id: crypto.randomUUID(), name: name.trim().slice(0, 80), path, filters: normalizeSearch(filters) };
         if(!await saveEntry(entry))return;
         setPreferredId(entry.id);
         setName(''); setMessage(t('search_saved'));
@@ -46,7 +47,7 @@ export default function SavedSearches({ filters, apply, defaultPastEventsFilter 
         </form>
         {link && <label className={styles.link}>{t('search_link')}<input readOnly value={link} onFocus={e => e.target.select()} /></label>}
         {!!saved.length && <ul>{saved.map(s => <li key={s.id} className={styles.actions}>
-            <button type="button" aria-label={s.name} aria-pressed={active?.id === s.id} className={active?.id === s.id ? styles.activeSearch : undefined} onClick={() => { setPreferredId(s.id); setMessage(''); if (s.path === window.location.pathname) apply(s.filters); else if (/^\/(?:nacionais|internacionais|regionais|tacas|lazer|favoritos|agenda)?$/.test(s.path)) window.location.assign(searchUrl(new URL(s.path, window.location.origin), s.filters)); }}>{active?.id === s.id && <span aria-hidden="true">✓ </span>}{s.name}{active?.id === s.id && <span className={styles.activeSearchBadge}>{t('search_active')}</span>}</button>
+            <button type="button" aria-label={s.name} aria-pressed={active?.id === s.id} className={active?.id === s.id ? styles.activeSearch : undefined} onClick={() => { setPreferredId(s.id); setMessage(''); if (personalPath(s.path) === path) apply(s.filters); else if (/^\/(?:nacionais|internacionais|regionais|tacas|lazer|favoritos|agenda|minhas-provas)?$/.test(s.path)) window.location.assign(searchUrl(new URL(s.path, window.location.origin), s.filters)); }}>{active?.id === s.id && <span aria-hidden="true">✓ </span>}{s.name}{active?.id === s.id && <span className={styles.activeSearchBadge}>{t('search_active')}</span>}</button>
             <button type="button" disabled={busy} aria-label={`${t('search_remove')}: ${s.name}`} onClick={() => remove(s.id)}>{t('search_remove')}</button>
         </li>)}</ul>}
         <p role="status" className={styles.activeSearchNotice}>{active ? t('search_active_name', {name:active.name}) : ''}</p>

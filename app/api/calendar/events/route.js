@@ -109,12 +109,7 @@ export async function GET(req) {
         if (!calRes.ok) {
             const errText = await calRes.text();
             console.warn("Google Calendar list error:", errText);
-            return NextResponse.json({ 
-                success: true, 
-                signedIn: true, 
-                markedEventIds: [], 
-                markedDates: {} 
-            });
+            return NextResponse.json({ success: false, error: 'GOOGLE_CALENDAR_UNAVAILABLE' }, { status: 503 });
         }
 
         const calData = await calRes.json();

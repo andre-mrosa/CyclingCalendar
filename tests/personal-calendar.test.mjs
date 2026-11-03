@@ -13,6 +13,7 @@ const now=new Date('2026-11-02T12:00:00Z');
 const request=(method,body,origin='https://calendar.test')=>new Request('https://calendar.test/api/test',{method,headers:{origin,'Content-Type':'application/json'},body:JSON.stringify(body)});
 
 test('account searches reject foreign paths, private GPS and injected identifiers',()=>{
+ assert.equal(normalizeSavedEntry({...entry,path:'/minhas-provas'}).path,'/minhas-provas');
  assert.equal(normalizeSavedEntry({...entry,userId:'other',role:'admin'}).userId,undefined);
  for(const patch of [{path:'https://evil.test/'},{path:'/admin'},{id:'../other'},{name:' '},{filters:{origin:{lat:38,lng:-9}}},{filters:{maxDistanceFilter:30}}])assert.throws(()=>normalizeSavedEntry({...entry,...patch}));
 });
@@ -35,6 +36,8 @@ test('personal statuses are private, bounded, validated and remain distinct from
  assert.equal((await api.PUT(request('PUT',{eventId:'missing',status:'registered'}))).status,404);assert.equal(operations.length,0);
  assert.equal((await api.PUT(request('PUT',{eventId:'race',aliases:['old-alias'],status:'registered',userId:'user_b'}))).status,200);
  assert.equal(operations.at(-1).create.userId,'user_a');assert.equal(operations.at(-1).create.status,'registered');assert.equal(operations[0].where.userId,'user_a');
+ assert.equal((await api.PUT(request('PUT',{eventId:'race',aliases:['old-alias'],status:'dismissed'}))).status,200);
+ assert.equal(operations.at(-1).create.status,'dismissed');assert.equal(operations.at(-1).create.userId,'user_a');
 });
 test('change notices compare known published facts only after a newer check',()=>{
  const baseline=planFavoriteChanges([race]);assert.equal(baseline.notices.length,0);

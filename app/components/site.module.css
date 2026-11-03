@@ -21,6 +21,14 @@
 .quickFilters label { display: grid; gap: 6px; min-width: 160px; font-size: 12px; color: var(--site-muted); }
 .quickFilters select { width: 100%; min-height: 42px; border: 1px solid var(--site-line); border-radius: 8px; background: var(--site-surface); color: var(--foreground); padding: 8px 10px; }
 .periods { display: flex; flex-wrap: wrap; gap: 6px; }
+.personalStates { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; }
+.personalStates button { min-height: 42px; padding: 8px 14px; border: 1px solid var(--site-line); border-radius: 8px; color: var(--site-muted); cursor: pointer; font-size: 13px; }
+.personalStates button[aria-pressed='true'] { background: var(--site-accent-soft); border-color: var(--site-accent); color: var(--site-accent); font-weight: 600; }
+.personalPage .calendarControls[data-expanded='false'] .primaryFilters { grid-template-columns: 1fr; }
+.personalPage .calendarControls[data-expanded='false'] .primaryFilters > label:not(:first-child) { display: none; }
+.personalOptions { margin-bottom: 22px; border-bottom: 1px solid var(--site-line); padding-bottom: 14px; }
+.personalOptions > summary { cursor: pointer; color: var(--site-muted); font-size: 13px; padding: 8px 0; }
+.personalOptions > section { margin-top: 14px; }
 .periods button { min-height: 36px; padding: 7px 10px; border: 1px solid var(--site-line); border-radius: 7px; font-size: 12px; text-align: left; color: var(--site-muted); cursor: pointer; transition: background .15s; }
 .periods button[aria-pressed='true'] { color: var(--site-accent); border-color: var(--site-accent); background: var(--site-accent-soft); font-weight: 600; }
 .weekday { display: block; margin-top: 7px; font-size: 10px; font-weight: 500; color: var(--site-muted); letter-spacing: .04em; text-transform: uppercase; }
@@ -313,6 +321,7 @@
 .quickFilters[data-expanded='false'] { display: none; }
 .calendarFeed { padding-bottom: 24px; }
 .feedHeading { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 64px; margin-bottom: 0; }
+.feedHeading:has(> .viewSwitch:only-child) { justify-content: flex-end; }
 .monthNavigation { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .monthNavigation h2 { text-transform: capitalize; font-size: 18px; font-weight: 600; letter-spacing: -.025em; }
 .monthNavigation button, .monthCalendar header button { display: inline-grid; place-items: center; width: 36px; height: 40px; border-radius: 4px; color: var(--foreground); cursor: pointer; }

@@ -3,7 +3,8 @@ import {prisma} from '@/app/lib/db';
 import {sameOriginJson,privateJson,requestError} from '@/app/lib/requestBody';
 import {getPublicEvent} from '@/app/lib/getPublicCalendarEvents';
 export const dynamic='force-dynamic';
-const statuses=['interested','going','registered'];
+// Dismiss a legacy calendar entry without deleting it in Google.
+const statuses=['interested','going','registered','dismissed'];
 export async function GET(){const {userId}=await auth();if(!userId)return privateJson({error:'Unauthorized'},401);try{return privateJson({states:await prisma.eventParticipation.findMany({where:{userId},select:{eventId:true,status:true,updatedAt:true},take:500,orderBy:{updatedAt:'desc'}})});}catch{return privateJson({error:'Unavailable'},503);}}
 export async function PUT(request){const {userId}=await auth();if(!userId)return privateJson({error:'Unauthorized'},401);try{const body=await sameOriginJson(request);if(typeof body.eventId!=='string'||!body.eventId||body.eventId.length>1000||!['',...statuses].includes(body.status))throw requestError(400,'Invalid status');
     const aliases=[...new Set([body.eventId,...(Array.isArray(body.aliases)?body.aliases:[])])];if(aliases.length>50||aliases.some(id=>typeof id!=='string'||!id||id.length>1000))throw requestError(400,'Invalid aliases');

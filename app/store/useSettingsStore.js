@@ -2,8 +2,9 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { DEFAULT_PALETTE, SETTINGS_STORAGE_KEY, normalizePalette } from '../lib/colorPalettes.js';
 import { CALENDAR_SOURCES } from '../lib/calendarSources.js';
+import { personalNavigation } from '../utils/personalCollection.js';
 
-export const DEFAULT_TABS = ['Geral', 'Minha Agenda', 'Nacionais', 'Internacionais', 'Taças', 'Regionais', 'Lazer', 'Favoritos'];
+export const DEFAULT_TABS = ['Geral', 'Favoritos', 'Nacionais', 'Internacionais', 'Taças', 'Regionais', 'Lazer'];
 
 export const DEFAULT_SOURCES = CALENDAR_SOURCES;
 
@@ -63,13 +64,13 @@ export const useSettingsStore = create(
         }),
         {
             name: SETTINGS_STORAGE_KEY,
-            version: 2,
+            version: 3,
             migrate: (state) => {
                 const previousDefault = ['FPC', 'Cabreira', 'Stop and Go', 'Classificações.net'];
                 const beforeOrganizers=CALENDAR_SOURCES.filter(source=>source!=='Organizador');
                 const selected = state.selectedSources;
                 // Upgrade the old default once, preserving deliberately selected subsets.
-                return { ...state, selectedSources: !selected || (selected.length === previousDefault.length && previousDefault.every(source => selected.includes(source))) || (selected.length===beforeOrganizers.length&&beforeOrganizers.every(source=>selected.includes(source))) ? CALENDAR_SOURCES : selected };
+                return personalNavigation({ ...state, selectedSources: !selected || (selected.length === previousDefault.length && previousDefault.every(source => selected.includes(source))) || (selected.length===beforeOrganizers.length&&beforeOrganizers.every(source=>selected.includes(source))) ? CALENDAR_SOURCES : selected });
             }
         }
     )

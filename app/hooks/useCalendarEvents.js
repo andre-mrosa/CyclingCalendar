@@ -5,14 +5,19 @@ import { useUser } from '@clerk/nextjs';
 import { useMemo, useCallback, useEffect } from 'react';
 import { useOnline, useStoredString, writeStored } from './useBrowserState';
 
-const fetcher = ([url]) => fetch(url).then(res => res.json());
+const fetcher = async ([url]) => {
+    const response = await fetch(url);
+    const data = await response.json();
+    if (!response.ok || !data.success) throw new Error('Calendar unavailable');
+    return data;
+};
 
 export function useCalendarEvents() {
     const { isSignedIn, user } = useUser();
     const userId = isSignedIn && user ? user.id : null;
     const cacheKey = userId ? `cycling_agenda_${userId}` : null;
 
-    const { data: remoteData, mutate, isLoading } = useSWR(
+    const { data: remoteData, error, mutate, isLoading } = useSWR(
         userId ? ['/api/calendar/events', userId] : null,
         fetcher,
         {
@@ -36,11 +41,11 @@ export function useCalendarEvents() {
     const data = useMemo(() => {
         if (!userId) return { markedEventIds: [], markedDates: {} };
         if (remoteData?.success) return remoteData;
-        if (!online) {
+        if (!online || error) {
             try { return JSON.parse(cached); } catch {}
         }
         return remoteData || { markedEventIds: [], markedDates: {} };
-    }, [remoteData, userId, online, cached]);
+    }, [remoteData, userId, online, cached, error]);
 
     const markedSet = useMemo(() => {
         return new Set(data?.markedEventIds || []);
@@ -75,6 +80,7 @@ export function useCalendarEvents() {
         getDateConflict,
         getCalendarEntry,
         refreshCalendar: mutate,
-        isLoading
+        isLoading,
+        error
     };
 }

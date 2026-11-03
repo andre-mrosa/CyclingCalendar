@@ -1,9 +1,77 @@
 import { useTranslation } from '../i18n/useTranslation';
 const copy = {
- pt: [['Encontrar uma prova', 'Pesquisa pelo nome e filtra por data, modalidade ou localização publicada. Alterna entre lista e calendário.'], ['Consultar a ficha e a fonte', 'O nome da prova abre a ficha no Cycling Calendar. A ligação “Ver original” abre a fonte num novo separador. Confirma na origem as inscrições, horários, percursos e alterações.'], ['Guardar e exportar', 'A estrela guarda a prova nos Favoritos. Podes exportar datas para um ficheiro ICS ou abrir a criação manual no Google Calendar. A exportação não faz a inscrição nem garante atualizações automáticas.'], ['Minha Agenda', 'Com uma conta Google ligada e as permissões necessárias, podes adicionar provas e consultar as marcações na Minha Agenda. Se a integração não estiver disponível, a aplicação abre a criação manual no Google Calendar.']],
- en: [['Find an event', 'Search by name and filter by date, discipline or published location. Switch between list and calendar.'], ['Read the page and source', 'The event name opens its Cycling Calendar page. “View original” opens the source in a new tab. Confirm registration, schedules, routes and changes there.'], ['Save and export', 'The star saves favorites. Export dates as ICS or open manual event creation in Google Calendar. Exporting does not register you for a race or guarantee automatic updates.'], ['My schedule', 'With a connected Google account and the required permissions, you can add events and view entries in My Schedule. If the integration is unavailable, the app opens manual event creation in Google Calendar.']],
- es: [['Encontrar una prueba', 'Busca por nombre y filtra por fecha, modalidad o ubicación publicada. Alterna entre lista y calendario.'], ['Consultar la ficha y la fuente', 'El nombre abre la ficha en Cycling Calendar. “Ver original” abre la fuente en otra pestaña. Confirma allí inscripciones, horarios, recorridos y cambios.'], ['Guardar y exportar', 'La estrella guarda favoritos. Exporta fechas como ICS o abre la creación manual en Google Calendar. La exportación no realiza la inscripción ni garantiza actualizaciones automáticas.'], ['Mi agenda', 'Con una cuenta Google vinculada y los permisos necesarios, puedes añadir pruebas y consultar las entradas en Mi agenda. Si la integración no está disponible, se abre la creación manual en Google Calendar.']],
- fr: [['Trouver une épreuve', 'Recherchez un nom et filtrez par date, discipline ou lieu publié. Alternez liste et calendrier.'], ['Consulter la fiche et la source', 'Le nom ouvre la fiche dans Cycling Calendar. « Voir l’original » ouvre la source dans un nouvel onglet. Confirmez les inscriptions, horaires, parcours et changements à la source.'], ['Enregistrer et exporter', 'L’étoile enregistre les favoris. Exportez les dates au format ICS ou ouvrez la création manuelle dans Google Calendar. Cela ne vous inscrit pas et ne garantit pas les mises à jour automatiques.'], ['Mon agenda', 'Avec un compte Google lié et les autorisations nécessaires, vous pouvez ajouter des épreuves et consulter Mon agenda. Si l’intégration est indisponible, la création manuelle dans Google Calendar s’ouvre.']],
+  "pt": [
+    [
+      "Encontrar uma prova",
+      "Pesquisa pelo nome e filtra por data, modalidade ou localização publicada. Alterna entre lista e calendário."
+    ],
+    [
+      "Consultar a fonte",
+      "O nome abre a ficha da prova. «Ver original» abre a fonte. Confirma ali inscrições, horários, percursos e alterações."
+    ],
+    [
+      "As minhas provas",
+      "Guardar prova coloca-a em Interessado. Com sessão iniciada, podes escolher Vou participar ou Já inscrito. Consulta a mesma coleção em lista ou calendário e filtra por participação. Estes estados são indicações pessoais; não efetuam uma inscrição."
+    ],
+    [
+      "Google Calendar e avisos",
+      "Adicionar ao Google Calendar é uma ação separada. As marcações antigas continuam visíveis em As minhas provas. Remover uma prova desta coleção não apaga eventos no Google. As opções de novas edições, avisos e subscrição estão reunidas em Google Calendar e avisos."
+    ]
+  ],
+  "en": [
+    [
+      "Find an event",
+      "Search by name and filter by date, discipline or published location. Switch between list and calendar."
+    ],
+    [
+      "Read the source",
+      "The name opens the event page. View original opens its source. Confirm registration, schedules, routes and changes there."
+    ],
+    [
+      "My events",
+      "Save event marks it as Interested. When signed in, choose Planning to attend or Registered. Browse the same collection as a list or calendar and filter by participation. These are personal statuses, not registration actions."
+    ],
+    [
+      "Google Calendar and alerts",
+      "Add to Google Calendar is a separate action. Existing calendar entries remain visible in My events. Removing an event from this collection does not delete it in Google. Edition following, alerts and subscriptions are grouped under Google Calendar and alerts."
+    ]
+  ],
+  "es": [
+    [
+      "Encontrar una prueba",
+      "Busca por nombre y filtra por fecha, modalidad o ubicación publicada. Alterna entre lista y calendario."
+    ],
+    [
+      "Consultar la fuente",
+      "El nombre abre la ficha. Ver original abre la fuente. Confirma allí inscripciones, horarios, recorridos y cambios."
+    ],
+    [
+      "Mis pruebas",
+      "Guardar prueba la marca como Me interesa. Con sesión iniciada, elige Voy a participar o Ya inscrito. Consulta la misma colección en lista o calendario y filtra por participación. Estos estados personales no realizan una inscripción."
+    ],
+    [
+      "Google Calendar y avisos",
+      "Añadir a Google Calendar es una acción separada. Las entradas antiguas siguen en Mis pruebas. Quitar una prueba de esta colección no la borra de Google. Las opciones de nuevas ediciones, avisos y suscripción están agrupadas en Google Calendar y avisos."
+    ]
+  ],
+  "fr": [
+    [
+      "Trouver une épreuve",
+      "Recherchez un nom et filtrez par date, discipline ou lieu publié. Alternez liste et calendrier."
+    ],
+    [
+      "Consulter la source",
+      "Le nom ouvre la fiche. Voir l’original ouvre la source. Confirmez-y inscriptions, horaires, parcours et modifications."
+    ],
+    [
+      "Mes épreuves",
+      "Enregistrer marque l’épreuve comme Intéressé. Une fois connecté, choisissez Participation prévue ou Déjà inscrit. Consultez la même collection en liste ou calendrier et filtrez par participation. Ces statuts personnels ne constituent pas une inscription."
+    ],
+    [
+      "Google Calendar et alertes",
+      "Ajouter à Google Calendar est une action distincte. Les anciennes entrées restent visibles dans Mes épreuves. Retirer une épreuve de cette collection ne la supprime pas de Google. Le suivi des éditions, les alertes et les abonnements sont regroupés dans Google Calendar et alertes."
+    ]
+  ]
 };
 export default function PlanningHelp() {
  const { language } = useTranslation();

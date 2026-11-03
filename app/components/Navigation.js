@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect, useCallback } from 'react';
 import { useTheme } from 'next-themes';
 import { SignInButton, Show, UserButton, useUser, useAuth } from '@clerk/nextjs';
-import { Home, Trophy, MapPin, Bike, HelpCircle, Settings, Menu, X, Moon, Sun, Flag, Star, Globe, LogIn, CalendarCheck, Shield, Trash2, RotateCcw, ChevronDown, Award, Check, UserRound, Search } from 'lucide-react';
+import { Home, Trophy, MapPin, Bike, HelpCircle, Settings, Menu, X, Moon, Sun, Flag, Globe, LogIn, CalendarCheck, Shield, Trash2, RotateCcw, ChevronDown, Award, Check, UserRound, Search } from 'lucide-react';
 import SettingsPage from '../definicoes/page';
 import HelpPage from '../ajuda/page';
 import { useSettingsStore } from '../store/useSettingsStore';
@@ -94,13 +94,12 @@ export default function Navigation() {
 
     const allLinks = [
         { href: "/", label: t('nav_general'), keyName: "Geral", icon: <Home size={18} />, exact: true },
-        { href: "/agenda", label: t('nav_agenda'), keyName: "Minha Agenda", icon: <CalendarCheck size={18} /> },
         { href: "/nacionais", label: t('nav_nationals'), keyName: "Nacionais", icon: <Award size={18} /> },
         { href: "/internacionais", label: t('nav_internationals'), keyName: "Internacionais", icon: <Globe size={18} /> },
         { href: "/tacas", label: t('nav_cups'), keyName: "Taças", icon: <Trophy size={18} /> },
         { href: "/regionais", label: t('nav_regionals'), keyName: "Regionais", icon: <MapPin size={18} /> },
         { href: "/lazer", label: t('nav_leisure'), keyName: "Lazer", icon: <Bike size={18} /> },
-        { href: "/favoritos", label: t('nav_favorites'), keyName: "Favoritos", icon: <Star size={18} /> }
+        { href: "/minhas-provas", label: t('nav_favorites'), keyName: "Favoritos", icon: <CalendarCheck size={18} /> }
     ];
 
     const sortedLinks = [...allLinks].sort((a, b) => {
@@ -121,9 +120,9 @@ export default function Navigation() {
     ];
 
     const renderLink = (link) => {
-        const isActive = link.exact 
+        const isActive = link.href === '/minhas-provas' && ['/favoritos', '/agenda'].includes(pathname) || (link.exact
             ? pathname === link.href 
-            : pathname.startsWith(link.href);
+            : pathname.startsWith(link.href));
 
         return (
             <Link prefetch={false}
@@ -210,13 +209,13 @@ export default function Navigation() {
 
     const getPageInfo = (path) => {
         if (path === '/') return { label: t('nav_general'), icon: <Home size={17} className="text-brand" /> };
-        if (path.startsWith('/agenda')) return { label: t('nav_agenda'), icon: <CalendarCheck size={17} className="text-brand" /> };
+        if (path.startsWith('/agenda') || path.startsWith('/minhas-provas')) return { label: t('nav_favorites'), icon: <CalendarCheck size={17} className="text-brand" /> };
         if (path.startsWith('/nacionais')) return { label: t('nav_nationals'), icon: <Award size={17} className="text-brand" /> };
         if (path.startsWith('/internacionais')) return { label: t('nav_internationals'), icon: <Globe size={17} className="text-brand" /> };
         if (path.startsWith('/tacas')) return { label: t('nav_cups'), icon: <Trophy size={17} className="text-brand" /> };
         if (path.startsWith('/regionais')) return { label: t('nav_regionals'), icon: <MapPin size={17} className="text-brand" /> };
         if (path.startsWith('/lazer')) return { label: t('nav_leisure'), icon: <Bike size={17} className="text-brand" /> };
-        if (path.startsWith('/favoritos')) return { label: t('nav_favorites'), icon: <Star size={17} className="text-brand" /> };
+        if (path.startsWith('/favoritos')) return { label: t('nav_favorites'), icon: <CalendarCheck size={17} className="text-brand" /> };
         if (path.startsWith('/definicoes')) return { label: t('nav_settings'), icon: <Settings size={17} className="text-brand" /> };
         if (path.startsWith('/ajuda')) return { label: t('nav_help'), icon: <HelpCircle size={17} className="text-brand" /> };
         if (path.startsWith('/admin')) return { label: t('nav_admin'), icon: <Shield size={17} className="text-brand" /> };
@@ -282,10 +281,10 @@ export default function Navigation() {
 
                 <div className={styles.desktopNav}>
                     <div className={styles.navLinks}>
-                        {links.filter(link => ['/', '/agenda', '/favoritos'].includes(link.href)).map(renderLink)}
+                        {links.filter(link => ['/', '/minhas-provas'].includes(link.href)).map(renderLink)}
                         <details className={styles.moreNav} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) event.currentTarget.removeAttribute('open'); }} onKeyDown={event => { if (event.key === 'Escape') { event.currentTarget.removeAttribute('open'); event.currentTarget.querySelector('summary')?.focus(); } }}>
                             <summary>{t('ui_more_races')}<ChevronDown size={14} /></summary>
-                            <div>{links.filter(link => !['/', '/agenda', '/favoritos'].includes(link.href)).map(renderLink)}</div>
+                            <div>{links.filter(link => !['/', '/minhas-provas'].includes(link.href)).map(renderLink)}</div>
                         </details>
                     </div>
                     
@@ -384,7 +383,7 @@ export default function Navigation() {
               </div>
             </nav>
             <nav className={styles.bottomNav} aria-label={t('ui_mobile_navigation')}>
-                {links.filter(link => ['/', '/agenda', '/favoritos'].includes(link.href)).map(link => <Link key={link.href} prefetch={false} href={link.href} aria-current={pathname === link.href ? 'page' : undefined}>
+                {links.filter(link => ['/', '/minhas-provas'].includes(link.href)).map(link => <Link key={link.href} prefetch={false} href={link.href} aria-current={pathname === link.href ? 'page' : undefined}>
                     {link.href === '/' ? <Search size={21} /> : link.icon}<span>{link.href === '/' ? t('ui_explore') : link.href === '/agenda' ? t('ui_agenda') : link.label}</span>
                 </Link>)}
                 <button type="button" onClick={() => setIsMobileMenuOpen(true)} aria-expanded={isMobileMenuOpen} aria-controls="site-mobile-menu"><UserRound size={21} /><span>{t('ui_account')}</span></button>

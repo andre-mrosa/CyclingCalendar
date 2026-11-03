@@ -95,7 +95,7 @@ for (const [path, destination] of [['/termos', '/terms-of-service'], ['/privacid
     assert.equal(response.status, 308, path);
     assert.ok(response.headers.get('location').endsWith(destination));
 }
-for (const path of ['/agenda', '/favoritos', '/definicoes', '/admin', '/sign-in', '/sign-up']) {
+for (const path of ['/agenda', '/favoritos', '/minhas-provas', '/definicoes', '/admin', '/sign-in', '/sign-up']) {
     const response = await get(path);
     const $ = load(await response.text());
     assert.equal(response.status, 200, path);

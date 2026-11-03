@@ -212,8 +212,7 @@ export default function Conta() {
                             onChange={(e) => setDefaultPage(e.target.value)}
                         >
                             <option value="/">{t('page_home_title')}</option>
-                            <option value="/agenda">{t('page_agenda_title')}</option>
-                            <option value="/favoritos">{t('page_favorites_title')}</option>
+                            <option value="/minhas-provas">{t('nav_favorites')}</option>
                             <option value="/nacionais">{t('page_nationals_title')}</option>
                             <option value="/tacas">{t('page_cups_title')}</option>
                             <option value="/regionais">{t('page_regionals_title')}</option>
@@ -287,7 +286,7 @@ export default function Conta() {
                     </div>
 
                     <div className="pt-3 flex flex-col gap-2">
-                        {(tabsOrder && tabsOrder.length > 0 ? tabsOrder : ['Geral', 'Minha Agenda', 'Nacionais', 'Internacionais', 'Taças', 'Regionais', 'Lazer', 'Favoritos']).map((tab, idx, arr) => {
+                        {(tabsOrder && tabsOrder.length > 0 ? tabsOrder : ['Geral', 'Favoritos', 'Nacionais', 'Internacionais', 'Taças', 'Regionais', 'Lazer']).map((tab, idx, arr) => {
                             const isVisible = !hiddenTabs.includes(tab);
                             const isFirst = idx === 0;
                             const isLast = idx === arr.length - 1;
