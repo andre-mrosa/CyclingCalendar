@@ -39,7 +39,7 @@ export default function GoogleCalendarAction({ event, inCalendar, collection }) 
     return <span className={styles.calendarActionWrap}>
         <button type="button" className={`${styles.eventExportBtn} ${styles.calendarAction}`} data-remove={inCalendar}
             aria-label={`${label}: ${event.title}`} title={label} disabled={disabled} onClick={act}>
-            {busy ? <LoaderCircle size={17} className="animate-spin" /> : inCalendar ? <><CalendarMinus size={18} /><span>{tr('removeCalendarShort')}</span></> : <CalendarPlus size={18} />}
+            {busy ? <LoaderCircle size={17} className="animate-spin" /> : inCalendar ? <CalendarMinus size={18} /> : <CalendarPlus size={18} />}
         </button>
         {failed && <span role="alert" className={styles.calendarActionError}>{tr('calendarError')}</span>}
     </span>;
