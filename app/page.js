@@ -2,6 +2,7 @@ import HomeClient from './HomeClient';
 import { SITE_URL, PUBLIC_PAGES, pageMetadata, jsonLd, itemListStructuredData, filterUpcomingEvents } from './lib/seo';
 import { getPublicCalendarEvents } from './lib/getPublicCalendarEvents';
 import SeoOverviewSection from './components/SeoOverviewSection';
+import { packCalendarEvents } from './lib/calendarPayload';
 export const revalidate = 300;
 export const metadata = pageMetadata(...PUBLIC_PAGES[0]);
 export default async function HomePage() {
@@ -13,7 +14,7 @@ export default async function HomePage() {
     return <>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(websiteSchema) }} />
         {upcomingEvents.length > 0 && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(itemListStructuredData(upcomingEvents, 'Próximas provas no calendário')) }} />}
-        <HomeClient initialEvents={initialEvents} />
+        <HomeClient initialCatalogue={packCalendarEvents(initialEvents)} />
         <SeoOverviewSection events={initialEvents} />
     </>;
 }

@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSettingsStore } from './store/useSettingsStore';
 import { useTranslation } from './i18n/useTranslation';
 import CalendarView from './components/CalendarView';
+import { unpackCalendarEvents } from './lib/calendarPayload';
 
-export default function Home({ initialEvents }) {
+export default function Home({ initialCatalogue }) {
+    const initialEvents = useMemo(() => unpackCalendarEvents(initialCatalogue), [initialCatalogue]);
     const { t } = useTranslation();
     const router = useRouter();
     const { defaultPage } = useSettingsStore();

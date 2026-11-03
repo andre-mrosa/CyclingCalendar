@@ -3,7 +3,7 @@ import { eventPath } from './eventDiscovery.js';
 import { lisbonWallClock } from '../utils/planning.js';
 
 export const SITE_URL = 'https://www.cyclingcalendar.pt';
-export const SITE_TITLE = 'Calendário de Ciclismo em Portugal — BTT, Estrada e Gravel | Cycling Calendar';
+export const SITE_TITLE = 'Calendário de Ciclismo em Portugal | Cycling Calendar';
 export const SITE_DESCRIPTION = 'Consulta datas, modalidades e localizações publicadas de provas de ciclismo: BTT, estrada, gravel e granfondos. Calendário independente com ligações às fontes.';
 export const PUBLIC_PAGES = [
     ['/', SITE_TITLE, SITE_DESCRIPTION],
