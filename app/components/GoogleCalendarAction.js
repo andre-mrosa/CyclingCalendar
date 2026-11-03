@@ -28,7 +28,11 @@ export default function GoogleCalendarAction({ event, inCalendar, collection }) 
                 });
             } else {
                 const { autoAddToGoogleCalendar, generateGoogleCalendarUrl } = await import('../utils/calendarExport');
-                await autoAddToGoogleCalendar(event, 'race', generateGoogleCalendarUrl(event, 'race'));
+                const added = await autoAddToGoogleCalendar(event, 'race', generateGoogleCalendarUrl(event, 'race'));
+                if (added && !collection.statusFor(event)) {
+                    try { await collection.setStatus(event, 'interested'); }
+                    catch { setFailed('personal'); }
+                }
                 trackEvent('ICS_EXPORT');
             }
         } catch { setFailed(true); }
@@ -41,6 +45,6 @@ export default function GoogleCalendarAction({ event, inCalendar, collection }) 
             aria-label={`${label}: ${event.title}`} title={label} disabled={disabled} onClick={act}>
             {busy ? <LoaderCircle size={17} className="animate-spin" /> : inCalendar ? <CalendarMinus size={18} /> : <CalendarPlus size={18} />}
         </button>
-        {failed && <span role="alert" className={styles.calendarActionError}>{tr('calendarError')}</span>}
+        {failed && <span role="alert" className={styles.calendarActionError}>{tr(failed === 'personal' ? 'calendarSavedStateError' : 'calendarError')}</span>}
     </span>;
 }

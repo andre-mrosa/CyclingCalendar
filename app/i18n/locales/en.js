@@ -232,7 +232,7 @@ const messages = {
     filter_show_results: "View races",
     filter_past_upcoming: "Past / Upcoming Events",
     filter_all_types: "All Types",
-    filter_stages: "Stages (Multi-day)",
+    filter_stages: "Stage race",
     filter_single_day: "Single Day",
     filter_all_scopes: "All Scopes",
     filter_all_licenses: "All Licenses",

@@ -1,8 +1,9 @@
 "use client";
 
-import { Flag } from 'lucide-react';
+import { Flag, Route } from 'lucide-react';
 import { useTranslation } from '../i18n/useTranslation';
 import styles from './site.module.css';
+import { interfaceText } from '../i18n/interfaceCopy';
 
 const copy = {
     pt: {
@@ -27,16 +28,17 @@ const copy = {
     },
 };
 
-export default function PageHeading({ title, subtitle, icon: Icon = Flag, hero = false }) {
+export default function PageHeading({ title, subtitle, icon: Icon = Flag, hero = false, children }) {
     const { language } = useTranslation();
     const text = copy[language] || copy.pt;
     return (
         <header className={`${styles.heading} ${hero ? styles.homeHeading : ''}`}>
             <div>
-                <div className={styles.eyebrow}>{!hero && <Icon size={14} aria-hidden="true" />} {hero ? text.eyebrow : 'Cycling Calendar'}</div>
-                <h1>{hero ? text.title : title}</h1>
-                <p>{subtitle || text.description}</p>
+                <div className={styles.eyebrow}>{!hero && <Icon size={14} aria-hidden="true" />} {hero ? interfaceText(language, 'country') : 'Cycling Calendar'}</div>
+                <h1>{hero ? interfaceText(language, 'homeTitle') : title}</h1>
+                <p>{hero ? interfaceText(language, 'homeIntro') : subtitle || text.description}</p>
             </div>
+            {children || (hero && <div className={styles.homeAside}><Route size={26} aria-hidden="true" /><div><strong>{interfaceText(language, 'homeAside')}</strong><p>{interfaceText(language, 'homeAsideIntro')}</p></div></div>)}
         </header>
     );
 }

@@ -232,7 +232,7 @@ const messages = {
     filter_show_results: "Voir les épreuves",
     filter_past_upcoming: "Événements Passés / Futurs",
     filter_all_types: "Tous les Types",
-    filter_stages: "Par Étapes (Multi-jours)",
+    filter_stages: "Par étapes",
     filter_single_day: "Un Jour",
     filter_all_scopes: "Tous les Niveaux",
     filter_all_licenses: "Toutes les Licences",

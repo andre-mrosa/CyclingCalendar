@@ -232,7 +232,7 @@ const messages = {
     filter_show_results: "Ver pruebas",
     filter_past_upcoming: "Eventos Pasados / Futuros",
     filter_all_types: "Todos los Tipos",
-    filter_stages: "Etapas (Varios días)",
+    filter_stages: "Por etapas",
     filter_single_day: "Un Día",
     filter_all_scopes: "Todos los Ámbitos",
     filter_all_licenses: "Todas las Licencias",

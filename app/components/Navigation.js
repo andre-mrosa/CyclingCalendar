@@ -14,6 +14,7 @@ import DynamicLogo from './DynamicLogo';
 import ClerkPrivacyProfilePage from './ClerkPrivacyProfilePage';
 import FlagIcon from './FlagIcon';
 import styles from './site.module.css';
+import { interfaceText } from '../i18n/interfaceCopy';
 import { useModalFocus } from '../hooks/useModalFocus';
 
 export default function Navigation() {
@@ -271,19 +272,19 @@ export default function Navigation() {
                         <Menu size={24} />
                     </button>
 
-                    <Link prefetch={false} href="/" className={styles.brand}><DynamicLogo className="w-8 h-8" /><span><strong>Cycling Calendar</strong><small>{currentPage.label}</small></span></Link>
+                    <Link prefetch={false} href="/" className={styles.brand}><DynamicLogo className="w-8 h-8" /><span><strong>Cycling Calendar</strong><small>Portugal</small></span></Link>
                 </div>
 
                 <Link prefetch={false} href="/" className={styles.brand} title="Cycling Calendar">
                     <DynamicLogo className="w-9 h-9 rounded-xl" />
-                    <span><strong>Cycling Calendar</strong></span>
+                    <span><strong>Cycling Calendar</strong><small>Portugal</small></span>
                 </Link>
 
                 <div className={styles.desktopNav}>
                     <div className={styles.navLinks}>
                         {links.filter(link => ['/', '/minhas-provas'].includes(link.href)).map(renderLink)}
                         <details className={styles.moreNav} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) event.currentTarget.removeAttribute('open'); }} onKeyDown={event => { if (event.key === 'Escape') { event.currentTarget.removeAttribute('open'); event.currentTarget.querySelector('summary')?.focus(); } }}>
-                            <summary>{t('ui_more_races')}<ChevronDown size={14} /></summary>
+                            <summary>{interfaceText(language, 'explore')}<ChevronDown size={14} /></summary>
                             <div>{links.filter(link => !['/', '/minhas-provas'].includes(link.href)).map(renderLink)}</div>
                         </details>
                     </div>
@@ -386,7 +387,7 @@ export default function Navigation() {
                 {links.filter(link => ['/', '/minhas-provas'].includes(link.href)).map(link => <Link key={link.href} prefetch={false} href={link.href} aria-current={pathname === link.href ? 'page' : undefined}>
                     {link.href === '/' ? <Search size={21} /> : link.icon}<span>{link.href === '/' ? t('ui_explore') : link.href === '/agenda' ? t('ui_agenda') : link.label}</span>
                 </Link>)}
-                <button type="button" onClick={() => setIsMobileMenuOpen(true)} aria-expanded={isMobileMenuOpen} aria-controls="site-mobile-menu"><UserRound size={21} /><span>{t('ui_account')}</span></button>
+                <button type="button" onClick={() => setIsMobileMenuOpen(true)} aria-expanded={isMobileMenuOpen} aria-controls="site-mobile-menu"><Menu size={21} /><span>{interfaceText(language, 'more')}</span></button>
             </nav>
 
             {/* Mobile Navigation Drawer */}

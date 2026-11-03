@@ -2,7 +2,7 @@
 export const DEFAULT_PALETTE = 'forest';
 export const SETTINGS_STORAGE_KEY = 'cycling-calendar-settings';
 export const COLOR_PALETTES = [
-    { id: 'forest', accent: '#35634e', soft: '#edf3ee', nightAccent: '#a8ceb8', nightSoft: '#293b30' },
+    { id: 'forest', accent: '#35634e', soft: '#edf0f4', nightAccent: '#a8ceb8', nightSoft: '#191c22' },
     { id: 'atlantic', accent: '#454952', soft: '#edeef0', nightAccent: '#bfc5cf', nightSoft: '#2c3039' },
     { id: 'violet', accent: '#6d5296', soft: '#ece5f4', nightAccent: '#c0a8e3', nightSoft: '#352d43' },
     { id: 'terracotta', accent: '#a54c35', soft: '#f5e8df', nightAccent: '#eab79e', nightSoft: '#443128' },

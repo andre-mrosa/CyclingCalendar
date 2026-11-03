@@ -11,9 +11,11 @@ import { useState, useEffect, useRef, useMemo, Fragment } from 'react';
 import { useSettingsStore } from '../store/useSettingsStore';
 import useSWR from 'swr';
 
-import { Calendar, MapPin, Search, X, ChevronLeft, ChevronRight, Users, Heart, Star, LayoutGrid, List, HelpCircle, Filter, Bike, AlertTriangle, Check, CalendarCheck, History, WifiOff, Download, Clock, Globe } from 'lucide-react';
+import { ArrowRight, Route, Info, Calendar, MapPin, Search, X, ChevronLeft, ChevronRight, Users, Heart, Star, LayoutGrid, List, HelpCircle, Filter, Bike, AlertTriangle, Check, CalendarCheck, History, WifiOff, Download, Clock, Globe } from 'lucide-react';
 import { useMyEvents } from '../hooks/useMyEvents';
 import { myEventsText } from '../i18n/myEventsCopy';
+import { interfaceText } from '../i18n/interfaceCopy';
+import { monthCollection, nextPersonalEvent, publishedLocationOptions } from '../utils/calendarInterface';
 import { personalCalendarMonth, matchesPersonalFilter } from '../utils/personalCollection';
 import GoogleCalendarAction from './GoogleCalendarAction';
 import FavoriteEditionControls from './FavoriteEditionControls';
@@ -39,7 +41,7 @@ import { isStageRace, getEventDiscipline } from '../utils/eventClassifier';
 import PageHeading from './PageHeading';
 import MonthCalendar from './MonthCalendar';
 import RegistrationBadge from './RegistrationBadge';
-import { eventsInPeriod, shiftMonth, groupEventsByDate, formatEventTitle, formatCalendarDateRange } from '../utils/calendarPresentation';
+import { shiftMonth, groupEventsByDate, formatEventTitle, formatCalendarDateRange } from '../utils/calendarPresentation';
 import AgendaOverview from './AgendaOverview';
 import styles from './site.module.css';
 import { matchesPeriod, isCancelled, conciseEscaloes } from '../utils/planning';
@@ -98,6 +100,9 @@ export default function CalendarView({
 }) {
     const { t, language } = useTranslation();
     const trPersonal = key => myEventsText(language, key);
+    const ui = key => interfaceText(language, key);
+    const [participationFilter, setParticipationFilter] = useState('all');
+    const [selectedLocation, setSelectedLocation] = useState('');
     const [personalFilter, setPersonalFilter] = useState('all');
 
     const {
@@ -190,18 +195,18 @@ export default function CalendarView({
     const { favorites, manualFavorites, automaticFavorites, isSignedIn, editionPreferences, markedSet, isMarked, getDateConflict, statusFor } = collection;
     const scopedEvents = useMemo(() => personal ? events.filter(event => {
         const status = statusFor(event);
-        return matchesPersonalFilter(personalFilter, status, isMarked(event.id, 'event', event._allIds || []));
-    }) : events, [personal, events, personalFilter, statusFor, isMarked]);
+        return matchesPersonalFilter(personalFilter, status, isMarked(event.id, 'event', event._allIds || [])) && (participationFilter === 'all' || status === participationFilter);
+    }) : events, [personal, events, personalFilter, participationFilter, statusFor, isMarked]);
 
     const selectedYears = useMemo(() => explicitYears || defaultYears || Array.from(new Set([
         String(currentYear), String(currentYear + 1),
         ...events.map(event => event.sortDate?.slice(0, 4)).filter(year => year && (personal || Number(year) >= currentYear)),
     ])).sort(), [explicitYears, defaultYears, currentYear, events, personal]);
-    const searchFilters = { searchTerm, selectedYears: explicitYears, selectedEscaloes, includeUnknownCategories, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, quickPeriod, selectedMonth, selectedDay, viewMode, sources: effectiveSources };
+    const searchFilters = { searchTerm, selectedLocation, selectedYears: explicitYears, selectedEscaloes, includeUnknownCategories, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, selectedLocation, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, quickPeriod, selectedMonth, selectedDay, viewMode, sources: effectiveSources };
     function applySearch(raw) {
         const value = normalizeSearch(raw);
         if (!value) return;
-        setSearchTerm(value.searchTerm || ''); setSelectedYears(value.selectedYears?.length ? value.selectedYears : null);
+        setSearchTerm(value.searchTerm || ''); setSelectedLocation(value.selectedLocation || ''); setSelectedYears(value.selectedYears?.length ? value.selectedYears : null);
         setSelectedEscaloes(forceEscalao ? [forceEscalao] : value.selectedEscaloes || []);
         setIncludeUnknownCategories(value.includeUnknownCategories);
         setSelectedAmbito(forceAmbito || value.selectedAmbito || 'Todos'); setSelectedLicenca(forceLicenca || value.selectedLicenca || 'Todas');
@@ -263,7 +268,7 @@ export default function CalendarView({
             selectedAmbito: forceAmbito || selectedAmbito,
             selectedLicenca: forceLicenca || selectedLicenca,
             selectedRegiao,
-            selectedDistrito,
+            selectedDistrito, selectedLocation,
             monthFrom,
             monthTo,
             selectedTags,
@@ -275,21 +280,27 @@ export default function CalendarView({
         filtered = filtered.filter(event => matchesPeriod(event, quickPeriod));
 
         return sortCalendarEvents(filtered, favorites);
-    }, [scopedEvents, personal, explicitYears, searchTerm, selectedYears, selectedEscaloes, includeUnknownCategories, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, filterByFavorites, filterByAgenda, filterLeisure, markedSet, favorites, forceEscalao, forceAmbito, forceLicenca, quickPeriod, today]);
+    }, [scopedEvents, personal, explicitYears, searchTerm, selectedYears, selectedEscaloes, includeUnknownCategories, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, selectedLocation, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, filterByFavorites, filterByAgenda, filterLeisure, markedSet, favorites, forceEscalao, forceAmbito, forceLicenca, quickPeriod, today]);
 
-    const filteredEvents = useMemo(() => eventsInPeriod(matchingEvents, selectedMonth, selectedDay), [matchingEvents, selectedMonth, selectedDay]);
-    const calendarMonth = selectedMonth || (personal && viewMode === 'calendar' ? personalCalendarMonth(matchingEvents, today) : null) || matchingEvents.map(event => eventDateDisplay(event).start).find(Boolean)?.slice(0, 7) || new Date().toISOString().slice(0, 7);
+    const calendarMonth = selectedMonth || personalCalendarMonth(matchingEvents, today);
+    const filteredEvents = useMemo(() => monthCollection(matchingEvents, calendarMonth, selectedDay, !selectedMonth), [matchingEvents, calendarMonth, selectedDay, selectedMonth]);
+    const allPersonalEvents = useMemo(() => events.filter(event => statusFor(event)), [events, statusFor]);
+    const nextRace = personal ? nextPersonalEvent(allPersonalEvents, today, statusFor) : null;
+    const nextRaceDate = nextRace ? eventDateDisplay(nextRace).start : null;
+    const locationOptions = useMemo(() => publishedLocationOptions(events), [events]);
+    const filterCount = [selectedLocation, selectedDistrito !== 'Todos', selectedRegiao !== 'Todas', selectedTags.length, selectedType !== 'Todos', selectedEscaloes.length, !includeUnknownCategories, selectedAmbito !== (forceAmbito || 'Todos'), selectedLicenca !== (forceLicenca || 'Todas'), explicitYears?.length, monthFrom !== 1 || monthTo !== 12].filter(Boolean).length;
+    const hasFilters = filterCount > 0 || searchTerm || selectedDay || selectedMonth || quickPeriod || pastEventsFilter !== defaultPastEventsFilter;
+    const otherMonth = matchingEvents.map(event => eventDateDisplay(event).start?.slice(0, 7)).find(month => month && month !== calendarMonth);
     const browseMonth = month => {
         setSelectedMonth(month);
         setSelectedDay(null);
         setSelectedYears([month.slice(0, 4)]);
         setMonthFrom(1); setMonthTo(12);
-        setPastEventsFilter('todos'); setQuickPeriod('');
+        setPastEventsFilter(personal ? (month < today.slice(0, 7) ? 'passados' : month > today.slice(0, 7) ? 'futuros' : pastEventsFilter) : 'todos'); setQuickPeriod('');
     };
     const chooseDay = day => {
         setSelectedMonth(calendarMonth);
         setSelectedDay(current => current === day ? null : day);
-        setViewMode('list');
     };
     const visibleCount = pagination.list === filteredEvents ? pagination.count : 100;
     const setVisibleCount = count => setPagination({ list: filteredEvents, count: typeof count === 'function' ? count(visibleCount) : count });
@@ -337,7 +348,8 @@ export default function CalendarView({
             : [currYr.toString(), (currYr + 1).toString()];
     };
 
-    const onSearchChange = (e) => setSearchTerm(e.target.value);
+    const onSearchChange = e => { setSearchTerm(e.target.value); setSelectedMonth(null); setSelectedDay(null); };
+    const rememberReturn = () => writeStored('cycling_calendar_return', new URL(searchUrl(window.location.href, searchFilters)).pathname + new URL(searchUrl(window.location.href, searchFilters)).search);
     const onYearToggle = (y) => {
         const newYears = selectedYears.includes(y)
             ? selectedYears.filter(yr => yr !== y)
@@ -381,7 +393,7 @@ export default function CalendarView({
         setSelectedAmbito(forceAmbito || 'Todos');
         setSelectedLicenca(forceLicenca || 'Todas');
         setSelectedRegiao((defaultRegiao && applyDefaultRegiao) ? defaultRegiao : 'Todas');
-        setSelectedDistrito('Todos');
+        setSelectedDistrito('Todos'); setSelectedLocation(''); setParticipationFilter('all');
         setSelectedYears(getDefaultSelectedYears());
         setMonthFrom(1);
         setMonthTo(12);
@@ -397,21 +409,22 @@ export default function CalendarView({
 
     return (
         <div className={`${styles.page} ${personal ? styles.personalPage : ''}`}>
-            <PageHeading title={pageTitle} subtitle={personal ? pageSubtitle : t('minimal_calendar_intro')} hero={hero} icon={personal || filterByAgenda ? CalendarCheck : filterByFavorites ? Star : Calendar} />
+            <PageHeading title={pageTitle} subtitle={personal ? pageSubtitle : t('minimal_calendar_intro')} hero={hero} icon={personal || filterByAgenda ? CalendarCheck : filterByFavorites ? Star : Calendar}>
+                {nextRace && nextRaceDate && <Link prefetch={false} href={eventPath(nextRace)} onClick={rememberReturn} className={styles.nextRace}>
+                    <span className={styles.nextRaceDate}><strong>{Number(nextRaceDate.slice(8))}</strong><small>{new Intl.DateTimeFormat(language, { month: 'short', timeZone: 'UTC' }).format(new Date(nextRaceDate + 'T12:00:00Z'))}</small></span>
+                    <span><small>{ui('nextEvent')}</small><strong>{formatEventTitle(nextRace.title)}</strong><span>{formatEventLocation(nextRace)} · {trPersonal(statusFor(nextRace))}</span></span><ArrowRight size={16} aria-hidden="true" />
+                </Link>}
+            </PageHeading>
             {pageIntro}
             {personal && <>
-                <div className={styles.personalStates} role="group" aria-label={trPersonal('status')}>
-                    {['all', 'interested', 'going', 'registered', 'calendar'].map(status => <button key={status} type="button" aria-pressed={personalFilter === status} onClick={() => {
-                        setPersonalFilter(status);
-                        if (status === 'calendar') { setViewMode('calendar'); setSelectedMonth(null); setSelectedDay(null); }
-                    }}>{status === 'calendar' && <CalendarCheck size={15} aria-hidden="true" />}{trPersonal(status)}</button>)}
+                <div className={styles.personalTabs} role="group" aria-label={trPersonal('title')}>
+                    {['all', 'calendar'].map(status => <button key={status} type="button" aria-pressed={personalFilter === status} onClick={() => {
+                        setPersonalFilter(status); setSelectedMonth(null); setSelectedDay(null);
+                    }}>{status === 'calendar' && <CalendarCheck size={16} aria-hidden="true" />}{status === 'calendar' ? 'Google Calendar' : ui('allEvents')}<small>{status === 'calendar' ? events.filter(event => isMarked(event.id, 'event', event._allIds || [])).length : allPersonalEvents.length}</small></button>)}
                 </div>
+                {personalFilter === 'calendar' && <p className={styles.collectionNote}><Info size={14} aria-hidden="true" />{ui('googleNote')}</p>}
                 {collection.personalError && <p role="alert">{trPersonal('loadError')} <button type="button" onClick={collection.refreshPersonal}>{t('btn_try_again')}</button></p>}
-                <details className={styles.personalOptions}><summary>{trPersonal('options')}</summary>
-                    <FavoriteEditionControls preferences={editionPreferences} isSignedIn={isSignedIn} />
-                    <FavoriteChangeControls /><FavoriteSubscription />
-                    {!isInitialLoading && scopedEvents.length > 0 && <AgendaOverview events={scopedEvents} onSelect={setSelectedEvent} />}
-                </details>
+
             </>}
             {filterByFavorites && <FavoriteEditionControls preferences={editionPreferences} isSignedIn={isSignedIn} />}
             {filterByFavorites && <FavoriteChangeControls />}
@@ -422,106 +435,35 @@ export default function CalendarView({
                         <span>{t('offline_mode_banner')}</span>
                     </div>
                 )}
-                <div className={styles.primaryFilters}>
-                    <label className={styles.searchField}>
-                        <span>{t('ui_search_label')}</span>
-                        <span className={styles.search}>
-                            <Search size={17} aria-hidden="true" />
-                            <input type="search" placeholder={t('search_placeholder')} value={searchTerm} onChange={onSearchChange} />
-                        </span>
-                    </label>
-                    <label>{t('planning_modality')}
-                        <select value={selectedTags.length === 1 ? selectedTags[0] : ''} onChange={e => setSelectedTags(e.target.value ? [e.target.value] : [])}>
-                            <option value="">{t('planning_all_modalities')}</option>
-                            {availableTags.map(tag => <option key={tag} value={tag}>{translateTag(tag, language)}</option>)}
-                        </select>
-                    </label>
-                    <label>{t('filter_district')}
-                        <select value={selectedDistrito} onChange={e => setSelectedDistrito(e.target.value)}>
-                            {uniqueDistritos.map(d => <option key={d} value={d}>{d === 'Todos' ? t('filter_all_districts') : d}</option>)}
-                        </select>
-                    </label>
+                <div className={styles.finder}>
+                    <label className={styles.finderSearch}><span className="sr-only">{t('ui_search_label')}</span><Search size={18} aria-hidden="true" /><input type="search" placeholder={t('search_placeholder')} value={searchTerm} onChange={onSearchChange} /></label>
+                    <label className={styles.finderLocation}><span className="sr-only">{ui('location')}</span><MapPin size={17} aria-hidden="true" /><input type="search" list="calendar-published-locations" placeholder={ui('location')} value={selectedLocation} onChange={e => { setSelectedLocation(e.target.value); setSelectedMonth(null); setSelectedDay(null); }} /></label>
+                    <datalist id="calendar-published-locations">{locationOptions.map(location => <option key={location} value={location} />)}</datalist>
+                    <button type="button" onClick={() => setShowFilters(!showFilters)} className={styles.filterButton} aria-expanded={showFilters} aria-controls="calendar-filters"><Filter size={16} aria-hidden="true" />{ui('filters')}{filterCount > 0 && <small className={styles.filterCount}>{filterCount}</small>}</button>
                 </div>
-                <div className={styles.toolbar}>
-                    <div className={styles.toolbarActions}>
-                        <button
-                            onClick={() => setShowFilters(!showFilters)}
-                            className={styles.filterButton}
-                            aria-expanded={showFilters}
-                            aria-controls="calendar-quick-filters calendar-filters"
-                        >
-                            <Filter size={15} className="shrink-0" />
-                            <span className="truncate">{showFilters ? t('filter_button_close') : t('planning_advanced')}</span>
-                        </button>
-
-                        <select
-                            aria-label={t('filter_past_upcoming')}
-                            value={pastEventsFilter}
-                            onChange={e => { setPastEventsFilter(e.target.value); setQuickPeriod(''); }}
-                        >
-                            <option value="todos">{t('filter_all_events')}</option>
-                            <option value="futuros">{t('filter_upcoming_only')}</option>
-                            <option value="passados">{t('filter_past_only')}</option>
-                        </select>
-
-                        {(selectedMonth || selectedDay || quickPeriod || selectedEscaloes.length > 0 || !includeUnknownCategories || selectedDistrito !== 'Todos' || selectedRegiao !== 'Todas' || selectedTags.length > 0 || selectedType !== 'Todos' || selectedAmbito !== (forceAmbito || 'Todos') || selectedLicenca !== (forceLicenca || 'Todas') || (explicitYears !== null && JSON.stringify([...selectedYears].sort()) !== JSON.stringify(getDefaultSelectedYears())) || monthFrom !== 1 || monthTo !== 12 || searchTerm !== '' || pastEventsFilter !== defaultPastEventsFilter) && (
-                            <button
-                                onClick={clearAllFilters}
-                                title={t('filter_clear_all')}
-                                className="col-span-2 sm:col-auto inline-flex items-center justify-center gap-1 font-medium text-xs sm:text-sm text-muted hover:text-slate-800 dark:hover:text-slate-300 transition-colors h-8 sm:h-10 px-2 cursor-pointer"
-                            >
-                                <X size={14} /> {t('filter_clear_all')}
-                            </button>
-                        )}
-                    </div>
-
-                </div>
-                {(!personal || showFilters) && <SavedSearches filters={searchFilters} apply={applySearch} defaultPastEventsFilter={defaultPastEventsFilter} />}
                 {/* Expanded controls preserve every existing filter. */}
-                <div id="calendar-quick-filters" className={styles.quickFilters} data-expanded={showFilters}>
-                    <div className={styles.periods}>
-                        {['', 'weekend', 'month'].map(period => (
-                            <button key={period} type="button" aria-pressed={quickPeriod === period} onClick={() => {
-                                setSelectedMonth(null); setSelectedDay(null);
-                                setQuickPeriod(period);
-                                if (period) {
-                                    setPastEventsFilter('futuros');
-                                    setSelectedYears([String(new Date().getFullYear()), String(new Date().getFullYear() + 1)]);
-                                    setMonthFrom(1); setMonthTo(12);
-                                }
-                            }}>{t(period ? `planning_${period}` : 'planning_any')}</button>
-                        ))}
-                    </div>
+                <div className={styles.quickRow}>
+                    {personal ? <>
+                        <div className={styles.periods} role="group" aria-label={t('filter_past_upcoming')}>
+                            {['futuros', 'passados', 'todos'].map(value => <button key={value} type="button" aria-pressed={pastEventsFilter === value} onClick={() => { setPastEventsFilter(value); setSelectedMonth(null); setSelectedDay(null); setSelectedYears(null); setQuickPeriod(''); }}>{ui(value === 'futuros' ? 'upcoming' : value === 'passados' ? 'history' : 'allDates')}</button>)}
+                        </div>
+                        <select className={styles.participationFilter} aria-label={trPersonal('status')} value={participationFilter} onChange={e => { setParticipationFilter(e.target.value); setSelectedMonth(null); setSelectedDay(null); }}><option value="all">{ui('allStates')}</option>{['interested','going','registered'].map(value => <option key={value} value={value}>{trPersonal(value)}</option>)}</select>
+                    </> : <>
+                        <div className={styles.disciplineChips} role="group" aria-label={t('planning_modality')}>
+                            {['', 'BTT', 'Estrada', 'Gravel', 'Granfondo', 'Passeio / Lazer'].map(tag => <button key={tag} type="button" aria-pressed={tag ? selectedTags.length === 1 && selectedTags[0] === tag : selectedTags.length === 0} onClick={() => { setSelectedTags(tag ? [tag] : []); setSelectedMonth(null); setSelectedDay(null); }}>{tag ? translateTag(tag, language) : ui('allDisciplines')}</button>)}
+                        </div>
+                        <div className={styles.periods} role="group" aria-label={t('filter_past_upcoming')}>
+                            {['', 'weekend', 'month'].map(period => <button key={period} type="button" aria-pressed={quickPeriod === period} onClick={() => { setSelectedMonth(null); setSelectedDay(null); setQuickPeriod(period); setPastEventsFilter('futuros'); setSelectedYears(null); setMonthFrom(1); setMonthTo(12); }}>{period ? t(period === 'weekend' ? 'planning_weekend' : 'planning_month') : pastEventsFilter === 'futuros' ? ui('upcoming') : ui('allDates')}</button>)}
+                        </div>
+                    </>}
                 </div>
-                <div className={styles.results}>
-                    <div className="text-xs text-muted font-medium flex items-center gap-1.5">
-                        <span>{t('filter_counter_showing')} <strong className="text-ink font-semibold">{Math.min(visibleCount, filteredEvents.length)}</strong> {t('filter_counter_of')} <strong className="text-ink font-semibold">{filteredEvents.length}</strong> {filteredEvents.length === 1 ? t('filter_counter_event') : t('filter_counter_events')}</span>
-                        {!personal && !filterByAgenda && !filterByFavorites && events.length > 0 && filteredEvents.length !== events.length && (
-                            <span className="text-slate-400 dark:text-slate-500 font-normal">({events.length} {t('filter_counter_total')})</span>
-                        )}
-                    </div>
-
-                    {(personal || filterByAgenda || filterByFavorites) && filteredEvents.length > 0 && (
-                        <button
-                            onClick={() => {
-                                if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(10);
-                                exportEventsToICS(filteredEvents, personal ? 'minhas_provas.ics' : filterByAgenda ? 'minha_agenda.ics' : 'favoritos.ics');
-                                trackEvent('ICS_EXPORT', {
-                                    metadata: { page: pageTitle, count: filteredEvents.length }
-                                });
-                            }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-brand bg-brand-soft text-brand hover:brightness-95 text-xs font-semibold transition-all cursor-pointer ml-auto"
-                            title={t('filter_export_ics')}
-                        >
-                            <Download size={13} />
-                            <span>{t('filter_export_ics')}</span>
-                        </button>
-                    )}
-                </div>
-
+                {hasFilters && <div className={styles.filterSummary}><button type="button" onClick={clearAllFilters}><X size={13} aria-hidden="true" />{t('filter_clear_all')}</button>{selectedType !== 'Todos' && <span>{selectedType === 'Etapas' ? ui('stages') : selectedType === 'Vários Dias' ? ui('multiDay') : t('filter_single_day')}</span>}{selectedDistrito !== 'Todos' && <span>{selectedDistrito}</span>}{selectedLocation && <span>{selectedLocation}</span>}</div>}
                 {showFilters && (
                     <div id="calendar-filters" className={styles.filters}>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 w-full">
+                            <label>{t('planning_modality')}<select value={selectedTags.length === 1 ? selectedTags[0] : ''} onChange={e => setSelectedTags(e.target.value ? [e.target.value] : [])}><option value="">{t('planning_all_modalities')}</option>{availableTags.map(tag => <option key={tag} value={tag}>{translateTag(tag, language)}</option>)}</select></label>
+                            <label>{t('filter_district')}<select value={selectedDistrito} onChange={e => setSelectedDistrito(e.target.value)}>{uniqueDistritos.map(d => <option key={d} value={d}>{d === 'Todos' ? t('filter_all_districts') : d}</option>)}</select></label>
+                            <label>{t('filter_past_upcoming')}<select value={pastEventsFilter} onChange={e => { setPastEventsFilter(e.target.value); setSelectedMonth(null); setSelectedDay(null); setQuickPeriod(''); }}><option value="futuros">{t('filter_upcoming_only')}</option><option value="passados">{t('filter_past_only')}</option><option value="todos">{t('filter_all_events')}</option></select></label>
                             {activeFilters.includes('year') && (
                                 <div className="flex flex-col gap-2 col-span-full">
                                     <label className="text-xs text-slate-400 uppercase tracking-wider font-bold ml-1">{t('filter_years')}</label>
@@ -598,7 +540,7 @@ export default function CalendarView({
                             )}
 
                             {(activeFilters.includes('escalao')||forceEscalao)&&<div className="col-span-full"><label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={includeUnknownCategories} onChange={e=>setIncludeUnknownCategories(e.target.checked)}/>{trustText(language,'includeUnknown')}</label><p className="text-xs text-muted mt-1">{trustText(language,'unknownNote')}</p></div>}
-                            {activeFilters.includes('ambito') && !forceAmbito && (
+                            {!forceAmbito && (
                                 <div className="flex flex-col gap-2">
                                     <label className="text-xs text-muted uppercase tracking-wider font-bold ml-1">{t('filter_scope')}</label>
                                     <select
@@ -616,7 +558,7 @@ export default function CalendarView({
                                 </div>
                             )}
 
-                            {activeFilters.includes('licenca') && !forceLicenca && (
+                            {!forceLicenca && (
                                 <div className="flex flex-col gap-2">
                                     <label className="text-xs text-muted uppercase tracking-wider font-bold ml-1">{t('filter_license')}</label>
                                     <select
@@ -644,12 +586,12 @@ export default function CalendarView({
                                 >
                                     <option value="Todos">{t('filter_all_types')}</option>
                                     <option value="Etapas">{t('filter_stages')}</option>
-                                    <option value="Um Dia">{t('filter_single_day')}</option>
-                                </select>
+                                    <option value="Um Dia">{t('filter_single_day')}</option><option value="Vários Dias">{ui('multiDay')}</option>
+                                </select><p className="text-xs text-muted">{ui('formatHint')}</p>
                             </div>
 
 
-                            {activeFilters.includes('regiao') && (
+                            {(activeFilters.includes('regiao') || hero) && (
                                 <div className="flex flex-col gap-2">
                                     <label className="text-xs text-muted uppercase tracking-wider font-bold ml-1">{t('filter_region')}</label>
                                     <select
@@ -689,23 +631,28 @@ export default function CalendarView({
                         )}
                     </div>
                 )}
+                {showFilters && <SavedSearches filters={searchFilters} apply={applySearch} defaultPastEventsFilter={defaultPastEventsFilter} />}
             </header>
             <div className={styles.calendarWorkspace}>
             <section className={styles.calendarFeed} aria-label={pageTitle}>
                 <div className={styles.feedHeading}>
-                    {viewMode !== 'calendar' && <div className={styles.monthNavigation}>
+                    <div className={styles.monthNavigation}>
                         <button type="button" aria-label={t('ui_previous_month')} onClick={() => browseMonth(shiftMonth(calendarMonth, -1))}><ChevronLeft size={18} /></button>
                         <h2>{formatMonthHeading(Number(calendarMonth.slice(0, 4)), Number(calendarMonth.slice(5)) - 1, language)} {calendarMonth.slice(0, 4)}</h2>
                         <button type="button" aria-label={t('ui_next_month')} onClick={() => browseMonth(shiftMonth(calendarMonth, 1))}><ChevronRight size={18} /></button>
-                    </div>}
+                        <button type="button" className={styles.todayButton} onClick={() => browseMonth(today.slice(0, 7))}>{ui('today')}</button>
+                    </div>
                     <div className={styles.viewSwitch} role="group" aria-label={t('ui_view')}>
-                        <button type="button" aria-pressed={viewMode === 'list'} onClick={() => setViewMode('list')}><List size={16} />{t('ui_list')}</button>
-                        <button type="button" aria-pressed={viewMode === 'calendar'} onClick={() => setViewMode('calendar')}><Calendar size={16} />{t('ui_calendar')}</button>
+                        <button type="button" aria-label={t('ui_list')} aria-pressed={viewMode === 'list'} onClick={() => setViewMode('list')}><List size={16} /><span>{t('ui_list')}</span></button>
+                        <button type="button" aria-label={t('ui_calendar')} aria-pressed={viewMode === 'calendar'} onClick={() => setViewMode('calendar')}><Calendar size={16} /><span>{t('ui_calendar')}</span></button>
                     </div>
                     <button type="button" className={styles.mobileFilterButton} aria-label={t('planning_advanced')} aria-expanded={showFilters} aria-controls="calendar-quick-filters calendar-filters" onClick={() => setShowFilters(value => !value)}><Filter size={19} /></button>
                 </div>
+                <div className={styles.feedSummary}><span role="status"><strong>{filteredEvents.length}</strong> {t(filteredEvents.length === 1 ? 'filter_counter_event' : 'filter_counter_events')}</span>
+                    {(personal || filterByAgenda || filterByFavorites) && filteredEvents.length > 0 ? <button type="button" onClick={() => { exportEventsToICS(filteredEvents, 'minhas_provas.ics'); trackEvent('ICS_EXPORT'); }}><Download size={14} aria-hidden="true" />{ui('export')}</button> : <button type="button" onClick={() => setShowFilters(value => !value)} aria-expanded={showFilters} aria-controls="calendar-filters"><Filter size={14} aria-hidden="true" />{t('search_save_share')}</button>}
+                </div>
                 {selectedDay && <div className={styles.daySelection}><span>{new Intl.DateTimeFormat(language, { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(selectedDay + 'T12:00:00Z'))}</span><button type="button" onClick={() => setSelectedDay(null)}>{t('ui_clear_day')}<X size={14} /></button></div>}
-                {viewMode === 'calendar' && <MonthCalendar expanded month={calendarMonth} events={matchingEvents} selectedDay={selectedDay} onDay={chooseDay} onMonth={browseMonth} />}
+                {viewMode === 'calendar' && <MonthCalendar expanded showHeader={false} month={calendarMonth} events={matchingEvents} selectedDay={selectedDay} onDay={chooseDay} onMonth={browseMonth} />}
                 <FavoriteChanges events={events} favorites={favorites} ready={Array.isArray(fetchedEvents) && !error && !isOffline} onSelect={setSelectedEvent} />
                 {filterByFavorites && <FavoriteSubscription />}
                 {(filterByAgenda || filterByFavorites) && !isInitialLoading && <AgendaOverview mode={filterByAgenda ? "agenda" : "favorites"} events={events.filter(event => filterByAgenda ? isMarked(event.id, 'event', event._allIds || []) : favorites.includes(event.id) || event._allIds?.some(id => favorites.includes(id)))} onSelect={setSelectedEvent} />}
@@ -752,6 +699,7 @@ export default function CalendarView({
                                 {personal && !scopedEvents.length && personalFilter === 'all' ? trPersonal('empty') : personal && personalFilter === 'calendar' && !scopedEvents.length ? trPersonal('calendarEmpty') : t('filter_no_events')}
                             </p>
                             {personal && !scopedEvents.length && personalFilter === 'all' ? <Link href="/" className={styles.primaryButton}>{t('page_favorites_explore_btn')}</Link> : <button type="button" onClick={clearAllFilters} className={styles.filterButton}><X size={14} />{t('filter_clear_all')}</button>}
+                            {otherMonth && <button type="button" className={styles.filterButton} onClick={() => browseMonth(otherMonth)}>{ui('nextMonth')}<ArrowRight size={15} /></button>}
                             {!error&&!isOffline&&<SearchSuggestions events={scopedEvents} filters={{...searchFilters,selectedYears}} context={{today,filterByFavorites,favorites,filterByAgenda,markedSet,filterLeisure,fixed:{...(forceEscalao?{selectedEscaloes:[forceEscalao]}:{}),...(forceAmbito?{selectedAmbito:forceAmbito}:{}),...(forceLicenca?{selectedLicenca:forceLicenca}:{})}}} apply={applySearch}/>}
 
                             {selectedRegiao !== 'Todas' && (
@@ -780,7 +728,7 @@ export default function CalendarView({
                     );
                 })()}
 
-                {!isInitialLoading && filteredEvents.length > 0 && viewMode === 'list' && (
+                {!isInitialLoading && filteredEvents.length > 0 && (viewMode === 'list' || selectedDay) && (
                     <>
                         <div className={styles.eventList}>
                             {groupEventsByDate(filteredEvents.slice(0, visibleCount)).map((group, idx, groups) => {
@@ -835,7 +783,7 @@ export default function CalendarView({
                                         <div className="flex flex-col justify-center min-w-0 flex-1">
                                             <div className={styles.eventHeadingRow}>
                                                 <h3>
-                                                    <Link prefetch={false} href={eventPath(event)} className={styles.eventTitle} onClick={() => trackEvent('EVENT_OPEN', { targetId: event.id })}>{displayTitle}</Link>
+                                                    <Link prefetch={false} href={eventPath(event)} className={styles.eventTitle} onClick={() => { rememberReturn(); trackEvent('EVENT_OPEN', { targetId: event.id }); }}>{displayTitle}</Link>
                                                 </h3>
                                                 {(selectedEscaloes.length>0||forceEscalao)&&<EventTrust event={event} compact/>}
                                                 {automaticFavorites.some(id => allIds.includes(id)) && !manualFavorites.some(id => allIds.includes(id)) && <span className="text-xs text-muted">{({ pt: 'Nova edição · adicionada automaticamente', en: 'New edition · added automatically', es: 'Nueva edición · añadida automáticamente', fr: 'Nouvelle édition · ajoutée automatiquement' })[language] || 'New edition · added automatically'}</span>}
@@ -915,14 +863,14 @@ export default function CalendarView({
 
                                             {/* Prova por Etapas */}
                                             {isStage && (
-                                                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 shrink-0">
-                                                    {t('card_stages')}
+                                                <span className={styles.stageBadge}>
+                                                    <Route size={12} aria-hidden="true" />{ui('stages')}
                                                 </span>
                                             )}
                                     </div>
-                                    <a href={originalEventUrl(event.link)} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 shrink-0" aria-label={t('minimal_original') + ': ' + event.title}>{t('minimal_original')} ↗</a>
+                                    <div className={styles.eventActions}><Link prefetch={false} href={eventPath(event)} onClick={rememberReturn} className={styles.eventDetailsLink} aria-label={ui('details') + ': ' + event.title} title={ui('details')}><ArrowRight size={17} aria-hidden="true" /></Link>
                                     <GoogleCalendarAction event={event} inCalendar={isEventMarked} collection={collection} />
-                                    <EventParticipation event={event} collection={collection} />
+                                    <EventParticipation event={event} collection={collection} /></div>
                                 </div>
 
                                                 );
@@ -942,6 +890,11 @@ export default function CalendarView({
                 )}
             </section>
             </div>
+            {personal && <>                <details className={styles.personalOptions}><summary>{trPersonal('options')}</summary>
+                    <FavoriteEditionControls preferences={editionPreferences} isSignedIn={isSignedIn} />
+                    <FavoriteChangeControls /><FavoriteSubscription />
+                    {!isInitialLoading && scopedEvents.length > 0 && <AgendaOverview events={scopedEvents} onSelect={setSelectedEvent} />}
+                </details></>}
             {showEscalaoHelp && (
                 <div role="dialog" aria-modal="true" aria-label={t('escalao_modal_title')} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1100] flex items-center justify-center p-4" onClick={() => setShowEscalaoHelp(false)}>
                     <div className="relative w-full max-w-[500px] bg-surface rounded-xl shadow-2xl border border-line flex flex-col max-h-[90vh] text-ink transition-colors duration-200" onClick={(e) => e.stopPropagation()}>

@@ -1,6 +1,6 @@
 import { CALENDAR_SOURCES } from '../lib/calendarSources.js';
 // Only recognised filters can enter the URL or a saved search.
-const strings = ['searchTerm', 'selectedAmbito', 'selectedLicenca', 'selectedRegiao', 'selectedDistrito', 'selectedType'];
+const strings = ['searchTerm', 'selectedAmbito', 'selectedLicenca', 'selectedRegiao', 'selectedDistrito', 'selectedLocation', 'selectedType'];
 const lists = ['selectedYears', 'selectedEscaloes', 'selectedTags', 'selectedDisciplines', 'sources'];
 export function normalizeSearch(value) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
@@ -44,7 +44,7 @@ export function savedSearchMatches(current, saved, defaultSources = CALENDAR_SOU
         const filters = normalizeSearch(value);
         if (!filters) return null;
         const defaults = {searchTerm:'', selectedAmbito:'Todos', selectedLicenca:'Todas', selectedRegiao:'Todas', selectedDistrito:'Todos', selectedType:'Todos', monthFrom:1, monthTo:12, pastEventsFilter:defaultPast, quickPeriod:'', selectedMonth:null, selectedDay:null, viewMode:'list'};
-        const result = Object.fromEntries(Object.entries(defaults).map(([key, fallback]) => [key, filters[key] ?? fallback]));
+        const result = Object.fromEntries(Object.entries({ ...defaults, selectedLocation: '' }).map(([key, fallback]) => [key, filters[key] ?? fallback]));
         for (const key of lists) result[key] = [...(filters[key] || (key === 'sources' ? defaultSources : []))].sort();
         result.includeUnknownCategories = filters.includeUnknownCategories;
         result.maxDistanceFilter = filters.maxDistanceFilter;

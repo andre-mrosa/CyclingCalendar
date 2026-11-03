@@ -39,10 +39,11 @@ test('one collection preserves saved, Google-calendar and status-only events inc
     assert.equal(personalStatus(event, [], new Set(['current_reg_open'])), null);
 });
 
-test('explicit removal overrides legacy sources without modifying favorites or Google entries', () => {
+test('legacy dismissal excludes favorites, while a Google entry remains in the unified collection', () => {
     const saved = ['current'];
     const google = new Set(['current']);
-    assert.equal(personalStatus(event, saved, google, [{ eventId: 'old-source-id', status: 'dismissed' }]), null);
+    assert.equal(personalStatus(event, saved, google, [{ eventId: 'old-source-id', status: 'dismissed' }]), 'interested');
+    assert.equal(personalStatus(event, saved, new Set(), [{ eventId: 'old-source-id', status: 'dismissed' }]), null);
     assert.deepEqual(saved, ['current']);
     assert.deepEqual([...google], ['current']);
     assert.equal(personalStatus(event, saved, google, [{ eventId: 'current', status: 'interested' }]), 'interested');

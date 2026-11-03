@@ -24,6 +24,7 @@ export function filterEvents(events, filters) {
         selectedLicenca,
         selectedRegiao,
         selectedDistrito,
+        selectedLocation,
         monthFrom,
         monthTo,
         selectedDisciplines,
@@ -146,6 +147,13 @@ export function filterEvents(events, filters) {
     if (selectedDistrito && selectedDistrito !== 'Todos') {
         filtered = filtered.filter(event => event.distrito === selectedDistrito);
     }
+    if (selectedLocation?.trim()) {
+        const words = normalizeSearchString(selectedLocation).replace(/[-–—,;]+/g, ' ').split(/\s+/).filter(Boolean);
+        filtered = filtered.filter(event => {
+            const location = normalizeSearchString(event.distrito).replace(/[-–—,;]+/g, ' ');
+            return words.every(word => location.includes(word));
+        });
+    }
 
     if (monthFrom !== undefined && monthTo !== undefined) {
         filtered = filtered.filter(event => {
@@ -187,6 +195,9 @@ export function filterEvents(events, filters) {
                 return isStage;
             } else if (selectedType === 'Um Dia') {
                 return !isStage && eventDateDisplay(event).singleDay;
+            } else if (selectedType === 'Vários Dias') {
+                const dates = eventDateDisplay(event);
+                return !isStage && Boolean(dates.start && dates.end && dates.start !== dates.end);
             }
             return true;
         });
