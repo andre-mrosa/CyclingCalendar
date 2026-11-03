@@ -14,6 +14,7 @@ import useSWR from 'swr';
 import { Calendar, CalendarPlus, MapPin, Search, X, ChevronLeft, ChevronRight, Users, Heart, Star, LayoutGrid, List, HelpCircle, Filter, Bike, AlertTriangle, Check, CalendarCheck, History, WifiOff, Download, Clock, Globe } from 'lucide-react';
 import { useMyEvents } from '../hooks/useMyEvents';
 import { myEventsText } from '../i18n/myEventsCopy';
+import { personalCalendarMonth } from '../utils/personalCollection';
 import FavoriteEditionControls from './FavoriteEditionControls';
 import { filterEvents } from '../utils/filterEvents';
 import { mergeEvents } from '../utils/mergeEvents';
@@ -276,7 +277,7 @@ export default function CalendarView({
     }, [scopedEvents, personal, explicitYears, searchTerm, selectedYears, selectedEscaloes, includeUnknownCategories, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, filterByFavorites, filterByAgenda, filterLeisure, markedSet, favorites, forceEscalao, forceAmbito, forceLicenca, quickPeriod, today]);
 
     const filteredEvents = useMemo(() => eventsInPeriod(matchingEvents, selectedMonth, selectedDay), [matchingEvents, selectedMonth, selectedDay]);
-    const calendarMonth = selectedMonth || (personal ? today.slice(0, 7) : null) || matchingEvents.map(event => eventDateDisplay(event).start).find(Boolean)?.slice(0, 7) || new Date().toISOString().slice(0, 7);
+    const calendarMonth = selectedMonth || (personal && viewMode === 'calendar' ? personalCalendarMonth(matchingEvents, today) : null) || matchingEvents.map(event => eventDateDisplay(event).start).find(Boolean)?.slice(0, 7) || new Date().toISOString().slice(0, 7);
     const browseMonth = month => {
         setSelectedMonth(month);
         setSelectedDay(null);

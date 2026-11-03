@@ -1,8 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { personalStatus, personalNavigation, changePersonalStatus } from '../app/utils/personalCollection.js';
+import { personalStatus, personalNavigation, changePersonalStatus, personalCalendarMonth } from '../app/utils/personalCollection.js';
 
 const event = { id: 'current', _allIds: ['old-source-id'] };
+test('calendar opens the next saved race month, handles ongoing races and retains historical collections', () => {
+    const races = [{ date: '01 MAI 2024' }, { date: '06 DEZ 2026' }];
+    assert.equal(personalCalendarMonth(races, '2026-11-03'), '2026-12');
+    assert.equal(personalCalendarMonth(races.slice(0, 1), '2026-11-03'), '2024-05');
+    assert.equal(personalCalendarMonth([{ date: '30 OUT 2026 a 04 NOV 2026' }], '2026-11-03'), '2026-11');
+    assert.equal(personalCalendarMonth([{ date: 'Por confirmar' }], '2026-11-03'), '2026-11');
+});
 test('saving a participation state also saves membership without toggling an existing favorite off', async () => {
     const persisted = [], toggles = [];
     await changePersonalStatus(event, 'going', { persist: async value => persisted.push(value), favorites: [], toggleFavorite: id => toggles.push(id) });

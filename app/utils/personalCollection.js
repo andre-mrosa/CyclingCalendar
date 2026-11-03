@@ -1,4 +1,11 @@
+import { eventDateDisplay } from './eventDateDisplay.js';
+
 export const PERSONAL_STATUSES = ['interested', 'going', 'registered'];
+export function personalCalendarMonth(events, today) {
+    const dates = events.map(eventDateDisplay).filter(date => date.start).sort((a, b) => a.start.localeCompare(b.start));
+    const next = dates.find(date => (date.end || date.start) >= today);
+    return (next ? (next.start < today ? today : next.start) : dates.at(-1)?.start || today).slice(0, 7);
+}
 export const personalPath = path => ['/agenda', '/favoritos'].includes(path) ? '/minhas-provas' : path;
 
 export async function changePersonalStatus(event, status, { persist, favorites, toggleFavorite }) {
