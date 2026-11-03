@@ -117,7 +117,7 @@
 .eventFavorite:hover, .eventExportBtn:hover { background: var(--site-soft); }
 .calendarActionWrap { display: inline-flex; position: relative; z-index: 3; align-items: center; }
 .calendarAction { display: inline-flex; gap: 5px; padding: 6px 8px; font-size: 12px; }
-.calendarAction[data-remove='true'] { color: var(--site-accent); border: 1px solid var(--site-line); }
+.calendarAction[data-remove='true'] { color: var(--site-accent); }
 .calendarAction:disabled { opacity: .55; cursor: wait; }
 .calendarActionError { position: absolute; top: 100%; right: 0; z-index: 5; width: 220px; padding: 8px; border: 1px solid var(--site-line); border-radius: 6px; background: var(--site-surface); color: var(--foreground); font-size: 12px; }
 .eventFavorite[aria-pressed='true'], .eventExportBtn[aria-pressed='true'] { color: var(--site-accent); }
