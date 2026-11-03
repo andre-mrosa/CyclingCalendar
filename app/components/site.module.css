@@ -326,12 +326,11 @@
 .quickFilters[data-expanded='false'] { display: none; }
 .calendarFeed { padding-bottom: 24px; }
 .feedHeading { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 64px; margin-bottom: 0; }
-.feedHeading:has(> .viewSwitch:only-child) { justify-content: flex-end; }
 .monthNavigation { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .monthNavigation h2 { text-transform: capitalize; font-size: 18px; font-weight: 600; letter-spacing: -.025em; }
 .monthNavigation button, .monthCalendar header button { display: inline-grid; place-items: center; width: 36px; height: 40px; border-radius: 4px; color: var(--foreground); cursor: pointer; }
 .monthNavigation button:hover, .monthCalendar header button:hover { background: var(--site-soft); }
-.viewSwitch { display: flex; border: 1px solid var(--site-line); border-radius: 4px; overflow: hidden; }
+.viewSwitch { display: flex; margin-left: auto; flex-shrink: 0; border: 1px solid var(--site-line); border-radius: 4px; overflow: hidden; }
 .viewSwitch button { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; padding: 0 12px; font-size: 12px; cursor: pointer; color: var(--site-muted); }
 .viewSwitch button[aria-pressed='true'] { background: var(--site-accent-soft); color: var(--site-accent); }
 .eventList { display: flex; flex-direction: column; }
@@ -416,7 +415,6 @@
   .monthNavigation button { width: 30px; height: 44px; }
   .viewSwitch button { min-height: 44px; padding: 0 8px; font-size: 0; gap: 0; }
   .viewSwitch button svg { width: 18px; height: 18px; }
-  .viewSwitch { margin-left: auto; }
   .mobileFilterButton { display: none; }
   .mobileFilterButton[aria-expanded='true'] { background: var(--site-accent-soft); border-color: var(--site-accent); }
   .eventCard { gap: 3px; padding: 13px 12px; }
