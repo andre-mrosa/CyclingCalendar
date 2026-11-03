@@ -1,0 +1,46 @@
+'use client';
+import { useState } from 'react';
+import { CalendarPlus, CalendarMinus, LoaderCircle } from 'lucide-react';
+import { useTranslation } from '../i18n/useTranslation';
+import { myEventsText } from '../i18n/myEventsCopy';
+import { removeCalendarEvent } from '../utils/calendarRemoval';
+import styles from './site.module.css';
+import { trackEvent } from './AnalyticsTracker';
+
+export default function GoogleCalendarAction({ event, inCalendar, collection }) {
+    const { language } = useTranslation();
+    const [busy, setBusy] = useState(false);
+    const [failed, setFailed] = useState(false);
+    const tr = key => myEventsText(language, key);
+    async function act(click) {
+        click.stopPropagation(); click.preventDefault();
+        setBusy(true); setFailed(false);
+        try {
+            if (inCalendar) {
+                await removeCalendarEvent(event, {
+                    confirm: () => window.confirm(tr('confirmRemoveCalendar').replace('{title}', event.title)),
+                    preserve: async () => {
+                        const ids = [event.id, ...(event._allIds || [])];
+                        const status = collection.statusFor(event);
+                        if (status && !collection.favorites.some(id => ids.includes(id))) await collection.setStatus(event, status);
+                    },
+                    refresh: collection.refreshCalendar,
+                });
+            } else {
+                const { autoAddToGoogleCalendar, generateGoogleCalendarUrl } = await import('../utils/calendarExport');
+                await autoAddToGoogleCalendar(event, 'race', generateGoogleCalendarUrl(event, 'race'));
+                trackEvent('ICS_EXPORT');
+            }
+        } catch { setFailed(true); }
+        finally { setBusy(false); }
+    }
+    const disabled = busy || Boolean(collection.isSignedIn && (collection.isLoading || collection.error || (inCalendar && !collection.canEdit)));
+    const label = tr(inCalendar ? 'removeCalendar' : 'export');
+    return <span className={styles.calendarActionWrap}>
+        <button type="button" className={`${styles.eventExportBtn} ${styles.calendarAction}`} data-remove={inCalendar}
+            aria-label={`${label}: ${event.title}`} title={label} disabled={disabled} onClick={act}>
+            {busy ? <LoaderCircle size={17} className="animate-spin" /> : inCalendar ? <><CalendarMinus size={18} /><span>{tr('removeCalendarShort')}</span></> : <CalendarPlus size={18} />}
+        </button>
+        {failed && <span role="alert" className={styles.calendarActionError}>{tr('calendarError')}</span>}
+    </span>;
+}

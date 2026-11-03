@@ -11,10 +11,11 @@ import { useState, useEffect, useRef, useMemo, Fragment } from 'react';
 import { useSettingsStore } from '../store/useSettingsStore';
 import useSWR from 'swr';
 
-import { Calendar, CalendarPlus, MapPin, Search, X, ChevronLeft, ChevronRight, Users, Heart, Star, LayoutGrid, List, HelpCircle, Filter, Bike, AlertTriangle, Check, CalendarCheck, History, WifiOff, Download, Clock, Globe } from 'lucide-react';
+import { Calendar, MapPin, Search, X, ChevronLeft, ChevronRight, Users, Heart, Star, LayoutGrid, List, HelpCircle, Filter, Bike, AlertTriangle, Check, CalendarCheck, History, WifiOff, Download, Clock, Globe } from 'lucide-react';
 import { useMyEvents } from '../hooks/useMyEvents';
 import { myEventsText } from '../i18n/myEventsCopy';
-import { personalCalendarMonth } from '../utils/personalCollection';
+import { personalCalendarMonth, matchesPersonalFilter } from '../utils/personalCollection';
+import GoogleCalendarAction from './GoogleCalendarAction';
 import FavoriteEditionControls from './FavoriteEditionControls';
 import { filterEvents } from '../utils/filterEvents';
 import { mergeEvents } from '../utils/mergeEvents';
@@ -189,8 +190,8 @@ export default function CalendarView({
     const { favorites, manualFavorites, automaticFavorites, isSignedIn, editionPreferences, markedSet, isMarked, getDateConflict, statusFor } = collection;
     const scopedEvents = useMemo(() => personal ? events.filter(event => {
         const status = statusFor(event);
-        return status && (personalFilter === 'all' || status === personalFilter);
-    }) : events, [personal, events, personalFilter, statusFor]);
+        return matchesPersonalFilter(personalFilter, status, isMarked(event.id, 'event', event._allIds || []));
+    }) : events, [personal, events, personalFilter, statusFor, isMarked]);
 
     const selectedYears = useMemo(() => explicitYears || defaultYears || Array.from(new Set([
         String(currentYear), String(currentYear + 1),
@@ -400,7 +401,10 @@ export default function CalendarView({
             {pageIntro}
             {personal && <>
                 <div className={styles.personalStates} role="group" aria-label={trPersonal('status')}>
-                    {['all', 'interested', 'going', 'registered'].map(status => <button key={status} type="button" aria-pressed={personalFilter === status} onClick={() => setPersonalFilter(status)}>{trPersonal(status)}</button>)}
+                    {['all', 'interested', 'going', 'registered', 'calendar'].map(status => <button key={status} type="button" aria-pressed={personalFilter === status} onClick={() => {
+                        setPersonalFilter(status);
+                        if (status === 'calendar') { setViewMode('calendar'); setSelectedMonth(null); setSelectedDay(null); }
+                    }}>{status === 'calendar' && <CalendarCheck size={15} aria-hidden="true" />}{trPersonal(status)}</button>)}
                 </div>
                 {collection.personalError && <p role="alert">{trPersonal('loadError')} <button type="button" onClick={collection.refreshPersonal}>{t('btn_try_again')}</button></p>}
                 <details className={styles.personalOptions}><summary>{trPersonal('options')}</summary>
@@ -745,7 +749,7 @@ export default function CalendarView({
                         <div className={styles.empty}>
                             <Search size={30} className="text-brand mx-auto mb-5" aria-hidden="true" />
                             <p className="text-muted mb-6 text-base">
-                                {personal && !scopedEvents.length && personalFilter === 'all' ? trPersonal('empty') : t('filter_no_events')}
+                                {personal && !scopedEvents.length && personalFilter === 'all' ? trPersonal('empty') : personal && personalFilter === 'calendar' && !scopedEvents.length ? trPersonal('calendarEmpty') : t('filter_no_events')}
                             </p>
                             {personal && !scopedEvents.length && personalFilter === 'all' ? <Link href="/" className={styles.primaryButton}>{t('page_favorites_explore_btn')}</Link> : <button type="button" onClick={clearAllFilters} className={styles.filterButton}><X size={14} />{t('filter_clear_all')}</button>}
                             {!error&&!isOffline&&<SearchSuggestions events={scopedEvents} filters={{...searchFilters,selectedYears}} context={{today,filterByFavorites,favorites,filterByAgenda,markedSet,filterLeisure,fixed:{...(forceEscalao?{selectedEscaloes:[forceEscalao]}:{}),...(forceAmbito?{selectedAmbito:forceAmbito}:{}),...(forceLicenca?{selectedLicenca:forceLicenca}:{})}}} apply={applySearch}/>}
@@ -917,19 +921,7 @@ export default function CalendarView({
                                             )}
                                     </div>
                                     <a href={originalEventUrl(event.link)} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 shrink-0" aria-label={t('minimal_original') + ': ' + event.title}>{t('minimal_original')} ↗</a>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            e.preventDefault();
-                                            import('../utils/calendarExport').then(m => m.autoAddToGoogleCalendar(event, 'race', m.generateGoogleCalendarUrl(event, 'race')));
-                                            trackEvent('ICS_EXPORT');
-                                        }}
-                                        className={`${styles.eventExportBtn} sm:ml-0 ml-auto`}
-                                        aria-label={trPersonal('export') + ': ' + event.title}
-                                        title={trPersonal('export')}
-                                    >
-                                        <CalendarPlus size={18} />
-                                    </button>
+                                    <GoogleCalendarAction event={event} inCalendar={isEventMarked} collection={collection} />
                                     <EventParticipation event={event} collection={collection} />
                                 </div>
 

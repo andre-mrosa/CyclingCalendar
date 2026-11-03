@@ -22,7 +22,7 @@
 .quickFilters select { width: 100%; min-height: 42px; border: 1px solid var(--site-line); border-radius: 8px; background: var(--site-surface); color: var(--foreground); padding: 8px 10px; }
 .periods { display: flex; flex-wrap: wrap; gap: 6px; }
 .personalStates { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; }
-.personalStates button { min-height: 42px; padding: 8px 14px; border: 1px solid var(--site-line); border-radius: 8px; color: var(--site-muted); cursor: pointer; font-size: 13px; }
+.personalStates button { display: inline-flex; align-items: center; gap: 6px; min-height: 42px; padding: 8px 14px; border: 1px solid var(--site-line); border-radius: 8px; color: var(--site-muted); cursor: pointer; font-size: 13px; }
 .personalStates button[aria-pressed='true'] { background: var(--site-accent-soft); border-color: var(--site-accent); color: var(--site-accent); font-weight: 600; }
 .personalPage .calendarControls[data-expanded='false'] .primaryFilters { grid-template-columns: 1fr; }
 .personalPage .calendarControls[data-expanded='false'] .primaryFilters > label:not(:first-child) { display: none; }
@@ -115,6 +115,11 @@
 .eventCard :is(button, select, input, textarea, summary, a:not(.eventTitle)) { position: relative; z-index: 3; }
 .eventFavorite, .eventExportBtn { position: relative; z-index: 3; display: inline-grid; place-items: center; flex-shrink: 0; min-width: 40px; min-height: 40px; border-radius: 5px; color: var(--site-muted); cursor: pointer; }
 .eventFavorite:hover, .eventExportBtn:hover { background: var(--site-soft); }
+.calendarActionWrap { display: inline-flex; position: relative; z-index: 3; align-items: center; }
+.calendarAction { display: inline-flex; gap: 5px; padding: 6px 8px; font-size: 12px; }
+.calendarAction[data-remove='true'] { color: var(--site-accent); border: 1px solid var(--site-line); }
+.calendarAction:disabled { opacity: .55; cursor: wait; }
+.calendarActionError { position: absolute; top: 100%; right: 0; z-index: 5; width: 220px; padding: 8px; border: 1px solid var(--site-line); border-radius: 6px; background: var(--site-surface); color: var(--foreground); font-size: 12px; }
 .eventFavorite[aria-pressed='true'], .eventExportBtn[aria-pressed='true'] { color: var(--site-accent); }
 .eventMeta { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; margin-top: 4px; color: var(--site-muted); font-size: 12px; line-height: 1.5; }
 .eventMeta > span { display: inline-flex; align-items: center; gap: 5px; min-width: 0; }

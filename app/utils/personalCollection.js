@@ -1,6 +1,9 @@
 import { eventDateDisplay } from './eventDateDisplay.js';
 
 export const PERSONAL_STATUSES = ['interested', 'going', 'registered'];
+export function matchesPersonalFilter(filter, status, inCalendar) {
+    return filter === 'calendar' ? Boolean(inCalendar) : Boolean(status && (filter === 'all' || status === filter));
+}
 export function personalCalendarMonth(events, today) {
     const dates = events.map(eventDateDisplay).filter(date => date.start).sort((a, b) => a.start.localeCompare(b.start));
     const next = dates.find(date => (date.end || date.start) >= today);
