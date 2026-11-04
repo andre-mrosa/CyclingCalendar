@@ -25,7 +25,7 @@ export function readStopAndGoHeader(html) {
             const month = MONTHS.indexOf(match[2].toLowerCase());
             const year = Number(match[3]);
             const date = new Date(Date.UTC(year, month, day));
-            if (date.getUTCMonth() !== month || date.getUTCDate() !== day) continue;
+            if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month || date.getUTCDate() !== day) continue;
             if (!dates.some(item => item.getTime() === date.getTime())) dates.push(date);
         }
     });
@@ -40,9 +40,16 @@ export function readStopAndGoHeader(html) {
         cycling: CYCLING_MODALITIES.has(modality),
         knownModality: CYCLING_MODALITIES.has(modality) || OTHER_MODALITIES.has(modality),
         sortDate: validDates ? sortDate : null,
+        endDate: validDates ? endDate : null,
         year: validDates ? String(sortDate.getUTCFullYear()) : null,
         date: validDates ? format(sortDate) + (endDate > sortDate ? ` a ${format(endDate)}` : '') : null
     };
+}
+
+export function stopAndGoWithinYears(header, years) {
+    if (!header?.sortDate || !header?.endDate) return false;
+    const start = header.sortDate.getUTCFullYear(), end = header.endDate.getUTCFullYear();
+    return years.some(year => /^\d{4}$/.test(String(year)) && Number(year) >= start && Number(year) <= end);
 }
 
 export function stopAndGoEventUrl(value) {
