@@ -69,8 +69,8 @@ export function classifyQuarantineReason(event) {
 
     return {
         category: 'other_sport',
-        badge: 'Filtro Stop & Go',
-        reason: 'Modalidade desportiva não-ciclismo importada da plataforma Stop & Go.',
+        badge: 'Por confirmar',
+        reason: 'O filtro excluiu este registo sem um motivo detalhado. Confirma a modalidade na fonte antes de decidir se deve ser publicado.',
         color: 'gray'
     };
 }

@@ -1,127 +1,25 @@
-import { ArrowUpRight, Activity, CalendarDays, Users, AlertTriangle, TrendingUp, Download, Heart, Search, CheckCircle2, XCircle, Clock } from 'lucide-react';
-import { Button, Empty, Status, dateTime, number, RefreshButton } from './ui';
-
-function TopEventCard({ title, count, max, index }) {
-    return (
-        <div className="flex items-center gap-4 group">
-            <div className="w-6 h-6 rounded-full bg-brand-soft text-brand flex items-center justify-center text-xs font-bold shrink-0">
-                {index + 1}
-            </div>
-            <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-baseline mb-1">
-                    <p className="text-sm font-medium text-ink truncate pr-4">{title}</p>
-                    <span className="text-sm font-semibold text-brand tabular-nums shrink-0">{number(count)} <span className="text-muted text-xs font-normal">aberturas</span></span>
-                </div>
-                <div className="h-1.5 w-full bg-soft rounded-full overflow-hidden">
-                    <div className="h-full bg-brand rounded-full transition-all duration-1000 ease-out" style={{ width: `${Math.max(0, (count / max) * 100)}%` }} />
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function StatCard({ title, value, icon: Icon, trend, subtitle, alert, onClick }) {
-    const Tag = onClick ? 'button' : 'div';
-    return (
-        <Tag 
-            type={onClick ? 'button' : undefined}
-            onClick={onClick}
-            className={`p-6 rounded-2xl border text-left transition-all ${
-                onClick ? 'cursor-pointer hover:border-brand/40 hover:shadow-md' : ''
-            } ${
-                alert ? 'bg-red-50/50 border-red-200 dark:bg-red-900/10 dark:border-red-900/30' : 'bg-surface border-line shadow-sm'
-            } flex flex-col relative overflow-hidden`}
-        >
-            <div className="flex justify-between items-start mb-4">
-                <div className={`p-2.5 rounded-xl ${alert ? 'bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-400' : 'bg-brand-soft text-brand'}`}>
-                    <Icon size={20} />
-                </div>
-                {trend && (
-                    <span className="flex items-center gap-1 text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-md">
-                        <TrendingUp size={12} /> {trend}
-                    </span>
-                )}
-            </div>
-            <h3 className="text-sm font-medium text-muted">{title}</h3>
-            <div className="mt-1 flex items-baseline gap-2">
-                <strong className={`text-3xl font-bold tracking-tight ${alert ? 'text-red-700 dark:text-red-400' : 'text-ink'}`}>{number(value)}</strong>
-            </div>
-            {subtitle && <p className="text-xs text-muted mt-2">{subtitle}</p>}
-        </Tag>
-    );
-}
-
-export default function Overview({ stats, busy, refreshing, timeframe, setTimeframe, autoRefresh, setAutoRefresh, refresh, navigate, pendingDeletions, lastRun, running }) {
-    const analytics = stats?.analytics;
-    const events = stats?.events;
-    const syncStatus = running ? 'running' : lastRun?.status || 'unknown';
-    const isSyncError = ['error', 'failed', 'ERROR'].includes(syncStatus);
-    
-    const maxEventViews = Math.max(1, ...(analytics?.topEvents?.map(e => e.count) || [0]));
-
-    return (
-        <div className="space-y-8 animate-in fade-in duration-700 fill-mode-both">
-            {/* Actionable Header */}
-            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 bg-surface p-6 sm:p-8 rounded-2xl border border-line shadow-sm relative overflow-hidden">
-                <div className="absolute top-0 right-0 -mt-16 -mr-16 text-brand-soft opacity-50 dark:opacity-10 pointer-events-none">
-                    <Activity size={240} strokeWidth={1} />
-                </div>
-                <div className="relative z-10">
-                    <h2 className="text-2xl font-bold tracking-tight text-ink mb-2">Ponto de Situação</h2>
-                    <p className="text-muted max-w-xl text-sm leading-relaxed">
-                        Bem-vindo ao centro de comando. Tens <strong>{number(events?.upcoming)} provas futuras</strong> publicadas e o sistema 
-                        {running ? ' está a sincronizar dados neste momento' : ' sincronizou com sucesso recentemente'}.
-                    </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-3">
-                    <Button onClick={() => navigate('operations')} tone={isSyncError ? 'danger' : 'default'} className="bg-white">
-                        {isSyncError ? 'Verificar Falha no Scraper' : 'Forçar Sincronização'}
-                    </Button>
-                    <Button tone="primary" onClick={() => navigate('inventory')}>
-                        Gerir Calendário
-                    </Button>
-                </div>
-            </div>
-
-            {/* Quick KPIs */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                <StatCard 
-                    title="Provas Futuras" 
-                    value={events?.upcoming} 
-                    icon={CalendarDays}
-                    subtitle={`${number(events?.total)} no total histórico`}
-                    onClick={() => navigate('inventory')}
-                />
-                <StatCard 
-                    title="Em Quarentena" 
-                    value={events?.quarantined} 
-                    icon={AlertTriangle}
-                    alert={events?.quarantined > 0}
-                    subtitle={events?.quarantined > 0 ? 'Filtro automático do scraper (ver motivos)' : 'Tudo limpo'}
-                    onClick={() => navigate('quarantine')}
-                />
-                <StatCard 
-                    title="Comunidade" 
-                    value={stats?.users?.total} 
-                    icon={Users}
-                    subtitle={pendingDeletions > 0 ? `${number(pendingDeletions)} contas para apagar` : 'Utilizadores registados'}
-                    onClick={() => navigate('users')}
-                />
-                <div className="p-6 rounded-2xl border border-line bg-surface shadow-sm flex flex-col">
-                    <div className="flex justify-between items-start mb-4">
-                        <div className={`p-2.5 rounded-xl ${running ? 'bg-blue-100 text-blue-600 animate-pulse' : isSyncError ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
-                            {running ? <RefreshButton busy={true}/> : isSyncError ? <XCircle size={20} /> : <CheckCircle2 size={20} />}
-                        </div>
-                        <span className="text-xs font-medium text-muted flex items-center gap-1"><Clock size={12}/> Automático</span>
-                    </div>
-                    <h3 className="text-sm font-medium text-muted">Scraper (Automação)</h3>
-                    <div className="mt-1">
-                        <Status value={syncStatus} />
-                    </div>
-                    <p className="text-xs text-muted mt-3 truncate">Última: {dateTime(lastRun?.completedAt || lastRun?.completionTime)}</p>
-                </div>
-            </div>
-
+import { Activity, Search, Heart, Download, ArrowUpRight, AlertTriangle, ClipboardCheck, Users, RefreshCw } from 'lucide-react';
+import { Button, Empty, Panel, Metric, Status, dateTime, number, RefreshButton } from './ui';
+import { runSummary } from '../../utils/adminPresentation';
+import styles from '../admin.module.css';
+function TopEventCard({title,count,max,index}) { return <div className={styles.rankingRow}><span>{index+1}</span><div><strong>{title}</strong><div className={styles.rankingBar}><i style={{width:Math.min(100,count/max*100)+'%'}}/></div></div><small>{number(count)} aberturas</small></div>; }
+export default function Overview({stats,busy,refreshing,timeframe,setTimeframe,autoRefresh,setAutoRefresh,refresh,navigate,pendingDeletions,pendingSubmissions,pendingReviewCount,submissionsUnavailable,verificationErrors=[],lastRun,running}) {
+ const analytics=stats?.analytics, events=stats?.events, summary=runSummary(lastRun,!!running);
+ if(verificationErrors.some(error=>error?.id==='operations')){summary.status='unknown';summary.text='Não foi possível confirmar o estado atual da sincronização.';}
+ const maxEventViews=Math.max(1,...(analytics?.topEvents?.map(e=>e.count)||[0]));
+ const tasks=[];
+ for(const error of verificationErrors)if(error)tasks.push({id:error.id,icon:AlertTriangle,title:'Não foi possível confirmar '+error.label,detail:'Abre a secção para consultar o erro e tentar novamente.'});
+ if(summary.attention)tasks.push({id:'operations',icon:AlertTriangle,title:summary.problems.length?summary.problems.length+' fontes precisam de atenção':'Rever a última sincronização',detail:summary.problems.map(row=>row.name||row.id).join(' · ')||summary.text});
+ if(!lastRun&&!running)tasks.push({id:'operations',icon:RefreshCw,title:'Confirmar estado da sincronização',detail:'Ainda não há um resultado confirmado.'});
+ if(pendingReviewCount>0)tasks.push({id:'quarantine',icon:ClipboardCheck,title:pendingReviewCount+' exclusões por confirmar',detail:'Registos sem um motivo de exclusão detalhado.'});
+ if(pendingSubmissions>0)tasks.push({id:'submissions',icon:ClipboardCheck,title:pendingSubmissions+' submissões por rever',detail:'Novas provas e correções de organizadores.'});
+ if(submissionsUnavailable)tasks.push({id:'submissions',icon:AlertTriangle,title:'Não foi possível confirmar as submissões',detail:'Abre a secção para tentar novamente.'});
+ if(pendingDeletions>0)tasks.push({id:'users',icon:Users,title:pendingDeletions+' pedidos de eliminação',detail:'Revê os pedidos e confirma a ação pretendida.'});
+ return (<div className={styles.stack}>
+ <div className={styles.hero}><div><Status value={summary.status}/><h2>{summary.attention?'Há assuntos por resolver':running?'A atualizar o calendário':'O teu calendário, num relance'}</h2><p>{summary.text}</p><p>Última conclusão: {dateTime(lastRun?.completedAt||lastRun?.completionTime)}</p></div><div className={styles.heroActions}><Button onClick={()=>navigate('operations')}>Ver sincronização</Button><RefreshButton busy={busy||refreshing} onClick={refresh}/></div></div>
+ <Panel title="Precisa da tua atenção" description="Problemas de recolha e pedidos que aguardam uma decisão."><div className={styles.attentionList}>{tasks.length?tasks.map(task=><button type="button" key={task.id} className={styles.attentionRow} onClick={()=>navigate(task.id)}><task.icon size={19}/><div><strong>{task.title}</strong><p>{task.detail}</p></div><ArrowUpRight size={16}/></button>):<Empty busy={busy}>Sem ações operacionais pendentes. Consulta Qualidade para ver os avisos dos dados.</Empty>}</div></Panel>
+ <div className={styles.metrics}><Metric label="Próximas provas" value={events?.upcoming} note="Publicadas no calendário" accent/><Metric label="Provas publicadas" value={events?.total} note="Inclui o histórico"/><Metric label="Exclusões automáticas" value={events?.quarantined} note="Fora do calendário público"/><Metric label="Utilizadores" value={stats?.users?.total} note="Contas registadas"/></div>
+ <div className={styles.sectionHeading}><Button onClick={()=>navigate('inventory')}>Consultar provas <ArrowUpRight size={14}/></Button><label className={styles.toggle}><input type="checkbox" checked={autoRefresh} onChange={event=>setAutoRefresh(event.target.checked)}/>Atualizar a cada minuto</label></div>
             <div className="pt-8 border-t border-line">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                     <div>
@@ -129,7 +27,7 @@ export default function Overview({ stats, busy, refreshing, timeframe, setTimefr
                         <p className="text-sm text-muted mt-1">Atividade registada apenas com consentimento para estatísticas. Exclui dispositivos de administrador e pedidos com Do Not Track. Não representa o total de visitas nem os cliques do Google.</p>
                     </div>
                     <div className="flex items-center gap-3 bg-surface border border-line p-1.5 rounded-xl">
-                        <select value={timeframe} onChange={event => setTimeframe(event.target.value)} className="bg-transparent text-sm text-ink font-medium px-3 py-1.5 focus:outline-none cursor-pointer">
+                        <select aria-label="Período das estatísticas" value={timeframe} onChange={event => setTimeframe(event.target.value)} className="bg-transparent text-sm text-ink font-medium px-3 py-1.5 focus:outline-none cursor-pointer">
                             <option value="today">Hoje</option>
                             <option value="7d">Últimos 7 dias</option>
                             <option value="30d">Últimos 30 dias</option>
@@ -142,7 +40,7 @@ export default function Overview({ stats, busy, refreshing, timeframe, setTimefr
                     {/* Activity Column */}
                     <div className="lg:col-span-1 space-y-6">
                         <div className="bg-surface rounded-2xl border border-line shadow-sm p-6">
-                            <h4 className="text-sm font-semibold text-ink uppercase tracking-wider mb-6">Métricas de Engajamento</h4>
+                            <h4 className="text-sm font-semibold text-ink uppercase tracking-wider mb-6">Atividade registada</h4>
                             <div className="space-y-6">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
@@ -161,7 +59,7 @@ export default function Overview({ stats, busy, refreshing, timeframe, setTimefr
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <div className="p-2 bg-rose-50 text-rose-600 rounded-lg"><Heart size={16}/></div>
-                                        <span className="text-sm font-medium text-ink">Favoritos Guardados</span>
+                                        <span className="text-sm font-medium text-ink">Provas guardadas</span>
                                     </div>
                                     <span className="font-bold text-ink">{number(analytics?.favoriteChanges)}</span>
                                 </div>
@@ -180,7 +78,7 @@ export default function Overview({ stats, busy, refreshing, timeframe, setTimefr
                     <div className="lg:col-span-2">
                         <div className="bg-surface rounded-2xl border border-line shadow-sm p-6 h-full flex flex-col">
                             <div className="flex items-center justify-between mb-6">
-                                <h4 className="text-sm font-semibold text-ink uppercase tracking-wider">Provas Mais Procuradas</h4>
+                                <h4 className="text-sm font-semibold text-ink uppercase tracking-wider">Provas mais consultadas</h4>
                                 <span className="text-xs text-muted font-medium bg-soft px-2 py-1 rounded-md">Top 5</span>
                             </div>
                             

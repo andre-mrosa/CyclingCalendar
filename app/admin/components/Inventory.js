@@ -42,7 +42,7 @@ export default function Inventory({ events, busy, refresh }) {
                     ['Com localidade / concelho', events?.withLocation],
                     ['Com link oficial', events?.withLink],
                     ['Com tradução multilíngue', events?.withTranslations]
-                ].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{number(value)}</dd></div>)}</dl>
+                ].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{number(value)}{['Com prazo de inscrição','Com localidade / concelho','Com link oficial','Com tradução multilíngue'].includes(label)?' / '+number(events?.total):''}</dd></div>)}</dl>
             </Panel>
         </div>
     </div>;

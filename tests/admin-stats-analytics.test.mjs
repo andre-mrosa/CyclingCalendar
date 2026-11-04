@@ -27,6 +27,15 @@ function dependencies(aggregateRows) {
     };
 }
 
+test('all quality counts retain the published-only filter alongside non-empty fields',async()=>{
+    const deps=dependencies([]),clauses=[];
+    deps.PUBLISHED_EVENTS_WHERE={NOT:{source:{contains:'Quarentena'}}};
+    deps.prisma.$transaction=async callback=>callback({event:{groupBy:async()=>[],count:async({where})=>{clauses.push(where);return 0;}}});
+    const api=await loadStats(deps);assert.equal((await api.GET(new Request('https://site.test/api/admin/stats'))).status,200);
+    const excludes=value=>Boolean(value?.NOT?.source?.contains==='Quarentena'||value?.AND?.some(excludes));
+    assert.equal(clauses.length,4);for(const where of clauses)assert.ok(excludes(where),'quarantine must remain excluded');
+});
+
 test('admin stats read consented daily aggregates and rank pages and opened public events', async () => {
     const rows = [
         { type: 'SESSION_START', path: '*', targetId: null, count: 12 },

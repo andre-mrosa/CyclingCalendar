@@ -38,8 +38,8 @@ export async function GET(request) {
                 const inventory = buildEventInventory(groups);
                 const [withRegistration, withLocation, withLink, withTranslations] = await Promise.all([
                     tx.event.count({ where: { ...PUBLISHED_EVENTS_WHERE, registrationClosesAt: { not: null } } }),
-                    tx.event.count({ where: { ...PUBLISHED_EVENTS_WHERE, details: { not: null }, NOT: [{ details: '' }] } }),
-                    tx.event.count({ where: { ...PUBLISHED_EVENTS_WHERE, link: { not: null }, NOT: [{ link: '' }] } }),
+                    tx.event.count({ where: { AND: [PUBLISHED_EVENTS_WHERE, { details: { not: null } }, { NOT: { details: '' } }] } }),
+                    tx.event.count({ where: { AND: [PUBLISHED_EVENTS_WHERE, { link: { not: null } }, { NOT: { link: '' } }] } }),
                     tx.event.count({ where: { ...PUBLISHED_EVENTS_WHERE, translations: { some: {} } } }),
                 ]);
                 inventory.withRegistration = withRegistration;

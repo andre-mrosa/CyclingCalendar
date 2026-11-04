@@ -1,119 +1,43 @@
 import Link from 'next/link';
-import { Activity, AlertTriangle, ArrowUpRight, CalendarDays, FileText, LayoutDashboard, Moon, Shield, Sun, Users } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { Activity, Archive, ArrowUpRight, CalendarDays, ClipboardCheck, FileText, LayoutDashboard, Moon, Shield, Sun, Users, ScanLine } from 'lucide-react';
 import { Button, Notice, Status } from './ui';
-
 import styles from '../admin.module.css';
 
 export const adminTabs = [
-    { id: 'stats', label: 'Visão Geral', icon: LayoutDashboard },
-    { id: 'inventory', label: 'Gestão do Calendário', icon: CalendarDays },
-    { id: 'quarantine', label: 'Quarentena', icon: AlertTriangle },
-    { id: 'users', label: 'Comunidade', icon: Users },
-    { id: 'operations', label: 'Automação (Scraper)', icon: Activity },
-    { id: 'logs', label: 'Registos do Sistema', icon: FileText },
+    { id:'stats', label:'Visão geral', icon:LayoutDashboard, description:'O calendário e o trabalho que precisa da tua atenção.' },
+    { id:'inventory', label:'Provas', icon:CalendarDays, description:'Pesquisa provas publicadas e consulta os seus dados.' },
+    { id:'submissions', label:'Submissões', icon:ClipboardCheck, description:'Revê novas provas e correções enviadas pelos organizadores.' },
+    { id:'quality', label:'Qualidade', icon:ScanLine, description:'Cobertura, avisos e qualidade de cada fonte.' },
+    { id:'quarantine', label:'Exclusões', icon:Archive, description:'Registos retirados do calendário pelos filtros automáticos.' },
+    { id:'operations', label:'Sincronização', icon:Activity, description:'Acompanha a recolha e o resultado de cada fonte.' },
+    { id:'users', label:'Utilizadores', icon:Users, description:'Contas, permissões e pedidos de eliminação.' },
+    { id:'logs', label:'Registos', icon:FileText, description:'Pesquisa o histórico técnico do sistema.' },
 ];
-
-export default function AdminDashboardView({ activeTab = 'stats', navigate, running, pendingDeletions = 0, quarantinedCount = 0, dark = false, onToggleTheme, error, onRetry, children, dialog }) {
-    const onTabKeyDown = (event, index) => {
-        let next;
-        if (event.key === 'ArrowDown') next = (index + 1) % adminTabs.length;
-        else if (event.key === 'ArrowUp') next = (index - 1 + adminTabs.length) % adminTabs.length;
-        else if (event.key === 'Home') next = 0;
-        else if (event.key === 'End') next = adminTabs.length - 1;
-        else return;
-        event.preventDefault();
-        navigate(adminTabs[next].id);
-        document.getElementById(`admin-tab-${adminTabs[next].id}`)?.focus();
-    };
-
-    return (
-        <div className="flex h-screen bg-canvas text-ink overflow-hidden flex-col md:flex-row">
-            <aside className="w-full md:w-64 flex-shrink-0 border-b md:border-b-0 md:border-r border-line bg-surface flex flex-col z-20">
-                <div className="p-6 border-b border-line flex items-center justify-between md:block">
-                    <div>
-                        <div className="flex items-center gap-2 text-brand font-bold text-[11px] tracking-widest uppercase mb-1">
-                            <Shield size={16} /> CC Admin
-                        </div>
-                        <h2 className="text-sm text-muted font-medium hidden md:block">Painel de Controlo</h2>
-                    </div>
-                    <div className="flex md:hidden items-center gap-2">
-                        {running && <Status value="running" />}
-                        <button onClick={onToggleTheme} className="p-2 text-muted hover:text-ink">
-                            {dark ? <Sun size={18} /> : <Moon size={18} />}
-                        </button>
-                    </div>
-                </div>
-                <nav className="flex-1 overflow-x-auto md:overflow-y-auto p-2 md:p-4 flex flex-row md:flex-col gap-1" role="tablist" aria-label="Secções de administração">
-                    {adminTabs.map((tab, index) => (
-                        <button 
-                            key={tab.id}
-                            id={`admin-tab-${tab.id}`}
-                            type="button" 
-                            role="tab" 
-                            aria-selected={activeTab === tab.id}
-                            aria-controls={`admin-panel-${tab.id}`}
-                            tabIndex={activeTab === tab.id ? 0 : -1}
-                            onKeyDown={event => onTabKeyDown(event, index)}
-                            onClick={() => navigate(tab.id)}
-                            className={`flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
-                                activeTab === tab.id 
-                                    ? 'bg-brand-soft text-brand shadow-sm' 
-                                    : 'text-muted hover:bg-soft hover:text-ink'
-                            }`}
-                        >
-                            <tab.icon size={18} className="flex-shrink-0" />
-                            <span>{tab.label}</span>
-                            {tab.id === 'users' && pendingDeletions > 0 && (
-                                <span className="ml-auto bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400 py-0.5 px-2 rounded-full text-xs font-bold border border-red-200 dark:border-red-800" aria-label={`${pendingDeletions} pedidos de eliminação`}>
-                                    {pendingDeletions}
-                                </span>
-                            )}
-                            {tab.id === 'quarantine' && quarantinedCount > 0 && (
-                                <span className="ml-auto bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 py-0.5 px-2 rounded-full text-xs font-bold border border-amber-200 dark:border-amber-800" aria-label={`${quarantinedCount} provas em quarentena`}>
-                                    {quarantinedCount}
-                                </span>
-                            )}
-                        </button>
-                    ))}
-                </nav>
-                <div className="p-4 border-t border-line hidden md:flex flex-col gap-3">
-                    <button onClick={onToggleTheme} className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-line bg-surface hover:bg-soft transition-colors">
-                        {dark ? <Sun size={16} /> : <Moon size={16} />} 
-                        Tema {dark ? 'Claro' : 'Escuro'}
-                    </button>
-                    <Link href="/" className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-muted hover:text-brand transition-colors">
-                        Ver calendário <ArrowUpRight size={15} />
-                    </Link>
-                </div>
-            </aside>
-            
-            <main className="flex-1 flex flex-col min-w-0 overflow-y-auto relative">
-                <header className="px-6 md:px-10 py-8 border-b border-line bg-surface sticky top-0 z-30 hidden md:flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{adminTabs.find(t => t.id === activeTab)?.label}</h1>
-                    </div>
-                    {running && (
-                        <div className="flex items-center gap-3 px-4 py-2 bg-brand-soft text-brand rounded-full text-sm font-medium border border-brand/20 shadow-sm">
-                            <Status value="running" /> Sincronização em curso
-                        </div>
-                    )}
-                </header>
-                
-                <div className={`flex-1 p-6 md:p-10 w-full max-w-7xl mx-auto ${styles.dashboard}`}>
-                    {error && (
-                        <div className="mb-6">
-                            <Notice error>
-                                <span className="mr-4">{error}</span>
-                                <Button onClick={onRetry}>Tentar novamente</Button>
-                            </Notice>
-                        </div>
-                    )}
-                    <section role="tabpanel" id={`admin-panel-${activeTab}`} aria-labelledby={`admin-tab-${activeTab}`} tabIndex={0} className="focus:outline-none">
-                        {children}
-                    </section>
-                </div>
-                {dialog}
-            </main>
-        </div>
-    );
+export default function AdminDashboardView({ activeTab='stats', navigate, running, pendingDeletions=0, pendingSubmissions=0, dark=false, onToggleTheme, error, onRetry, children, dialog }) {
+    const current = adminTabs.find(tab=>tab.id===activeTab) || adminTabs[0];
+    const previousTab = useRef(activeTab), heading = useRef(null);
+    useEffect(() => {
+        if (previousTab.current !== activeTab) {
+            window.scrollTo({ top:0, behavior:'instant' });
+            heading.current?.focus({ preventScroll:true });
+            previousTab.current = activeTab;
+        }
+    }, [activeTab]);
+    return <div className={`${styles.shell} ${styles.dashboard}`}>
+        <aside className={styles.sidebar}>
+            <Link href="/admin" className={styles.adminBrand}><span className={styles.brandIcon}><Shield size={20}/></span><span>Cycling Calendar<small>Área de gestão</small></span></Link>
+            <p className={styles.navLabel}>ESPAÇO DE TRABALHO</p>
+            <nav className={styles.desktopNav} aria-label="Secções de administração">{adminTabs.map(tab=>{
+                const count=tab.id==='users'?pendingDeletions:tab.id==='submissions'?pendingSubmissions:0;
+                return <a key={tab.id} href={`#${tab.id}`} aria-current={activeTab===tab.id?'page':undefined} onClick={event=>{event.preventDefault();navigate(tab.id);}}><tab.icon size={18}/><span>{tab.label}</span>{count>0&&<span className={styles.navBadge}>{count}</span>}</a>;
+            })}</nav>
+            <div className={styles.sidebarFooter}><Link href="/">Ver calendário <ArrowUpRight size={15}/></Link><button type="button" onClick={onToggleTheme}>{dark?<Sun size={16}/>:<Moon size={16}/>}Usar tema {dark?'claro':'escuro'}</button></div>
+        </aside>
+        <div className={styles.workspace}>
+            <header className={styles.workspaceHeader}><div><span className={styles.eyebrow}>GESTÃO / {current.label}</span><h1 ref={heading} tabIndex={-1}>{current.label}</h1><p>{current.description}</p></div><div className={styles.headerActions}>{running&&<Status value="running"/>}<Link href="/" className={styles.mobileHome} aria-label="Ver calendário"><ArrowUpRight size={20}/></Link><button className={styles.mobileTheme} type="button" onClick={onToggleTheme} aria-label={`Usar tema ${dark?'claro':'escuro'}`}>{dark?<Sun size={19}/>:<Moon size={19}/>}</button></div></header>
+            <label className={styles.mobileNav}>Secção<select value={activeTab} onChange={event=>navigate(event.target.value)}>{adminTabs.map(tab=><option key={tab.id} value={tab.id}>{tab.label}{tab.id==='submissions'&&pendingSubmissions?` (${pendingSubmissions})`:tab.id==='users'&&pendingDeletions?` (${pendingDeletions})`:''}</option>)}</select></label>
+            <main className={styles.workspaceContent} id="admin-content">{error&&<Notice error><span>{error}</span><Button onClick={onRetry}>Tentar novamente</Button></Notice>}<section aria-label={current.label}>{children}</section></main>
+        </div>{dialog}
+    </div>;
 }

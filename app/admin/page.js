@@ -6,6 +6,10 @@ import { useTheme } from 'next-themes';
 import AdminDashboardView, { adminTabs as tabs } from './components/AdminDashboardView';
 import Overview from './components/Overview';
 import Inventory from './components/Inventory';
+import EventManager from './components/EventManager';
+import SourceQuality from './components/SourceQuality';
+import Submissions from './components/Submissions';
+import useSWR from 'swr';
 import Operations from './components/Operations';
 import Users from './components/Users';
 import Logs from './components/Logs';
@@ -40,6 +44,9 @@ export default function AdminDashboardPage() {
     const { resolvedTheme, setTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
     const [activeTab, setActiveTab] = useState('stats');
+    const {data:submissionData,error:submissionError}=useSWR(isLoaded&&isSignedIn?'/api/admin/submissions':null,async url=>{const response=await fetch(url,{cache:'no-store'});if(!response.ok)throw Error('Não foi possível confirmar as submissões.');return response.json();},{refreshInterval:60000});
+    const pendingSubmissions=submissionData?.pendingCount;
+
     const [errors, setErrors] = useState({});
     const setError = useCallback((key, message) => setErrors(previous => ({ ...previous, [key]: message })), []);
 
@@ -138,7 +145,7 @@ export default function AdminDashboardPage() {
     }, [users, userRoleFilter, userSearch]);
 
     const [logs, setLogs] = useState([]);
-    const [isLoadingLogs, setIsLoadingLogs] = useState(false);
+    const [isLoadingLogs, setIsLoadingLogs] = useState(true);
     const [logLevelFilter, setLogLevelFilter] = useState('ALL');
     const [logSourceFilter, setLogSourceFilter] = useState('ALL');
     const [logSearch, setLogSearch] = useState('');
@@ -323,7 +330,7 @@ export default function AdminDashboardPage() {
         checkScraperStatus();
     }, [isLoaded, isSignedIn, checkScraperStatus]);
     useEffect(() => {
-        if (!isLoaded || !isSignedIn || activeTab !== 'quarantine') return;
+        if (!isLoaded || !isSignedIn || !['quarantine','stats'].includes(activeTab)) return;
         loadQuarantine();
     }, [isLoaded, isSignedIn, activeTab, loadQuarantine]);
     useEffect(() => {
@@ -439,18 +446,18 @@ export default function AdminDashboardPage() {
         else if (activeTab === 'quarantine') loadQuarantine();
         else loadStats();
     };
-    const visibleError = errors[activeTab === 'inventory' ? 'stats' : activeTab];
-    const modalTitle = roleChangeTarget ? 'Alterar permissões' : deleteTarget ? deleteTarget.mode === 'delete_data' ? 'Limpar dados do utilizador' : 'Eliminar conta permanentemente' : clearLogsTarget?.all ? 'Eliminar todos os logs?' : clearLogsTarget ? 'Limpar logs antigos?' : quarantineTarget?.action === 'restore' ? 'Restaurar prova para o calendário' : 'Eliminar prova permanentemente';
+    const visibleError = errors[activeTab === 'quality' ? 'stats' : activeTab];
+    const modalTitle = roleChangeTarget ? 'Alterar permissões' : deleteTarget ? deleteTarget.mode === 'delete_data' ? 'Limpar dados do utilizador' : 'Eliminar conta permanentemente' : clearLogsTarget?.all ? 'Eliminar todos os logs?' : clearLogsTarget ? 'Limpar logs antigos?' : quarantineTarget?.action === 'restore' ? 'Publicar prova no calendário' : 'Eliminar prova permanentemente';
 
-    return <AdminDashboardView activeTab={activeTab} navigate={navigate} running={runningOp} pendingDeletions={pendingDeletionsCount} quarantinedCount={stats?.events?.quarantined ?? quarantineEvents.length} dark={mounted && resolvedTheme === 'dark'} onToggleTheme={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')} error={visibleError} onRetry={retry} dialog={
-        (roleChangeTarget || deleteTarget || clearLogsTarget || quarantineTarget) && <ConfirmDialog title={modalTitle} onClose={closeDialog} onConfirm={executeAction} busy={actionBusy} message={actionMessage} danger={!!deleteTarget || !!clearLogsTarget || quarantineTarget?.action === 'delete'} confirmLabel={deleteTarget?.mode === 'delete_account' || quarantineTarget?.action === 'delete' ? 'Eliminar permanentemente' : quarantineTarget?.action === 'restore' ? 'Restaurar prova' : 'Confirmar ação'}>
+    return <AdminDashboardView activeTab={activeTab} navigate={navigate} running={runningOp} pendingDeletions={pendingDeletionsCount} pendingSubmissions={pendingSubmissions} quarantinedCount={stats?.events?.quarantined ?? quarantineEvents.length} dark={mounted && resolvedTheme === 'dark'} onToggleTheme={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')} error={visibleError} onRetry={retry} dialog={
+        (roleChangeTarget || deleteTarget || clearLogsTarget || quarantineTarget) && <ConfirmDialog title={modalTitle} onClose={closeDialog} onConfirm={executeAction} busy={actionBusy} message={actionMessage} danger={!!deleteTarget || !!clearLogsTarget || quarantineTarget?.action === 'delete'} confirmLabel={deleteTarget?.mode === 'delete_account' || quarantineTarget?.action === 'delete' ? 'Eliminar permanentemente' : quarantineTarget?.action === 'restore' ? 'Publicar no calendário' : 'Confirmar ação'}>
             {roleChangeTarget && <><p>Alterar o cargo de <strong>{roleChangeTarget.user.fullName || roleChangeTarget.user.email}</strong> ({roleChangeTarget.user.email}) para <strong>{roleChangeTarget.newRole === 'admin' ? 'administrador' : 'utilizador'}</strong>?</p><p>Esta alteração afeta o acesso às ferramentas de administração.</p></>}
             {deleteTarget && <><p><strong>{deleteTarget.user.fullName || 'Utilizador'}</strong><br />{deleteTarget.user.email}</p>{deleteTarget.user.deletionReason && <p>Motivo indicado: {deleteTarget.user.deletionReason}</p>}<Notice error>{deleteTarget.mode === 'delete_data' ? 'Todos os favoritos e preferências serão removidos. A conta mantém-se ativa.' : 'A conta será apagada permanentemente do sistema de autenticação (Clerk). Esta ação não pode ser desfeita.'}</Notice></>}
             {clearLogsTarget && <p>{clearLogsTarget.all ? 'Todos os logs do sistema serão eliminados permanentemente, incluindo os que não correspondem aos filtros atuais.' : 'Os logs do sistema com mais de 30 dias serão eliminados permanentemente. Os registos mais recentes serão mantidos.'}</p>}
             {quarantineTarget && (
                 quarantineTarget.action === 'restore' ? (
                     <>
-                        <p>Tens a certeza de que desejas restaurar <strong>{quarantineTarget.event.title}</strong>?</p>
+                        <p>Tens a certeza de que desejas publicar <strong>{quarantineTarget.event.title}</strong>?</p>
                         <p className="text-sm text-muted">A prova sairá do estado de quarentena e voltará a ficar visível no calendário público de ciclismo.</p>
                     </>
                 ) : (
@@ -462,8 +469,10 @@ export default function AdminDashboardPage() {
             )}
         </ConfirmDialog>
     }>
-            {activeTab === 'stats' && <Overview stats={stats} busy={isLoadingStats} refreshing={isLiveRefreshing} timeframe={analyticsTimeframe} setTimeframe={setAnalyticsTimeframe} autoRefresh={autoRefreshStats} setAutoRefresh={setAutoRefreshStats} refresh={() => loadStats()} navigate={navigate} pendingDeletions={pendingDeletionsCount} lastRun={lastScrapeResult} running={runningOp} />}
-            {activeTab === 'inventory' && <Inventory events={stats?.events} busy={isLoadingStats} refresh={() => loadStats()} />}
+            {activeTab === 'stats' && <Overview stats={stats} busy={isLoadingStats} refreshing={isLiveRefreshing} timeframe={analyticsTimeframe} setTimeframe={setAnalyticsTimeframe} autoRefresh={autoRefreshStats} setAutoRefresh={setAutoRefreshStats} refresh={() => loadStats()} navigate={navigate} pendingDeletions={pendingDeletionsCount} pendingSubmissions={pendingSubmissions} pendingReviewCount={quarantineCategoriesCount.other_sport} submissionsUnavailable={!!submissionError} verificationErrors={[scraperError&&{id:'operations',label:'a sincronização'},errors.quarantine&&{id:'quarantine',label:'as exclusões'},errors.users&&{id:'users',label:'os pedidos dos utilizadores'}].filter(Boolean)} lastRun={lastScrapeResult} running={runningOp} />}
+            {activeTab === 'inventory' && <EventManager />}
+            {activeTab === 'submissions' && <Submissions onReviewed={() => loadStats(true)} />}
+            {activeTab === 'quality' && <div className="space-y-6"><SourceQuality /><details className="rounded-xl border border-line bg-surface p-5"><summary className="cursor-pointer font-semibold">Inventário e cobertura do calendário</summary><div className="pt-6"><Inventory events={stats?.events} busy={isLoadingStats} refresh={() => loadStats()} /></div></details></div>}
             {activeTab === 'quarantine' && <Quarantine events={quarantineEvents} categoriesCount={quarantineCategoriesCount} busy={isLoadingQuarantine} refresh={loadQuarantine} onRestore={openRestoreQuarantine} onDelete={openDeleteQuarantine} actionBusy={actionBusy} />}
             {activeTab === 'operations' && <Operations running={runningOp} output={opOutput} sources={scraperState.sources} steps={scraperState.steps} activeStep={scraperState.activeStep} elapsed={scraperElapsedSecs} lastRun={lastScrapeResult} currentRun={scraperState} logs={scraperState.logs || []} onRun={handleRunOperation} onRefresh={checkScraperStatus} onLogs={() => navigate('logs')} onClear={() => openClear(false)} clearing={actionBusy} statusError={scraperError} />}
             {activeTab === 'users' && <Users users={filteredUsers} total={users.length} busy={isLoadingUsers} search={userSearch} setSearch={setUserSearch} roleFilter={userRoleFilter} setRoleFilter={setUserRoleFilter} pending={pendingDeletionsCount} refresh={loadUsers} onRole={openRole} onDelete={openDelete} />}

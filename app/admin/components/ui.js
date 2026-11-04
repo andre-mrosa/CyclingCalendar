@@ -11,7 +11,7 @@ export const entries = value => Array.isArray(value) ? value : Object.entries(va
 
 export function Button({ children, tone, className = '', ...props }) {
     let toneClasses = "bg-surface border-line text-ink hover:bg-soft";
-    if (tone === 'primary') toneClasses = "bg-brand border-brand text-white hover:opacity-90";
+    if (tone === 'primary') toneClasses = "bg-[var(--site-accent-strong)] border-[var(--site-accent-strong)] text-white hover:opacity-90";
     else if (tone === 'danger') toneClasses = "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40";
     
     return (
@@ -46,7 +46,7 @@ export function Panel({ title, description, action, children, className = '' }) 
                     {action && <div className="shrink-0">{action}</div>}
                 </div>
             )}
-            <div className="w-full overflow-x-auto">
+            <div className="w-full min-w-0">
                 {children}
             </div>
         </section>

@@ -131,9 +131,9 @@ export default function AdminLayout({ children }) {
 
     return (
         <div className="min-h-screen bg-canvas text-ink">
-            <main className="max-w-[1360px] mx-auto px-4 sm:px-8 lg:px-10 py-5 sm:py-8">
+            <div>
                 {children}
-            </main>
+            </div>
         </div>
     );
 }

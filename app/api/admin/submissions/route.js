@@ -4,9 +4,16 @@ import {reviewSubmission} from '@/app/lib/organizerSubmissions';
 import {sameOriginJson,privateJson} from '@/app/lib/requestBody';
 import {revalidateTag} from 'next/cache';
 export const dynamic='force-dynamic';
-export async function GET(){
+export async function GET(request){
     const admin=await requireAdmin();if(!admin.authorized)return privateJson({error:'Unauthorized'},admin.status);
-    try{return privateJson({submissions:await prisma.organizerSubmission.findMany({orderBy:{createdAt:'desc'},take:100})});}catch{return privateJson({error:'Unavailable'},503);}
+    const params=new URL(request?.url||'https://local.test/api/admin/submissions').searchParams,status=params.get('status')||'PENDING',pageValue=params.get('page')||'1';
+    if(!['PENDING','APPROVED','REJECTED','ALL'].includes(status)||!/^[1-9]\d{0,5}$/.test(pageValue))return privateJson({error:'Filtros inválidos.'},400);
+    try{return privateJson(await prisma.$transaction(async tx=>{
+        const where=status==='ALL'?{}:{status};
+        const total=await tx.organizerSubmission.count({where}),pendingCount=await tx.organizerSubmission.count({where:{status:'PENDING'}}),pages=Math.max(1,Math.ceil(total/20)),page=Math.min(Number(pageValue),pages);
+        const submissions=await tx.organizerSubmission.findMany({where,orderBy:[{createdAt:'desc'},{id:'asc'}],take:20,skip:(page-1)*20});
+        return {submissions,total,pendingCount,page,pages};
+    },{isolationLevel:'RepeatableRead'}));}catch{return privateJson({error:'Não foi possível consultar as submissões.'},503);}
 }
 export async function POST(request){
     const admin=await requireAdmin();if(!admin.authorized)return privateJson({error:'Unauthorized'},admin.status);
