@@ -25,7 +25,7 @@ export async function GET(request) {
         const skip = (page - 1) * limit;
         if (!Number.isSafeInteger(skip)) return Response.json({ success: false, error: 'Página inválida.' }, { status: 400 });
 
-        const where = { id: { not: 'operational-scraper-lease' } };
+        const where = { id: { notIn: ['operational-scraper-lease','operational-stopandgo-access'] } };
 
         if (level !== 'ALL') {
             where.level = level.toUpperCase();
@@ -51,9 +51,9 @@ export async function GET(request) {
                     skip
                 }),
                 prisma.systemLog.count({ where }),
-                prisma.systemLog.count({ where: { level: 'ERROR', id: { not: 'operational-scraper-lease' } } }),
-                prisma.systemLog.count({ where: { level: 'WARN', id: { not: 'operational-scraper-lease' } } }),
-                prisma.systemLog.count({ where: { level: 'INFO', id: { not: 'operational-scraper-lease' } } })
+                prisma.systemLog.count({ where: { level: 'ERROR', id: { notIn: ['operational-scraper-lease','operational-stopandgo-access'] } } }),
+                prisma.systemLog.count({ where: { level: 'WARN', id: { notIn: ['operational-scraper-lease','operational-stopandgo-access'] } } }),
+                prisma.systemLog.count({ where: { level: 'INFO', id: { notIn: ['operational-scraper-lease','operational-stopandgo-access'] } } })
             ]);
 
         return Response.json({
@@ -98,7 +98,7 @@ export async function DELETE(request) {
 
         let count = 0;
         if (clearAll) {
-            const res = await prisma.systemLog.deleteMany({ where: { id: { not: 'operational-scraper-lease' } } });
+            const res = await prisma.systemLog.deleteMany({ where: { id: { notIn: ['operational-scraper-lease','operational-stopandgo-access'] } } });
             count = res.count;
             await logSystem({
                 level: 'WARN',

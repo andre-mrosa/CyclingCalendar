@@ -55,6 +55,7 @@ async function runPipeline(triggeredBy, options) {
         yearsScraped: years, fpcEvents: {}, deepScrapedFpc: null, mergedEvents: null,
         sources: {}, steps: {}, errors: []
     };
+    let sourceContinuation = null;
     const observeError = ({ sourceId, stepId, year, message }) => {
         const target = sourceId ? stats.sources[sourceId] : stats.steps[stepId];
         if (target) {
@@ -80,6 +81,12 @@ async function runPipeline(triggeredBy, options) {
             const started = Date.now();
             const target = { status: 'running', count: null, duration: null, message: 'Em curso' };
             if (source) target.metrics = { processed: 0, created: 0, updated: 0, merged: 0, quarantined: 0 };
+            if(id==='stopandgo' && options.sourceContinuation?.metrics) {
+                target.metrics={...target.metrics,...options.sourceContinuation.metrics};
+                if(options.sourceContinuation.hadErrors) {
+                    target.status='error'; target.message=options.sourceContinuation.errorMessage||'Uma página não foi lida num bloco anterior.';
+                }
+            }
             (source ? stats.sources : stats.steps)[id] = target;
             return withScraperLogContext(source ? { sourceId: id, stepId: null } : { sourceId: null, stepId: id }, async () => {
                 const snapshot = (event) => ({ event, ...(source ? { sourceId: id } : { stepId: id }), ...target });
@@ -94,7 +101,10 @@ async function runPipeline(triggeredBy, options) {
                 try {
                     const count = await work({ onResult, onCoverage:coverage=>{target.coverage=coverage;} }, target);
                     target.count = source ? target.metrics.processed : (Number.isFinite(count) ? count : null);
-                    if (target.status !== 'error') {
+                    if(id==='stopandgo' && count?.continuation) {
+                        sourceContinuation={...count.continuation,metrics:{...target.metrics},hadErrors:target.status==='error',errorMessage:target.status==='error'?target.message:null,startedAt:options.sourceContinuation?.startedAt||new Date(started).toISOString(),durationSeconds:(options.sourceContinuation?.durationSeconds||0)+(Date.now()-started)/1000};
+                        target.message=`Recolha em curso: ${count.continuation.nextIndex} de ${count.continuation.urls.length} páginas verificadas. A continuar no próximo bloco.`;
+                    } else if (target.status !== 'error') {
                         target.status = 'done';
                         target.message = target.count === null ? 'Concluído; contagem indisponível' : `${target.count} ${source ? 'processados (não necessariamente novos)' : 'processados'}`;
                     }
@@ -102,12 +112,12 @@ async function runPipeline(triggeredBy, options) {
                     if (error.retryable === false) target.retryable = false;
                     await logError('SCRAPER', `${name}: ${error.message}`, error);
                 }
-                target.duration = `${((Date.now() - started) / 1000).toFixed(1)}s`;
-                if(source&&prisma.sourceQualitySnapshot){
-                    try {await recordSourceQuality({db:prisma,source:{fpc:'FPC',cabreira:'Cabreira',stopandgo:'Stop and Go',recordepessoal:'Recorde Pessoal',apedalar:'Apedalar'}[id]||name,year:id==='fpc'?years.find(year=>pipelineStage==='fpc-'+year):null,runId,startedAt:new Date(started),partial:target.status==='error',coverage:target.coverage});}
+                target.duration = `${((Date.now() - started) / 1000+(id==='stopandgo'?options.sourceContinuation?.durationSeconds||0:0)).toFixed(1)}s`;
+                if(source&&!sourceContinuation&&prisma.sourceQualitySnapshot){
+                    try {await recordSourceQuality({db:prisma,source:{fpc:'FPC',cabreira:'Cabreira',stopandgo:'Stop and Go',recordepessoal:'Recorde Pessoal',apedalar:'Apedalar'}[id]||name,year:id==='fpc'?years.find(year=>pipelineStage==='fpc-'+year):null,runId,startedAt:new Date(id==='stopandgo'&&options.sourceContinuation?.startedAt||started),partial:target.status==='error',coverage:target.coverage});}
                     catch {await logInfo('SCRAPER',`${name}: controlo de qualidade indisponível.`,{event:'quality-unavailable',sourceId:id});}
                 }
-                await logInfo('SCRAPER', `${name}: ${target.status === 'error' ? 'concluído com erros' : 'concluído'} em ${target.duration}.`, snapshot('stage-complete'));
+                await logInfo('SCRAPER', sourceContinuation?`${name}: a continuar no próximo bloco.`:`${name}: ${target.status === 'error' ? 'concluído com erros' : 'concluído'} em ${target.duration}.`, snapshot(sourceContinuation?'stage-progress':'stage-complete'));
             });
         }
 
@@ -117,7 +127,7 @@ async function runPipeline(triggeredBy, options) {
                     await stage('cabreira', 'Cabreira', true, saveOptions => scrapeCabreira(null, saveOptions));
                     break;
                 case 'stopandgo':
-                    await stage('stopandgo', 'Stop and Go', true, saveOptions => scrapeStopAndGo({years,...saveOptions}));
+                    await stage('stopandgo', 'Stop and Go', true, saveOptions => scrapeStopAndGo({years,...saveOptions,progress:options.sourceContinuation}));
                     break;
                 case 'recordepessoal':
                     await stage('recordepessoal', 'Recorde Pessoal', true, saveOptions => scrapeRecordePessoal({ years, ...saveOptions }));
@@ -153,14 +163,14 @@ async function runPipeline(triggeredBy, options) {
             }
 
             const durationSeconds = Number(((Date.now() - startTime) / 1000).toFixed(1));
-            const failed = stats.errors.length > 0;
+            const failed = stats.errors.length > 0 || Object.values(stats.sources).some(target=>target.status==='error');
             // Do not refetch an entire partially processed source for one failed
             // page, or retry an explicit access refusal in the same run.
             const sourceStates = Object.values(stats.sources);
-            const retrying = failed && attempt < 3 && !sourceStates.some(target =>
+            const retrying = !sourceContinuation && failed && attempt < 3 && !sourceStates.some(target =>
                 target.retryable === false || target.metrics.processed > 0 || target.coverage?.discovered > 0);
             const stageIndex = pipelineStages.indexOf(pipelineStage);
-            const nextStage = retrying
+            const nextStage = sourceContinuation ? pipelineStage : retrying
                 ? pipelineStage
                 : (stageIndex < pipelineStages.length - 1 ? pipelineStages[stageIndex + 1] : null);
             const hadErrors = Boolean(options.hadErrors) || (failed && !retrying);
@@ -183,7 +193,7 @@ async function runPipeline(triggeredBy, options) {
                 success: isLastStage ? !(hadErrors || failed) : true,
                 stats, durationSeconds, nextStage, runId, years,
                 scope, attempt, nextAttempt: retrying ? attempt + 1 : 1,
-                hadErrors, triggeredBy, fullHistorical: historical
+                hadErrors, triggeredBy, fullHistorical: historical, sourceContinuation
             };
         } catch (error) {
             const durationSeconds = Number(((Date.now() - startTime) / 1000).toFixed(1));

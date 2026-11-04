@@ -132,7 +132,7 @@ export async function cleanOldLogs(daysToKeep = 30) {
         cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
         const result = await prisma.systemLog.deleteMany({
             where: {
-                id: { not: 'operational-scraper-lease' },
+                id: { notIn: ['operational-scraper-lease','operational-stopandgo-access'] },
                 createdAt: {
                     lt: cutoffDate
                 }

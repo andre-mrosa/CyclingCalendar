@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { fixtureModule } from './fixtureModule.mjs';
 const { parseFPCCalendar, fetchFPCCalendar } = await fixtureModule('../app/lib/scrapers/fpc.js');
 const { deepScrapeCabreira, isCabreiraCyclingEvent } = await fixtureModule('../app/lib/scrapers/cabreira.js');
-const { scrapeStopAndGo } = await fixtureModule('../app/lib/scrapers/stopandgo.js', { '../logger.js': { logInfo: async () => {}, logError: async () => {} } });
+const { scrapeStopAndGo } = await fixtureModule('../app/lib/scrapers/stopandgo.js', { '../db.js': { prisma: {} }, '../logger.js': { logInfo: async () => {}, logError: async () => {} } });
 import { readStopAndGoHeader } from '../app/lib/scrapers/stopandgoParser.js';
 import { getAmbito } from '../app/lib/scrapers/utils.js';
 import { getEventDiscipline, getEventRaceType, getEventRaceTypes, getEventDisciplineFamilies, isStageRace } from '../app/utils/eventClassifier.js';

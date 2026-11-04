@@ -48,7 +48,7 @@ export async function GET(request) {
                 inventory.withTranslations = withTranslations;
                 return inventory;
             }, { isolationLevel: 'RepeatableRead' }),
-            prisma.systemLog.count({ where: { level: 'ERROR', id: { not: 'operational-scraper-lease' } } }).catch(() => null),
+            prisma.systemLog.count({ where: { level: 'ERROR', id: { notIn: ['operational-scraper-lease','operational-stopandgo-access'] } } }).catch(() => null),
             (async () => {
                 try {
                     const client = await clerkClient();

@@ -12,7 +12,8 @@ export async function calendarSyncWorkflow(input) {
             options = {
                 ...options, pipelineStage: result.nextStage, years: result.years,
                 attempt: result.nextAttempt, hadErrors: result.hadErrors,
-                fullHistorical: result.fullHistorical
+                fullHistorical: result.fullHistorical,
+                sourceContinuation: result.sourceContinuation || null
             };
         }
         throw new Error('Limite de etapas da sincronização excedido.');

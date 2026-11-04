@@ -4,11 +4,12 @@ import { logInfo, logError } from '../logger.js';
 import { saveOrMergeEvent } from '../merging/eventMerger.js';
 import { getTag, getAmbito } from './utils.js';
 import { isCyclingCandidate } from './cyclingEvidence.js';
-import { assertSourceAccess, SOURCE_USER_AGENT } from './sourceAccess.js';
+import { assertSourceAccess } from './sourceAccess.js';
 import { parsePublishedRaceDate } from './publishedDates.js';
 import {categoryOptions} from './publishedCategories.js';
 import {fetchSitemapUrls} from './sitemapDiscovery.js';
 import {createCollectionAudit} from './collectionAudit.js';
+import {fetchApedalarPage} from './apedalarPage.js';
 
 const BASE_URL = 'https://apedalar.pt';
 
@@ -31,9 +32,13 @@ export async function scrapeApedalar(prisma, year, options = {}) {
                 // Throttle
                 await new Promise(r => setTimeout(r, 1000));
 
-                const eventRes = await fetch(url, {
-                    headers: { 'User-Agent': SOURCE_USER_AGENT }, signal:AbortSignal.timeout(10000)
-                });
+                const page = await fetchApedalarPage(url);
+                if(page.unavailable) {
+                    audit.resolve(url,'unavailable');
+                    await logInfo('SCRAPER',`Apedalar: página de prova indisponível em ${url}`,{event:'source-page-unavailable',url,reason:page.unavailable});
+                    continue;
+                }
+                const eventRes = page.response;
 
                 assertSourceAccess(eventRes, 'Apedalar');
                 if (!eventRes.ok) {
@@ -52,6 +57,11 @@ export async function scrapeApedalar(prisma, year, options = {}) {
                 // Archived/result layouts can omit QUANDO but still publish
                 // the precise event date in their own Open Graph date label.
                 const rawDate = $('h2:contains("QUANDO?")').next('div').text().trim() || $('meta[property="og:description"]').attr('content') || '';
+                if(!rawDate && /^pr[oó]ximos eventos$/i.test(title)) {
+                    audit.resolve(url,'unavailable');
+                    await logInfo('SCRAPER',`Apedalar: endereço sem página individual de prova em ${url}`,{event:'source-page-unavailable',url,reason:'Página genérica sem data ou metadados da prova.'});
+                    continue;
+                }
                 const parsed = parsePublishedRaceDate(rawDate);
                 if (!parsed) {await audit.fail(url,'data não reconhecida');continue;}
                 if (parsed.endDate < new Date().toISOString().slice(0,10)) {audit.resolve(url,'past');continue;}

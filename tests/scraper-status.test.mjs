@@ -270,7 +270,7 @@ test('cleanup always excludes the active lease even with days=0', async t => {
     let query;
     t.mock.method(loggerDb.systemLog, 'deleteMany', async input => { query = input; return { count: 4 }; });
     assert.equal(await cleanOldLogs(0), 4);
-    assert.equal(query.where.id.not, 'operational-scraper-lease');
+    assert.deepEqual(query.where.id.notIn, ['operational-scraper-lease','operational-stopandgo-access']);
 });
 
 test('oversized diagnostics keep valid JSON and run attribution', async t => {
@@ -357,6 +357,29 @@ async function runPipelinePlan(pipeline, options = {}) {
     }
     throw new Error('O plano de teste não terminou');
 }
+
+test('bounded Stop and Go blocks retain metrics, progress and quality scope until completion',async t=>{
+    const logs=captureLogs(t);let invocation=0,qualityCalls=0,qualityStart;
+    const pipeline=await pipelineFixture({
+        prisma:{sourceQualitySnapshot:{},event:{}},
+        recordSourceQuality:async options=>{qualityCalls++;qualityStart=options.startedAt;},
+        scrapeStopAndGo:async({onResult,onCoverage,progress})=>{
+            invocation++;
+            if(invocation===1){assert.equal(progress,undefined);await onResult({action:'updated'});onCoverage({discovered:2,saved:1,unresolved:1});return {continuation:{urls:['one','two'],nextIndex:1,outcomes:[['one','saved'],['two',null]]}};}
+            assert.equal(progress.nextIndex,1);await onResult({action:'created'});onCoverage({discovered:2,saved:2,unresolved:0});return 1;
+        },
+    });
+    const first=await pipeline.runUnifiedScrapingPipeline('TEST',{pipelineStage:'stopandgo',scope:'daily'});
+    assert.equal(first.nextStage,'stopandgo');assert.equal(first.stats.sources.stopandgo.status,'running');assert.equal(first.sourceContinuation.metrics.processed,1);assert.equal(first.hadErrors,false);assert.equal(qualityCalls,0);
+    assert.ok(logs.some(log=>readLogDetails(log).event==='stage-progress'));
+    const second=await pipeline.runUnifiedScrapingPipeline('TEST',{pipelineStage:'stopandgo',scope:'daily',sourceContinuation:first.sourceContinuation});
+    assert.equal(second.nextStage,'recordepessoal');assert.equal(second.sourceContinuation,null);assert.equal(second.stats.sources.stopandgo.status,'done');assert.equal(second.stats.sources.stopandgo.metrics.processed,2);assert.equal(second.stats.sources.stopandgo.metrics.updated,1);assert.equal(second.stats.sources.stopandgo.metrics.created,1);assert.equal(qualityCalls,1);assert.equal(qualityStart.toISOString(),first.sourceContinuation.startedAt);
+});
+test('a failed page in an earlier Stop and Go block remains partial after its continuation',async()=>{
+    const pipeline=await pipelineFixture({scrapeStopAndGo:async()=>0});
+    const result=await pipeline.runUnifiedScrapingPipeline('TEST',{pipelineStage:'stopandgo',scope:'daily',sourceContinuation:{metrics:{processed:1,updated:1},hadErrors:true,errorMessage:'Página não reconhecida',startedAt:'2026-11-04T12:00:00Z'}});
+    assert.equal(result.stats.sources.stopandgo.status,'error');assert.equal(result.hadErrors,true);assert.equal(result.nextStage,'recordepessoal');assert.equal(result.stats.sources.stopandgo.message,'Página não reconhecida');
+});
 
 test('daily and weekly plans isolate FPC into one bounded stage per season', async () => {
     const pipeline = await pipelineFixture();
@@ -470,7 +493,7 @@ test('durable workflow carries stage checkpoints and retry state without self HT
     const workflow = await isolatedModule('../app/workflows/calendarSync.js', {
         executeCalendarStage: async options => {
             seen.push(options);
-            return { success: true, nextStage: seen.length === 1 ? 'finalize' : null, years: ['2026'], nextAttempt: 2, hadErrors: true, fullHistorical: false };
+            return { success: true, nextStage: seen.length === 1 ? 'finalize' : null, years: ['2026'], nextAttempt: 2, hadErrors: true, fullHistorical: false, sourceContinuation:seen.length===1?{nextIndex:60,urls:['fixture']}:null };
         }, recordCalendarFailure: async () => { throw new Error('Unexpected failure'); }
     });
     assert.deepEqual(await workflow.calendarSyncWorkflow({ runId: 'r', pipelineStage: 'fpc-2026' }), { success: true, runId: 'r' });
@@ -478,6 +501,7 @@ test('durable workflow carries stage checkpoints and retry state without self HT
     assert.equal(seen[1].pipelineStage, 'finalize');
     assert.equal(seen[1].attempt, 2);
     assert.equal(seen[1].hadErrors, true);
+    assert.deepEqual(seen[1].sourceContinuation,{nextIndex:60,urls:['fixture']});
 });
 
 test('durable workflow terminates corrupt plans and records terminal step failures', async () => {
