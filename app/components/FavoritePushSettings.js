@@ -5,6 +5,7 @@ import { Bell } from 'lucide-react';
 import { useSWRConfig } from 'swr';
 import { useTranslation } from '../i18n/useTranslation';
 import { activatePushDevice } from '../utils/pushOnboarding';
+import { serviceWorkerUrl } from '../utils/appUpdates';
 
 const copy = {
     pt: { title:'Notificações neste dispositivo', detail:'Recebe um resumo diário quando aparecerem novas edições das tuas provas favoritas. Só enviamos se houver novidades.',
@@ -71,7 +72,7 @@ export default function FavoritePushSettings({ isSignedIn, userId, onboarding = 
                     if (!cancelled) setDevice({ supported:false, userId });
                     return;
                 }
-                await navigator.serviceWorker.register('/sw.js', { scope:'/', updateViaCache:'none' });
+                await navigator.serviceWorker.register(serviceWorkerUrl(process.env.NEXT_PUBLIC_APP_VERSION), { scope:'/', updateViaCache:'none' });
                 const registration = await navigator.serviceWorker.ready;
                 const subscription = await registration.pushManager.getSubscription();
                 const response = await fetch('/api/notifications/push' + (subscription ? '?id=' + await idFor(subscription) : ''), { cache:'no-store' });

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from '../i18n/useTranslation';
 import { startAppUpdates } from '../utils/appUpdates';
+import { offlineNavigationUrl } from '../../public/offline-model';
 
 const labels = {
     pt:['Nova versão disponível. Guarda o que estás a editar antes de atualizar.','Atualizar'],
@@ -25,7 +26,14 @@ export default function ServiceWorkerRegistration() {
         if (process.env.NODE_ENV !== 'production') return;
         updater.current = startAppUpdates({ version:process.env.NEXT_PUBLIC_APP_VERSION, window, document, navigator,
             onUpdate:setAvailable, onCalendarChange:version => window.dispatchEvent(new CustomEvent('calendar-data-updated', { detail:version })) });
-        return () => updater.current?.stop();
+        const offlineLink = event => {
+            if (navigator.onLine || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+            const anchor = event.target.closest?.('a[href]');
+            const target = anchor && !anchor.target && offlineNavigationUrl(anchor.href, window.location.href);
+            if (target) { event.preventDefault(); event.stopPropagation(); window.location.assign(target); }
+        };
+        document.addEventListener('click', offlineLink, true);
+        return () => { updater.current?.stop(); document.removeEventListener('click', offlineLink, true); };
     }, []);
     const text = labels[language] || labels.pt;
     return available ? <aside role="status" className="fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-lg rounded-xl border border-line bg-surface p-4 text-ink shadow-xl">

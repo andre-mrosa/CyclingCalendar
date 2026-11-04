@@ -1,7 +1,46 @@
-// Retire previous offline caches; imported content must not reappear offline.
-self.addEventListener('install',()=>self.skipWaiting());
-self.addEventListener('activate',event=>event.waitUntil((async()=>{await Promise.all((await caches.keys()).map(key=>caches.delete(key)));await self.clients.claim();})()));
-self.addEventListener('fetch',event=>event.respondWith(fetch(event.request,{cache:'no-store'})));
+// Cache only our independent offline reader. Never cache authenticated HTML,
+// APIs, Clerk, Google responses, imported pages or third-party media.
+const appVersion = new URL(self.location.href).searchParams.get('app') || 'current';
+const OFFLINE_CACHE = 'cycling-offline-shell-v1-' + (/^[a-zA-Z0-9._-]{1,100}$/.test(appVersion) ? appVersion : 'current');
+const OFFLINE_ASSETS = ['/offline.html', '/offline.css', '/offline.js', '/offline-model.js', '/icon-192x192.png', '/icon-512x512.png'];
+self.addEventListener('install', event => event.waitUntil((async () => {
+    const responses = await Promise.all(OFFLINE_ASSETS.map(async path => {
+        const response = await fetch(new URL(path, self.location.origin), { cache: 'reload', credentials: 'omit' });
+        if (!response.ok || response.redirected) throw new Error('Offline reader unavailable');
+        return [path, response];
+    }));
+    const cache = await caches.open(OFFLINE_CACHE);
+    await Promise.all(responses.map(([path, response]) => cache.put(path, response)));
+    await self.skipWaiting();
+})()));
+self.addEventListener('activate', event => event.waitUntil((async () => {
+    await Promise.all((await caches.keys()).filter(key => key !== OFFLINE_CACHE && /^(cycling[-_]|workbox-precache|next-pwa)/.test(key)).map(key => caches.delete(key)));
+    await self.clients.claim();
+})()));
+async function offlineResponse() {
+    const cached = await (await caches.open(OFFLINE_CACHE)).match('/offline.html');
+    if (cached) {
+        const headers = new Headers(cached.headers);
+        headers.set('X-Cycling-Offline', '1'); headers.set('Cache-Control', 'no-store'); headers.set('X-Robots-Tag', 'noindex, nofollow');
+        return new Response(await cached.arrayBuffer(), { status: 200, headers });
+    }
+    return new Response('<!doctype html><html lang="pt"><meta name="viewport" content="width=device-width"><title>Sem ligação</title><h1>Sem ligação</h1><p>Abre a app uma vez com internet para preparar o modo offline.</p><a href="/">Tentar novamente</a></html>', { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
+}
+self.addEventListener('fetch', event => {
+    const request = event.request, url = new URL(request.url);
+    if (request.method !== 'GET' || url.origin !== self.location.origin) return;
+    if (OFFLINE_ASSETS.includes(url.pathname) && !url.search) {
+        event.respondWith((async () => (await (await caches.open(OFFLINE_CACHE)).match(url.pathname)) || fetch(request))());
+    } else if (request.mode === 'navigate') {
+        event.respondWith((async () => {
+            try {
+                const signal = typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(6000) : undefined;
+                const response = await fetch(request, { cache: 'no-store', signal });
+                return response.status >= 500 ? offlineResponse() : response;
+            } catch { return offlineResponse(); }
+        })());
+    }
+});
 self.addEventListener('push', event => {
     let message;
     try { message = event.data?.json(); } catch { /* Always display a visible notification. */ }

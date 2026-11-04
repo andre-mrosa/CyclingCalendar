@@ -31,6 +31,7 @@ A recolha guarda factos mínimos, respeita recusas de acesso e reutiliza página
 - [Favoritos e novas edições](maintenance/FAVORITE-EDITIONS.md)
 - [Agenda, estados pessoais e avisos de alterações](maintenance/PERSONAL-CALENDAR-2026-11-02.md)
 - [Notificações mobile](maintenance/favorite-push.md)
+- [App instalada: offline e atualizações](maintenance/PWA-2026-11-04.md)
 - [Privacidade e retenção](maintenance/PRIVACY-OPERATIONS.md)
 - [Revisão legal e limites](maintenance/LEGAL-COMPLIANCE-2026-10-30.md)
 - [SEO](maintenance/SEO-2026-10-28.md)

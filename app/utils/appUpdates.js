@@ -1,17 +1,19 @@
 const VERSION = /^[a-zA-Z0-9._-]{1,100}$/;
+export const serviceWorkerUrl = version => '/sw.js?app=' + encodeURIComponent(typeof version === 'string' && VERSION.test(version) ? version : 'current');
 export function canReloadApp(document, pathname) {
-    if (/^\/(?:sign-in|sign-up|admin|contacto)(?:\/|$)/.test(pathname)) return false;
-    if (document.querySelector('dialog[open], [aria-modal="true"]')) return false;
+    if (/^\/(?:sign-in|sign-up|admin|contacto|organizador)(?:\/|$)/.test(pathname)) return false;
+    if (document.querySelector('dialog[open], [aria-modal="true"], [aria-busy="true"]')) return false;
     const active = document.activeElement;
     return !active || (!active.isContentEditable && !['INPUT','TEXTAREA','SELECT'].includes(active.tagName));
 }
 export function startAppUpdates({ version, window, document, navigator, onUpdate, onCalendarChange,
     fetcher = fetch, now = Date.now, interval = 300000 }) {
-    let stopped = false, checking = false, reloading = false, pending = null, lastCheck = -Infinity, lastSync = null;
-    const registration = navigator.serviceWorker?.register('/sw.js', { scope:'/', updateViaCache:'none' }).catch(() => null);
+    let stopped = false, checking = false, recheck = false, reloading = false, dirty = false, pending = null, lastCheck = -Infinity, lastSync = null;
+    // Version checks must not wait for a slow or unavailable service-worker registration.
+    const registration = Promise.resolve().then(() => navigator.serviceWorker?.register(serviceWorkerUrl(version), { scope:'/', updateViaCache:'none' })).catch(() => null);
     function applyUpdate(manual = false) {
         if (!pending || stopped || reloading) return;
-        if (!manual && !canReloadApp(document, window.location.pathname)) { onUpdate(true); return; }
+        if (navigator.onLine === false || (!manual && (dirty || !canReloadApp(document, window.location.pathname)))) { onUpdate(true); return; }
         try {
             if (!manual && window.sessionStorage.getItem('cycling_app_reload') === pending) { onUpdate(true); return; }
             window.sessionStorage.setItem('cycling_app_reload', pending);
@@ -19,11 +21,13 @@ export function startAppUpdates({ version, window, document, navigator, onUpdate
         reloading = true;
         window.location.reload();
     }
-    async function check() {
-        if (stopped || checking || document.visibilityState === 'hidden' || navigator.onLine === false || now() - lastCheck < 30000) return;
+    async function check({ force = false } = {}) {
+        if (stopped || document.visibilityState === 'hidden' || navigator.onLine === false) return;
+        if (checking) { if (force) recheck = true; return; }
+        if (!force && now() - lastCheck < 30000) return;
         checking = true; lastCheck = now();
         try {
-            (await registration)?.update().catch(() => {});
+            void registration.then(worker => worker?.update()).catch(() => {});
             const results = await Promise.allSettled(['/api/app-version','/api/sync-version'].map(async url => {
                 const response = await fetcher(url, { cache:'no-store', signal:AbortSignal.timeout(8000) });
                 if (!response.ok) throw new Error('Version unavailable');
@@ -39,17 +43,26 @@ export function startAppUpdates({ version, window, document, navigator, onUpdate
             if (typeof sync === 'string' && Number.isFinite(Date.parse(sync)) && sync !== lastSync) {
                 lastSync = sync; onCalendarChange(sync);
             }
-        } finally { checking = false; }
+        } finally {
+            checking = false;
+            if (recheck && !stopped) { recheck = false; void check({ force: true }); }
+        }
     }
-    const timer = window.setInterval(check, interval);
-    for (const event of ['focus','online']) window.addEventListener(event, check);
-    document.addEventListener('visibilitychange', check);
+    const resume = () => { void check({ force: true }); };
+    const rememberDraft = event => { if (event.target?.isContentEditable || event.target?.closest?.('form')) dirty = true; };
+    const timer = window.setInterval(() => { void check(); }, interval);
+    for (const event of ['focus','online','pageshow']) window.addEventListener(event, resume);
+    document.addEventListener('visibilitychange', resume);
+    document.addEventListener('input', rememberDraft, true);
+    document.addEventListener('change', rememberDraft, true);
     navigator.serviceWorker?.addEventListener('controllerchange', check);
     void check();
     return { check, applyUpdate:() => applyUpdate(true), stop:() => {
         stopped = true; window.clearInterval(timer);
-        for (const event of ['focus','online']) window.removeEventListener(event, check);
-        document.removeEventListener('visibilitychange', check);
+        for (const event of ['focus','online','pageshow']) window.removeEventListener(event, resume);
+        document.removeEventListener('visibilitychange', resume);
+        document.removeEventListener('input', rememberDraft, true);
+        document.removeEventListener('change', rememberDraft, true);
         navigator.serviceWorker?.removeEventListener('controllerchange', check);
     } };
 }

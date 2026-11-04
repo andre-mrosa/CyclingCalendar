@@ -16,6 +16,7 @@ import { useMyEvents } from '../hooks/useMyEvents';
 import { myEventsText } from '../i18n/myEventsCopy';
 import { interfaceText } from '../i18n/interfaceCopy';
 import { monthCollection, nextPersonalEvent, publishedLocationOptions } from '../utils/calendarInterface';
+import { saveOfflineCatalogue } from '../utils/offlineSnapshot';
 import { personalCalendarMonth, matchesPersonalFilter } from '../utils/personalCollection';
 import GoogleCalendarAction from './GoogleCalendarAction';
 import FavoriteEditionControls from './FavoriteEditionControls';
@@ -192,6 +193,11 @@ export default function CalendarView({
     }, [fetchedEvents, localCachedEvents, isOffline, error, effectiveSources.length]);
 
     const collection = useMyEvents(events);
+    useEffect(() => {
+        if (!isOffline && !error && Array.isArray(fetchedEvents) && !forceAmbito && !forceLicenca && !forceEscalao && !filterLeisure) {
+            try { saveOfflineCatalogue(localStorage, events); } catch { /* Storage may be blocked. */ }
+        }
+    }, [isOffline, error, fetchedEvents, forceAmbito, forceLicenca, forceEscalao, filterLeisure, events]);
     const { favorites, manualFavorites, automaticFavorites, isSignedIn, editionPreferences, markedSet, isMarked, getDateConflict, statusFor } = collection;
     const scopedEvents = useMemo(() => personal ? events.filter(event => {
         const status = statusFor(event);

@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="pt">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#17191d"><title>Cycling Calendar · Offline</title><link rel="stylesheet" href="/offline.css"><script type="module" src="/offline.js"></script></head>
+<body>
+<header><a href="/" class="brand"><img src="/icon-192x192.png" width="34" height="34" alt=""><strong>Cycling Calendar</strong></a><span class="offline-label" id="offline-label">Modo offline</span></header>
+<main>
+  <section class="notice" role="status"><div><strong id="connection-title">Sem ligação à internet</strong><p id="connection-detail">Podes consultar as provas guardadas neste dispositivo.</p></div><button id="retry" type="button">Tentar ligação</button></section>
+  <h1 id="heading">Calendário</h1><p class="muted" id="copy-date"></p>
+  <section id="reader">
+    <div class="collection" id="collection" role="group" aria-label="Coleção"><button type="button" id="all-personal" aria-pressed="true">Todas as provas</button><button type="button" id="google-only" aria-pressed="false">Google Calendar</button></div>
+    <div class="filters"><label><span id="search-label">Pesquisar</span><input id="search" type="search" placeholder="Prova ou localidade" autocomplete="off"></label><label><span id="discipline-label">Modalidade</span><select id="discipline"><option value="">Todas</option></select></label><label><span id="period-label">Período</span><select id="period"><option value="future">Próximas</option><option value="past">Histórico</option><option value="all">Todas as datas</option></select></label></div>
+    <div class="toolbar"><div class="month"><h2 id="month-title"></h2><button id="previous" type="button" aria-label="Mês anterior">‹</button><button id="next" type="button" aria-label="Mês seguinte">›</button></div><div class="view" role="group" id="view-group" aria-label="Apresentação"><button id="list-view" type="button" aria-pressed="true">Lista</button><button id="calendar-view" type="button" aria-pressed="false">Calendário</button></div></div>
+    <div class="summary"><output id="counter" aria-live="polite"></output><button type="button" id="clear">Limpar filtros</button></div>
+    <div id="calendar" hidden></div><div id="results"></div>
+    <p class="muted read-note" id="read-note">A inscrição, as alterações de participação e o Google Calendar ficam disponíveis quando recuperares a ligação.</p>
+  </section>
+  <section id="unavailable" hidden><p id="unavailable-text">Esta página precisa de ligação à internet.</p><a class="button" href="/" id="open-calendar">Consultar calendário guardado</a></section>
+</main>
+<nav class="bottom-nav" id="bottom-nav" aria-label="Navegação"><a href="/" id="discover-link">Calendário</a><a href="/minhas-provas" id="personal-link">As minhas provas</a></nav>
+<dialog id="event-dialog" aria-labelledby="event-title"><div class="dialog-head"><h2 id="event-title"></h2><button id="close-dialog" aria-label="Fechar" type="button">×</button></div><div id="event-facts"></div></dialog>
+<noscript>Ativa JavaScript para consultar a cópia offline do calendário.</noscript>
+</body></html>

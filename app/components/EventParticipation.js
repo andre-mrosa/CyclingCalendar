@@ -17,7 +17,7 @@ export default function EventParticipation({ event, collection }) {
         try { await collection.setStatus(event, next); } catch { setFailed(true); }
         finally { setBusy(false); }
     }
-    return <span className={styles.participation} data-active={!!status} onClick={event => event.stopPropagation()}>
+    return <span className={styles.participation} data-active={!!status} aria-busy={busy} onClick={event => event.stopPropagation()}>
         {collection.isSignedIn && status ? <select className={styles.participationSelect} title={interfaceText(language, 'stateHint')}
             aria-label={tr('status') + ': ' + event.title} value={status} disabled={busy || !collection.canEdit}
             onChange={event => change(event.target.value)}>

@@ -40,7 +40,7 @@ export default function GoogleCalendarAction({ event, inCalendar, collection }) 
     }
     const disabled = busy || Boolean(collection.isSignedIn && (collection.isLoading || collection.error || (inCalendar && !collection.canEdit)));
     const label = tr(inCalendar ? 'removeCalendar' : 'export');
-    return <span className={styles.calendarActionWrap}>
+    return <span className={styles.calendarActionWrap} aria-busy={busy}>
         <button type="button" className={`${styles.eventExportBtn} ${styles.calendarAction}`} data-remove={inCalendar}
             aria-label={`${label}: ${event.title}`} title={label} disabled={disabled} onClick={act}>
             {busy ? <LoaderCircle size={17} className="animate-spin" /> : inCalendar ? <CalendarMinus size={18} /> : <CalendarPlus size={18} />}

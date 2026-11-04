@@ -129,7 +129,7 @@ test('push routes scope reads and deletion to the owner and require authenticati
 });
 test('service worker displays pushes and opens only same-origin event or favorites pages', async () => {
     const handlers={},shown=[],opened=[];let closed=0;
-    const context={self:{addEventListener:(name,fn)=>{handlers[name]=fn;},location:{origin:'https://calendar.test'},
+    const context={self:{addEventListener:(name,fn)=>{handlers[name]=fn;},location:{origin:'https://calendar.test',href:'https://calendar.test/sw.js?app=test'},
         registration:{showNotification:async(...args)=>shown.push(args)},clients:{matchAll:async()=>[],openWindow:async url=>opened.push(url)}},URL};
     vm.runInNewContext(await readFile(new URL('../public/sw.js',import.meta.url),'utf8'),context);
     let done;

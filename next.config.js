@@ -12,6 +12,7 @@ const nextConfig = {
         { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
         { key: 'Service-Worker-Allowed', value: '/' },
       ] },
+      { source: '/offline.html', headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }, { key: 'Cache-Control', value: 'no-store' }] },
       { source: '/:path*', headers: [
         { key: 'X-Content-Type-Options', value: 'nosniff' },
         { key: 'Referrer-Policy', value: 'strict-origin' },
