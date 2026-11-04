@@ -62,5 +62,12 @@ export function createStopAndGoAccess({ db, fetcher=fetch, now=Date.now, wait=ms
         tail=request.catch(()=>{}); return request;
     };
     queued.nextAllowedAt=()=>nextRequest;
+    queued.markResolved=async()=>{
+        const row=await db?.systemLog?.findUnique?.({where:{id:STOPANDGO_ACCESS_ID}});
+        const gate=row?.details&&JSON.parse(row.details);
+        if(gate?.status===429 && Date.parse(gate.retryAt)<=now()) {
+            await db.systemLog.updateMany({where:{id:STOPANDGO_ACCESS_ID,details:row.details},data:{details:JSON.stringify({...gate,status:200,retryAt:null,resolvedAt:new Date(now()).toISOString()})}});
+        }
+    };
     return queued;
 }

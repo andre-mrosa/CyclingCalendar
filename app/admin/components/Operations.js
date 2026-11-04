@@ -2,6 +2,7 @@ import { Play, RefreshCw } from 'lucide-react';
 import { Button, Empty, Notice, Panel, RefreshButton, Status, dateTime, entries, number } from './ui';
 import styles from '../admin.module.css';
 import { duration } from '../../utils/adminPresentation';
+import SourceRetry from './SourceRetry';
 
 
 const metricLabels = { processed: 'Processados', created: 'Criados', updated: 'Atualizados', merged: 'Fundidos', quarantined: 'Em quarentena' };
@@ -24,6 +25,7 @@ export default function Operations({ running, output, sources, steps, activeStep
     const currentSteps = running || output ? steps : run?.steps;
     const status = running ? (output?.status === 'loading' ? 'loading' : 'running') : output?.status || run?.status;
     return <div className={styles.stack}>
+        <SourceRetry />
         <div className={styles.sectionHeading}><div><h2>Recolha das fontes</h2><p>Executa uma recolha ou acompanha o resultado mais recente.</p></div><RefreshButton onClick={onRefresh} /></div>
         <Panel title="Sincronizar calendário" description="Recolhe as fontes ativas, atualiza o calendário e valida os idiomas da interface." action={<Status value={status} />}>
             <div className={styles.operationAction}><div><p>Recolha automática diária às 02:00 UTC.</p><p className={styles.muted}>Consulta o ano atual e o seguinte.</p></div><Button tone="primary" disabled={!!running} onClick={() => onRun(false)}>{running ? <RefreshCw size={16} className={styles.spin} /> : <Play size={16} />}{running ? 'Sincronização em curso' : status === 'interrupted' ? 'Executar novamente' : 'Executar sincronização'}</Button></div>

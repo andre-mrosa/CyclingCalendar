@@ -55,8 +55,9 @@ function applySnapshot(target, snapshot) {
  * exact runId. Counts are processed operations, never database inventory.
  */
 export function parseScraperStatus({ startLog = null, completionLog = null, logs = [], now, staleAfterMs = 15 * 60 * 1000 }) {
-    const sources = entities(SOURCE_DEFS);
-    const steps = entities(STEP_DEFS);
+    const sourceOnly = readLogDetails(startLog).scope === 'stopandgo';
+    const sources = entities(sourceOnly ? {stopandgo:SOURCE_DEFS.stopandgo} : SOURCE_DEFS);
+    const steps = entities(sourceOnly ? {finalize:STEP_DEFS.finalize} : STEP_DEFS);
     const all = { ...sources, ...steps };
     const empty = { success: true, isRunning: false, activeStep: 0, elapsedSeconds: 0,
         sources, steps, stepDurations: {}, logs: [], lastRun: null };
@@ -85,7 +86,7 @@ export function parseScraperStatus({ startLog = null, completionLog = null, logs
     const stats = completionDetails.stats || completionDetails;
     const rawYears = stats.yearsScraped || stats.years || startDetails.years || (startLog.message?.match(/\b20\d{2}\b/g) || []);
     const years = [...new Set(Array.isArray(rawYears) ? rawYears.map(String) : [])];
-    sources.fpc.desc = `Calendários FPC${years.length ? ` ${years.join(', ')}` : ''} · processados, não novos`;
+    if(sources.fpc)sources.fpc.desc = `Calendários FPC${years.length ? ` ${years.join(', ')}` : ''} · processados, não novos`;
     const yearCounts = new Map();
     const yearMetrics = new Map();
     const yearDurations = new Map();

@@ -148,7 +148,8 @@ export const scrapeStopAndGo = async (options = {}) => {
                 });
             }
 
-            await logInfo('SCRAPER', `Sincronização Stop and Go concluída (${audit.counts().saved} provas futuras processadas na BD)`);
+        await sourceFetch.markResolved?.();
+        await logInfo('SCRAPER', `Sincronização Stop and Go concluída (${audit.counts().saved} provas futuras processadas na BD)`);
             return processedCount;
         } catch (err) {
             await logError('SCRAPER', `Erro no scraping Stop and Go: ${err.message}`, err);

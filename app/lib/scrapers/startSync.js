@@ -8,6 +8,11 @@ import { getPipelineStages } from './unifiedPipeline.js';
 
 export async function startCalendarSync({ scope = 'manual', fullHistorical = false, resume = false, triggeredBy = 'ADMIN_MANUAL' } = {}) {
     return withScraperLock(async () => {
+        const retryRow=await prisma.systemLog.findUnique?.({where:{id:'operational-stopandgo-retry'}});
+        const retry=retryRow?.details&&JSON.parse(retryRow.details);
+        if(retry?.status==='running' && (!retry.workflowId || ['pending','running'].includes(await getRun(retry.workflowId).status))) {
+            throw Object.assign(new Error('A retoma automática de Stop and Go está em curso.'),{code:'SCRAPER_ALREADY_RUNNING'});
+        }
         const previous = await prisma.systemLog.findFirst({
             where: { source: 'SCRAPER', message: 'Workflow de sincronização agendado.' },
             orderBy: { createdAt: 'desc' }
@@ -42,7 +47,7 @@ export async function startCalendarSync({ scope = 'manual', fullHistorical = fal
             pipelineStage = saved.nextStage;
             resumedFrom = previousRunId;
         }
-        if (!['daily', 'weekly', 'manual'].includes(scope) || !Array.isArray(years) ||
+        if (!['daily', 'weekly', 'manual', ...(resume?['stopandgo']:[])].includes(scope) || !Array.isArray(years) ||
             !years.every(year => /^\d{4}$/.test(year)) ||
             (pipelineStage && !getPipelineStages(scope, years).includes(pipelineStage))) throw new Error('Plano de sincronização inválido.');
         // Historical collection is retired; keep old callers compatible without claiming to run it.

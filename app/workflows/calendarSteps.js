@@ -15,6 +15,17 @@ export async function executeCalendarStage(options) {
 
 executeCalendarStage.maxRetries = 2;
 
+export async function scheduleStopAndGoRetry() {
+    'use step';
+    const {ensureStopAndGoRetry}=await import('../lib/scrapers/stopandgoRetry.js');
+    try {return await ensureStopAndGoRetry();}
+    catch(error) {
+        if(error.code==='SCRAPER_ALREADY_RUNNING')throw new RetryableError('Outro pedido está a confirmar o agendamento.',{retryAfter:'1m'});
+        throw error;
+    }
+}
+scheduleStopAndGoRetry.maxRetries=6;
+
 export async function recordCalendarFailure(runId, pipelineStage, error) {
     'use step';
     const { logError, withScraperLogContext } = await import('../lib/logger.js');

@@ -12,9 +12,10 @@ import { withScraperLock } from './runLock.js';
 import {recordSourceQuality} from '../sourceQuality.js';
 import {cleanTrustData} from '../trustRetention.js';
 
-const VALID_SCOPES = new Set(['daily', 'weekly', 'manual']);
+const VALID_SCOPES = new Set(['daily', 'weekly', 'manual', 'stopandgo']);
 
 export function getPipelineStages(scope, years) {
+    if (scope === 'stopandgo') return ['stopandgo', 'finalize'];
     const fpcStages = years.map(year => `fpc-${year}`);
     if (scope === 'daily') return [...fpcStages, 'cabreira', 'stopandgo', 'recordepessoal', 'apedalar', 'translation', 'finalize'];
     if (scope === 'weekly') return [...fpcStages, 'translation', 'finalize'];
@@ -51,11 +52,11 @@ async function runPipeline(triggeredBy, options) {
         mode: historical ? 'FULL_HISTORICAL' : 'DAILY_ACTIVE',
         pipelineStage,
         scope,
-        sourcesScraped: scope === 'weekly' ? ['FPC'] : ['FPC', 'Cabreira', 'Stop and Go', 'Recorde Pessoal', 'Apedalar'],
+        sourcesScraped: scope === 'stopandgo' ? ['Stop and Go'] : scope === 'weekly' ? ['FPC'] : ['FPC', 'Cabreira', 'Stop and Go', 'Recorde Pessoal', 'Apedalar'],
         yearsScraped: years, fpcEvents: {}, deepScrapedFpc: null, mergedEvents: null,
         sources: {}, steps: {}, errors: []
     };
-    let sourceContinuation = null;
+    let sourceContinuation = null, sourceRetryAt = null;
     const observeError = ({ sourceId, stepId, year, message }) => {
         const target = sourceId ? stats.sources[sourceId] : stats.steps[stepId];
         if (target) {
@@ -110,6 +111,9 @@ async function runPipeline(triggeredBy, options) {
                     }
                 } catch (error) {
                     if (error.retryable === false) target.retryable = false;
+                    if (id==='stopandgo' && error.status===429 && Number.isFinite(Date.parse(error.retryAt))) {
+                        sourceRetryAt=error.retryAt; target.retryAt=error.retryAt;
+                    }
                     await logError('SCRAPER', `${name}: ${error.message}`, error);
                 }
                 target.duration = `${((Date.now() - started) / 1000+(id==='stopandgo'?options.sourceContinuation?.durationSeconds||0:0)).toFixed(1)}s`;
@@ -193,7 +197,7 @@ async function runPipeline(triggeredBy, options) {
                 success: isLastStage ? !(hadErrors || failed) : true,
                 stats, durationSeconds, nextStage, runId, years,
                 scope, attempt, nextAttempt: retrying ? attempt + 1 : 1,
-                hadErrors, triggeredBy, fullHistorical: historical, sourceContinuation
+                hadErrors, triggeredBy, fullHistorical: historical, sourceContinuation, sourceRetryAt
             };
         } catch (error) {
             const durationSeconds = Number(((Date.now() - startTime) / 1000).toFixed(1));

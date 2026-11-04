@@ -270,7 +270,7 @@ test('cleanup always excludes the active lease even with days=0', async t => {
     let query;
     t.mock.method(loggerDb.systemLog, 'deleteMany', async input => { query = input; return { count: 4 }; });
     assert.equal(await cleanOldLogs(0), 4);
-    assert.deepEqual(query.where.id.notIn, ['operational-scraper-lease','operational-stopandgo-access']);
+    assert.equal(query.where.id.not.startsWith, 'operational-');
 });
 
 test('oversized diagnostics keep valid JSON and run attribution', async t => {

@@ -16,6 +16,12 @@ test('the request interval survives the boundary between durable blocks',async()
  const second=createStopAndGoAccess({...options,notBefore:first.nextAllowedAt()});await second('https://stopandgo.net/events/two');
  assert.deepEqual(starts,[0,2000]);
 });
+test('a completed collection resolves the old cooldown without clearing a newer refusal',async()=>{
+ let details=JSON.stringify({status:429,retryAt:'2026-11-04T12:00:00Z'});
+ const read=createStopAndGoAccess({now:()=>Date.parse('2026-11-04T13:00:00Z'),db:{systemLog:{findUnique:async()=>({details}),updateMany:async({where,data})=>{assert.equal(where.details,details);details=data.details;return {count:1};}}}});
+ await read.markResolved();assert.equal(JSON.parse(details).status,200);assert.equal(JSON.parse(details).retryAt,null);
+ details=JSON.stringify({status:429,retryAt:'2026-11-04T14:00:00Z'});await read.markResolved();assert.equal(JSON.parse(details).status,429);
+});
 test('a refusal stops queued work and persists Retry-After across cold invocations',async()=>{
  let clock=Date.parse('2026-11-04T12:00:00Z'),row=null,requests=0;
  const db={systemLog:{findUnique:async()=>row,upsert:async({where,create})=>{assert.equal(where.id,STOPANDGO_ACCESS_ID);row=create;}}};
