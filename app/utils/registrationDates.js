@@ -7,7 +7,8 @@ export function formatRegistrationDay(value, language = 'pt') {
     return new Intl.DateTimeFormat(locale,{day:'2-digit',month:'short',timeZone:'UTC'}).format(date);
 }
 
-export function parseRegistrationDates(html = '') {
+export function parseRegistrationDates(html = '', {source} = {}) {
+    const explicitTimes=new Map();
     const text = String(html).replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>|<!--[\s\S]*?-->/gi,' ').replace(/<[^>]*>/g, ' ').replace(/&nbsp;|&#160;/g, ' ')
         .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ');
     const date = '(\\d{1,2})[-/.](\\d{1,2})[-/.](20\\d{2})';
@@ -19,6 +20,7 @@ export function parseRegistrationDates(html = '') {
             const d = new Date(Date.UTC(+year, +month - 1, +day, hour === undefined ? (closing ? 23 : 0) : +hour, minute === undefined ? (closing ? 59 : 0) : +minute));
             if (d.getUTCFullYear() !== +year || d.getUTCMonth() !== +month - 1 || d.getUTCDate() !== +day || +(hour || 0) > 23 || +(minute || 0) > 59) continue;
             found.push(d.toISOString());
+            explicitTimes.set(d.toISOString(),explicitTimes.get(d.toISOString())===true||hour!==undefined);
         }
         return [...new Set(found)].sort();
     };
@@ -27,10 +29,15 @@ export function parseRegistrationDates(html = '') {
     // A phase deadline, cancellation/refund deadline or generic "até ao dia" is not.
     const closings = read('inscricoes\\s+(?:(?:encerram|terminam|fecham)\\s+(?:(?:no\\s+)?dia\\s+|a\\s+)?|(?:serao\\s+)?efetuadas\\s+ate\\s+(?:ao\\s+)?dia\\s+)', true);
     if(openings.length&&closings.length===1&&openings[0]>closings[0])return {registrationOpensAt:null,registrationClosesAt:null};
-    return {
+    const result={
         registrationOpensAt: openings[0] || null,
         registrationClosesAt: closings.length === 1 ? closings[0] : null,
     };
+    if(source&&(result.registrationOpensAt||result.registrationClosesAt)){
+        result.temporalEvidence={version:1};
+        for(const [field,key] of [['registrationOpensAt','registrationOpen'],['registrationClosesAt','registrationClose']])if(result[field])result.temporalEvidence[key]={precision:'day',value:result[field],source,hasTime:explicitTimes.get(result[field])===true};
+    }
+    return result;
 }
 
 export function withRegistrationDates(event) {

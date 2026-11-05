@@ -5,10 +5,10 @@ import { useUser } from '@clerk/nextjs';
 import { useMemo, useCallback, useEffect } from 'react';
 import { useOnline, useStoredString, writeStored } from './useBrowserState';
 import {calendarMarked} from '../utils/registrationReminders';
+import {fetchJsonDeadline} from '../utils/fetchJsonDeadline';
 
 const fetcher = async ([url]) => {
-    const response = await fetch(url);
-    const data = await response.json();
+    const {response,data}=await fetchJsonDeadline(url);
     if (!response.ok || !data.success) throw new Error('Calendar unavailable');
     return data;
 };

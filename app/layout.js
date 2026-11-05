@@ -7,6 +7,7 @@ import CalendarShell from "./components/CalendarShell";
 import ColorPaletteManager from "./components/ColorPaletteManager";
 import ServiceWorkerRegistration from "./components/ServiceWorkerRegistration";
 import { paletteCSS, paletteBootstrap } from "./lib/colorPalettes";
+import { bootRecovery } from './lib/bootRecovery';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,7 +34,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="pt"  suppressHydrationWarning>
-      <head><style id="color-palettes">{paletteCSS()}</style><script dangerouslySetInnerHTML={{ __html: paletteBootstrap }} /></head>
+      <head><style id="color-palettes">{paletteCSS()}</style><script dangerouslySetInnerHTML={{ __html: paletteBootstrap }} /><script dangerouslySetInnerHTML={{ __html: bootRecovery }} /></head>
       <body className={`${geistSans.className} ${geistSans.variable} ${geistMono.variable} min-h-screen bg-canvas text-ink antialiased`} suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem={true}>
           <ThemeClerkProvider>

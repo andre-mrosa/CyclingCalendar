@@ -32,7 +32,7 @@ export default function GlobalErrorBoundary({ error, reset }) {
                 Ocorreu um problema ao carregar a página
             </h2>
             <p className="text-sm text-slate-400 max-w-md mb-6">
-                O erro foi registado automaticamente no nosso sistema para ser analisado pela equipa.
+                Tenta novamente ou consulta a cópia guardada neste dispositivo.
             </p>
             <button
                 onClick={() => reset()}
@@ -41,6 +41,7 @@ export default function GlobalErrorBoundary({ error, reset }) {
                 <RotateCcw size={16} />
                 <span>Tentar novamente</span>
             </button>
+            <a href="/offline.html" className="mt-5 text-emerald-300 underline">Consultar offline</a>
         </div>
     );
 }

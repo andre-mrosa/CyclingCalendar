@@ -1,7 +1,7 @@
 import { originalEventUrl } from '../lib/publicEvent.js';
 import { detectRaceDate } from './detectRaceDate.js';
 import {monthlyRegistration,expectedOpeningLabel,monthlyOpeningNote} from './partialDates.js';
-import {registrationAlarmLines} from './registrationReminders.js';
+import {registrationAlarmLines,registrationCalendarDate} from './registrationReminders.js';
 
 /**
  * Utilitários para exportar eventos para Google Calendar, Apple Calendar e ficheiro iCal (.ics)
@@ -61,13 +61,14 @@ export function generateGoogleCalendarUrl(event, type = 'race') {
     let dates = getCalendarDates(event);
     if (type === 'reg_open' && event.registrationOpensAt) {
         title = (monthlyRegistration(event)?expectedOpeningLabel('pt'):'Abertura Inscrições')+': '+title;
-        const d = new Date(event.registrationOpensAt);
+        const d = registrationCalendarDate(event,'reg_open');
+        if(!d)return null;
         const end = new Date(d.getTime() + 60*60*1000);
         dates = { start: formatIcsDate(d).replace(/Z$/, ''), end: formatIcsDate(end).replace(/Z$/, '') };
-        if(monthlyRegistration(event)){const next=new Date(d);next.setUTCDate(next.getUTCDate()+1);dates={start:formatIcsDate(d).slice(0,8),end:formatIcsDate(next).slice(0,8)};}
     } else if (type === 'reg_close' && event.registrationClosesAt) {
         title = 'Fim Inscrições: ' + title;
-        const d = new Date(event.registrationClosesAt);
+        const d = registrationCalendarDate(event,'reg_close');
+        if(!d)return null;
         const end = new Date(d.getTime() + 60*60*1000);
         dates = { start: formatIcsDate(d).replace(/Z$/, ''), end: formatIcsDate(end).replace(/Z$/, '') };
     }
@@ -119,16 +120,13 @@ export function buildIcsContent(event, origin = 'https://cyclingcalendar.pt') {
     ];
 
     if (event.registrationOpensAt) {
-        const d = new Date(event.registrationOpensAt);
-        if (Number.isFinite(d.getTime())) {
+        const d = registrationCalendarDate(event,'reg_open');
+        if (d&&Number.isFinite(d.getTime())) {
             lines.push(
                 'BEGIN:VEVENT',
                 `UID:reg-open-${encodeURIComponent(event.id)}@cyclingcalendar.pt`,
                 `DTSTAMP:${nowStr}`,
-                ...(monthlyRegistration(event)?[
-                    `DTSTART;VALUE=DATE:${formatIcsDate(d).slice(0,8)}`,
-                    `DTEND;VALUE=DATE:${formatIcsDate(new Date(d.getTime()+86400000)).slice(0,8)}`,
-                ]:[`DTSTART;TZID=Europe/Lisbon:${formatIcsDate(d).replace(/Z$/, '')}`,`DTEND;TZID=Europe/Lisbon:${formatIcsDate(new Date(d.getTime() + 60*60*1000)).replace(/Z$/, '')}`]),
+                `DTSTART;TZID=Europe/Lisbon:${formatIcsDate(d).replace(/Z$/, '')}`,`DTEND;TZID=Europe/Lisbon:${formatIcsDate(new Date(d.getTime() + 60*60*1000)).replace(/Z$/, '')}`,
                 `SUMMARY:${monthlyRegistration(event)?expectedOpeningLabel('pt'):'Abertura Inscrições'}: ${cleanTitle}`,
                 `DESCRIPTION:${cleanDescription}${monthlyRegistration(event)?'\\n'+escapeText(monthlyOpeningNote):''}`,
                 `URL:${eventUrl}`,
@@ -140,8 +138,8 @@ export function buildIcsContent(event, origin = 'https://cyclingcalendar.pt') {
     }
 
     if (event.registrationClosesAt) {
-        const d = new Date(event.registrationClosesAt);
-        if (Number.isFinite(d.getTime())) {
+        const d = registrationCalendarDate(event,'reg_close');
+        if (d&&Number.isFinite(d.getTime())) {
             lines.push(
                 'BEGIN:VEVENT',
                 `UID:reg-close-${encodeURIComponent(event.id)}@cyclingcalendar.pt`,

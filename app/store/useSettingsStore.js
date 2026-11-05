@@ -64,13 +64,11 @@ export const useSettingsStore = create(
         }),
         {
             name: SETTINGS_STORAGE_KEY,
-            version: 3,
+            version: 4,
             migrate: (state) => {
-                const previousDefault = ['FPC', 'Cabreira', 'Stop and Go', 'Classificações.net'];
-                const beforeOrganizers=CALENDAR_SOURCES.filter(source=>source!=='Organizador');
-                const selected = state.selectedSources;
-                // Upgrade the old default once, preserving deliberately selected subsets.
-                return personalNavigation({ ...state, selectedSources: !selected || (selected.length === previousDefault.length && previousDefault.every(source => selected.includes(source))) || (selected.length===beforeOrganizers.length&&beforeOrganizers.every(source=>selected.includes(source))) ? CALENDAR_SOURCES : selected });
+                // One-time reset requested by the owner. Subsequent choices are
+                // persisted normally at version 4, including an empty selection.
+                return personalNavigation({ ...state, selectedSources: [...CALENDAR_SOURCES] });
             }
         }
     )

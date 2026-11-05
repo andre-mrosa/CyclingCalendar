@@ -22,9 +22,9 @@ test('a month-only race appears only in its month, with no day and no invented r
  assert.equal(matchesPeriod(monthly,'month',new Date('2027-10-20')),true);
  const exact={...monthly,id:'exact',date:'19 OUT 2027',sortDate:'2027-10-19'};assert.deepEqual(groupEventsByDate([monthly,exact]).map(g=>g[0].id),['exact','tn']);
 });
-test('month-only registration is a first-day all-day reminder, never proof that entries are open',()=>{
- const link=new URL(generateGoogleCalendarUrl(opening,'reg_open'));assert.equal(link.searchParams.get('dates'),'20270101/20270102');assert.match(link.searchParams.get('text'),/prevista/);assert.match(link.searchParams.get('details'),/apenas o mês/);
- const ics=buildIcsContent(opening).replace(/\r\n /g,'');assert.match(ics,/DTSTART;VALUE=DATE:20270101/);assert.match(ics,/DTEND;VALUE=DATE:20270102/);assert.match(ics,/Abertura prevista/);assert.doesNotMatch(ics,/UID:event-|inscrições abrem em 15/);
+test('month-only registration is a first-day 09:00 reminder, never proof that entries are open',()=>{
+ const link=new URL(generateGoogleCalendarUrl(opening,'reg_open'));assert.equal(link.searchParams.get('dates'),'20270101T090000/20270101T100000');assert.match(link.searchParams.get('text'),/prevista/);assert.match(link.searchParams.get('details'),/apenas o mês/);
+ const ics=buildIcsContent(opening).replace(/\r\n /g,'');assert.match(ics,/DTSTART;TZID=Europe\/Lisbon:20270101T090000/);assert.match(ics,/DTEND;TZID=Europe\/Lisbon:20270101T100000/);assert.match(ics,/Abertura prevista/);assert.doesNotMatch(ics,/UID:event-|inscrições abrem em 15/);
  assert.equal(registrationStatus(opening,new Date('2027-01-10')),'unknown');assert.equal(matchesPeriod(opening,'open',new Date('2027-01-10')),false);
  assert.equal(registrationStatus(opening,new Date('2026-12-20')),'upcoming');
  assert.equal(toPublicEvent(opening).temporalEvidence.registrationOpen.precision,'month');

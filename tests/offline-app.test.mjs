@@ -40,21 +40,23 @@ test('offline search, saved/Google filtering and multi-day calendar selection wo
 });
 
 function worker(version='new') {
-    const listeners=new Map(),buckets=new Map(),calls=[];let online=true,failAsset=false,claimed=false,installed=false;
+    const listeners=new Map(),buckets=new Map(),calls=[],timers=new Map();let online=true,failAsset=false,claimed=false,installed=false,stall='',timerId=0;
     const origin='https://calendar.test',key=input=>new URL(typeof input==='string'?input:input.url||input.href,origin).href;
     const caches={keys:async()=>[...buckets.keys()],delete:async name=>buckets.delete(name),open:async name=>{
         if(!buckets.has(name))buckets.set(name,new Map());const bucket=buckets.get(name);
         return{put:async(input,response)=>bucket.set(key(input),response.clone()),match:async input=>bucket.get(key(input))?.clone()};
     }};
     const self={location:new URL('/sw.js?app='+version,origin),addEventListener:(name,fn)=>listeners.set(name,fn),skipWaiting:async()=>{installed=true;},clients:{claim:async()=>{claimed=true;}}};
-    vm.runInNewContext(readFileSync(new URL('../public/sw.js',import.meta.url),'utf8'),{self,caches,URL,Response,Headers,AbortSignal,fetch:async(input,options)=>{
+    vm.runInNewContext(readFileSync(new URL('../public/sw.js',import.meta.url),'utf8'),{self,caches,URL,Response,Headers,AbortController,setTimeout:fn=>{timers.set(++timerId,fn);return timerId;},clearTimeout:id=>timers.delete(id),fetch:async(input,options)=>{
         calls.push({url:key(input),options});if(!online)throw Error('offline');const path=new URL(key(input)).pathname;
+        if(stall==='headers')return new Promise(()=>{});
+        if(stall==='body'){const response=new Response('pending');response.clone=()=>({arrayBuffer:()=>new Promise(()=>{})});return response;}
         if(failAsset&&path==='/offline.js')return new Response('failed',{status:503});
         return new Response(path==='/offline.html'?'<html>OFFLINE READER</html>':path.startsWith('/offline.')?'ASSET':'PERSONAL_HTML',{headers:{'Content-Type':path.endsWith('.html')?'text/html':'text/javascript'}});
     }});
     const run=async name=>{let task;listeners.get(name)({waitUntil:value=>{task=value;}});return task;};
     const request=(path,extra={})=>{let response;listeners.get('fetch')({request:{url:new URL(path,origin).href,method:'GET',mode:'navigate',...extra},respondWith:value=>{response=value;}});return response;};
-    return{run,request,caches,buckets,calls,setOnline:value=>{online=value;},failAsset:()=>{failAsset=true;},status:()=>({claimed,installed})};
+    return{run,request,caches,buckets,calls,setOnline:value=>{online=value;},setStall:value=>{stall=value;},expire:()=>{for(const fn of [...timers.values()])fn();},failAsset:()=>{failAsset=true;},status:()=>({claimed,installed})};
 }
 test('the worker warms only its own reader and serves a cold navigation and assets with the server offline', async () => {
     const w=worker();await w.run('install');await w.run('activate');assert.deepEqual(w.status(),{claimed:true,installed:true});
@@ -74,4 +76,19 @@ test('authenticated pages and APIs never enter the cache; POST, HEAD and third-p
 test('a failed install leaves the previous offline reader intact and activation deletes only project caches',async()=>{
     const failed=worker();await failed.caches.open('cycling-offline-shell-v1-old');failed.failAsset();await assert.rejects(failed.run('install'),/Offline reader unavailable/);assert.equal(failed.status().installed,false);assert.ok(failed.buckets.has('cycling-offline-shell-v1-old'));
     const w=worker();await w.caches.open('cycling-offline-shell-v1-old');await w.caches.open('other-app-cache');await w.run('install');await w.run('activate');assert.ok(!w.buckets.has('cycling-offline-shell-v1-old'));assert.ok(w.buckets.has('other-app-cache'));
+});
+
+test('online-but-stalled headers or HTML bodies fall back even when fetch ignores abort',async()=>{
+    for(const stage of ['headers','body']){
+        const w=worker();await w.run('install');w.setStall(stage);
+        const pending=w.request('/');await new Promise(resolve=>setImmediate(resolve));w.expire();
+        const response=await pending;assert.equal(response.headers.get('X-Cycling-Offline'),'1');assert.match(await response.text(),/OFFLINE READER/);
+        assert.equal(w.calls.at(-1).options.signal.aborted,true);
+    }
+});
+
+test('a stalled offline asset install times out while retaining the previous working worker cache',async()=>{
+    const w=worker();await w.caches.open('cycling-offline-shell-v1-previous');w.setStall('headers');
+    const pending=w.run('install');const rejected=assert.rejects(pending,/Network deadline/);w.expire();await rejected;
+    assert.equal(w.status().installed,false);assert.ok(w.buckets.has('cycling-offline-shell-v1-previous'));
 });

@@ -32,6 +32,7 @@ function applyRegistration(row,opening,closing,source){
   if(moment>=new Date(row.sortDate)&&row.temporalEvidence.race.precision==='day')throw Error(`${row.title}: inscrições posteriores à prova`);
   row[`registration${name==='Open'?'Opens':'Closes'}At`]=moment.toISOString();
   row.temporalEvidence[`registration${name}`]=fact(date?moment.toISOString():month,source,date?'day':'month');
+  row.temporalEvidence[`registration${name}`].hasTime=!!time;
  }
  if(row.registrationOpensAt&&row.registrationClosesAt&&row.registrationOpensAt>row.registrationClosesAt)throw Error('Período de inscrições invertido');
 }

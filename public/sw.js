@@ -3,9 +3,25 @@
 const appVersion = new URL(self.location.href).searchParams.get('app') || 'current';
 const OFFLINE_CACHE = 'cycling-offline-shell-v1-' + (/^[a-zA-Z0-9._-]{1,100}$/.test(appVersion) ? appVersion : 'current');
 const OFFLINE_ASSETS = ['/offline.html', '/offline.css', '/offline.js', '/offline-model.js', '/icon-192x192.png', '/icon-512x512.png'];
+// Race the complete response, not just its headers. Some mobile connections
+// stay "online" while neither delivering a body nor rejecting the request.
+async function boundedFetch(request, options = {}, milliseconds = 6000) {
+    const controller = new AbortController();
+    let timer;
+    try {
+        return await Promise.race([
+            (async () => {
+                const response = await fetch(request, { ...options, signal: controller.signal });
+                await response.clone().arrayBuffer();
+                return response;
+            })(),
+            new Promise((_, reject) => { timer = setTimeout(() => { controller.abort(); reject(new Error('Network deadline')); }, milliseconds); }),
+        ]);
+    } finally { clearTimeout(timer); }
+}
 self.addEventListener('install', event => event.waitUntil((async () => {
     const responses = await Promise.all(OFFLINE_ASSETS.map(async path => {
-        const response = await fetch(new URL(path, self.location.origin), { cache: 'reload', credentials: 'omit' });
+        const response = await boundedFetch(new URL(path, self.location.origin), { cache: 'reload', credentials: 'omit' }, 10000);
         if (!response.ok || response.redirected) throw new Error('Offline reader unavailable');
         return [path, response];
     }));
@@ -34,8 +50,7 @@ self.addEventListener('fetch', event => {
     } else if (request.mode === 'navigate') {
         event.respondWith((async () => {
             try {
-                const signal = typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(6000) : undefined;
-                const response = await fetch(request, { cache: 'no-store', signal });
+                const response = await boundedFetch(request, { cache: 'no-store' });
                 return response.status >= 500 ? offlineResponse() : response;
             } catch { return offlineResponse(); }
         })());

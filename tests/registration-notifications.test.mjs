@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {REGISTRATION_REMINDER_MINUTES,registrationReminders,calendarMarked} from '../app/utils/registrationReminders.js';
+import {REGISTRATION_REMINDER_MINUTES,registrationReminders,calendarMarked,registrationCalendarDate} from '../app/utils/registrationReminders.js';
+import {parseRegistrationDates} from '../app/utils/registrationDates.js';
+import {cleanTemporalEvidence} from '../app/utils/partialDates.js';
 import {buildIcsContent} from '../app/utils/calendarExport.js';
 import {planFavoriteChanges,favoriteChangeEmail} from '../app/lib/favoriteChangeAlerts.js';
 import {updateGoogleRegistrationReminders} from '../app/lib/googleRegistrationReminders.js';
@@ -48,8 +50,25 @@ test('push diagnostics are scoped to this account, rate limited per device and r
 });
 test('bulk calendar reminder update rejects anonymous and cross-origin requests before OAuth',async()=>{
  let userId=null,oauth=0,writes=0;
- const route=await fixtureModule('../app/api/calendar/registration-reminders/route.js',{'@clerk/nextjs/server':{auth:async()=>({userId}),clerkClient:async()=>({users:{getUserOauthAccessToken:async()=>{oauth++;return {data:[{token:'fixture'}]};}}})},'@/app/lib/requestBody':{privateJson,sameOriginJson},'@/app/lib/googleRegistrationReminders':{updateGoogleRegistrationReminders:async()=>{writes++;return {updated:0};}}});
+ const route=await fixtureModule('../app/api/calendar/registration-reminders/route.js',{'@clerk/nextjs/server':{auth:async()=>({userId}),clerkClient:async()=>({users:{getUserOauthAccessToken:async()=>{oauth++;return {data:[{token:'fixture'}]};}}})},'@/app/lib/getPublicCalendarEvents':{getPublicCalendarEvents:async()=>[]},'@/app/lib/requestBody':{privateJson,sameOriginJson},'@/app/lib/googleRegistrationReminders':{updateGoogleRegistrationReminders:async()=>{writes++;return {updated:0};}}});
  const request=origin=>new Request('https://calendar.test/api/calendar/registration-reminders',{method:'POST',headers:{origin,'Content-Type':'application/json'},body:'{}'});
  assert.equal((await route.POST(request('https://calendar.test'))).status,401);userId='owner';assert.equal((await route.POST(request('https://evil.test'))).status,403);assert.equal(oauth+writes,0);
  assert.equal((await route.POST(request('https://calendar.test'))).status,200);assert.equal(writes,1);
+});
+
+test('registration reminders use 09:00 for a date or month, preserving explicitly published times including midnight',()=>{
+ assert.equal(registrationCalendarDate(mq).toISOString(),'2027-04-01T09:00:00.000Z');
+ for(const raw of ['2027-02-14T00:00:00Z','2027-07-14T00:00:00Z'])assert.equal(registrationCalendarDate({...mq,registrationOpensAt:raw,temporalEvidence:null}).toISOString().slice(11,19),'09:00:00');
+ const source='https://organizer.test/rules';
+ for(const [text,clock] of [['Abertura das inscrições dia 14/04/2027','09:00:00'],['Abertura das inscrições dia 14/04/2027 às 00:00','00:00:00'],['Abertura das inscrições dia 14/04/2027 às 20:30','20:30:00']]){
+  const parsed=parseRegistrationDates(text,{source});parsed.temporalEvidence=cleanTemporalEvidence(parsed.temporalEvidence);
+  assert.equal(registrationCalendarDate(parsed).toISOString().slice(11,19),clock);
+ }
+ const close={registrationClosesAt:'2027-04-30T23:59:00Z'};assert.equal(registrationCalendarDate(close,'reg_close').toISOString().slice(11,19),'09:00:00');
+ close.temporalEvidence={registrationClose:{hasTime:true}};assert.equal(registrationCalendarDate(close,'reg_close').toISOString().slice(11,19),'23:59:00');
+});
+
+test('bulk migration converts an existing all-day MQ reminder to Lisbon 09:00 without touching race dates',async()=>{
+ let patch;await updateGoogleRegistrationReminders('fixture',{events:[mq],pages:async url=>url.includes('calendarList')?[{id:'owned',summary:'Cycling Calendar'}]:[{id:'old-opening',start:{date:'2027-04-01'},extendedProperties:{private:{cyclingCalendarEventId:mq.id+'_reg_open'}}}],fetcher:async(_,options)=>{patch=JSON.parse(options.body);return new Response('{}');}});
+ assert.deepEqual(patch.start,{date:null,dateTime:'2027-04-01T09:00:00',timeZone:'Europe/Lisbon'});assert.equal(patch.reminders.overrides.length,5);
 });

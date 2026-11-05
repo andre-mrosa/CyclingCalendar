@@ -18,6 +18,7 @@ export default function ServiceWorkerRegistration() {
     const updater = useRef(null);
     useEffect(() => { document.documentElement.lang = language; }, [language]);
     useEffect(() => {
+        window.dispatchEvent(new Event('cycling-app-ready'));
         try {
             for (const key of Object.keys(localStorage)) {
                 if (/^cycling_calendar_list_|^cycling_calendar_minimal_v[1-4]_|^cycling_favorite_changes_v1_|^cycling_events|^cycling_road/.test(key)) localStorage.removeItem(key);

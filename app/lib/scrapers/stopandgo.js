@@ -29,11 +29,11 @@ export const deepScrapeStopAndGo = async (url, existingHtml = null, sourceFetch 
         }
         const $ = cheerio.load(html);
 
-        const dates = parseRegistrationDates($('body').html());
+        const dates = parseRegistrationDates($('body').html(),{source:url});
         opensAt = dates.registrationOpensAt ? new Date(dates.registrationOpensAt) : null;
         closesAt = dates.registrationClosesAt ? new Date(dates.registrationClosesAt) : null;
 
-        return { opensAt, closesAt };
+        return { opensAt, closesAt, ...(dates.temporalEvidence?{temporalEvidence:dates.temporalEvidence}:{}) };
     } catch(e) {
         if (e.retryable === false) throw e;
         return { opensAt: null, closesAt: null };
@@ -126,7 +126,7 @@ export const scrapeStopAndGo = async (options = {}) => {
                     const slug = url.split('/').filter(Boolean).pop();
                     const id = 'stopandgo-' + slug;
 
-                    const { opensAt, closesAt } = await deepScrapeStopAndGo(url, eventHtml, sourceFetch);
+                    const { opensAt, closesAt, temporalEvidence } = await deepScrapeStopAndGo(url, eventHtml, sourceFetch);
 
                     const eventData = {
                         tag:getTag(header.title, header.modality), ambito:getAmbito(header.title, '', '', 'Stop and Go'),
@@ -136,6 +136,7 @@ export const scrapeStopAndGo = async (options = {}) => {
                         details: header.location,
                         source: 'Stop and Go',
                         link: url,
+                        ...(temporalEvidence && {temporalEvidence}),
                         ...(opensAt && { registrationOpensAt: opensAt }),
                         ...(closesAt && { registrationClosesAt: closesAt })
                     };

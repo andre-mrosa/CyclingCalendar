@@ -21,6 +21,7 @@ export function cleanTemporalEvidence(value) {
         if(item.precision==='day'&&new Date(item.value).toISOString().slice(0,10)!==item.value.slice(0,10))continue;
         let source;try{const url=new URL(item.source);if(url.protocol!=='https:'||url.username||url.password)continue;source=url.href;}catch{continue;}
         out[field]={precision:item.precision,value:item.value,source};
+        if(field!=='race'&&typeof item.hasTime==='boolean')out[field].hasTime=item.hasTime;
     }
     return Object.keys(out).length>1?out:null;
 }

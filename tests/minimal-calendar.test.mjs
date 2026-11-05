@@ -6,6 +6,7 @@ import { queryCalendarList } from '../app/lib/calendarListQuery.js';
 import { buildIcsContent, generateGoogleCalendarUrl } from '../app/utils/calendarExport.js';
 import { maintenanceResponse } from '../app/lib/contentReleasePolicy.js';
 import { retiredContentResponse } from '../app/lib/publicEvent.js';
+import { isPublicBootAsset } from '../app/lib/publicBootAssets.js';
 
 const historical = { id: 'example', title: 'Prova exemplo', date: '04 OUT 2026', sortDate: new Date('2026-10-04'), distrito: 'Braga', source: 'FPC', link: 'https://www.fpciclismo.pt/prova/example?utm_source=old',
     description: 'PRIVATE_DESCRIPTION', image: 'PRIVATE_IMAGE', logo: 'PRIVATE_LOGO', programa: 'PRIVATE_PROGRAM', details: 'PRIVATE_DETAILS', prices: 'PRIVATE_PRICES',
@@ -68,10 +69,10 @@ test('production calendar is open; retired files remain closed', async t => {
     const previous = process.env.NODE_ENV;
     t.after(() => { if (previous === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = previous; delete globalThis.__minimalProxy; });
     let middlewareCalls = 0;
-    globalThis.__minimalProxy = { PUBLIC_RELEASE_APPROVED: true, maintenanceResponse, retiredContentResponse,
+    globalThis.__minimalProxy = { PUBLIC_RELEASE_APPROVED: true, maintenanceResponse, retiredContentResponse, isPublicBootAsset, NextResponse:{next:()=>new Response('public asset')},
         clerkMiddleware: () => () => { middlewareCalls++; return new Response('local preview'); } };
     const source = readFileSync(new URL('../proxy.js', import.meta.url), 'utf8').replace(/^import .*;\r?$/gm, '');
-    const { default: proxy } = await import('data:text/javascript;base64,' + Buffer.from('const { PUBLIC_RELEASE_APPROVED, maintenanceResponse, retiredContentResponse, clerkMiddleware } = globalThis.__minimalProxy;\n' + source).toString('base64'));
+    const { default: proxy } = await import('data:text/javascript;base64,' + Buffer.from('const { PUBLIC_RELEASE_APPROVED, maintenanceResponse, retiredContentResponse, clerkMiddleware,isPublicBootAsset,NextResponse } = globalThis.__minimalProxy;\n' + source).toString('base64'));
     process.env.NODE_ENV = 'production';
     for (const host of ['localhost', '127.0.0.1', 'www.cyclingcalendar.pt']) assert.equal(proxy(new Request('http://' + host + '/')).status, 200);
     assert.equal(middlewareCalls, 3);
@@ -80,4 +81,6 @@ test('production calendar is open; retired files remain closed', async t => {
     assert.equal(proxy(new Request('http://localhost/media/events/a.png')).status, 410);
     assert.equal(proxy(new Request('https://www.cyclingcalendar.pt/')).status, 200);
     assert.equal(middlewareCalls, 5);
+    for(const path of ['/sw.js','/offline.html','/_next/static/chunk.js'])assert.equal(await proxy(new Request('https://www.cyclingcalendar.pt'+path)).text(),'public asset');
+    assert.equal(middlewareCalls,5);
 });

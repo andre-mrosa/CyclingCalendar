@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {formatRegistrationDay} from '../app/utils/registrationDates.js';
 import {autoAddToGoogleCalendar,buildIcsContent,generateGoogleCalendarUrl} from '../app/utils/calendarExport.js';
-const race={id:'fixture',title:'Prova',date:'23 MAI 2027',registrationClosesAt:'2027-05-18T23:59:00.000Z'};
+const race={id:'fixture',title:'Prova',date:'23 MAI 2027',registrationClosesAt:'2027-05-18T23:59:00.000Z',temporalEvidence:{registrationClose:{hasTime:true}}};
 
 test('registration deadlines preserve the published day in Lisbon summer and other browser time zones',t=>{
     const before=process.env.TZ;t.after(()=>{if(before===undefined)delete process.env.TZ;else process.env.TZ=before;});

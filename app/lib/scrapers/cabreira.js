@@ -22,7 +22,7 @@ export function isCabreiraCyclingEvent(title) {
 
 export const deepScrapeCabreira = async (link) => {
     // Read factual title and registration dates from the source, without importing its editorial content.
-    let opensAt = null, closesAt = null, title = null, tag = '', publishedCategories = [];
+    let opensAt = null, closesAt = null, title = null, tag = '', publishedCategories = [], temporalEvidence;
     if (!link) return { opensAt, closesAt, title, tag };
         await delay(500); // Polite rate limit
         const regUrl = link + (link.includes('?') ? '&' : '?') + 'tab=regulamento';
@@ -36,11 +36,12 @@ export const deepScrapeCabreira = async (link) => {
             if(!title)throw new Error('detalhes Cabreira: título não reconhecido');
             tag = publishedRegulationDiscipline($reg('body').text());
             publishedCategories = regulationCategories(regHtml);
-            const dates = parseRegistrationDates($reg('body').html());
+            const dates = parseRegistrationDates($reg('body').html(),{source:regUrl});
+            temporalEvidence=dates.temporalEvidence;
             opensAt = dates.registrationOpensAt ? new Date(dates.registrationOpensAt) : null;
             closesAt = dates.registrationClosesAt ? new Date(dates.registrationClosesAt) : null;
         }
-        return { opensAt, closesAt, title, tag, publishedCategories };
+        return { opensAt, closesAt, title, tag, publishedCategories, ...(temporalEvidence?{temporalEvidence}:{}) };
 };
 
 export const scrapeCabreira = async (year, options = {}) => {
@@ -109,7 +110,7 @@ export const scrapeCabreira = async (year, options = {}) => {
                     if(!ev.href||!ev.sortDate) {await audit.fail(ev.key,'ligação/data publicada não reconhecida');return;}
                     const id = 'cabreira-' + ev.title.replace(/\s+/g, '-').toLowerCase() + '-' + ev.eventYear;
                     
-                    const { opensAt, closesAt, title, tag, publishedCategories } = await deepScrapeCabreira(ev.href);
+                    const { opensAt, closesAt, title, tag, publishedCategories, temporalEvidence } = await deepScrapeCabreira(ev.href);
                     const publishedTitle = title || ev.title;
                     if (!isCabreiraCyclingEvent(publishedTitle)) {audit.resolve(ev.key,'nonCycling');return;}
 
@@ -122,6 +123,7 @@ export const scrapeCabreira = async (year, options = {}) => {
                         details: ev.locText,
                         source: 'Cabreira',
                         link: ev.href || 'https://cabreirasolutions.com/eventos/',
+                        ...(temporalEvidence && {temporalEvidence}),
                         ...(opensAt && { registrationOpensAt: opensAt }),
                         ...(closesAt && { registrationClosesAt: closesAt })
                     };

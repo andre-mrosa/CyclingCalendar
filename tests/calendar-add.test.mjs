@@ -3,12 +3,12 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { detectRaceDate } from '../app/utils/detectRaceDate.js';
 import {monthlyRegistration,expectedOpeningLabel,monthlyOpeningNote} from '../app/utils/partialDates.js';
-import {registrationReminders,calendarIdentifiers} from '../app/utils/registrationReminders.js';
+import {registrationReminders,calendarIdentifiers,registrationCalendarDate} from '../app/utils/registrationReminders.js';
 
 async function calendarRoute(userId, token = 'mock-token') {
     let oauthCalls = 0;
     const deps = {
-        auth: async () => ({ userId }), detectRaceDate,monthlyRegistration,expectedOpeningLabel,monthlyOpeningNote,registrationReminders,calendarIdentifiers,
+        auth: async () => ({ userId }), detectRaceDate,monthlyRegistration,expectedOpeningLabel,monthlyOpeningNote,registrationReminders,calendarIdentifiers,registrationCalendarDate,
         NextResponse: { json: (data, options) => Response.json(data, options) },
         clerkClient: async () => ({ users: { getUserOauthAccessToken: async () => {
             oauthCalls++;
@@ -19,13 +19,13 @@ async function calendarRoute(userId, token = 'mock-token') {
     globalThis[key] = deps;
     const source = (await readFile(new URL('../app/api/calendar/add/route.js', import.meta.url), 'utf8')).replace(/^import .*;\r?$/gm, '');
     try {
-        const route = await import('data:text/javascript;base64,' + Buffer.from(`const { auth, clerkClient, NextResponse, detectRaceDate,monthlyRegistration,expectedOpeningLabel,monthlyOpeningNote,registrationReminders,calendarIdentifiers } = globalThis[${JSON.stringify(key)}];\n${source}`).toString('base64'));
+        const route = await import('data:text/javascript;base64,' + Buffer.from(`const { auth, clerkClient, NextResponse, detectRaceDate,monthlyRegistration,expectedOpeningLabel,monthlyOpeningNote,registrationReminders,calendarIdentifiers,registrationCalendarDate } = globalThis[${JSON.stringify(key)}];\n${source}`).toString('base64'));
         return { route, oauthCalls: () => oauthCalls };
     } finally { delete globalThis[key]; }
 }
 const request = body => new Request('https://calendar.test/api/calendar/add', { method: 'POST', body: JSON.stringify(body) });
 
-test('month-only opening exports an explicitly estimated first-day all-day reminder to Google',async t=>{
+test('month-only opening exports an explicitly estimated first-day 09:00 reminder to Google',async t=>{
  let written;
  t.mock.method(globalThis,'fetch',async(url,options={})=>{
   if(url.endsWith('/users/me/calendarList'))return Response.json({items:[{summary:'Cycling Calendar',id:'calendar'}]});
@@ -34,7 +34,7 @@ test('month-only opening exports an explicitly estimated first-day all-day remin
  const {route}=await calendarRoute('test-user');
  const event={id:'mq',title:'Mountain Quest',registrationOpensAt:'2027-04-01T00:00:00.000Z',temporalEvidence:{version:1,registrationOpen:{precision:'month',value:'2027-04',source:'https://mountainquest.pt/registrations/'}}};
  assert.equal((await route.POST(request({event,type:'reg_open'}))).status,200);
- assert.deepEqual(written.start,{date:'2027-04-01'});assert.deepEqual(written.end,{date:'2027-04-02'});assert.match(written.summary,/prevista/);assert.match(written.description,/apenas o mês/);
+ assert.deepEqual(written.start,{dateTime:'2027-04-01T09:00:00',timeZone:'Europe/Lisbon'});assert.deepEqual(written.end,{dateTime:'2027-04-01T10:00:00',timeZone:'Europe/Lisbon'});assert.match(written.summary,/prevista/);assert.match(written.description,/apenas o mês/);
 });
 
 test('a confirmed opening date updates its existing estimated reminder instead of creating a duplicate',async t=>{
@@ -44,7 +44,7 @@ test('a confirmed opening date updates its existing estimated reminder instead o
   assert.notEqual(options.method,'POST');return Response.json({items:[{id:'existing',extendedProperties:{private:{registrationPrecision:'month'}}}]});
  });
  const {route}=await calendarRoute('test-user');const event={id:'mq',title:'Mountain Quest',registrationOpensAt:'2027-04-14T12:00:00.000Z'};
- assert.equal((await route.POST(request({event,type:'reg_open'}))).status,200);assert.equal(writes.length,1);assert.match(writes[0].url,/events\/existing$/);assert.deepEqual(writes[0].body.start,{dateTime:'2027-04-14T12:00:00',timeZone:'Europe/Lisbon'});
+ assert.equal((await route.POST(request({event,type:'reg_open'}))).status,200);assert.equal(writes.length,1);assert.match(writes[0].url,/events\/existing$/);assert.deepEqual(writes[0].body.start,{date:null,dateTime:'2027-04-14T12:00:00',timeZone:'Europe/Lisbon'});
 });
 
 test('calendar integration requires authentication before OAuth or external calls', async t => {
@@ -100,6 +100,6 @@ test('registration exports preserve Lisbon wall-clock deadlines and encode event
         if(options.method==='POST'){written=JSON.parse(options.body);return Response.json({id:'created'});}
         assert.ok(['cyclingCalendarEventId=fixture&a-reg_close','cyclingCalendarEventId=fixture&a_reg_close'].includes(new URL(url).searchParams.get('privateExtendedProperty')));return Response.json({items:[]});
     });
-    const {route}=await calendarRoute('test-user');const result=await route.POST(request({event:{id:'fixture&a',registrationClosesAt:'2027-05-18T23:59:00.000Z'},type:'reg_close'}));
+    const {route}=await calendarRoute('test-user');const result=await route.POST(request({event:{id:'fixture&a',registrationClosesAt:'2027-05-18T23:59:00.000Z',temporalEvidence:{registrationClose:{hasTime:true}}},type:'reg_close'}));
     assert.equal(result.status,200);assert.deepEqual(written.start,{dateTime:'2027-05-18T23:59:00',timeZone:'Europe/Lisbon'});
 });

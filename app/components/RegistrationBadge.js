@@ -9,7 +9,7 @@ import { useClientReady } from '../hooks/useBrowserState';
 import {useParticipationStates,participationFor} from '../hooks/useParticipationStates';
 import {monthlyRegistration,expectedOpeningLabel,monthLabel,raceMonth,monthEnd} from '../utils/partialDates';
 import {useCalendarEvents} from '../hooks/useCalendarEvents';
-import {calendarIdentifiers} from '../utils/registrationReminders';
+import {calendarIdentifiers,registrationCalendarDate} from '../utils/registrationReminders';
 import {removeCalendarEvent} from '../utils/calendarRemoval';
 
 export default function RegistrationBadge({ event, isCancelled }) {
@@ -69,8 +69,8 @@ export default function RegistrationBadge({ event, isCancelled }) {
     const inCalendar=calendar.isMarked(event.id,target,event._allIds||[]);
     const keys=calendarIdentifiers(event.id,target,event._allIds||[]);
     const entry=calendar.getCalendarEntry(keys[0],keys.slice(1));
-    const expected=String(type==='reg_open'?event.registrationOpensAt:event.registrationClosesAt||'');
-    const needsUpdate=!!entry&&expected&&((entry.allDay?String(entry.start).slice(0,10)!==expected.slice(0,10)||!monthlyRegistration(event):String(entry.start).slice(0,19)!==expected.slice(0,19)));
+    const expected=registrationCalendarDate(event,type)?.toISOString()||'';
+    const needsUpdate=!!entry&&expected&&(entry.allDay||String(entry.start).slice(0,19)!==expected.slice(0,19));
     const labels={pt:['Já no Google Calendar · remover lembrete','Atualizar data no Google Calendar','Queres remover este lembrete de inscrições do Google Calendar?','Não foi possível atualizar o calendário.'],en:['In Google Calendar · remove reminder','Update date in Google Calendar','Remove this registration reminder from Google Calendar?','Could not update the calendar.'],es:['En Google Calendar · eliminar recordatorio','Actualizar fecha en Google Calendar','¿Eliminar este recordatorio del Google Calendar?','No se pudo actualizar el calendario.'],fr:['Dans Google Calendar · supprimer le rappel','Actualiser la date dans Google Calendar','Supprimer ce rappel du Google Calendar ?','Impossible de modifier le calendrier.']}[language]||['In Google Calendar · remove reminder','Update date in Google Calendar','Remove this registration reminder?','Could not update the calendar.'];
     async function act(e){e.preventDefault();e.stopPropagation();setBusy(true);setFailed(false);try{
         if(inCalendar&&!needsUpdate)await removeCalendarEvent(event,{target,confirm:()=>window.confirm(labels[2]),refresh:calendar.refreshCalendar});

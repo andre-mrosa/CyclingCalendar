@@ -2,7 +2,7 @@ import { auth, clerkClient } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { detectRaceDate } from '@/app/utils/detectRaceDate';
 import {monthlyRegistration,expectedOpeningLabel,monthlyOpeningNote} from '@/app/utils/partialDates';
-import {registrationReminders,calendarIdentifiers} from '@/app/utils/registrationReminders';
+import {registrationReminders,calendarIdentifiers,registrationCalendarDate} from '@/app/utils/registrationReminders';
 
 async function getTargetCalendarId(token) {
     try {
@@ -102,7 +102,7 @@ export async function POST(req) {
                 }
             }
             if (checkData.items && checkData.items.length > 0) {
-                const expected=String(type==='reg_open'?event.registrationOpensAt:event.registrationClosesAt||'');
+                const expected=registrationCalendarDate(event,type)?.toISOString()||'';
                 const reminder=checkData.items.find(item=>item.extendedProperties?.private?.registrationPrecision==='month'||(item.start&&(item.start.dateTime?item.start.dateTime.slice(0,19)!==expected.slice(0,19):item.start.date!==expected.slice(0,10)||!monthlyRegistration(event))));
                 if(type!=='race'&&reminder?.id&&!(type==='reg_open'&&monthlyRegistration(event)))replaceReminderId=reminder.id;
                 else if(type!=='race') {
@@ -134,25 +134,26 @@ export async function POST(req) {
             gEvent.description='Mais informações: '+(event.link||'https://www.cyclingcalendar.pt');
             gEvent.extendedProperties.private.registrationPrecision=monthlyRegistration(event)?'month':'day';
             gEvent.summary = (monthlyRegistration(event)?expectedOpeningLabel('pt'):'Abertura Inscrições')+': '+event.title;
-            gEvent.start = { dateTime: new Date(event.registrationOpensAt).toISOString().slice(0,19), timeZone:'Europe/Lisbon' };
-            gEvent.end = { dateTime: new Date(new Date(event.registrationOpensAt).getTime() + 3600000).toISOString().slice(0,19), timeZone:'Europe/Lisbon' };
+            const opening=registrationCalendarDate(event,type);
+            gEvent.start = { dateTime: opening.toISOString().slice(0,19), timeZone:'Europe/Lisbon' };
+            gEvent.end = { dateTime: new Date(opening.getTime() + 3600000).toISOString().slice(0,19), timeZone:'Europe/Lisbon' };
             gEvent.reminders=registrationReminders();
             if(monthlyRegistration(event)) {
-                const day=new Date(event.registrationOpensAt),end=new Date(day);end.setUTCDate(end.getUTCDate()+1);
-                gEvent.start={date:day.toISOString().slice(0,10)};gEvent.end={date:end.toISOString().slice(0,10)};
                 gEvent.description=monthlyOpeningNote+'\n'+(event.link||'');
                 gEvent.extendedProperties.private.registrationPrecision='month';
                 gEvent.reminders=registrationReminders();
             }
         } else if (type === 'reg_close' && event.registrationClosesAt) {
             gEvent.summary = 'Fim Inscrições: ' + event.title;
-            gEvent.start = { dateTime: new Date(event.registrationClosesAt).toISOString().slice(0,19), timeZone:'Europe/Lisbon' };
-            gEvent.end = { dateTime: new Date(new Date(event.registrationClosesAt).getTime() + 3600000).toISOString().slice(0,19), timeZone:'Europe/Lisbon' };
+            const closing=registrationCalendarDate(event,type);
+            gEvent.start = { dateTime: closing.toISOString().slice(0,19), timeZone:'Europe/Lisbon' };
+            gEvent.end = { dateTime: new Date(closing.getTime() + 3600000).toISOString().slice(0,19), timeZone:'Europe/Lisbon' };
             gEvent.reminders=registrationReminders();
         } else {
             return NextResponse.json({ error: 'Missing dates for this type' }, { status: 400 });
         }
 
+        if(replaceReminderId&&type!=='race'){gEvent.start.date=null;gEvent.end.date=null;}
         const createRes = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(targetCalendarId)}/events${replaceReminderId?'/'+encodeURIComponent(replaceReminderId):''}`, {
             method: replaceReminderId?'PATCH':'POST',
             headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
