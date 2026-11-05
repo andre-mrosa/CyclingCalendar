@@ -16,6 +16,7 @@ import PageHeading from '../components/PageHeading';
 import ColorPalettePicker from '../components/ColorPalettePicker';
 import FavoritePushSettings from '../components/FavoritePushSettings';
 import styles from '../components/site.module.css';
+import {CALENDAR_SOURCE_OPTIONS} from '../lib/calendarSources';
 
 export default function Conta() {
     const { theme, setTheme } = useTheme();
@@ -354,14 +355,7 @@ export default function Conta() {
                     </div>
 
                     <div className="pt-2 flex flex-col gap-3">
-                        {[
-                            { id: 'FPC', name: 'Federação Portuguesa de Ciclismo (FPC)', desc: t('settings_source_fpc') },
-                            { id: 'Cabreira', name: 'Cabreira Solutions', desc: t('settings_source_cabreira') },
-                            { id: 'Stop and Go', name: 'Stop and Go', desc: t('settings_source_stop') },
-                            { id: 'Recorde Pessoal', name: 'Recorde Pessoal', desc: t('settings_source_recorde') },
-                            { id: 'Apedalar', name: 'Apedalar', desc: t('settings_source_apedalar') },
-                            { id: 'Classificações.net', name: 'Classificações.net', desc: t('settings_source_classificacoes') }
-                        ].map(source => {
+                        {CALENDAR_SOURCE_OPTIONS.map(source => {
                             const isSelected = selectedSources.includes(source.id);
                             return (
                                 <div key={source.id} className="flex flex-col sm:flex-row sm:items-center justify-between bg-soft px-4 py-3.5 rounded-xl border border-line gap-3">
@@ -370,7 +364,7 @@ export default function Conta() {
                                             {source.name}
                                         </span>
                                         <span className="text-xs text-muted block mt-0.5">
-                                            {source.desc}
+                                            {t(source.descriptionKey)}
                                         </span>
                                     </div>
                                     <button type="button" role="switch" aria-checked={isSelected} aria-label={source.name}

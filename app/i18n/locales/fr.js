@@ -588,6 +588,7 @@ const messages = {
     settings_source_recorde: "Inscriptions, balades VTT, marathons et événements sportifs.",
     settings_source_apedalar: "Inscriptions, gestion d’événements et chronométrage.",
     settings_source_classificacoes: "Volta a Portugal, grands prix, VTT 24 heures, coupes et résultats officiels.",
+    settings_source_organizer: "Annonces des organisateurs : Mountain Quest, MQ Series et Bairrada 150.",
     export_calendar: "Ajouter au Calendrier",
 };
 export default messages;

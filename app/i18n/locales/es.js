@@ -587,6 +587,7 @@ const messages = {
     settings_source_recorde: "Inscripciones, paseos BTT, maratones y eventos deportivos.",
     settings_source_apedalar: "Inscripciones, gestión de eventos y cronometraje.",
     settings_source_classificacoes: "Volta a Portugal, grandes premios, BTT 24 horas, copas y resultados oficiales.",
+    settings_source_organizer: "Anuncios de los organizadores: Mountain Quest, MQ Series y Bairrada 150.",
     export_calendar: "Añadir al Calendario",
 };
 export default messages;

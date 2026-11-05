@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { CALENDAR_SOURCES, normalizeCalendarSources, selectCalendarSources } from '../app/lib/calendarSources.js';
+import { CALENDAR_SOURCES, CALENDAR_SOURCE_OPTIONS, normalizeCalendarSources, selectCalendarSources } from '../app/lib/calendarSources.js';
 import { decodeSearch, searchUrl } from '../app/utils/savedSearches.js';
 
 test('disabled sources stay disabled in server data and shared searches', () => {
+    assert.deepEqual(CALENDAR_SOURCE_OPTIONS.map(source=>source.id),CALENDAR_SOURCES);
     const events = [{ id: 'fpc', source: 'FPC' }, { id: 'cabreira', source: 'Cabreira' }, { id: 'shared', source: 'FPC + Stop and Go' }];
     assert.deepEqual(selectCalendarSources(events, []), []);
     assert.deepEqual(selectCalendarSources(events, ['Cabreira']), [events[1]]);

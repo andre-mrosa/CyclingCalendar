@@ -588,6 +588,7 @@ const messages = {
     settings_source_recorde: "Registration, MTB rides, marathons and sports events.",
     settings_source_apedalar: "Registration, event management and timing.",
     settings_source_classificacoes: "Volta a Portugal, grands prix, 24-hour MTB, cups and official results.",
+    settings_source_organizer: "Organizer announcements: Mountain Quest, MQ Series and Bairrada 150.",
     export_calendar: "Add to Calendar",
 };
 export default messages;
