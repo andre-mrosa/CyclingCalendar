@@ -10,6 +10,7 @@ export function calendarEntry(item) {
         reminderMinutes: item.reminders?.useDefault === false
             ? (item.reminders.overrides || []).map(reminder => reminder.minutes).filter(Number.isFinite) : null,
         title: item.summary || '',
+        registrationPrecision:item.extendedProperties?.private?.registrationPrecision||null,
     };
 }
 

@@ -11,12 +11,13 @@ import { useState, useEffect, useRef, useMemo, Fragment } from 'react';
 import { useSettingsStore } from '../store/useSettingsStore';
 import useSWR from 'swr';
 
-import { ArrowRight, Route, Info, Calendar, MapPin, Search, X, ChevronLeft, ChevronRight, Users, Heart, Star, LayoutGrid, List, HelpCircle, Filter, Bike, AlertTriangle, Check, CalendarCheck, History, WifiOff, Download, Clock, Globe } from 'lucide-react';
+import { ArrowRight, Route, Info, Calendar, CalendarClock, MapPin, Search, X, ChevronLeft, ChevronRight, Users, Heart, Star, LayoutGrid, List, HelpCircle, Filter, Bike, AlertTriangle, Check, CalendarCheck, History, WifiOff, Download, Clock, Globe } from 'lucide-react';
 import { useMyEvents } from '../hooks/useMyEvents';
 import { myEventsText } from '../i18n/myEventsCopy';
 import { interfaceText } from '../i18n/interfaceCopy';
 import { monthCollection, nextPersonalEvent, publishedLocationOptions } from '../utils/calendarInterface';
 import { saveOfflineCatalogue } from '../utils/offlineSnapshot';
+import {calendarMilestones,filterCalendarMilestones,milestoneText,milestoneLabel,milestoneCount} from '../utils/calendarMilestones';
 import { fetchJsonDeadline } from '../utils/fetchJsonDeadline';
 import { personalCalendarMonth, matchesPersonalFilter } from '../utils/personalCollection';
 import GoogleCalendarAction from './GoogleCalendarAction';
@@ -287,7 +288,13 @@ export default function CalendarView({
         return sortCalendarEvents(filtered, favorites);
     }, [scopedEvents, personal, explicitYears, searchTerm, selectedYears, selectedEscaloes, includeUnknownCategories, selectedAmbito, selectedLicenca, selectedRegiao, selectedDistrito, selectedLocation, monthFrom, monthTo, selectedTags, selectedType, pastEventsFilter, filterByFavorites, filterByAgenda, filterLeisure, markedSet, favorites, forceEscalao, forceAmbito, forceLicenca, quickPeriod, today]);
 
-    const calendarMonth = selectedMonth || personalCalendarMonth(matchingEvents, today);
+    const registrationItems=useMemo(()=>{
+        if(!personal||viewMode!=='calendar')return [];
+        const items=calendarMilestones(events,collection.markedEntries).filter(item=>participationFilter==='all'||item.event&&statusFor(item.event)===participationFilter);
+        return filterCalendarMilestones(items,{searchTerm,selectedLocation,selectedYears:explicitYears,selectedEscaloes,includeUnknownCategories,selectedAmbito,selectedLicenca,selectedRegiao,selectedDistrito,monthFrom,monthTo,selectedTags,selectedType,pastEventsFilter,quickPeriod},today);
+    },[personal,viewMode,events,collection.markedEntries,participationFilter,statusFor,searchTerm,selectedLocation,explicitYears,selectedEscaloes,includeUnknownCategories,selectedAmbito,selectedLicenca,selectedRegiao,selectedDistrito,monthFrom,monthTo,selectedTags,selectedType,pastEventsFilter,quickPeriod,today]);
+    const calendarMonth = selectedMonth || personalCalendarMonth([...matchingEvents,...registrationItems.map(item=>item.datedEvent)], today);
+    const visibleRegistrationItems=registrationItems.filter(item=>selectedDay?item.day===selectedDay:item.day.startsWith(calendarMonth));
     const filteredEvents = useMemo(() => monthCollection(matchingEvents, calendarMonth, selectedDay, !selectedMonth), [matchingEvents, calendarMonth, selectedDay, selectedMonth]);
     const allPersonalEvents = useMemo(() => events.filter(event => statusFor(event)), [events, statusFor]);
     const nextRace = personal ? nextPersonalEvent(allPersonalEvents, today, statusFor) : null;
@@ -653,11 +660,12 @@ export default function CalendarView({
                     </div>
                     <button type="button" className={styles.mobileFilterButton} aria-label={t('planning_advanced')} aria-expanded={showFilters} aria-controls="calendar-quick-filters calendar-filters" onClick={() => setShowFilters(value => !value)}><Filter size={19} /></button>
                 </div>
-                <div className={styles.feedSummary}><span role="status"><strong>{filteredEvents.length}</strong> {t(filteredEvents.length === 1 ? 'filter_counter_event' : 'filter_counter_events')}</span>
+                <div className={styles.feedSummary}><span role="status"><strong>{filteredEvents.length}</strong> {t(filteredEvents.length === 1 ? 'filter_counter_event' : 'filter_counter_events')}{visibleRegistrationItems.length>0&&' · '+milestoneCount(language,visibleRegistrationItems.length)}</span>
                     {(personal || filterByAgenda || filterByFavorites) && filteredEvents.length > 0 ? <button type="button" onClick={() => { exportEventsToICS(filteredEvents, 'minhas_provas.ics'); trackEvent('ICS_EXPORT'); }}><Download size={14} aria-hidden="true" />{ui('export')}</button> : <button type="button" onClick={() => setShowFilters(value => !value)} aria-expanded={showFilters} aria-controls="calendar-filters"><Filter size={14} aria-hidden="true" />{t('search_save_share')}</button>}
                 </div>
                 {selectedDay && <div className={styles.daySelection}><span>{new Intl.DateTimeFormat(language, { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(selectedDay + 'T12:00:00Z'))}</span><button type="button" onClick={() => setSelectedDay(null)}>{t('ui_clear_day')}<X size={14} /></button></div>}
-                {viewMode === 'calendar' && <MonthCalendar expanded showHeader={false} month={calendarMonth} events={matchingEvents} selectedDay={selectedDay} onDay={chooseDay} onMonth={browseMonth} />}
+                {viewMode === 'calendar' && <MonthCalendar expanded showHeader={false} month={calendarMonth} events={matchingEvents} milestones={registrationItems} selectedDay={selectedDay} onDay={chooseDay} onMonth={browseMonth} />}
+                {visibleRegistrationItems.length>0&&<section className={styles.registrationDates} aria-label={milestoneText(language,'title')}><h3>{milestoneText(language,'title')}</h3>{visibleRegistrationItems.map(item=><div key={item.id}><CalendarClock size={16} aria-hidden="true"/><span><strong>{milestoneLabel(language,item)}</strong><span>{item.event?<Link href={eventPath(item.event)}>{item.title}</Link>:item.title}</span></span><time dateTime={item.day}>{new Intl.DateTimeFormat(language,{day:'numeric',month:'short',timeZone:'UTC'}).format(new Date(item.day+'T12:00:00Z'))}{item.time&&' · '+item.time}</time></div>)}</section>}
                 <FavoriteChanges events={events} favorites={favorites} ready={Array.isArray(fetchedEvents) && !error && !isOffline} onSelect={setSelectedEvent} />
                 {filterByFavorites && <FavoriteSubscription />}
                 {(filterByAgenda || filterByFavorites) && !isInitialLoading && <AgendaOverview mode={filterByAgenda ? "agenda" : "favorites"} events={events.filter(event => filterByAgenda ? isMarked(event.id, 'event', event._allIds || []) : favorites.includes(event.id) || event._allIds?.some(id => favorites.includes(id)))} onSelect={setSelectedEvent} />}
@@ -682,7 +690,7 @@ export default function CalendarView({
                     </div>
                 )}
 
-                {!isInitialLoading && (!error || events.length > 0) && filteredEvents.length === 0 && (() => {
+                {!isInitialLoading && (!error || events.length > 0) && filteredEvents.length === 0 && !visibleRegistrationItems.length && (() => {
                     const associationLinks = {
                         'AC Minho': 'https://www.acm.pt/',
                         'AC Porto': 'https://acporto.org/',

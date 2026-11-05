@@ -27,6 +27,8 @@ export function readOfflinePersonal(storage) {
     } catch { return new Map(); }
 }
 export function offlinePersonalFor(event, personal) { return [event.id, ...(event.aliases || [])].map(id => personal.get(id)).find(Boolean) || null; }
+export function cleanOfflineRegistrations(value){return Array.isArray(value)?value.slice(0,10000).filter(row=>row&&isoDay(row.day)&&['open','close'].includes(row.kind)).map(row=>({id:text(row.id,1000),eventId:text(row.eventId,1000),title:text(row.title,300),day:row.day,time:typeof row.time==='string'&&/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(row.time)?row.time:'',kind:row.kind,estimated:row.estimated===true})):[];}
+export function readOfflineRegistrations(storage){try{const value=JSON.parse(storage.getItem(OFFLINE_PERSONAL_KEY));return value?.schema===1?cleanOfflineRegistrations(value.registrations):[];}catch{return [];}}
 export function offlineMonthShift(month, delta) {
     const date = new Date(month + '-01T12:00:00Z'); date.setUTCMonth(date.getUTCMonth() + delta);
     return date.toISOString().slice(0, 7);

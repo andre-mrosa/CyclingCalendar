@@ -70,6 +70,7 @@ export function useCalendarEvents() {
         isSignedIn,
         markedSet,
         markedDates,
+        markedEntries,
         isMarked,
         getDateConflict,
         getCalendarEntry,

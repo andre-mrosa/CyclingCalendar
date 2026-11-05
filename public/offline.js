@@ -1,4 +1,4 @@
-import { readOfflineCatalogue, readOfflinePersonal, offlinePersonalFor, offlineFilter, offlineMonthShift, offlineOccursOn, offlineRoute } from './offline-model.js';
+import { readOfflineCatalogue, readOfflinePersonal,readOfflineRegistrations, offlinePersonalFor, offlineFilter, offlineMonthShift, offlineOccursOn, offlineRoute } from './offline-model.js';
 const $ = id => document.getElementById(id);
 let settings = {}; try { settings = JSON.parse(localStorage.getItem('cycling-calendar-settings'))?.state || {}; } catch {}
 const lang = ['pt','en','es','fr'].includes(settings.language) ? settings.language : (['pt','es','fr'].find(code => navigator.language.startsWith(code)) || 'en');
@@ -15,6 +15,7 @@ for (const [id,key] of Object.entries({'offline-label':'offline','connection-tit
 $('search').placeholder = tr('searchPlaceholder'); $('previous').ariaLabel = tr('previous'); $('next').ariaLabel = tr('next'); $('close-dialog').ariaLabel = tr('close');
 let storage; try { storage = localStorage; } catch { storage = { getItem: () => null }; }
 const catalogue = readOfflineCatalogue(storage), personal = readOfflinePersonal(storage);
+const savedRegistrations=readOfflineRegistrations(storage);
 const pathname = location.pathname, personalOnly = /^\/(minhas-provas|favoritos|agenda)$/.test(pathname);
 set('heading',personalOnly?'personal':'calendar'); $('collection').hidden = !personalOnly;
 $('discover-link').setAttribute('aria-current',personalOnly?'false':'page'); $('personal-link').setAttribute('aria-current',personalOnly?'page':'false');
@@ -26,6 +27,12 @@ for (const type of [...new Set(catalogue.events.map(event=>event.discipline).fil
 const today = new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Lisbon',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 let month = '', day = '', view = 'list', googleOnly = false;
 function filtered(extra={}) { return offlineFilter(catalogue.events,{query:$('search').value,discipline:$('discipline').value,personalOnly,googleOnly,period:$('period').value,today,pathname,...extra},personal); }
+const registrationLabel=kind=>({pt:{open:'Abertura de inscrições',close:'Fecho de inscrições',title:'Inscrições no Google Calendar'},en:{open:'Registration opens',close:'Registration closes',title:'Registrations in Google Calendar'},es:{open:'Apertura de inscripciones',close:'Cierre de inscripciones',title:'Inscripciones en Google Calendar'},fr:{open:'Ouverture des inscriptions',close:'Clôture des inscriptions',title:'Inscriptions dans Google Calendar'}}[lang])[kind];
+function registrationItems(){return !personalOnly?[]:savedRegistrations.filter(item=>{
+ const source=catalogue.events.find(event=>event.id===item.eventId||event.aliases?.includes(item.eventId));
+ const record={...(source||{}),id:item.id,title:item.title,start:item.day,end:item.day,month:''};
+ return offlineFilter([record],{query:$('search').value,discipline:$('discipline').value,period:$('period').value,today}).length;
+});}
 function dateText(date, options={day:'numeric',month:'long',year:'numeric'}) { return new Intl.DateTimeFormat(lang,{...options,timeZone:'UTC'}).format(new Date(date+'T12:00:00Z')); }
 function range(event) { return event.start ? dateText(event.start)+(event.end&&event.end!==event.start?' – '+dateText(event.end):'') : event.month?'— '+dateText(event.month+'-01',{month:'long',year:'numeric'})+' · '+tr('unknown'):tr('unknown'); }
 function details(event) {
@@ -48,15 +55,18 @@ function renderRows(events) {
  }return fragment;
 }
 function render(){
+ const registrations=registrationItems();
  const all=filtered(); if(!month)month=(all.find(event=>(event.start||event.month)&&(event.end||event.start||event.month+'-99')>=today)?.start||all.find(event=>event.month&&event.month>=today.slice(0,7))?.month||all.filter(event=>event.start).at(-1)?.start||today).slice(0,7);
  $('month-title').textContent=dateText(month+'-01',{month:'long',year:'numeric'});const current=filtered({month,day});$('counter').textContent=current.length+' '+tr('events');
  $('calendar').hidden=view!=='calendar';$('list-view').setAttribute('aria-pressed',view==='list');$('calendar-view').setAttribute('aria-pressed',view==='calendar');
  if(view==='calendar'){
   const weekdays=node('div',undefined,'weekdays'),days=node('div',undefined,'days');for(let i=0;i<7;i++)weekdays.append(node('div',dateText('2024-01-0'+(i+1),{weekday:'short'})));
   const first=new Date(month+'-01T12:00:00Z'),offset=(first.getUTCDay()+6)%7,count=new Date(Date.UTC(first.getUTCFullYear(),first.getUTCMonth()+1,0)).getUTCDate();
-  for(let i=0;i<Math.ceil((offset+count)/7)*7;i++){const n=i-offset+1;if(n<1||n>count){days.append(node('span'));continue;}const iso=month+'-'+String(n).padStart(2,'0'),entries=all.filter(event=>offlineOccursOn(event,iso)),button=node('button');button.type='button';button.append(node('span',String(n)));button.setAttribute('aria-label',dateText(iso)+' · '+entries.length+' '+tr('events'));button.setAttribute('aria-pressed',day===iso);if(entries.length)button.append(node('small','• '+entries.length));button.addEventListener('click',()=>{day=day===iso?'':iso;render();});days.append(button);}
+  for(let i=0;i<Math.ceil((offset+count)/7)*7;i++){const n=i-offset+1;if(n<1||n>count){days.append(node('span'));continue;}const iso=month+'-'+String(n).padStart(2,'0'),entries=all.filter(event=>offlineOccursOn(event,iso)),milestones=registrations.filter(item=>item.day===iso),button=node('button');button.type='button';button.append(node('span',String(n)));button.setAttribute('aria-label',dateText(iso)+' · '+entries.length+' '+tr('events')+milestones.map(item=>' · '+registrationLabel(item.kind)+': '+item.title).join(''));button.setAttribute('aria-pressed',day===iso);if(entries.length)button.append(node('small','• '+entries.length));if(milestones.length)button.append(node('small','◷ '+milestones.length));button.addEventListener('click',()=>{day=day===iso?'':iso;render();});days.append(button);}
   $('calendar').replaceChildren(weekdays,days);
   const monthly=current.filter(event=>event.month);if(!day&&monthly.length)$('calendar').append(node('h3','— '+tr('unknown')),renderRows(monthly));
+  const visible=registrations.filter(item=>day?item.day===day:item.day.startsWith(month));
+  if(visible.length){const section=node('section');section.append(node('h3',registrationLabel('title')));for(const item of visible){const row=node('p',registrationLabel(item.kind)+' · '+dateText(item.day)+(item.time?' · '+item.time:'')+' — '+item.title);section.append(row);}$('calendar').append(section);}
  }
  $('results').replaceChildren();
  if(view==='list'||day){if(day)$('results').append(node('p',dateText(day),'selected-day'));if(current.length)$('results').append(renderRows(current));else{

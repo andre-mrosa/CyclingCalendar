@@ -24,9 +24,9 @@ export function useMyEvents(events) {
         try {
             saveOfflinePersonal(localStorage, offlineScope, [], () => null, () => false);
             if (saved.isSignedIn && (!participation.data || participation.error || calendar.isLoading || calendar.error)) return;
-            saveOfflinePersonal(localStorage, offlineScope, events, statusFor, calendar.isMarked);
+            saveOfflinePersonal(localStorage, offlineScope, events, statusFor, calendar.isMarked,calendar.markedEntries);
         } catch { /* The live app still works when browser storage is blocked. */ }
-    }, [online, saved.isLoaded, saved.isSignedIn, offlineScope, participation.data, participation.error, calendar.isLoading, calendar.error, calendar.isMarked, events, statusFor]);
+    }, [online, saved.isLoaded, saved.isSignedIn, offlineScope, participation.data, participation.error, calendar.isLoading, calendar.error, calendar.isMarked,calendar.markedEntries, events, statusFor]);
     async function setStatus(event, status) {
         const persist = () => changePersonalStatus(event, status, { favorites: saved.favorites, toggleFavorite: saved.toggleFavorite, persist: participation.user ? async body => {
             const response = await fetch('/api/planning/states', {

@@ -2,7 +2,8 @@ import { toPublicEvent } from '../lib/publicEvent.js';
 import { eventDateDisplay } from './eventDateDisplay.js';
 import { getEventDiscipline, isStageRace } from './eventClassifier.js';
 import { eventPath } from '../lib/eventDiscovery.js';
-import { cleanOfflineRows, OFFLINE_CATALOGUE_KEY, OFFLINE_PERSONAL_KEY } from '../../public/offline-model.js';
+import { cleanOfflineRows,cleanOfflineRegistrations, OFFLINE_CATALOGUE_KEY, OFFLINE_PERSONAL_KEY } from '../../public/offline-model.js';
+import {calendarMilestones} from './calendarMilestones.js';
 
 export function saveOfflineCatalogue(storage, events, now = new Date()) {
     const rows = events.map(toPublicEvent).filter(Boolean).map(event => {
@@ -11,7 +12,7 @@ export function saveOfflineCatalogue(storage, events, now = new Date()) {
     });
     try { storage.setItem(OFFLINE_CATALOGUE_KEY, JSON.stringify({ schema: 1, updatedAt: now.toISOString(), events: cleanOfflineRows(rows) })); return true; } catch { return false; }
 }
-export function saveOfflinePersonal(storage, scope, events, statusFor, isMarked) {
+export function saveOfflinePersonal(storage, scope, events, statusFor, isMarked,calendarEntries) {
     try {
         let previous; try { previous = JSON.parse(storage.getItem(OFFLINE_PERSONAL_KEY)); } catch {}
         const entries = new Map(previous?.scope === scope && previous?.schema === 1 && Array.isArray(previous.entries) ? previous.entries.filter(row => Array.isArray(row) && typeof row[0] === 'string' && ['interested','going','registered'].includes(row[1])).map(row => [row[0], [row[0], row[1], row[2] === true]]) : []);
@@ -20,6 +21,7 @@ export function saveOfflinePersonal(storage, scope, events, statusFor, isMarked)
             const status = statusFor(event);
             if (['interested', 'going', 'registered'].includes(status)) entries.set(event.id, [event.id, status, isMarked(event.id, 'event', event._allIds || [])]);
         }
-        storage.setItem(OFFLINE_PERSONAL_KEY, JSON.stringify({ schema: 1, scope, entries: [...entries.values()].slice(0, 10000) })); return true;
+        const registrations=calendarEntries?calendarMilestones(events,calendarEntries).map(item=>({id:item.id,eventId:item.event?.id||'',title:item.title,day:item.day,time:item.time,kind:item.kind,estimated:item.estimated})):previous?.scope===scope?previous.registrations:[];
+        storage.setItem(OFFLINE_PERSONAL_KEY, JSON.stringify({ schema: 1, scope, entries: [...entries.values()].slice(0, 10000),registrations:cleanOfflineRegistrations(registrations) })); return true;
     } catch { return false; }
 }
