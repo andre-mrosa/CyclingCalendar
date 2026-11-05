@@ -1,6 +1,7 @@
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { detectRaceDate } from '@/app/utils/detectRaceDate';
+import {monthlyRegistration,expectedOpeningLabel,monthlyOpeningNote} from '@/app/utils/partialDates';
 
 async function getTargetCalendarId(token) {
     try {
@@ -89,10 +90,13 @@ export async function POST(req) {
         const checkRes = await fetch(checkUrl, { headers: { 'Authorization': `Bearer ${token}` } });
         if (!checkRes.ok) return NextResponse.json({error:'Não foi possível verificar se a prova já está na agenda.'},{status:503});
 
+        let replaceReminderId=null;
         if (checkRes.ok) {
             const checkData = await checkRes.json();
             if (checkData.items && checkData.items.length > 0) {
-                return NextResponse.json({ success: true, message: 'exists' });
+                const reminder=checkData.items.find(item=>item.extendedProperties?.private?.registrationPrecision==='month');
+                if(type==='reg_open'&&reminder?.id&&!monthlyRegistration(event))replaceReminderId=reminder.id;
+                else return NextResponse.json({ success: true, message: 'exists' });
             }
         }
 
@@ -112,10 +116,18 @@ export async function POST(req) {
             gEvent.start = { date: startDateStr };
             gEvent.end = { date: endDt.toISOString().split('T')[0] };
         } else if (type === 'reg_open' && event.registrationOpensAt) {
-            gEvent.summary = 'Abertura Inscrições: ' + event.title;
+            gEvent.extendedProperties.private.registrationPrecision=monthlyRegistration(event)?'month':'day';
+            gEvent.summary = (monthlyRegistration(event)?expectedOpeningLabel('pt'):'Abertura Inscrições')+': '+event.title;
             gEvent.start = { dateTime: new Date(event.registrationOpensAt).toISOString().slice(0,19), timeZone:'Europe/Lisbon' };
             gEvent.end = { dateTime: new Date(new Date(event.registrationOpensAt).getTime() + 3600000).toISOString().slice(0,19), timeZone:'Europe/Lisbon' };
             gEvent.reminders.overrides = [{ method: 'popup', minutes: 60 }];
+            if(monthlyRegistration(event)) {
+                const day=new Date(event.registrationOpensAt),end=new Date(day);end.setUTCDate(end.getUTCDate()+1);
+                gEvent.start={date:day.toISOString().slice(0,10)};gEvent.end={date:end.toISOString().slice(0,10)};
+                gEvent.description=monthlyOpeningNote+'\n'+(event.link||'');
+                gEvent.extendedProperties.private.registrationPrecision='month';
+                gEvent.reminders.overrides=[{method:'popup',minutes:1440}];
+            }
         } else if (type === 'reg_close' && event.registrationClosesAt) {
             gEvent.summary = 'Fim Inscrições: ' + event.title;
             gEvent.start = { dateTime: new Date(event.registrationClosesAt).toISOString().slice(0,19), timeZone:'Europe/Lisbon' };
@@ -125,8 +137,8 @@ export async function POST(req) {
             return NextResponse.json({ error: 'Missing dates for this type' }, { status: 400 });
         }
 
-        const createRes = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(targetCalendarId)}/events`, {
-            method: 'POST',
+        const createRes = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(targetCalendarId)}/events${replaceReminderId?'/'+encodeURIComponent(replaceReminderId):''}`, {
+            method: replaceReminderId?'PATCH':'POST',
             headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
             body: JSON.stringify(gEvent)
         });

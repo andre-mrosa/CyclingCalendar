@@ -296,7 +296,7 @@ export default function CalendarView({
     const locationOptions = useMemo(() => publishedLocationOptions(events), [events]);
     const filterCount = [selectedLocation, selectedDistrito !== 'Todos', selectedRegiao !== 'Todas', selectedTags.length, selectedType !== 'Todos', selectedEscaloes.length, !includeUnknownCategories, selectedAmbito !== (forceAmbito || 'Todos'), selectedLicenca !== (forceLicenca || 'Todas'), explicitYears?.length, monthFrom !== 1 || monthTo !== 12].filter(Boolean).length;
     const hasFilters = filterCount > 0 || searchTerm || selectedDay || selectedMonth || quickPeriod || pastEventsFilter !== defaultPastEventsFilter;
-    const otherMonth = matchingEvents.map(event => eventDateDisplay(event).start?.slice(0, 7)).find(month => month && month !== calendarMonth);
+    const otherMonth = matchingEvents.map(event => {const date=eventDateDisplay(event);return (date.start||date.periodStart)?.slice(0,7);}).find(month => month && month !== calendarMonth);
     const browseMonth = month => {
         setSelectedMonth(month);
         setSelectedDay(null);
@@ -743,7 +743,7 @@ export default function CalendarView({
                                 const isNewMonth = !prevMY || currentMY.key !== prevMY.key;
                                 const monthHeading = currentMY.key === 'unknown' ? t('planning_date_unconfirmed') : isNewMonth ? formatMonthHeading(currentMY.year, currentMY.monthIdx, language) : '';
                                 const { day, month, singleDay, start, end } = currentMY;
-                                const dateLabel = start ? formatCalendarDateRange(start, end, language) : t('planning_date_unconfirmed');
+                                const dateLabel = start ? formatCalendarDateRange(start, end, language) : currentMY.precision==='month'?`${monthHeading||formatMonthHeading(currentMY.year,currentMY.monthIdx,language)} ${currentMY.year} · ${t('planning_date_unconfirmed')}`:t('planning_date_unconfirmed');
                                 return <Fragment key={group[0].id}>
                                     {isNewMonth && (idx > 0 || currentMY.key === 'unknown') && <div className={styles.monthHeading}><h2>{monthHeading}{' '}<span>{currentMY.year}</span></h2></div>}
                                     <section className={styles.dateGroup} aria-label={dateLabel}>

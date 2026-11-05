@@ -1,5 +1,6 @@
 import { originalEventUrl } from '../lib/publicEvent.js';
 import { detectRaceDate } from './detectRaceDate.js';
+import {monthlyRegistration,expectedOpeningLabel,monthlyOpeningNote} from './partialDates.js';
 
 /**
  * Utilitários para exportar eventos para Google Calendar, Apple Calendar e ficheiro iCal (.ics)
@@ -58,10 +59,11 @@ export function generateGoogleCalendarUrl(event, type = 'race') {
     let title = event.title || 'Prova de Ciclismo';
     let dates = getCalendarDates(event);
     if (type === 'reg_open' && event.registrationOpensAt) {
-        title = 'Abertura Inscrições: ' + title;
+        title = (monthlyRegistration(event)?expectedOpeningLabel('pt'):'Abertura Inscrições')+': '+title;
         const d = new Date(event.registrationOpensAt);
         const end = new Date(d.getTime() + 60*60*1000);
         dates = { start: formatIcsDate(d).replace(/Z$/, ''), end: formatIcsDate(end).replace(/Z$/, '') };
+        if(monthlyRegistration(event)){const next=new Date(d);next.setUTCDate(next.getUTCDate()+1);dates={start:formatIcsDate(d).slice(0,8),end:formatIcsDate(next).slice(0,8)};}
     } else if (type === 'reg_close' && event.registrationClosesAt) {
         title = 'Fim Inscrições: ' + title;
         const d = new Date(event.registrationClosesAt);
@@ -73,7 +75,7 @@ export function generateGoogleCalendarUrl(event, type = 'race') {
     const encTitle = encodeURIComponent(title);
     const encLocation = encodeURIComponent(event.distrito || '');
     const encDetails = encodeURIComponent(
-        'Prova: ' + (event.title || '') + '\nModalidade: ' + (event.tag || 'Ciclismo') + '\nMais detalhes e inscrições: ' + (originalEventUrl(event.link) || '')
+        'Prova: ' + (event.title || '') + '\nModalidade: ' + (event.tag || 'Ciclismo') + '\nMais detalhes e inscrições: ' + (originalEventUrl(event.link) || '')+(type==='reg_open'&&monthlyRegistration(event)?'\n'+monthlyOpeningNote:'')
     );
 
     const datesParam = '&dates=' + dates.start + '/' + dates.end;
@@ -81,8 +83,9 @@ export function generateGoogleCalendarUrl(event, type = 'race') {
 }
 
 export function buildIcsContent(event, origin = 'https://cyclingcalendar.pt') {
+    if(!event)return null;
     const dates = getCalendarDates(event);
-    if (!dates) return null;
+    if (!dates && ![event.registrationOpensAt,event.registrationClosesAt].some(value=>value&&Number.isFinite(new Date(value).getTime()))) return null;
     const nowStr = formatIcsDate(new Date());
 
     const eventUrl = originalEventUrl(event.link) || '';
@@ -96,7 +99,7 @@ export function buildIcsContent(event, origin = 'https://cyclingcalendar.pt') {
         'PRODID:-//Cycling Calendar Portugal//PT',
         'CALSCALE:GREGORIAN',
         'METHOD:PUBLISH',
-        'BEGIN:VEVENT',
+        ...(dates?['BEGIN:VEVENT',
         `UID:event-${encodeURIComponent(event.id)}@cyclingcalendar.pt`,
         `DTSTAMP:${nowStr}`,
         `DTSTART;VALUE=DATE:${dates.start}`,
@@ -111,7 +114,7 @@ export function buildIcsContent(event, origin = 'https://cyclingcalendar.pt') {
         'TRIGGER:-P1D',
         'DESCRIPTION:Lembrete de prova de ciclismo',
         'END:VALARM',
-        'END:VEVENT'
+        'END:VEVENT']:[])
     ];
 
     if (event.registrationOpensAt) {
@@ -121,16 +124,18 @@ export function buildIcsContent(event, origin = 'https://cyclingcalendar.pt') {
                 'BEGIN:VEVENT',
                 `UID:reg-open-${encodeURIComponent(event.id)}@cyclingcalendar.pt`,
                 `DTSTAMP:${nowStr}`,
-                `DTSTART;TZID=Europe/Lisbon:${formatIcsDate(d).replace(/Z$/, '')}`,
-                `DTEND;TZID=Europe/Lisbon:${formatIcsDate(new Date(d.getTime() + 60*60*1000)).replace(/Z$/, '')}`,
-                `SUMMARY:Abertura Inscrições: ${cleanTitle}`,
-                `DESCRIPTION:${cleanDescription}`,
+                ...(monthlyRegistration(event)?[
+                    `DTSTART;VALUE=DATE:${formatIcsDate(d).slice(0,8)}`,
+                    `DTEND;VALUE=DATE:${formatIcsDate(new Date(d.getTime()+86400000)).slice(0,8)}`,
+                ]:[`DTSTART;TZID=Europe/Lisbon:${formatIcsDate(d).replace(/Z$/, '')}`,`DTEND;TZID=Europe/Lisbon:${formatIcsDate(new Date(d.getTime() + 60*60*1000)).replace(/Z$/, '')}`]),
+                `SUMMARY:${monthlyRegistration(event)?expectedOpeningLabel('pt'):'Abertura Inscrições'}: ${cleanTitle}`,
+                `DESCRIPTION:${cleanDescription}${monthlyRegistration(event)?'\\n'+escapeText(monthlyOpeningNote):''}`,
                 `URL:${eventUrl}`,
                 'STATUS:CONFIRMED',
                 'BEGIN:VALARM',
                 'ACTION:DISPLAY',
-                'TRIGGER:-PT15M',
-                'DESCRIPTION:As inscrições abrem em 15 minutos!',
+                monthlyRegistration(event)?'TRIGGER:-P1D':'TRIGGER:-PT15M',
+                monthlyRegistration(event)?'DESCRIPTION:Confirmar abertura prevista de inscrições':'DESCRIPTION:As inscrições abrem em 15 minutos!',
                 'END:VALARM',
                 'END:VEVENT'
             );

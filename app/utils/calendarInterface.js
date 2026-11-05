@@ -6,7 +6,7 @@ import { getEventDiscipline } from './eventClassifier.js';
 // Presentation only: keep unknown dates available without putting them on a date.
 export function monthCollection(events, month, day, includeUnknown = false) {
     const dated = eventsInPeriod(events, month, day);
-    return includeUnknown && month && !day ? [...dated, ...events.filter(event => !eventDateDisplay(event).start)] : dated;
+    return includeUnknown && month && !day ? [...dated, ...events.filter(event => eventDateDisplay(event).key==='unknown')] : dated;
 }
 export function nextPersonalEvent(events, today, statusFor) {
     return events.filter(event => statusFor(event) && (eventDateDisplay(event).end || eventDateDisplay(event).start) >= today)

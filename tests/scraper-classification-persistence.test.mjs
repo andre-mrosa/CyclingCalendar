@@ -4,7 +4,7 @@ import {saveOrMergeEvent} from '../app/lib/merging/eventMerger.js';
 import {getAmbito} from '../app/lib/scrapers/utils.js';
 import {SOURCE_REVIEWS} from '../app/lib/contentReleasePolicy.js';
 
-const hosts={FPC:'www.fpciclismo.pt',Cabreira:'cabreirasolutions.com','Stop and Go':'stopandgo.net',Apedalar:'apedalar.pt','Recorde Pessoal':'recordepessoal.pt'};
+const hosts={FPC:'www.fpciclismo.pt',Cabreira:'cabreirasolutions.com','Stop and Go':'stopandgo.net',Apedalar:'apedalar.pt','Recorde Pessoal':'recordepessoal.pt',Organizador:'mountainquest.pt'};
 const race=(source,extra={})=>({id:'fixture-2027',title:'Taça Oeste XCM - Juniores 2027',date:'14 FEV 2027',sortDate:'2027-02-14',source,details:'Vimeiro',link:`https://${hosts[source]}/evento/2027`,...extra});
 function database(initial=[]) {
     const rows=structuredClone(initial);

@@ -157,7 +157,8 @@ export function filterEvents(events, filters) {
 
     if (monthFrom !== undefined && monthTo !== undefined) {
         filtered = filtered.filter(event => {
-            const { start, end } = eventDateDisplay(event);
+            const display=eventDateDisplay(event);
+            const start=display.start||display.periodStart,end=display.end||display.periodEnd;
             if (!start) return true;
             let cursor = new Date(start.slice(0,7) + '-01T12:00:00Z');
             const last = (end || start).slice(0,7);

@@ -6,6 +6,7 @@ import { myEventsText } from '../i18n/myEventsCopy';
 import { removeCalendarEvent } from '../utils/calendarRemoval';
 import styles from './site.module.css';
 import { trackEvent } from './AnalyticsTracker';
+import {raceMonth} from '../utils/partialDates';
 
 export default function GoogleCalendarAction({ event, inCalendar, collection }) {
     const { language } = useTranslation();
@@ -38,8 +39,9 @@ export default function GoogleCalendarAction({ event, inCalendar, collection }) 
         } catch { setFailed(true); }
         finally { setBusy(false); }
     }
-    const disabled = busy || Boolean(collection.isSignedIn && (collection.isLoading || collection.error || (inCalendar && !collection.canEdit)));
-    const label = tr(inCalendar ? 'removeCalendar' : 'export');
+    const missingDay=!inCalendar&&raceMonth(event);
+    const disabled = Boolean(missingDay) || busy || Boolean(collection.isSignedIn && (collection.isLoading || collection.error || (inCalendar && !collection.canEdit)));
+    const label = missingDay?({pt:'Dia por confirmar',en:'Day to be confirmed',es:'Día por confirmar',fr:'Jour à confirmer'})[language]:tr(inCalendar ? 'removeCalendar' : 'export');
     return <span className={styles.calendarActionWrap} aria-busy={busy}>
         <button type="button" className={`${styles.eventExportBtn} ${styles.calendarAction}`} data-remove={inCalendar}
             aria-label={`${label}: ${event.title}`} title={label} disabled={disabled} onClick={act}>

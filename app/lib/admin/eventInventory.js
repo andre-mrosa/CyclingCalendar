@@ -1,3 +1,4 @@
+import {raceMonth,monthEnd} from '../../utils/partialDates.js';
 export const PUBLISHED_EVENTS_WHERE = { NOT: { source: { contains: 'Quarentena' } } };
 
 const SOURCE_DEFINITIONS = [
@@ -6,6 +7,7 @@ const SOURCE_DEFINITIONS = [
     ['stopAndGo', 'Stop and Go', 'Stop and Go'],
     ['recordepessoal', 'Recorde Pessoal', 'Recorde Pessoal'],
     ['apedalar', 'Apedalar', 'Apedalar'],
+    ['organizador','Organizador','Organizadores'],
 ];
 
 // Source counts overlap. Only total/byYear.total count each stored event once.
@@ -37,7 +39,8 @@ export function buildEventInventory(groups, now = new Date()) {
         const yearRow = years.get(year);
         inventory.total += count;
         yearRow.total += count;
-        inventory[!day ? 'undated' : day < today ? 'past' : 'upcoming'] += count;
+        const last=raceMonth(row)?monthEnd(raceMonth(row)):day;
+        inventory[!last ? 'undated' : last < today ? 'past' : 'upcoming'] += count;
         if (sourceNames.length > 1) {
             inventory.multiSource += count;
             yearRow.multiSource += count;

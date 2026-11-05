@@ -1,4 +1,5 @@
 import { getCalendarDates } from './calendarExport.js';
+import {raceMonth,monthlyRegistration} from './partialDates.js';
 
 export function isCancelled(event) {
     return /\b(anulad[oa]s?|cancelad[oa]s?|cancelled|canceled)\b/i.test(event.title || '');
@@ -9,7 +10,7 @@ export function matchesPeriod(event, period, now = new Date()) {
     if (isCancelled(event)) return false;
     if (period === 'open') {
         // Unknown opening/closing dates cannot establish that registration is open.
-        return !!event.registrationOpensAt && !!event.registrationClosesAt &&
+        return !monthlyRegistration(event) && !!event.registrationOpensAt && !!event.registrationClosesAt &&
             event.registrationOpensAt <= lisbonWallClock(now) && event.registrationClosesAt >= lisbonWallClock(now);
     }
     const raw = event.sortDate;
@@ -19,7 +20,7 @@ export function matchesPeriod(event, period, now = new Date()) {
     const day = eventDate.toISOString().slice(0, 10);
     const dates = getCalendarDates(event);
     const compactToISO = value => `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}`;
-    if (!dates) return false;
+    if (!dates) return period==='month'&&raceMonth(event)===lisbonWallClock(now).slice(0,7);
     const endDay = compactToISO(dates.end);
     const today = lisbonWallClock(now).slice(0, 10);
     if (period === 'month') return endDay > today && day.slice(0, 7) <= today.slice(0, 7);

@@ -34,7 +34,7 @@ export async function GET(request) {
     try {
         const [eventInventory, errorCount, totalUsers, aggregates] = await Promise.all([
             prisma.$transaction(async tx => {
-                const groups = await tx.event.groupBy({ by: ['source', 'sortDate'], _count: { _all: true } });
+                const groups = await tx.event.groupBy({ by: ['source', 'sortDate','date'], _count: { _all: true } });
                 const inventory = buildEventInventory(groups);
                 const [withRegistration, withLocation, withLink, withTranslations] = await Promise.all([
                     tx.event.count({ where: { ...PUBLISHED_EVENTS_WHERE, registrationClosesAt: { not: null } } }),

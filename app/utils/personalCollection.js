@@ -5,7 +5,7 @@ export function matchesPersonalFilter(filter, status, inCalendar) {
     return filter === 'calendar' ? Boolean(inCalendar) : Boolean(status && (filter === 'all' || status === filter));
 }
 export function personalCalendarMonth(events, today) {
-    const dates = events.map(eventDateDisplay).filter(date => date.start).sort((a, b) => a.start.localeCompare(b.start));
+    const dates = events.map(eventDateDisplay).map(date=>({...date,start:date.start||date.periodStart,end:date.end||date.periodEnd})).filter(date => date.start).sort((a, b) => a.start.localeCompare(b.start));
     const next = dates.find(date => (date.end || date.start) >= today);
     return (next ? (next.start < today ? today : next.start) : dates.at(-1)?.start || today).slice(0, 7);
 }

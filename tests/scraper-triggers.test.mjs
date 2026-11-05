@@ -18,7 +18,7 @@ const req = (path, authorization) => new Request(`https://calendar.test${path}`,
 
 test('production has one daily source sync without a duplicate weekly source crawl',async()=>{
     const config=JSON.parse(await readFile(new URL('../vercel.json',import.meta.url),'utf8'));
-    assert.deepEqual(config.crons.filter(item=>item.path.startsWith('/api/cron/scrape')),[{path:'/api/cron/scrape?scope=daily',schedule:'0 2 * * *'}]);
+    assert.deepEqual(config.crons.filter(item=>item.path.startsWith('/api/cron/scrape')),[{path:'/api/cron/scrape?scope=daily',schedule:'0 2 * * *'},{path:'/api/cron/scrape?scope=organizers',schedule:'0 5 1 * *'}]);
 });
 
 test('scheduled scrape endpoint requires CRON_SECRET and starts only daily or weekly minimal runs', async t => {

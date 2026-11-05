@@ -25,7 +25,8 @@ export function pageMetadata(path, title, description) {
         twitter: { card: 'summary', title, description, images: [SITE_URL + '/icon-512x512.png'] } };
 }
 export function eventDescription(event) {
-    const date = eventDateDisplay(event).start ? event.date : 'por confirmar na fonte';
+    const dates=eventDateDisplay(event);
+    const date = dates.start ? event.date : dates.precision==='month'?event.date+' (dia por confirmar)':'por confirmar na fonte';
     return `${event.title}. Data publicada: ${date}.${event.tag ? ` Modalidade indicada: ${event.tag}.` : ''} Consulta a fonte para confirmar local, inscrições e eventuais alterações.`;
 }
 // The catalogue has basic facts, not verified venues, ticket offers or event images.
@@ -41,8 +42,8 @@ export function itemListStructuredData(events, name) {
 }
 export function filterUpcomingEvents(events, limit = 40, today = lisbonWallClock().slice(0, 10)) {
     return (events || []).map(event => ({ event, dates: eventDateDisplay(event) }))
-        .filter(({ dates }) => dates.start && (dates.end || dates.start) >= today)
-        .sort((a, b) => a.dates.start.localeCompare(b.dates.start) || a.event.title.localeCompare(b.event.title, 'pt'))
+        .filter(({ dates }) => (dates.end || dates.start || dates.periodEnd) >= today)
+        .sort((a, b) => (a.dates.start||a.dates.periodEnd+'~').localeCompare(b.dates.start||b.dates.periodEnd+'~') || a.event.title.localeCompare(b.event.title, 'pt'))
         .slice(0, limit).map(({ event }) => event);
 }
 export const jsonLd = value => JSON.stringify(value).replace(/</g, '\\u003c');

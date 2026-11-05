@@ -9,6 +9,7 @@ export function cleanOfflineRows(value) {
     return value.slice(0, 10000).filter(row => row && typeof row.id === 'string' && row.id.length <= 1000 && typeof row.title === 'string').map(row => ({
         id: row.id, title: text(row.title, 300), date: text(row.date, 100),
         start: isoDay(row.start), end: isoDay(row.end),
+        month:typeof row.month==='string'&&/^20\d{2}-(0[1-9]|1[0-2])$/.test(row.month)?row.month:'',
         location: text(row.location, 200), discipline: text(row.discipline, 100), scope: text(row.scope, 100),
         source: text(row.source, 150), stage: row.stage === true,
         aliases: Array.isArray(row.aliases) ? row.aliases.filter(id => typeof id === 'string' && id.length <= 1000).slice(0, 50) : [],
@@ -46,15 +47,17 @@ export function offlineFilter(events, { query = '', discipline = '', personalOnl
         if (personalOnly && !saved || googleOnly && !saved?.google) return false;
         if (words.some(word => !normal(event.title + ' ' + event.location + ' ' + event.discipline).includes(word))) return false;
         if (discipline && event.discipline !== discipline) return false;
-        if (period === 'future' && (event.end || event.start) && (event.end || event.start) < today) return false;
-        if (period === 'past' && (!(event.end || event.start) || (event.end || event.start) >= today)) return false;
+        const last=event.end||event.start||(event.month?new Date(Date.UTC(Number(event.month.slice(0,4)),Number(event.month.slice(5)),0)).toISOString().slice(0,10):'');
+        if (period === 'future' && last && last < today) return false;
+        if (period === 'past' && (!last || last >= today)) return false;
         if (pathname === '/internacionais' && !/internacional|uci/i.test(event.scope)) return false;
         if (pathname === '/nacionais' && !/naciona/i.test(event.scope)) return false;
         if (pathname === '/tacas' && !/taça de portugal/i.test(event.scope)) return false;
         if (pathname === '/regionais' && !/regional/i.test(event.scope)) return false;
         if (pathname === '/lazer' && !/passeio|lazer|granfondo/i.test(event.discipline + ' ' + event.scope)) return false;
         if (day) return offlineOccursOn(event, day);
+        if(month&&event.month&&event.month!==month)return false;
         if (month && event.start && !(event.start < offlineMonthShift(month, 1) + '-01' && (event.end || event.start) >= month + '-01')) return false;
         return true;
-    }).sort((a, b) => (a.start || '9999').localeCompare(b.start || '9999'));
+    }).sort((a, b) => (a.start || (a.month?a.month+'-99':'9999')).localeCompare(b.start || (b.month?b.month+'-99':'9999')));
 }

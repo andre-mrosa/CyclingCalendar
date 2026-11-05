@@ -4,6 +4,7 @@ import { getAmbito } from '../scrapers/utils.js';
 import { originalEventUrl, getPreferredEventLink, isFpcUrl } from '../publicEvent.js';
 import { SOURCE_REVIEWS } from '../contentReleasePolicy.js';
 import { Prisma } from '@prisma/client';
+import {cleanTemporalEvidence,raceMonth,organizerSeries} from '../../utils/partialDates.js';
 import { publishedCategoryEvidence, mergeCategoryEvidence } from '../../utils/categoryEvidence.js';
 
 /**
@@ -271,6 +272,7 @@ export function toMinimalScrapedEvent(event) {
         id: String(event.id), title, date, sortDate, details: location || null,
         regiao: location || null, distrito: location || null,
         source, link,
+        ...(cleanTemporalEvidence(event.temporalEvidence)?{temporalEvidence:cleanTemporalEvidence(event.temporalEvidence)}:{}),
         ...classifyScrapedEvent({ ...event, title, source }),
         ...(publishedCategoryEvidence({...event,title,link}) ? {categoryEvidence:publishedCategoryEvidence({...event,title,link})} : {}),
     };
@@ -323,6 +325,24 @@ function mergeMinimalClassification(existing, incoming) {
     const evidence=mergeCategoryEvidence(existing.categoryEvidence,incoming.categoryEvidence,incoming.source);
     if(evidence)facts.categoryEvidence=evidence;
     else if(existing.categoryEvidence)facts.categoryEvidence=Prisma.DbNull;
+    if(incoming.temporalEvidence) {
+        const temporal={...existing.temporalEvidence,...incoming.temporalEvidence};
+        for(const [key,field] of [['registrationOpen','registrationOpensAt'],['registrationClose','registrationClosesAt']]) {
+            if(existing[field]&&incoming[field]&&existing.temporalEvidence?.[key]?.precision!=='month'&&incoming.temporalEvidence[key]?.precision==='month') {
+                delete facts[field];
+                if(existing.temporalEvidence?.[key])temporal[key]=existing.temporalEvidence[key];else delete temporal[key];
+            }
+        }
+        if(!raceMonth(existing)&&raceMonth(incoming)) {
+            if(existing.temporalEvidence?.race)temporal.race=existing.temporalEvidence.race;else delete temporal.race;
+        }
+        facts.temporalEvidence=temporal;
+    }else if(existing.temporalEvidence) {
+        const temporal={...existing.temporalEvidence};
+        for(const [key,field] of [['registrationOpen','registrationOpensAt'],['registrationClose','registrationClosesAt']])if(incoming[field])delete temporal[key];
+        if(!raceMonth(incoming))delete temporal.race;
+        facts.temporalEvidence=temporal;
+    }
     // Recollection must also remove obsolete guesses when current evidence is unknown.
     if (incomingOfficial || !existingOfficial) {
         for (const field of ['tag', 'ambito']) if (!incoming[field]) facts[field] = null;
@@ -480,6 +500,23 @@ export async function saveOrMergeEvent(prisma, eventData, options = {}) {
     let existingById = await prisma.event.findUnique({
         where: { id: eventData.id }
     });
+    const series=organizerSeries(eventData);
+    if(!existingById&&series) {
+        const year=eventData.sortDate.getUTCFullYear();
+        const rows=await prisma.event.findMany({where:{sortDate:{gte:new Date(Date.UTC(year,0,1)),lt:new Date(Date.UTC(year+1,0,1))},NOT:{source:{contains:'Quarentena'}}}});
+        const matches=rows.filter(row=>organizerSeries(row)===series);
+        if(matches.length>1)throw Error(`Conflito: várias edições ${year} da série ${series}; revisão necessária`);
+        if(matches.length===1)existingById=matches[0];
+    }
+    if(existingById&&series&&!raceMonth(existingById)&&!raceMonth(eventData)&&
+       new Date(existingById.sortDate).getTime()!==eventData.sortDate.getTime()&&!String(existingById.source).split(',').map(x=>x.trim()).includes(eventData.source)) {
+        throw Error(`Conflito de datas entre fontes para ${eventData.title}; dados anteriores preservados`);
+    }
+    if(existingById&&raceMonth(eventData)&&!raceMonth(existingById)) {
+        const temporal={...eventData.temporalEvidence};
+        if(existingById.temporalEvidence?.race)temporal.race=existingById.temporalEvidence.race;else delete temporal.race;
+        eventData={...eventData,date:existingById.date,sortDate:new Date(existingById.sortDate),temporalEvidence:temporal};
+    }
     // Some providers reuse a yearless slug (and thus the scraper ID) for the
     // next edition. Never replace the previous edition or its favorites.
     if(existingById&&!existingById.source?.includes('Quarentena')&&

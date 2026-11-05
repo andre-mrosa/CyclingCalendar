@@ -7,7 +7,7 @@ import { cleanOfflineRows, OFFLINE_CATALOGUE_KEY, OFFLINE_PERSONAL_KEY } from '.
 export function saveOfflineCatalogue(storage, events, now = new Date()) {
     const rows = events.map(toPublicEvent).filter(Boolean).map(event => {
         const dates = eventDateDisplay(event);
-        return { id: event.id, title: event.title, date: event.date, start: dates.start, end: dates.end, location: event.distrito, discipline: getEventDiscipline(event), scope: event.ambito, source: event.source, aliases: event._allIds || [], path: eventPath(event), stage: isStageRace(event) };
+        return { id: event.id, title: event.title, date: event.date, start: dates.start, end: dates.end, month:dates.precision==='month'?dates.key:'', location: event.distrito, discipline: getEventDiscipline(event), scope: event.ambito, source: event.source, aliases: event._allIds || [], path: eventPath(event), stage: isStageRace(event) };
     });
     try { storage.setItem(OFFLINE_CATALOGUE_KEY, JSON.stringify({ schema: 1, updatedAt: now.toISOString(), events: cleanOfflineRows(rows) })); return true; } catch { return false; }
 }

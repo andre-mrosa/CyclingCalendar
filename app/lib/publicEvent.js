@@ -1,10 +1,11 @@
 // Explicit output contract for the minimal calendar. This limits republication;
 // it does not establish permission to extract a source's database.
 import {categoryStatus} from '../utils/categoryEvidence.js';
+import {cleanTemporalEvidence} from '../utils/partialDates.js';
 export const PUBLIC_EVENT_SELECT = Object.freeze(Object.fromEntries([
     'id', 'title', 'date', 'sortDate', 'tag', 'ambito', 'escaloes', 'licenca',
     'regiao', 'distrito', 'source', 'link', 'registrationOpensAt', 'registrationClosesAt',
-    'categoryEvidence','lastVerifiedAt','lastVerifiedSource',
+    'categoryEvidence','lastVerifiedAt','lastVerifiedSource','temporalEvidence',
 ].map(key => [key, true])));
 
 export const SOURCE_HOSTS = ['fpciclismo.pt', 'cabreirasolutions.com', 'stopandgo.net',
@@ -117,6 +118,7 @@ export function toPublicEvent(event) {
         categoryEvidence: categoryStatus(event).status==='published' ? {version:1,...categoryStatus(event)} : null,
         lastVerifiedAt: event.lastVerifiedAt && Number.isFinite(new Date(event.lastVerifiedAt).getTime()) ? new Date(event.lastVerifiedAt).toISOString() : null,
         lastVerifiedSource: label(event.lastVerifiedSource,100),
+        ...(cleanTemporalEvidence(event.temporalEvidence)?{temporalEvidence:cleanTemporalEvidence(event.temporalEvidence)}:{}),
     };
     if (event.registrationOpensAt) {
         result.registrationOpensAt = event.registrationOpensAt instanceof Date ? event.registrationOpensAt.toISOString() : event.registrationOpensAt;

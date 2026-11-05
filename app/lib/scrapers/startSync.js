@@ -47,7 +47,7 @@ export async function startCalendarSync({ scope = 'manual', fullHistorical = fal
             pipelineStage = saved.nextStage;
             resumedFrom = previousRunId;
         }
-        if (!['daily', 'weekly', 'manual', ...(resume?['stopandgo']:[])].includes(scope) || !Array.isArray(years) ||
+        if (!['daily', 'weekly', 'manual', 'organizers', ...(resume?['stopandgo']:[])].includes(scope) || !Array.isArray(years) ||
             !years.every(year => /^\d{4}$/.test(year)) ||
             (pipelineStage && !getPipelineStages(scope, years).includes(pipelineStage))) throw new Error('Plano de sincronização inválido.');
         // Historical collection is retired; keep old callers compatible without claiming to run it.

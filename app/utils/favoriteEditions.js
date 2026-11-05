@@ -2,6 +2,7 @@ import { eventDateDisplay } from './eventDateDisplay.js';
 import { originalEventUrl } from '../lib/publicEvent.js';
 import { isCancelled } from './planning.js';
 import { getEventDiscipline } from './eventClassifier.js';
+import {organizerSeries} from './partialDates.js';
 
 const normal = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 export const safeFavoriteIds = value => Array.isArray(value) ? [...new Set(value.filter(id => typeof id === 'string' && id.length > 0 && id.length <= 1000))].slice(0, 1000) : [];
@@ -9,8 +10,8 @@ const generic = new Set(['granfondo','ciclismo','btt','estrada','maratona','pass
 export function editionIdentity(event) {
     if (!event || isCancelled(event) || event.source?.includes('Quarentena') || !originalEventUrl(event.link)) return null;
     const dates = eventDateDisplay(event);
-    if (!dates.start) return null;
-    const year = Number(dates.start.slice(0, 4));
+    if (!dates.start && !dates.periodStart) return null;
+    const year = Number((dates.start||dates.periodStart).slice(0, 4));
     let name = normal(event.title).replace(/\b20\d{2}\b/g, '').replace(/\bgrandfondo\b/g, 'granfondo').trim();
     // Preserve cup rounds, categories, distances and place names.
     if (!/\b(?:taca|campeonato|etapa|ronda)\b/.test(name)) {
@@ -27,8 +28,9 @@ export function editionIdentity(event) {
     const tag = normal(discipline).replace(/[^a-z0-9]+/g,' ').trim();
     if (!tag || !name.split(' ').some(word => word.length >= 4 && !generic.has(word) && !/^\d+$/.test(word))) return null;
     const sport = /\bxcm\b/.test(tag) ? 'btt xcm' : tag;
-    const series = sport + ':' + name;
-    return { series, key: series + ':' + year, year, start: dates.start };
+    const curated=organizerSeries(event);
+    const series = curated?'organizer:'+curated:sport + ':' + name;
+    return { series, key: series + ':' + year, year, start: dates.start||dates.key };
 }
 export function editionMatches(events, seedIds, excludedKeys = []) {
     const seeds = new Set(safeFavoriteIds(seedIds));

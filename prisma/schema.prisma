@@ -43,6 +43,7 @@ model Event {
   detailsCheckedAt     DateTime?
   lastVerifiedAt       DateTime?
   lastVerifiedSource   String?
+  temporalEvidence     Json?
   categoryEvidence     Json?
   
   createdAt            DateTime  @default(now())

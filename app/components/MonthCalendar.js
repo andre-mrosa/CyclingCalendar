@@ -5,6 +5,9 @@ import { useMemo } from 'react';
 import { useTranslation } from '../i18n/useTranslation';
 import { monthDays, eventOccursOn, shiftMonth } from '../utils/calendarPresentation';
 import styles from './site.module.css';
+import Link from 'next/link';
+import {eventDateDisplay} from '../utils/eventDateDisplay';
+import {eventPath} from '../lib/eventDiscovery';
 
 export default function MonthCalendar({ month, events, selectedDay, onDay, onMonth, expanded = false, showHeader = true }) {
     const { t, language } = useTranslation();
@@ -30,5 +33,6 @@ export default function MonthCalendar({ month, events, selectedDay, onDay, onMon
                 {expanded && <span className={styles.dayEvents}>{dayEvents.slice(0, 2).map(event => <span key={event.id}>{event.title}</span>)}{dayEvents.length > 2 && <small>+{dayEvents.length - 2}</small>}</span>}
             </button> : <span aria-hidden="true" key={`empty-${index}`} />)}
         </div>
+        {events.some(event=>eventDateDisplay(event).precision==='month'&&eventDateDisplay(event).key===month)&&<div className="mt-4 border-t border-line pt-4"><h3 className="text-sm font-semibold">— {t('planning_date_unconfirmed')}</h3>{events.filter(event=>eventDateDisplay(event).precision==='month'&&eventDateDisplay(event).key===month).map(event=><p key={event.id} className="mt-2"><Link href={eventPath(event)} className="text-brand hover:underline">{event.title}</Link></p>)}</div>}
     </section>;
 }

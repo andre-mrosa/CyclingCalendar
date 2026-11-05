@@ -5,6 +5,7 @@ import { scrapeCabreira } from './cabreira.js';
 import { scrapeStopAndGo } from './stopandgo.js';
 import { scrapeRecordePessoal } from './recordepessoal.js';
 import { scrapeApedalar } from './apedalar.js';
+import { collectOrganizer } from './organizers.js';
 import { validateCalendarTranslations } from '../validateCalendarTranslations.js';
 import { prisma } from '../db.js';
 import { logInfo, logError, withScraperLogContext } from '../logger.js';
@@ -12,9 +13,10 @@ import { withScraperLock } from './runLock.js';
 import {recordSourceQuality} from '../sourceQuality.js';
 import {cleanTrustData} from '../trustRetention.js';
 
-const VALID_SCOPES = new Set(['daily', 'weekly', 'manual', 'stopandgo']);
+const VALID_SCOPES = new Set(['daily', 'weekly', 'manual', 'stopandgo', 'organizers']);
 
 export function getPipelineStages(scope, years) {
+    if(scope==='organizers')return ['mq','bairrada','finalize'];
     if (scope === 'stopandgo') return ['stopandgo', 'finalize'];
     const fpcStages = years.map(year => `fpc-${year}`);
     if (scope === 'daily') return [...fpcStages, 'cabreira', 'stopandgo', 'recordepessoal', 'apedalar', 'translation', 'finalize'];
@@ -52,7 +54,7 @@ async function runPipeline(triggeredBy, options) {
         mode: historical ? 'FULL_HISTORICAL' : 'DAILY_ACTIVE',
         pipelineStage,
         scope,
-        sourcesScraped: scope === 'stopandgo' ? ['Stop and Go'] : scope === 'weekly' ? ['FPC'] : ['FPC', 'Cabreira', 'Stop and Go', 'Recorde Pessoal', 'Apedalar'],
+        sourcesScraped: scope==='organizers'?['MQ Series','Bairrada 150']:scope === 'stopandgo' ? ['Stop and Go'] : scope === 'weekly' ? ['FPC'] : ['FPC', 'Cabreira', 'Stop and Go', 'Recorde Pessoal', 'Apedalar'],
         yearsScraped: years, fpcEvents: {}, deepScrapedFpc: null, mergedEvents: null,
         sources: {}, steps: {}, errors: []
     };
@@ -127,6 +129,13 @@ async function runPipeline(triggeredBy, options) {
 
         try {
             switch (pipelineStage) {
+                case 'mq':
+                case 'bairrada':
+                    await stage(pipelineStage,pipelineStage==='mq'?'MQ Series':'Bairrada 150',true,async saveOptions=>{
+                        const result=await collectOrganizer(pipelineStage,{years,...saveOptions});
+                        return result.events.length;
+                    });
+                    break;
                 case 'cabreira':
                     await stage('cabreira', 'Cabreira', true, saveOptions => scrapeCabreira(null, saveOptions));
                     break;

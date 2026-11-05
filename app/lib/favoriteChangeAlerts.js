@@ -24,7 +24,7 @@ export function planFavoriteChanges(events,before={}){
         if(!Number.isFinite(checked)||!url){if(previous)state[event.id]=previous;continue;}
         if(previous&&Date.parse(previous.checkedAt)>=checked){state[event.id]=previous;continue;}
         const dates=eventDateDisplay(event);
-        const current={date:dates.start?dates.start+'/'+dates.end:'',location:event.distrito||'',cancelled:isCancelled(event),checkedAt:event.lastVerifiedAt,aliases};
+        const current={date:dates.start?dates.start+'/'+dates.end:dates.precision==='month'?dates.key:'',location:event.distrito||'',cancelled:isCancelled(event),checkedAt:event.lastVerifiedAt,aliases};
         const changes=[];
         if(previous&&Date.parse(previous.checkedAt)<checked){
             for(const field of ['date','location'])if(previous[field]&&current[field]&&previous[field]!==current[field])changes.push({field,before:previous[field],after:current[field]});

@@ -17,7 +17,7 @@ export function detectRaceDate(event) {
     const sortISO = validISO(event.sortDate);
     const year = raw.match(/\b(20\d{2})\b/)?.[1] || sortISO?.slice(0, 4);
     let start, end;
-    if (raw && /definir|anunciar|adiad|tbd|evento|unknown/i.test(raw)) return null;
+    if (raw && (/definir|anunciar|adiad|tbd|evento|unknown/i.test(raw)||/^[—–-]\s*[A-Z]{3}\s+20\d{2}$/i.test(raw))) return null;
     const range = raw.match(/^(\d{1,2})\s*(?:de\s+)?([a-zà-ú]{3,9})?(?:\s+(?:de\s+)?(20\d{2}))?\s*(?:a|até|[-–—])\s*(\d{1,2})\s+(?:de\s+)?([a-zà-ú]{3,9})(?:\s+(?:de\s+)?(20\d{2}))?$/i);
     const enumerated = raw.match(/^(\d{1,2})(?:[,\s]+\d{1,2})*(?:[,\s]+(?:e|&)\s*|\s*[-–—]\s*)(\d{1,2})\s+(?:de\s+)?([a-zà-ú]{3,9})(?:\s+(?:de\s+)?(20\d{2}))?$/i);
     const single = raw.match(/^(\d{1,2})\s+(?:de\s+)?([a-zà-ú]{3,9})(?:\s+(?:de\s+)?(20\d{2}))?$/i);

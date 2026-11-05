@@ -18,6 +18,8 @@ import { isStageRace, getEventDiscipline } from '../utils/eventClassifier';
 import EventParticipation from './EventParticipation';
 import GoogleCalendarAction from './GoogleCalendarAction';
 import EventTrust from './EventTrust';
+import RegistrationBadge from './RegistrationBadge';
+import {monthLabel} from '../utils/partialDates';
 import styles from './site.module.css';
 
 export default function EventDetail({ event, related = [] }) {
@@ -50,7 +52,7 @@ export default function EventDetail({ event, related = [] }) {
         <header className={styles.detailHeading}>
             <p className={styles.eyebrow}>{discipline && translateTag(discipline, language)}{event.ambito && <> · {translateAmbito(event.ambito, language)}</>}</p>
             <h1>{formatEventTitle(event.title)}</h1>
-            <div className={styles.detailMeta}><span><CalendarDays size={17} aria-hidden="true" />{dates.start ? <time dateTime={dates.start}>{formatCalendarDateRange(dates.start, dates.end, language)}</time> : ui('unknownDate')}</span>{location && <span><MapPin size={17} aria-hidden="true" />{location}</span>}</div>
+            <div className={styles.detailMeta}><span><CalendarDays size={17} aria-hidden="true" />{dates.precision==='month'?`— ${monthLabel(dates.key,language)} · ${ui('unknownDate')}`:dates.start ? <time dateTime={dates.start}>{formatCalendarDateRange(dates.start, dates.end, language)}</time> : ui('unknownDate')}</span>{location && <span><MapPin size={17} aria-hidden="true" />{location}</span>}</div>
         </header>
         <div className={styles.detailLayout}>
             <div className={styles.detailContent}>
@@ -74,6 +76,7 @@ export default function EventDetail({ event, related = [] }) {
                 <h2>{ui('nextStart')}</h2><p>{ui('sourceIntro')}</p>
                 {sourceLink && <><a href={sourceLink} target="_blank" rel="noopener noreferrer" className={styles.primaryButton}>{ui('sourceAction')}<ArrowUpRight size={16} aria-hidden="true" /></a><small>{ui('organiserSite')} · {sourceHost}</small></>}
                 <hr />
+                <RegistrationBadge event={event} />
                 {status && <p className={styles.detailStateLabel}>{ui('yourStatus')}</p>}
                 <EventParticipation event={event} collection={collection} />
                 {status && <p className={styles.detailStateHint}>{ui('stateHint')}</p>}

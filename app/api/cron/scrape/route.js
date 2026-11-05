@@ -13,7 +13,7 @@ export async function GET(request) {
 
     const { searchParams } = new URL(request.url);
     const scope = searchParams.get('scope') || 'daily';
-    if (searchParams.has('stage') || searchParams.has('runId') || !['daily', 'weekly'].includes(scope)) {
+    if (searchParams.has('stage') || searchParams.has('runId') || !['daily', 'weekly','organizers'].includes(scope)) {
         return Response.json({ success: false, error: 'Etapas geridas pela fila; scope inválido.' }, { status: 400 });
     }
     try {

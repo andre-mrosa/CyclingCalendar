@@ -28,7 +28,7 @@ export async function loadCollection(kind, params, searchParams) {
     const events = matching.map(event => ({ event, dates: eventDateDisplay(event) }));
     // Upcoming first, then the most recent archive. Undated records follow.
     events.sort((a, b) => {
-        const group = item => !item.dates.start ? 2 : (item.dates.end || item.dates.start) >= today ? 0 : 1;
+        const group = item => !item.dates.start&&!item.dates.periodStart ? 2 : (item.dates.end || item.dates.start || item.dates.periodEnd) >= today ? 0 : 1;
         const diff = group(a) - group(b);
         return diff || (group(a) === 1 ? (b.dates.start || '').localeCompare(a.dates.start || '') : (a.dates.start || '').localeCompare(b.dates.start || '')) || a.event.title.localeCompare(b.event.title, 'pt');
     });
@@ -63,9 +63,9 @@ export default function DiscoveryCollection({ data }) {
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(itemListStructuredData(events, collection.name)) }} />
             <ul className="space-y-3">{events.map(event => {
                 const dates = eventDateDisplay(event);
-                const past = dates.end && dates.end < today;
+                const past = (dates.end||dates.periodEnd) && (dates.end||dates.periodEnd) < today;
                 return <li key={event.id} className="bg-surface border border-line rounded-xl p-5">
-                    <p className="text-xs text-muted mb-2">{past ? 'Arquivo · ' : ''}{dates.start ? <time dateTime={dates.start}>{event.date}</time> : 'Data por confirmar na fonte'}</p>
+                    <p className="text-xs text-muted mb-2">{past ? 'Arquivo · ' : ''}{dates.start ? <time dateTime={dates.start}>{event.date}</time> : dates.precision==='month'?event.date+' · Dia por confirmar':'Data por confirmar na fonte'}</p>
                     <h3 className="text-lg font-semibold"><Link prefetch={false} href={eventPath(event)} className="text-brand break-words">{event.title}</Link></h3>
                     <p className="text-sm text-muted mt-2">{[event.tag, event.distrito, event.source].filter(Boolean).join(' · ')}</p>
                 </li>;

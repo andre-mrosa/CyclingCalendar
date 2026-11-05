@@ -6,6 +6,7 @@ import { formatRegistrationDay } from '../utils/registrationDates';
 import { lisbonWallClock } from '../utils/planning';
 import { useClientReady } from '../hooks/useBrowserState';
 import {useParticipationStates,participationFor} from '../hooks/useParticipationStates';
+import {monthlyRegistration,expectedOpeningLabel,monthLabel,raceMonth,monthEnd} from '../utils/partialDates';
 
 export default function RegistrationBadge({ event, isCancelled }) {
     const { language, t } = useTranslation();
@@ -15,7 +16,7 @@ export default function RegistrationBadge({ event, isCancelled }) {
     if (!mounted || isCancelled || !event.sortDate || participationFor(event,states)?.status==='registered') return null;
     
     const now = new Date(lisbonWallClock());
-    const eventDate = new Date(event.sortDate);
+    const eventDate = new Date(raceMonth(event)?monthEnd(raceMonth(event)):event.sortDate);
     eventDate.setUTCHours(23, 59, 59, 999);
     
     if (eventDate < now) return null; // Event has passed
@@ -28,7 +29,10 @@ export default function RegistrationBadge({ event, isCancelled }) {
 
     const formatDate = value => formatRegistrationDay(value, language);
 
-    if (event.registrationClosesAt && new Date(event.registrationClosesAt) < now) {
+    if(monthlyRegistration(event)) {
+        status='opening_expected';Icon=CalendarClock;type='reg_open';
+        text=expectedOpeningLabel(language)+': '+monthLabel(event.temporalEvidence.registrationOpen.value,language);
+    } else if (event.registrationClosesAt && new Date(event.registrationClosesAt) < now) {
         status = 'closed';
         Icon = CalendarX;
         type = 'reg_close';

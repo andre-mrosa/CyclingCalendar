@@ -49,7 +49,8 @@ export function eventsInPeriod(events, month, day) {
     const from = `${month}-01`;
     const until = `${shiftMonth(month, 1)}-01`;
     return events.filter(event => {
-        const { start, end } = eventDateDisplay(event);
+        const { start, end, key, precision } = eventDateDisplay(event);
+        if(precision==='month')return key===month;
         return start && start < until && (end || start) >= from;
     });
 }
@@ -65,7 +66,12 @@ export function groupEventsByDate(events) {
     const dated = new Map();
     const unknown = [];
     for (const event of events) {
-        const { start, end } = eventDateDisplay(event);
+        const { start, end, precision, key:month } = eventDateDisplay(event);
+        if(precision==='month') {
+            const key=month+'-99';
+            if(!dated.has(key))dated.set(key,[]);
+            dated.get(key).push(event);continue;
+        }
         if (!start) {
             unknown.push([event]);
             continue;

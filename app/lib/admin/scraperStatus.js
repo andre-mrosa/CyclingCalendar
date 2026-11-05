@@ -3,7 +3,9 @@ const SOURCE_DEFS = {
     cabreira: ['Cabreira Solutions', 'Granfondos & Provas — eventos processados, não novos'],
     stopandgo: ['Stop & Go', 'Sitemap Ciclismo/BTT — eventos processados, não novos'],
     recordepessoal: ['Recorde Pessoal', 'Eventos e inscrições de Ciclismo/BTT — processados, não novos'],
-    apedalar: ['Apedalar', 'Eventos de ciclismo — processados, não novos']
+    apedalar: ['Apedalar', 'Eventos de ciclismo — processados, não novos'],
+    mq:['MQ Series','Mountain Quest, Iron Rider e Terra Norte · recolha mensal'],
+    bairrada:['Bairrada 150','Site e regulamento oficiais · recolha mensal']
 };
 const STEP_DEFS = {
     translation: ['Validação dos idiomas', 'PT / EN / ES / FR; os nomes originais das provas são preservados.'],
@@ -35,6 +37,8 @@ function entityId(message) {
     if (/stop\s*(and|&)\s*go|stopandgo/i.test(message)) return 'stopandgo';
     if (/recorde\s*pessoal/i.test(message)) return 'recordepessoal';
     if (/apedalar/i.test(message)) return 'apedalar';
+    if (/mq series/i.test(message))return 'mq';
+    if (/bairrada 150/i.test(message))return 'bairrada';
     return null;
 }
 
@@ -55,8 +59,9 @@ function applySnapshot(target, snapshot) {
  * exact runId. Counts are processed operations, never database inventory.
  */
 export function parseScraperStatus({ startLog = null, completionLog = null, logs = [], now, staleAfterMs = 15 * 60 * 1000 }) {
-    const sourceOnly = readLogDetails(startLog).scope === 'stopandgo';
-    const sources = entities(sourceOnly ? {stopandgo:SOURCE_DEFS.stopandgo} : SOURCE_DEFS);
+    const scope=readLogDetails(startLog).scope;
+    const sourceOnly = scope === 'stopandgo'||scope==='organizers';
+    const sources = entities(scope==='organizers'?{mq:SOURCE_DEFS.mq,bairrada:SOURCE_DEFS.bairrada}:sourceOnly ? {stopandgo:SOURCE_DEFS.stopandgo} : Object.fromEntries(Object.entries(SOURCE_DEFS).filter(([key])=>!['mq','bairrada'].includes(key))));
     const steps = entities(sourceOnly ? {finalize:STEP_DEFS.finalize} : STEP_DEFS);
     const all = { ...sources, ...steps };
     const empty = { success: true, isRunning: false, activeStep: 0, elapsedSeconds: 0,
