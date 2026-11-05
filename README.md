@@ -22,7 +22,7 @@ As migrações de produção são aplicadas com `npx prisma migrate deploy`, usa
 
 ## Sincronização
 
-O cron consulta as cinco fontes diariamente às 02:00 UTC: FPC, Cabreira, Stop and Go, Recorde Pessoal e Apedalar. O plano cobre o ano atual e o seguinte; a recolha histórica está desativada. O workflow persiste as etapas e uma reserva na BD impede execuções simultâneas.
+O cron consulta as cinco fontes à quarta-feira, às 01:00 UTC (01:00 no inverno / 02:00 no verão em Portugal continental): FPC, Cabreira, Stop and Go, Recorde Pessoal e Apedalar. O plano cobre o ano atual e o seguinte; a recolha histórica está desativada. O workflow persiste as etapas e uma reserva na BD impede execuções simultâneas. Os organizadores mantêm a recolha mensal. O painel permite executar apenas Stop and Go; os períodos de espera e a retoma após HTTP 429 continuam a ser respeitados.
 
 MQ Series e Bairrada 150 têm uma recolha separada no dia 1 de cada mês às 05:00 UTC. O estado persistente impede consultas repetidas no mesmo mês. Provas anunciadas só por mês mostram «—» no dia; aberturas de inscrições mensais podem ser exportadas como lembrete previsto no dia 1. Ver [recolha mensal dos organizadores](maintenance/ORGANIZADORES-MENSAL-2026-11-05.md).
 

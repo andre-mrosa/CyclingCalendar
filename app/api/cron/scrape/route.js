@@ -12,14 +12,12 @@ export async function GET(request) {
     }
 
     const { searchParams } = new URL(request.url);
-    const scope = searchParams.get('scope') || 'daily';
+    const scope = searchParams.get('scope') || 'weekly';
     if (searchParams.has('stage') || searchParams.has('runId') || !['daily', 'weekly','organizers'].includes(scope)) {
         return Response.json({ success: false, error: 'Etapas geridas pela fila; scope inválido.' }, { status: 400 });
     }
     try {
-        const now = new Date();
-        const result = await startCalendarSync({ scope, triggeredBy: `CRON_VERCEL_${scope.toUpperCase()}`,
-            fullHistorical: scope === 'weekly' && (now.getDay() === 0 || now.getDate() === 1) });
+        const result = await startCalendarSync({ scope, triggeredBy: `CRON_VERCEL_${scope.toUpperCase()}`,fullHistorical:false });
         return Response.json(result, { status: 202 });
     } catch (error) {
         if (error.code === 'SCRAPER_ALREADY_RUNNING') return Response.json({ success: true, skipped: true, message: error.message });

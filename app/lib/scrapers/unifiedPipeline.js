@@ -20,7 +20,7 @@ export function getPipelineStages(scope, years) {
     if (scope === 'stopandgo') return ['stopandgo', 'finalize'];
     const fpcStages = years.map(year => `fpc-${year}`);
     if (scope === 'daily') return [...fpcStages, 'cabreira', 'stopandgo', 'recordepessoal', 'apedalar', 'translation', 'finalize'];
-    if (scope === 'weekly') return [...fpcStages, 'translation', 'finalize'];
+    if (scope === 'weekly') return [...fpcStages, 'cabreira', 'stopandgo', 'recordepessoal', 'apedalar', 'translation', 'finalize'];
     return [...fpcStages, 'cabreira', 'stopandgo', 'recordepessoal', 'apedalar', 'translation', 'finalize'];
 }
 
@@ -54,7 +54,7 @@ async function runPipeline(triggeredBy, options) {
         mode: historical ? 'FULL_HISTORICAL' : 'DAILY_ACTIVE',
         pipelineStage,
         scope,
-        sourcesScraped: scope==='organizers'?['MQ Series','Bairrada 150']:scope === 'stopandgo' ? ['Stop and Go'] : scope === 'weekly' ? ['FPC'] : ['FPC', 'Cabreira', 'Stop and Go', 'Recorde Pessoal', 'Apedalar'],
+        sourcesScraped: scope==='organizers'?['MQ Series','Bairrada 150']:scope === 'stopandgo' ? ['Stop and Go'] : ['FPC', 'Cabreira', 'Stop and Go', 'Recorde Pessoal', 'Apedalar'],
         yearsScraped: years, fpcEvents: {}, deepScrapedFpc: null, mergedEvents: null,
         sources: {}, steps: {}, errors: []
     };

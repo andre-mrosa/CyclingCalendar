@@ -9,8 +9,10 @@ export async function GET(request) {
     if (!admin.authorized) return Response.json({ success: false, error: admin.error }, { status: admin.status });
     try {
         const { searchParams } = new URL(request.url);
+        const scope=searchParams.get('scope')||'manual';
+        if(!['manual','stopandgo'].includes(scope))return Response.json({success:false,error:'Fonte de sincronização inválida.'},{status:400});
         const result = await startCalendarSync({
-            scope: 'manual', triggeredBy: 'ADMIN_MANUAL',
+            scope, triggeredBy: scope==='stopandgo'?'ADMIN_STOPANDGO':'ADMIN_MANUAL',
             fullHistorical: searchParams.get('history') === 'true',
             resume: searchParams.get('resume') === 'true',
         });

@@ -16,9 +16,9 @@ const req = (path, authorization) => new Request(`https://calendar.test${path}`,
     headers: authorization ? { authorization } : {},
 });
 
-test('production has one daily source sync without a duplicate weekly source crawl',async()=>{
+test('production has one weekly five-source sync and preserves the monthly organizer crawl',async()=>{
     const config=JSON.parse(await readFile(new URL('../vercel.json',import.meta.url),'utf8'));
-    assert.deepEqual(config.crons.filter(item=>item.path.startsWith('/api/cron/scrape')),[{path:'/api/cron/scrape?scope=daily',schedule:'0 2 * * *'},{path:'/api/cron/scrape?scope=organizers',schedule:'0 5 1 * *'}]);
+    assert.deepEqual(config.crons.filter(item=>item.path.startsWith('/api/cron/scrape')),[{path:'/api/cron/scrape?scope=weekly',schedule:'0 1 * * 3'},{path:'/api/cron/scrape?scope=organizers',schedule:'0 5 1 * *'}]);
 });
 
 test('scheduled scrape endpoint requires CRON_SECRET and starts only daily or weekly minimal runs', async t => {
@@ -40,6 +40,8 @@ test('scheduled scrape endpoint requires CRON_SECRET and starts only daily or we
     assert.equal(response.status, 202);
     assert.equal((await response.json()).scope, 'daily');
     assert.equal(calls, 1);
+    const weekly=await route.GET(req('/api/cron/scrape','Bearer cron-test-secret'));
+    assert.equal((await weekly.json()).scope,'weekly');
 });
 
 test('manual scrape endpoint requires an administrator and queues the minimal pipeline', async () => {
@@ -59,4 +61,7 @@ test('manual scrape endpoint requires an administrator and queues the minimal pi
     assert.equal(response.status, 202);
     assert.equal((await response.json()).scope, 'manual');
     assert.equal(calls, 1);
+    const onlyStopGo=await allowed.GET(req('/api/force-scrape?scope=stopandgo'));
+    const single=await onlyStopGo.json();assert.equal(onlyStopGo.status,202);assert.equal(single.scope,'stopandgo');assert.equal(single.triggeredBy,'ADMIN_STOPANDGO');
+    assert.equal((await allowed.GET(req('/api/force-scrape?scope=unknown'))).status,400);assert.equal(calls,2);
 });
