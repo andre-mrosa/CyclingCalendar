@@ -23,8 +23,9 @@ export function createStopAndGoAccess({ db, fetcher=fetch, now=Date.now, wait=ms
             const row=await db?.systemLog?.findUnique?.({where:{id:STOPANDGO_ACCESS_ID}});
             if(row?.details) {
                 const value=JSON.parse(row.details), until=Date.parse(value.retryAt);
-                if(!Number.isFinite(until))throw Error('Stop and Go: período de espera inválido; confirmar o estado operacional');
-                if(until>now())blocked=refusal(until,value.status);
+                const resolved=value.status===200 && value.retryAt===null;
+                if(!resolved && !Number.isFinite(until))throw Error('Stop and Go: período de espera inválido; confirmar o estado operacional');
+                if(!resolved && until>now())blocked=refusal(until,value.status);
             } else {
                 // The first updated run must also respect a refusal logged by
                 // the previous deployment, which did not yet persist Retry-After.

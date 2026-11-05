@@ -40,6 +40,25 @@ test('Retry-After accepts dates and refusals without a valid header use a conser
  for(const value of ['', 'invalid','-5'])assert.equal(retryAt(new Response('',{status:429,headers:{'retry-after':value}}),now),now+3600000);
  assert.equal(retryAt(new Response('',{status:403}),now),now+86400000);
 });
+
+test('persisted 403 and 429 cooldowns make no source requests before their deadline',async()=>{
+ for(const status of [403,429]) {
+  let requests=0;
+  const read=createStopAndGoAccess({now:()=>Date.parse('2026-11-05T12:00:00Z'),db:{systemLog:{findUnique:async()=>({details:JSON.stringify({status,retryAt:'2026-11-05T15:15:09.442Z'})})}},fetcher:async()=>{requests++;return new Response('ok');}});
+  for(const path of ['sitemap.xml','events','events/prova'])await assert.rejects(read('https://stopandgo.net/'+path),{code:'SOURCE_ACCESS_DENIED',status});
+  assert.equal(requests,0);
+ }
+});
+
+test('a new invocation accepts a resolved cooldown but refuses malformed blocking state',async()=>{
+ for(const gate of [{status:200,retryAt:null},{status:429,retryAt:null},{status:403,retryAt:'invalid'}]) {
+  let requests=0;
+  const read=createStopAndGoAccess({db:{systemLog:{findUnique:async()=>({details:JSON.stringify(gate)})}},fetcher:async()=>{requests++;return new Response('ok');}});
+  if(gate.status===200)assert.equal((await read('https://stopandgo.net/events')).status,200);
+  else await assert.rejects(read('https://stopandgo.net/events'),/período de espera inválido/);
+  assert.equal(requests,gate.status===200?1:0);
+ }
+});
 test('the first updated invocation respects a recent refusal from the previous deployment',async()=>{
  const now=Date.parse('2026-11-04T12:30:00Z');let requests=0,stored;
  const read=createStopAndGoAccess({now:()=>now,db:{systemLog:{findUnique:async()=>null,findFirst:async()=>({message:'Stop and Go: acesso recusado (HTTP 429)',createdAt:new Date('2026-11-04T12:00:00Z')}),upsert:async args=>{stored=args.create;}}},fetcher:async()=>{requests++;}});
