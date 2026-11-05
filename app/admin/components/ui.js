@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { RefreshCw, X, AlertCircle, CheckCircle2, Info } from 'lucide-react';
+import styles from '../admin.module.css';
 
 export const number = value => value == null ? '—' : typeof value === 'number' ? value.toLocaleString('pt-PT') : String(value);
 export const dateTime = value => {
@@ -10,14 +11,12 @@ export const dateTime = value => {
 export const entries = value => Array.isArray(value) ? value : Object.entries(value || {}).map(([id, item]) => ({ ...item, id: item.id || id }));
 
 export function Button({ children, tone, className = '', ...props }) {
-    let toneClasses = "bg-surface border-line text-ink hover:bg-soft";
-    if (tone === 'primary') toneClasses = "bg-[var(--site-accent-strong)] border-[var(--site-accent-strong)] text-white hover:opacity-90";
-    else if (tone === 'danger') toneClasses = "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40";
+    const toneClasses=tone==='primary'?styles.primary:tone==='danger'?styles.danger:'';
     
     return (
         <button 
             type="button" 
-            className={`inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md border transition-colors focus:outline-none focus:ring-2 focus:ring-brand/50 disabled:opacity-50 disabled:cursor-not-allowed ${toneClasses} ${className}`} 
+            className={`${styles.button} ${toneClasses} ${className}`}
             {...props}
         >
             {children}
@@ -36,17 +35,17 @@ export function RefreshButton({ busy, onClick }) {
 
 export function Panel({ title, description, action, children, className = '' }) {
     return (
-        <section className={`bg-surface border border-line rounded-xl shadow-sm overflow-hidden ${className}`}>
+        <section className={`${styles.panel} ${className}`}>
             {title && (
-                <div className="px-6 py-5 border-b border-line flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className={styles.panelHeading}>
                     <div>
-                        <h3 className="text-lg font-semibold text-ink tracking-tight">{title}</h3>
-                        {description && <p className="text-sm text-muted mt-1 max-w-2xl">{description}</p>}
+                        <h3>{title}</h3>
+                        {description && <p>{description}</p>}
                     </div>
                     {action && <div className="shrink-0">{action}</div>}
                 </div>
             )}
-            <div className="w-full min-w-0">
+            <div className={styles.panelContent}>
                 {children}
             </div>
         </section>
@@ -55,12 +54,12 @@ export function Panel({ title, description, action, children, className = '' }) 
 
 export function Metric({ label, value, note, accent }) {
     return (
-        <div className={`p-6 rounded-xl border ${accent ? 'bg-brand-soft/30 border-brand/40' : 'bg-surface border-line shadow-sm'} flex flex-col`}>
-            <span className="text-sm font-medium text-muted">{label}</span>
-            <strong className={`text-3xl font-bold tracking-tight mt-2 mb-1 ${accent ? 'text-brand' : 'text-ink'}`}>
+        <div className={`${styles.metric} ${accent?styles.metricAccent:''}`}>
+            <span>{label}</span>
+            <strong>
                 {number(value)}
             </strong>
-            {note && <small className="text-xs text-muted leading-tight">{note}</small>}
+            {note && <small>{note}</small>}
         </div>
     );
 }
@@ -71,13 +70,10 @@ export function Status({ value = 'unknown', children }) {
     const isBad = ['error', 'failed', 'ERROR'].includes(value);
     const isWarn = ['partial', 'interrupted', 'WARN'].includes(value);
     
-    let toneClasses = "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border-gray-200 dark:border-gray-700";
-    if (isGood) toneClasses = "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800";
-    else if (isBad) toneClasses = "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800";
-    else if (isWarn) toneClasses = "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800";
+    const toneClasses=isGood?styles.good:isBad?styles.bad:isWarn?styles.warning:'';
     
     return (
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${toneClasses}`}>
+        <span className={`${styles.badge} ${toneClasses}`}>
             {children || labels[value] || value}
         </span>
     );
@@ -85,7 +81,7 @@ export function Status({ value = 'unknown', children }) {
 
 export function Empty({ children = 'Sem dados disponíveis.', busy = false }) {
     return (
-        <div className="flex flex-col items-center justify-center p-12 text-center text-muted" role="status">
+        <div className={styles.empty} role="status">
             {busy ? <RefreshCw size={24} className="animate-spin mb-4 text-brand" /> : <div className="mb-4 text-gray-300 dark:text-gray-700"><Info size={32} /></div>}
             <p className="text-sm font-medium">{busy ? 'A carregar…' : children}</p>
         </div>
@@ -94,7 +90,7 @@ export function Empty({ children = 'Sem dados disponíveis.', busy = false }) {
 
 export function Notice({ children, error = false }) {
     return (
-        <div className={`flex items-start gap-3 p-4 rounded-lg border ${error ? 'bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-800 dark:text-red-300' : 'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-300'}`} role={error ? 'alert' : 'status'}>
+        <div className={`${styles.notice} ${error?styles.noticeError:''}`} role={error ? 'alert' : 'status'}>
             <div className="shrink-0 mt-0.5">
                 {error ? <AlertCircle size={18} /> : <Info size={18} />}
             </div>

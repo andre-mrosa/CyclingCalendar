@@ -101,6 +101,42 @@
 .panelHeading { padding: 22px 24px; }
 .panelHeading + .tableScroll { border-top: 1px solid var(--line); }
 .panelHeading p { max-width: 62ch; }
+.panelContent { min-width:0; }
+.panelHeading { align-items:flex-start; gap:14px; padding:20px 22px; }
+.panelHeading > div:first-child { min-width:0; flex:1; }
+.panelHeading p { font-size:12px; line-height:1.6; }
+.workspaceHeader h1:focus { outline:none; }
+.operationsLayout { display:grid; grid-template-columns:minmax(0,1fr) 320px; gap:22px; align-items:start; }
+.operationsLayout > * { min-width:0; }
+.operationsLayout .runMetrics { grid-template-columns:repeat(3,minmax(0,1fr)); padding:0 22px 22px; }
+.operationsLayout .runDates { grid-template-columns:repeat(2,minmax(0,1fr)); padding-bottom:22px; margin-bottom:22px; border-bottom:1px solid var(--line); }
+.scheduleCard { padding:0 22px 22px; display:grid; gap:13px; }
+.scheduleCard p { color:var(--muted); font-size:12px; }
+.scheduleCard small { color:var(--muted); font-size:11px; line-height:1.6; }
+.scheduleTime { display:flex; gap:12px; align-items:center; color:var(--accent); padding:14px; border:1px solid var(--line); border-radius:8px; }
+.scheduleTime span { color:var(--muted); font-size:11px; }
+.scheduleTime strong { display:block; color:var(--ink); font-size:21px; line-height:1.4; }
+.organizerSource { padding:18px 22px; border-top:1px solid var(--line); }
+.organizerHeading { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.organizerSource > p { margin-top:8px; font-size:12px; color:var(--muted); }
+.organizerSource dl { display:grid; gap:8px; margin-top:14px; font-size:11px; }
+.organizerSource dl > div { display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px; }
+.organizerSource dt { color:var(--muted); }
+.organizerSource dd { font-variant-numeric:tabular-nums; }
+.organizerSource details { margin-top:13px; font-size:11px; }
+.organizerSource summary { color:var(--accent); cursor:pointer; }
+.organizerSource ul { list-style:none; padding:0; margin:12px 0 0; display:grid; gap:10px; }
+.organizerSource li { display:grid; gap:2px; }
+.organizerSource li small { color:var(--muted); }
+.organizerAction { padding:4px 22px 22px; }
+.organizerAction .button { width:100%; }
+.sourceProgress { margin:12px 0; }
+.sourceProgress > div { display:flex; justify-content:space-between; gap:12px; font-size:11px; color:var(--muted); }
+.sourceProgress progress { display:block; width:100%; height:5px; margin-top:8px; accent-color:var(--accent); }
+.pipelineMessage { color:var(--muted); font-size:12px; line-height:1.6; overflow-wrap:anywhere; margin:12px 0 !important; }
+.maintenanceAction { margin-top:16px; }
+@media(max-width:1100px) { .operationsLayout { grid-template-columns:minmax(0,1fr); }.operationsLayout > aside { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start; } }
+@media(max-width:720px) { .operationsLayout > aside { grid-template-columns:minmax(0,1fr); }.operationsLayout .runMetrics { grid-template-columns:repeat(2,minmax(0,1fr)); }.panelHeading { padding:18px; }.organizerSource { padding:18px; } }
 .button { display: inline-flex; justify-content: center; align-items: center; gap: 8px; min-height: 38px; padding: 8px 13px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: 12px !important; font-weight: 600 !important; line-height: 1.4; text-decoration: none; transition: background .15s; }
 .button:hover { background: var(--subtle); }
 .primary { background: var(--site-accent-strong); color: #fff; border-color: var(--site-accent-strong); }
