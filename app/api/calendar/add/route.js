@@ -2,6 +2,7 @@ import { auth, clerkClient } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { detectRaceDate } from '@/app/utils/detectRaceDate';
 import {monthlyRegistration,expectedOpeningLabel,monthlyOpeningNote} from '@/app/utils/partialDates';
+import {registrationReminders,calendarIdentifiers} from '@/app/utils/registrationReminders';
 
 async function getTargetCalendarId(token) {
     try {
@@ -93,10 +94,24 @@ export async function POST(req) {
         let replaceReminderId=null;
         if (checkRes.ok) {
             const checkData = await checkRes.json();
+            if(type!=='race') {
+                for(const key of calendarIdentifiers(String(event.id),type==='reg_open'?'registration_open':'registration_close',event._allIds||[]).filter(key=>key!==eventKey).slice(0,99)) {
+                    const response=await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(targetCalendarId)}/events?privateExtendedProperty=${encodeURIComponent('cyclingCalendarEventId='+key)}`,{headers:{Authorization:`Bearer ${token}`}});
+                    if(!response.ok)return NextResponse.json({error:'Não foi possível verificar o lembrete existente.'},{status:503});
+                    const data=await response.json();checkData.items=[...(checkData.items||[]),...(data.items||[])];
+                }
+            }
             if (checkData.items && checkData.items.length > 0) {
-                const reminder=checkData.items.find(item=>item.extendedProperties?.private?.registrationPrecision==='month');
-                if(type==='reg_open'&&reminder?.id&&!monthlyRegistration(event))replaceReminderId=reminder.id;
-                else return NextResponse.json({ success: true, message: 'exists' });
+                const expected=String(type==='reg_open'?event.registrationOpensAt:event.registrationClosesAt||'');
+                const reminder=checkData.items.find(item=>item.extendedProperties?.private?.registrationPrecision==='month'||(item.start&&(item.start.dateTime?item.start.dateTime.slice(0,19)!==expected.slice(0,19):item.start.date!==expected.slice(0,10)||!monthlyRegistration(event))));
+                if(type!=='race'&&reminder?.id&&!(type==='reg_open'&&monthlyRegistration(event)))replaceReminderId=reminder.id;
+                else if(type!=='race') {
+                    for(const id of [...new Set(checkData.items.map(item=>item.id).filter(Boolean))]) {
+                        const response=await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(targetCalendarId)}/events/${encodeURIComponent(id)}`,{method:'PATCH',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({reminders:registrationReminders()})});
+                        if(!response.ok)return NextResponse.json({error:'Não foi possível atualizar os avisos.'},{status:503});
+                    }
+                    return NextResponse.json({success:true,message:'exists'});
+                }else return NextResponse.json({ success: true, message: 'exists' });
             }
         }
 
@@ -116,23 +131,24 @@ export async function POST(req) {
             gEvent.start = { date: startDateStr };
             gEvent.end = { date: endDt.toISOString().split('T')[0] };
         } else if (type === 'reg_open' && event.registrationOpensAt) {
+            gEvent.description='Mais informações: '+(event.link||'https://www.cyclingcalendar.pt');
             gEvent.extendedProperties.private.registrationPrecision=monthlyRegistration(event)?'month':'day';
             gEvent.summary = (monthlyRegistration(event)?expectedOpeningLabel('pt'):'Abertura Inscrições')+': '+event.title;
             gEvent.start = { dateTime: new Date(event.registrationOpensAt).toISOString().slice(0,19), timeZone:'Europe/Lisbon' };
             gEvent.end = { dateTime: new Date(new Date(event.registrationOpensAt).getTime() + 3600000).toISOString().slice(0,19), timeZone:'Europe/Lisbon' };
-            gEvent.reminders.overrides = [{ method: 'popup', minutes: 60 }];
+            gEvent.reminders=registrationReminders();
             if(monthlyRegistration(event)) {
                 const day=new Date(event.registrationOpensAt),end=new Date(day);end.setUTCDate(end.getUTCDate()+1);
                 gEvent.start={date:day.toISOString().slice(0,10)};gEvent.end={date:end.toISOString().slice(0,10)};
                 gEvent.description=monthlyOpeningNote+'\n'+(event.link||'');
                 gEvent.extendedProperties.private.registrationPrecision='month';
-                gEvent.reminders.overrides=[{method:'popup',minutes:1440}];
+                gEvent.reminders=registrationReminders();
             }
         } else if (type === 'reg_close' && event.registrationClosesAt) {
             gEvent.summary = 'Fim Inscrições: ' + event.title;
             gEvent.start = { dateTime: new Date(event.registrationClosesAt).toISOString().slice(0,19), timeZone:'Europe/Lisbon' };
             gEvent.end = { dateTime: new Date(new Date(event.registrationClosesAt).getTime() + 3600000).toISOString().slice(0,19), timeZone:'Europe/Lisbon' };
-            gEvent.reminders.overrides = [{ method: 'popup', minutes: 1440 }];
+            gEvent.reminders=registrationReminders();
         } else {
             return NextResponse.json({ error: 'Missing dates for this type' }, { status: 400 });
         }

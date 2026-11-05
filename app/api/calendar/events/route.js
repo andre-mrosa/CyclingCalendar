@@ -127,8 +127,8 @@ export async function GET(req) {
 
             markedEventIds.push(cyclingId);
 
-            const isRegOpen = cyclingId.endsWith('_reg_open');
-            const isRegClose = cyclingId.endsWith('_reg_close');
+            const isRegOpen = /[_-]reg_open$/.test(cyclingId);
+            const isRegClose = /[_-]reg_close$/.test(cyclingId);
             const isMainRace = !isRegOpen && !isRegClose;
 
             if (isMainRace) {

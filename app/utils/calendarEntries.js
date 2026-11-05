@@ -19,7 +19,7 @@ export function findCalendarConflict(event, entries = {}) {
     if (!dates) return { hasConflict: false };
     const ids = new Set([event.id, ...(event._allIds || [])].map(String));
     for (const [id, entry] of Object.entries(entries)) {
-        if (ids.has(id) || /_reg_(open|close)$/.test(id) || isCancelled({ title: entry.title })) continue;
+        if (ids.has(id) || /[_-]reg_(open|close)$/.test(id) || isCancelled({ title: entry.title })) continue;
         const start = entry.start?.slice(0, 10);
         let end = entry.end?.slice(0, 10) || start;
         if (entry.allDay && end) {

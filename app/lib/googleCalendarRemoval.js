@@ -27,6 +27,7 @@ async function pages(url, token) {
     } while (pageToken);
     return items;
 }
+export const googleCalendarPages=pages;
 
 export async function removeGoogleCalendarEntries(token, identifiers) {
     const calendars = await pages('https://www.googleapis.com/calendar/v3/users/me/calendarList', token);

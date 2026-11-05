@@ -4,6 +4,7 @@ import { getPublicCalendarEvents } from '@/app/lib/getPublicCalendarEvents';
 import { planFavoriteEditions, safeFavoriteIds } from '@/app/utils/favoriteEditions';
 import { pushAvailable, pushId, pushClock, validPushSubscription, validPushSchedule } from '@/app/lib/favoritePush';
 import { sendPush } from '@/app/lib/sendPush';
+import {testOwnPushDevices} from '@/app/lib/pushDiagnostics';
 
 export const dynamic = 'force-dynamic';
 const response = (data, status = 200) => Response.json(data, { status, headers: { 'Cache-Control': 'private, no-store' } });
@@ -86,6 +87,7 @@ export async function POST(request) {
     if (!pushAvailable()) return response({ error: 'Push not configured' }, 503);
     let body;
     try { body = await request.json(); } catch { return response({ error: 'Invalid JSON' }, 400); }
+    if(body?.allDevices===true){try{const counts=await testOwnPushDevices({db:prisma,userId,send:sendPush});return response({success:!counts.failed,...counts},counts.failed?503:200);}catch{return response({error:'Push test delivery failed'},503);}}
     if (!/^[a-f0-9]{64}$/.test(body?.id)) return response({ error: 'Invalid device' }, 400);
     try {
         const row = await prisma.favoritePushSubscription.findFirst({ where: { id: body.id, userId, enabled: true } });

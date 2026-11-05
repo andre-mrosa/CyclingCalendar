@@ -6,6 +6,8 @@ import {safeFavoriteIds,effectiveEditionIds} from '../utils/favoriteEditions.js'
 import {eventPath} from './eventDiscovery.js';
 import {originalEventUrl} from './publicEvent.js';
 import {verifiedEmail} from '../utils/favoriteAlerts.js';
+import {monthlyRegistration} from '../utils/partialDates.js';
+const registrationValue=value=>value&&Number.isFinite(new Date(value).getTime())?new Date(value).toISOString():null;
 export async function changeFavoriteEvents(db,user,events){
     const preference=await db.favoriteEditionPreference.findUnique({where:{userId:user.id}});
     const manual=safeFavoriteIds(user.unsafeMetadata?.favorites),excluded=safeFavoriteIds(user.unsafeMetadata?.favoriteEditionExclusions);
@@ -22,25 +24,29 @@ export function planFavoriteChanges(events,before={}){
         const checked=Date.parse(event.lastVerifiedAt),url=originalEventUrl(event.link);
         const aliases=[event.id,...(event._allIds||[])],previous=aliases.map(id=>before[id]).find(Boolean)||Object.values(before).find(row=>row?.aliases?.some(id=>aliases.includes(id)));
         if(!Number.isFinite(checked)||!url){if(previous)state[event.id]=previous;continue;}
-        if(previous&&Date.parse(previous.checkedAt)>=checked){state[event.id]=previous;continue;}
         const dates=eventDateDisplay(event);
-        const current={date:dates.start?dates.start+'/'+dates.end:dates.precision==='month'?dates.key:'',location:event.distrito||'',cancelled:isCancelled(event),checkedAt:event.lastVerifiedAt,aliases};
+        const current={date:dates.start?dates.start+'/'+dates.end:dates.precision==='month'?dates.key:'',location:event.distrito||'',cancelled:isCancelled(event),checkedAt:event.lastVerifiedAt,aliases,
+            registrationOpensAt:registrationValue(event.registrationOpensAt)?(monthlyRegistration(event)?event.temporalEvidence.registrationOpen.value:registrationValue(event.registrationOpensAt)):null,
+            registrationClosesAt:registrationValue(event.registrationClosesAt)};
+        if(previous&&Date.parse(previous.checkedAt)>=checked){state[event.id]={...previous};if(Date.parse(previous.checkedAt)===checked)for(const field of ['registrationOpensAt','registrationClosesAt'])if(!Object.hasOwn(previous,field))state[event.id][field]=current[field];continue;}
         const changes=[];
         if(previous&&Date.parse(previous.checkedAt)<checked){
             for(const field of ['date','location'])if(previous[field]&&current[field]&&previous[field]!==current[field])changes.push({field,before:previous[field],after:current[field]});
+            for(const field of ['registrationOpensAt','registrationClosesAt'])if(Object.hasOwn(previous,field)&&current[field]&&previous[field]!==current[field])changes.push({field,before:previous[field],after:current[field]});
             // Absence of a cancellation word does not confirm reinstatement.
             if(current.cancelled&&previous.cancelled===false)changes.push({field:'cancelled',before:false,after:true});
         }
         if(changes.length)notices.push({title:event.title,path:eventPath(event),sourceUrl:url,changes});
-        state[event.id]={...current,date:current.date||previous?.date||'',location:current.location||previous?.location||'',cancelled:current.cancelled||previous?.cancelled===true};
+        state[event.id]={...current,date:current.date||previous?.date||'',location:current.location||previous?.location||'',registrationOpensAt:current.registrationOpensAt||previous?.registrationOpensAt||null,registrationClosesAt:current.registrationClosesAt||previous?.registrationClosesAt||null,cancelled:current.cancelled||previous?.cancelled===true};
     }
     return {state,notices};
 }
 export function favoriteChangeEmail(notices,language='pt'){
     const words={pt:['Alterações nas tuas provas favoritas','Data','Local','Cancelamento','Agendada','Cancelada','Gerir ou desativar','Confirma os detalhes na fonte.'],en:['Changes to your favorite events','Date','Location','Cancellation','Scheduled','Cancelled','Manage or disable','Confirm the details at the source.'],es:['Cambios en tus pruebas favoritas','Fecha','Lugar','Cancelación','Programada','Cancelada','Gestionar o desactivar','Confirma los detalles en la fuente.'],fr:['Modifications de vos épreuves favorites','Date','Lieu','Annulation','Prévue','Annulée','Gérer ou désactiver','Confirmez les détails à la source.']}[language]||null;
     const w=words||['Changes to your favorite events','Date','Location','Cancellation','Scheduled','Cancelled','Manage or disable','Confirm details at the source.'];
-    const format=(field,value)=>field==='cancelled'?(value?w[5]:w[4]):field==='date'?value.split('/').map(day=>day.split('-').reverse().join('/')).filter((v,i,a)=>!i||v!==a[0]).join(' – '):value;
-    return {subject:w[0],text:notices.map(n=>`${n.title}\n`+n.changes.map(c=>`${w[{date:1,location:2,cancelled:3}[c.field]]}: ${format(c.field,c.before)} → ${format(c.field,c.after)}`).join('\n')+`\nhttps://www.cyclingcalendar.pt${n.path}\n${n.sourceUrl}`).join('\n\n')+`\n\n${w[7]}\n${w[6]}: https://www.cyclingcalendar.pt/favoritos`};
+    const registrationLabels={pt:['Abertura de inscrições','Fecho de inscrições','Por confirmar'],en:['Registration opening','Registration deadline','Unconfirmed'],es:['Apertura de inscripciones','Cierre de inscripciones','Por confirmar'],fr:['Ouverture des inscriptions','Clôture des inscriptions','À confirmer']}[language]||['Registration opening','Registration deadline','Unconfirmed'];
+    const format=(field,value)=>field==='cancelled'?(value?w[5]:w[4]):!value?registrationLabels[2]:field.startsWith('registration')?(/^20\d{2}-\d{2}$/.test(value)?value.slice(5)+'/'+value.slice(0,4)+' · '+registrationLabels[2]:value.slice(0,10).split('-').reverse().join('/')+(value.slice(11,16)!=='00:00'?' '+value.slice(11,16)+' (Europe/Lisbon)':'')):field==='date'?value.split('/').map(day=>day.split('-').reverse().join('/')).filter((v,i,a)=>!i||v!==a[0]).join(' – '):value;
+    return {subject:w[0],text:notices.map(n=>`${n.title}\n`+n.changes.map(c=>`${c.field==='registrationOpensAt'?registrationLabels[0]:c.field==='registrationClosesAt'?registrationLabels[1]:w[{date:1,location:2,cancelled:3}[c.field]]}: ${format(c.field,c.before)} → ${format(c.field,c.after)}`).join('\n')+`\nhttps://www.cyclingcalendar.pt${n.path}\n${n.sourceUrl}`).join('\n\n')+`\n\n${w[7]}\n${w[6]}: https://www.cyclingcalendar.pt/favoritos`};
 }
 export async function deliverFavoriteChanges({db,users,events,row,send,jsonNull,now=new Date()}){
     const leaseUntil=new Date(now.getTime()+10*60000);

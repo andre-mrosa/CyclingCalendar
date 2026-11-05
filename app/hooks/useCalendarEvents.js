@@ -4,6 +4,7 @@ import useSWR from 'swr';
 import { useUser } from '@clerk/nextjs';
 import { useMemo, useCallback, useEffect } from 'react';
 import { useOnline, useStoredString, writeStored } from './useBrowserState';
+import {calendarMarked} from '../utils/registrationReminders';
 
 const fetcher = async ([url]) => {
     const response = await fetch(url);
@@ -58,14 +59,7 @@ export function useCalendarEvents() {
     const isMarked = useCallback((eventId, target = 'event', allIds = []) => {
         if (!isSignedIn || !eventId) return false;
 
-        if (target === 'registration_open') {
-            return markedSet.has(`${eventId}_reg_open`) || (allIds && allIds.some(id => markedSet.has(`${id}_reg_open`)));
-        }
-        if (target === 'registration_close') {
-            return markedSet.has(`${eventId}_reg_close`) || (allIds && allIds.some(id => markedSet.has(`${id}_reg_close`)));
-        }
-
-        return markedSet.has(String(eventId)) || (allIds && allIds.some(id => markedSet.has(String(id))));
+        return calendarMarked(markedSet,String(eventId),target,allIds||[]);
     }, [isSignedIn, markedSet]);
 
     const markedEntries = data?.markedEntries || {};

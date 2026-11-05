@@ -3,11 +3,12 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { detectRaceDate } from '../app/utils/detectRaceDate.js';
 import {monthlyRegistration,expectedOpeningLabel,monthlyOpeningNote} from '../app/utils/partialDates.js';
+import {registrationReminders,calendarIdentifiers} from '../app/utils/registrationReminders.js';
 
 async function calendarRoute(userId, token = 'mock-token') {
     let oauthCalls = 0;
     const deps = {
-        auth: async () => ({ userId }), detectRaceDate,monthlyRegistration,expectedOpeningLabel,monthlyOpeningNote,
+        auth: async () => ({ userId }), detectRaceDate,monthlyRegistration,expectedOpeningLabel,monthlyOpeningNote,registrationReminders,calendarIdentifiers,
         NextResponse: { json: (data, options) => Response.json(data, options) },
         clerkClient: async () => ({ users: { getUserOauthAccessToken: async () => {
             oauthCalls++;
@@ -18,7 +19,7 @@ async function calendarRoute(userId, token = 'mock-token') {
     globalThis[key] = deps;
     const source = (await readFile(new URL('../app/api/calendar/add/route.js', import.meta.url), 'utf8')).replace(/^import .*;\r?$/gm, '');
     try {
-        const route = await import('data:text/javascript;base64,' + Buffer.from(`const { auth, clerkClient, NextResponse, detectRaceDate,monthlyRegistration,expectedOpeningLabel,monthlyOpeningNote } = globalThis[${JSON.stringify(key)}];\n${source}`).toString('base64'));
+        const route = await import('data:text/javascript;base64,' + Buffer.from(`const { auth, clerkClient, NextResponse, detectRaceDate,monthlyRegistration,expectedOpeningLabel,monthlyOpeningNote,registrationReminders,calendarIdentifiers } = globalThis[${JSON.stringify(key)}];\n${source}`).toString('base64'));
         return { route, oauthCalls: () => oauthCalls };
     } finally { delete globalThis[key]; }
 }
@@ -97,7 +98,7 @@ test('registration exports preserve Lisbon wall-clock deadlines and encode event
     t.mock.method(globalThis,'fetch',async(url,options={})=>{
         if(url.endsWith('/users/me/calendarList'))return Response.json({items:[{summary:'Cycling Calendar',id:'calendar'}]});
         if(options.method==='POST'){written=JSON.parse(options.body);return Response.json({id:'created'});}
-        assert.equal(new URL(url).searchParams.get('privateExtendedProperty'),'cyclingCalendarEventId=fixture&a-reg_close');return Response.json({items:[]});
+        assert.ok(['cyclingCalendarEventId=fixture&a-reg_close','cyclingCalendarEventId=fixture&a_reg_close'].includes(new URL(url).searchParams.get('privateExtendedProperty')));return Response.json({items:[]});
     });
     const {route}=await calendarRoute('test-user');const result=await route.POST(request({event:{id:'fixture&a',registrationClosesAt:'2027-05-18T23:59:00.000Z'},type:'reg_close'}));
     assert.equal(result.status,200);assert.deepEqual(written.start,{dateTime:'2027-05-18T23:59:00',timeZone:'Europe/Lisbon'});

@@ -29,6 +29,7 @@ import SearchSuggestions from './SearchSuggestions';
 import EventTrust from './EventTrust';
 import EventParticipation from './EventParticipation';
 import FavoriteChangeControls from './FavoriteChangeControls';
+import RegistrationReminderSettings from './RegistrationReminderSettings';
 import {trustText} from '../i18n/trustCopy';
 import {SPECIFIC_CATEGORIES} from '../utils/categoryEvidence';
 
@@ -899,6 +900,7 @@ export default function CalendarView({
             {personal && <>                <details className={styles.personalOptions}><summary>{trPersonal('options')}</summary>
                     <FavoriteEditionControls preferences={editionPreferences} isSignedIn={isSignedIn} />
                     <FavoriteChangeControls /><FavoriteSubscription />
+                    {isSignedIn&&<RegistrationReminderSettings />}
                     {!isInitialLoading && scopedEvents.length > 0 && <AgendaOverview events={scopedEvents} onSelect={setSelectedEvent} />}
                 </details></>}
             {showEscalaoHelp && (

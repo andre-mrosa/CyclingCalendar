@@ -109,13 +109,13 @@ export default function FavoritePushSettings({ isSignedIn, userId, onboarding = 
             setDevice({ ...current, enabled:false, subscription:null }); setMessage('off');
         } catch { setMessage('error'); } finally { setBusy(false); }
     }
-    async function sendTest() {
+    async function sendTest(allDevices=false) {
         setBusy(true); setMessage('');
         try {
             const response = await fetch('/api/notifications/push', { method:'POST', headers:{ 'Content-Type':'application/json' },
-                body:JSON.stringify({ id:await idFor(current.subscription) }) });
+                body:JSON.stringify(allDevices?{allDevices:true}:{ id:await idFor(current.subscription) }) });
             if (!response.ok) throw new Error();
-            setMessage('testSent');
+            setMessage(allDevices?'testAllSent':'testSent');
         } catch { setMessage('error'); } finally { setBusy(false); }
     }
     const zones = [...new Set([timeZone, 'Europe/Lisbon', 'Atlantic/Azores', 'Atlantic/Madeira', 'UTC'])];
@@ -141,11 +141,12 @@ export default function FavoritePushSettings({ isSignedIn, userId, onboarding = 
                     <div className="flex flex-wrap gap-3">
                         <button type="button" onClick={save} disabled={busy || !current.available || (!current.follow && !onboarding)} className={button + ' bg-brand text-white'}>{current.enabled ? text.save : text.enable}</button>
                         {current.enabled && current.subscription && <button type="button" onClick={disable} disabled={busy} className={button}>{text.disable}</button>}
-                        {current.enabled && current.subscription && <button type="button" onClick={sendTest} disabled={busy} className={button}>{(testCopy[language] || testCopy.pt)[0]}</button>}
+                        {current.enabled && current.subscription && <button type="button" onClick={()=>sendTest(false)} disabled={busy} className={button}>{(testCopy[language] || testCopy.pt)[0]}</button>}
+                        <button type="button" onClick={()=>sendTest(true)} disabled={busy||!current.available} className={button}>{({pt:'Testar todos os meus dispositivos',en:'Test all my devices',es:'Probar todos mis dispositivos',fr:'Tester tous mes appareils'})[language]}</button>
                     </div>
                     {current.enabled && <p className="text-sm text-brand mt-3">{text.ready}</p>}
                     <p className="text-xs text-muted mt-4">{text.timing}</p>
                 </>}
-        {message && <p role="status" className="text-sm mt-3">{message === 'testSent' ? (testCopy[language] || testCopy.pt)[1] : text[message]}</p>}
+        {message && <p role="status" className="text-sm mt-3">{message === 'testAllSent'?({pt:'Teste enviado aos dispositivos ativos. Confirma a receção no Android; aceitação pelo serviço não garante apresentação no ecrã.',en:'Test sent to active devices. Confirm receipt on Android; service acceptance does not guarantee display.',es:'Prueba enviada a los dispositivos activos. Confirma la recepción en Android.',fr:'Test envoyé aux appareils actifs. Confirmez la réception sur Android.'})[language]:message === 'testSent' ? (testCopy[language] || testCopy.pt)[1] : text[message]}</p>}
     </section>;
 }

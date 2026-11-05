@@ -1,6 +1,7 @@
 import { originalEventUrl } from '../lib/publicEvent.js';
 import { detectRaceDate } from './detectRaceDate.js';
 import {monthlyRegistration,expectedOpeningLabel,monthlyOpeningNote} from './partialDates.js';
+import {registrationAlarmLines} from './registrationReminders.js';
 
 /**
  * Utilitários para exportar eventos para Google Calendar, Apple Calendar e ficheiro iCal (.ics)
@@ -132,11 +133,7 @@ export function buildIcsContent(event, origin = 'https://cyclingcalendar.pt') {
                 `DESCRIPTION:${cleanDescription}${monthlyRegistration(event)?'\\n'+escapeText(monthlyOpeningNote):''}`,
                 `URL:${eventUrl}`,
                 'STATUS:CONFIRMED',
-                'BEGIN:VALARM',
-                'ACTION:DISPLAY',
-                monthlyRegistration(event)?'TRIGGER:-P1D':'TRIGGER:-PT15M',
-                monthlyRegistration(event)?'DESCRIPTION:Confirmar abertura prevista de inscrições':'DESCRIPTION:As inscrições abrem em 15 minutos!',
-                'END:VALARM',
+                ...registrationAlarmLines(monthlyRegistration(event)?'Confirmar abertura prevista de inscrições':'Abertura de inscrições'),
                 'END:VEVENT'
             );
         }
@@ -155,11 +152,7 @@ export function buildIcsContent(event, origin = 'https://cyclingcalendar.pt') {
                 `DESCRIPTION:${cleanDescription}`,
                 `URL:${eventUrl}`,
                 'STATUS:CONFIRMED',
-                'BEGIN:VALARM',
-                'ACTION:DISPLAY',
-                'TRIGGER:-P1D',
-                'DESCRIPTION:Último dia para inscrições!',
-                'END:VALARM',
+                ...registrationAlarmLines('Fecho de inscrições'),
                 'END:VEVENT'
             );
         }

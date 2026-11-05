@@ -1,5 +1,6 @@
 'use client';
-import { CalendarDays, CalendarClock, CalendarX, CalendarCheck, CalendarPlus } from 'lucide-react';
+import { CalendarDays, CalendarClock, CalendarX, CalendarCheck, CalendarPlus,CalendarMinus,CalendarSync,LoaderCircle } from 'lucide-react';
+import {useState} from 'react';
 import { useTranslation } from '../i18n/useTranslation';
 import { generateGoogleCalendarUrl } from '../utils/calendarExport';
 import { formatRegistrationDay } from '../utils/registrationDates';
@@ -7,11 +8,16 @@ import { lisbonWallClock } from '../utils/planning';
 import { useClientReady } from '../hooks/useBrowserState';
 import {useParticipationStates,participationFor} from '../hooks/useParticipationStates';
 import {monthlyRegistration,expectedOpeningLabel,monthLabel,raceMonth,monthEnd} from '../utils/partialDates';
+import {useCalendarEvents} from '../hooks/useCalendarEvents';
+import {calendarIdentifiers} from '../utils/registrationReminders';
+import {removeCalendarEvent} from '../utils/calendarRemoval';
 
 export default function RegistrationBadge({ event, isCancelled }) {
     const { language, t } = useTranslation();
     const mounted = useClientReady();
     const {states}=useParticipationStates();
+    const calendar=useCalendarEvents();
+    const [busy,setBusy]=useState(false),[failed,setFailed]=useState(false);
     
     if (!mounted || isCancelled || !event.sortDate || participationFor(event,states)?.status==='registered') return null;
     
@@ -59,23 +65,33 @@ export default function RegistrationBadge({ event, isCancelled }) {
     if (!status) return null;
 
     const gcalUrl = generateGoogleCalendarUrl(event, type);
+    const target=type==='reg_open'?'registration_open':'registration_close';
+    const inCalendar=calendar.isMarked(event.id,target,event._allIds||[]);
+    const keys=calendarIdentifiers(event.id,target,event._allIds||[]);
+    const entry=calendar.getCalendarEntry(keys[0],keys.slice(1));
+    const expected=String(type==='reg_open'?event.registrationOpensAt:event.registrationClosesAt||'');
+    const needsUpdate=!!entry&&expected&&((entry.allDay?String(entry.start).slice(0,10)!==expected.slice(0,10)||!monthlyRegistration(event):String(entry.start).slice(0,19)!==expected.slice(0,19)));
+    const labels={pt:['Já no Google Calendar · remover lembrete','Atualizar data no Google Calendar','Queres remover este lembrete de inscrições do Google Calendar?','Não foi possível atualizar o calendário.'],en:['In Google Calendar · remove reminder','Update date in Google Calendar','Remove this registration reminder from Google Calendar?','Could not update the calendar.'],es:['En Google Calendar · eliminar recordatorio','Actualizar fecha en Google Calendar','¿Eliminar este recordatorio del Google Calendar?','No se pudo actualizar el calendario.'],fr:['Dans Google Calendar · supprimer le rappel','Actualiser la date dans Google Calendar','Supprimer ce rappel du Google Calendar ?','Impossible de modifier le calendrier.']}[language]||['In Google Calendar · remove reminder','Update date in Google Calendar','Remove this registration reminder?','Could not update the calendar.'];
+    async function act(e){e.preventDefault();e.stopPropagation();setBusy(true);setFailed(false);try{
+        if(inCalendar&&!needsUpdate)await removeCalendarEvent(event,{target,confirm:()=>window.confirm(labels[2]),refresh:calendar.refreshCalendar});
+        else {const {autoAddToGoogleCalendar}=await import('../utils/calendarExport');await autoAddToGoogleCalendar(event,type,gcalUrl);await calendar.refreshCalendar();}
+    }catch{setFailed(true);}finally{setBusy(false);}}
 
     if (gcalUrl && status !== 'closed') {
         return (
-            <a 
-                href="#" 
-                onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    import('../utils/calendarExport').then(m => m.autoAddToGoogleCalendar(event, type, gcalUrl));
-                }}
+            <span className="inline-flex flex-wrap items-center gap-2"><button
+                type="button"
+                disabled={busy||Boolean(calendar.isSignedIn&&(calendar.isLoading||calendar.error))}
+                onClick={act}
                 className={`flex items-center gap-1.5 px-2 py-1 rounded-[5px] text-[11px] font-semibold tracking-wide shrink-0 whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity ${className}`} 
-                title={text + t('badge_reg_add_calendar')}
+                title={inCalendar?(needsUpdate?labels[1]:labels[0]):text + t('badge_reg_add_calendar')}
+                aria-label={(inCalendar?(needsUpdate?labels[1]:labels[0]):text + t('badge_reg_add_calendar'))+': '+event.title}
+                aria-pressed={inCalendar&&!needsUpdate}
             >
-                <Icon size={13} className="shrink-0" />
+                {inCalendar&&!needsUpdate?<CalendarCheck size={13} className="shrink-0"/>:<Icon size={13} className="shrink-0" />}
                 <span>{text}</span>
-                <CalendarPlus size={11} className="ml-0.5 opacity-70" />
-            </a>
+                {busy?<LoaderCircle size={13} className="animate-spin"/>:needsUpdate?<CalendarSync size={13}/>:inCalendar?<CalendarMinus size={13}/>:<CalendarPlus size={11} className="ml-0.5 opacity-70" />}
+            </button>{failed&&<span role="alert" className="text-xs text-red-500">{labels[3]}</span>}</span>
         );
     }
 
