@@ -48,6 +48,7 @@ function applySnapshot(target, snapshot) {
     if (Object.hasOwn(snapshot, 'count')) target.count = validCount(snapshot.count);
     if (typeof snapshot.duration === 'string') target.duration = snapshot.duration;
     if (typeof snapshot.message === 'string') target.message = snapshot.message;
+    if(snapshot.coverage&&typeof snapshot.coverage==='object')target.coverage=Object.fromEntries(['discovered','saved','past','nonCycling','outsideYears','unavailable','failed','unresolved'].map(key=>[key,validCount(snapshot.coverage[key])]));
     if (snapshot.metrics && typeof snapshot.metrics === 'object') {
         target.metrics = Object.fromEntries(METRICS.map(key => [key, validCount(snapshot.metrics[key])]));
         if (target.count === null && target.metrics.processed !== null) target.count = target.metrics.processed;
@@ -96,7 +97,7 @@ export function parseScraperStatus({ startLog = null, completionLog = null, logs
     const yearMetrics = new Map();
     const yearDurations = new Map();
     const errors = new Map();
-    let hasErrors = false;
+    let hasErrors = false,lastActiveEntity=null;
     const recordError = (id, message) => {
         hasErrors = true;
         if (all[id]) errors.set(id, message);
@@ -108,7 +109,13 @@ export function parseScraperStatus({ startLog = null, completionLog = null, logs
         const id = details.sourceId || details.stepId || entityId(message);
         const target = all[id];
         if (log.level === 'ERROR') recordError(id, message);
+        if(details.event==='pipeline-stage-done'){
+            for(const [key,snapshot] of Object.entries(details.sources||{}))applySnapshot(sources[key],snapshot);
+            for(const [key,snapshot] of Object.entries(details.steps||{}))applySnapshot(steps[key],snapshot);
+            continue;
+        }
         if (typeof details.event === 'string' && details.event.startsWith('stage-')) {
+            if(target&&['stage-start','stage-progress'].includes(details.event))lastActiveEntity=id;
             applySnapshot(target, details);
             if (id === 'fpc' && details.event === 'stage-complete' && details.year != null && typeof details.duration === 'string') {
                 const seconds = Number.parseFloat(details.duration);
@@ -210,7 +217,8 @@ export function parseScraperStatus({ startLog = null, completionLog = null, logs
     }
     const ordered = Object.values(all);
     const stepDurations = Object.fromEntries(ordered.map((target, index) => [index + 1, target.duration]));
-    const active = ordered.findIndex(target => target.status === 'running');
+    const runningIndex=ordered.findIndex(target=>target.status==='running');
+    const active=runningIndex>=0?runningIndex:isRunning&&lastActiveEntity?ordered.findIndex(target=>target.id===lastActiveEntity):-1;
     const metrics = Object.fromEntries(METRICS.map(key => {
         const values = Object.values(sources).map(source => source.metrics[key]);
         return [key, values.every(value => value !== null) ? values.reduce((sum, value) => sum + value, 0) : null];
@@ -224,6 +232,7 @@ export function parseScraperStatus({ startLog = null, completionLog = null, logs
     } : null;
     return {
         ...empty, isRunning, activeStep: active < 0 ? 0 : active + 1,
+        activeStepLabel:active<0?null:ordered[active].name,
         elapsedSeconds: Math.floor(durationSeconds), sources, steps, stepDurations,
         logs: [...scoped].reverse().slice(0, 25), lastRun,
         runId, years, metrics, completed: Boolean(completion), interrupted: status === 'interrupted',

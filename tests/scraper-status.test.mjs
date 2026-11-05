@@ -26,6 +26,14 @@ test('unknown run and missing source counts are null, never fabricated zeroes', 
     assert.deepEqual(result.logs, []);
 });
 
+test('a source continuing with candidate errors retains coverage and the active stage label',()=>{
+ const runId='continuing-with-warnings',startLog=row(0,'Iniciada sincronização stopandgo',{event:'run-start',runId,scope:'stopandgo',years:['2026','2027']});
+ const coverage={discovered:379,saved:15,past:39,nonCycling:147,outsideYears:35,failed:4,unresolved:139};
+ const logs=[row(10,'Stop and Go: início.',{event:'stage-start',runId,sourceId:'stopandgo',status:'running'}),row(15,'Stop and Go: página inválida',{runId,sourceId:'stopandgo'},'ERROR'),row(20,'Stop and Go: a continuar',{event:'stage-progress',runId,sourceId:'stopandgo',status:'error',coverage,metrics:{processed:15,updated:15,created:0,merged:0,quarantined:0}}),row(21,'Stop and Go: início.',{event:'stage-start',runId,sourceId:'stopandgo',status:'error'})];
+ const result=parse(startLog,logs,30);assert.equal(result.isRunning,true);assert.equal(result.activeStep,1);assert.equal(result.activeStepLabel,'Stop & Go');assert.equal(result.sources.stopandgo.coverage.discovered,379);assert.equal(result.sources.stopandgo.coverage.unresolved,139);assert.equal(result.sources.stopandgo.status,'error');
+ const continued=parse(startLog,[...logs,row(25,'Etapa stopandgo concluída em 10s.',{event:'pipeline-stage-done',runId,sources:{stopandgo:{status:'error',duration:'120.0s',coverage}}})],30);assert.equal(continued.sources.stopandgo.duration,'120.0s');
+});
+
 test('legacy overlapping 375 + 375 FPC summaries count once per year', () => {
     const logs = [
         row(-24, 'Iniciada sincronização global'),

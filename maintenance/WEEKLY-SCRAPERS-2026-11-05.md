@@ -9,3 +9,14 @@ As continuações da mesma recolha e a retoma limitada após HTTP 429 continuam 
 O painel passa a permitir «Executar apenas Stop and Go», com a mesma autenticação administrativa, reserva e workflow persistente das restantes recolhas. Não inicia as outras fontes. Esta opção é usada para a verificação manual autorizada em 5 de novembro, após o termo da espera registada às 15:15.
 
 A revisão visual do painel coloca o resultado e as fontes em primeiro plano, com os agendamentos semanal/mensal numa coluna secundária. Os organizadores têm margens, datas identificadas e listas de provas recolhíveis. Botões, cartões e estados usam os estilos partilhados do painel. Durante uma continuação com avisos, a fonte distingue «A recolher · com avisos» de um resultado final; quando há cobertura disponível, mostra páginas analisadas e progresso.
+
+## Resultado da execução manual
+
+Execução `a7f82bef-ff90-486f-afe2-a5d6be3cce79`, iniciada em 5 de novembro às 15:37 e terminada às 15:50, em 783,4 segundos. Não houve novas recusas HTTP 403/429. O registo de espera anterior (403 de 4 de novembro, expirado às 15:15 de 5 de novembro) não foi renovado.
+
+- 379 páginas analisadas, zero pendentes.
+- 15 provas verificadas e atualizadas; zero criações, fusões ou quarentena.
+- 60 páginas de provas passadas, 265 de outras modalidades e 35 fora dos anos abrangidos.
+- Quatro páginas com cabeçalho/modalidade/data não interpretados: `desafio-acdl-2027`, `granfondo-sra-da-gra-a`, `meia-maratona-de-guimar-es`, `taca-regional-de-xcm-trofeu-meias-maratonas-arcvr-2026`.
+
+O resultado correto é parcial por estes erros de leitura, não por um bloqueio de acesso. O painel conserva cobertura, etapa ativa mesmo com avisos e duração acumulada entre blocos. Não se efetuou uma segunda recolha para verificar a interface.
