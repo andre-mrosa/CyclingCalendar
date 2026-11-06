@@ -1,8 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readStopAndGoHeader,stopAndGoWithinYears} from '../app/lib/scrapers/stopandgoParser.js';
+import {readStopAndGoHeader,stopAndGoWithinYears,stopAndGoEarlyExclusion} from '../app/lib/scrapers/stopandgoParser.js';
 import {fixtureModule} from './fixtureModule.mjs';
 const page=(date,title='Prova BTT')=>`<nav>Calendário 2026</nav><section><div><h1>${title}</h1><div>Maia</div><div>${date}</div><div>BTT</div></div></section><aside>Prova recomendada 5 jan 2027</aside>`;
+
+test('the four diagnosed pages distinguish old/season records from a genuinely inconsistent future date',()=>{
+ const years=['2026','2027'],today='2026-11-06';
+ const acdl=readStopAndGoHeader(page('17 jul 2027 18 jul 2028','Desafio ACDL 2027'));assert.equal(acdl.sortDate,null);assert.equal(stopAndGoEarlyExclusion(acdl,years,today),null);assert.equal(acdl.publishedDateLabel,'17 JUL 2027 a 18 JUL 2028');
+ const reversed=readStopAndGoHeader(page('6 set 2019 6 jun 2019','Granfondo Senhora da Graça 2019'));assert.equal(reversed.sortDate,null);assert.equal(stopAndGoEarlyExclusion(reversed,years,today),'outsideYears');
+ const noSport=readStopAndGoHeader(page('23 jun 2019 28 jun 2019','Meia Maratona de Guimarães').replace('<div>BTT</div>',''));assert.equal(noSport.knownModality,false);assert.equal(stopAndGoEarlyExclusion(noSport,years,today),'outsideYears');
+ const season=readStopAndGoHeader(page('22 mar 2026 5 jul 2026','Taça regional de XCM/Troféu Meias Maratonas ARCVR'));assert.equal(season.sortDate,null);assert.equal(stopAndGoEarlyExclusion(season,years,today),'past');
+ const enclosing=readStopAndGoHeader(page('1 jan 2025 1 jan 2028'));assert.equal(stopAndGoEarlyExclusion(enclosing,years,today),null);
+ const ongoing=readStopAndGoHeader(page('5 nov 2026 7 nov 2026'));assert.equal(stopAndGoEarlyExclusion(ongoing,years,today),null);
+});
 test('the race year comes from its dated header, never title, navigation, URL or the current year',()=>{
  const old=readStopAndGoHeader(page('<div>24 <span>mar</span> <span>2019</span></div>','Prova BTT 2026'));
  assert.equal(old.year,'2019');assert.equal(old.sortDate.toISOString(),'2019-03-24T00:00:00.000Z');assert.equal(stopAndGoWithinYears(old,['2026','2027']),false);

@@ -90,7 +90,7 @@ test('Apedalar records obsolete redirects as unavailable instead of invalid date
 });
 test('Stop and Go checkpoints a bounded chunk and resumes without rediscovery or duplicate requests',async t=>{
  const urls=Array.from({length:61},(_,i)=>'https://stopandgo.net/events/prova-'+i),calls=[],errors=[];
- const scraper=await fixtureModule('../app/lib/scrapers/stopandgo.js',{'../db.js':{prisma:{}},'../logger.js':{logInfo:async()=>{},logError:async(_s,message)=>errors.push(message)},'./stopandgoAccess.js':{createStopAndGoAccess:()=>globalThis.fetch},'./stopandgoParser.js':{readStopAndGoHeader:()=>({knownModality:true,cycling:false}),stopAndGoEventUrl:url=>url}});
+ const scraper=await fixtureModule('../app/lib/scrapers/stopandgo.js',{'../db.js':{prisma:{}},'../logger.js':{logInfo:async()=>{},logError:async(_s,message)=>errors.push(message)},'./stopandgoAccess.js':{createStopAndGoAccess:()=>globalThis.fetch},'./stopandgoParser.js':{readStopAndGoHeader:()=>({knownModality:true,cycling:false}),stopAndGoEarlyExclusion:()=>null,stopAndGoEventUrl:url=>url}});
  t.mock.method(globalThis,'fetch',async url=>{calls.push(url);return new Response('header');});
  const first=await scraper.scrapeStopAndGo({progress:{urls,nextIndex:0,outcomes:urls.map(url=>[url,null])}});
  assert.equal(first.continuation.nextIndex,60);assert.equal(calls.length,60);assert.equal(errors.length,0);

@@ -4,7 +4,7 @@ import { prisma } from '../db.js';
 import { toTitleCase, getAmbito, getTag } from './utils.js';
 import { logInfo, logError } from '../logger.js';
 import { saveOrMergeEvent } from '../merging/eventMerger.js';
-import { readStopAndGoHeader, stopAndGoEventUrl, stopAndGoWithinYears } from './stopandgoParser.js';
+import { readStopAndGoHeader, stopAndGoEventUrl, stopAndGoWithinYears,stopAndGoEarlyExclusion } from './stopandgoParser.js';
 import { fetchStopAndGoCyclingLinks } from './stopandgoListing.js';
 import { parseRegistrationDates } from '../../utils/registrationDates.js';
 import { detectRaceDate } from '../../utils/detectRaceDate.js';
@@ -112,8 +112,10 @@ export const scrapeStopAndGo = async (options = {}) => {
                         await delay(500);
                     }
 
+                    const exclusion=stopAndGoEarlyExclusion(header,years,todayZero.toISOString().slice(0,10));
+                    if(exclusion){audit.resolve(url,exclusion);return;}
                     if (!header || !header.knownModality || (header.cycling && !header.sortDate)) {
-                        await audit.fail(url,'cabeçalho/modalidade/data não reconhecidos');
+                        await audit.fail(url,header?.cycling&&header.publishedDateLabel?`intervalo de datas publicado inválido para uma prova: ${header.publishedDateLabel}`:'cabeçalho/modalidade/data não reconhecidos');
                         return;
                     }
                     if (!header.cycling) {audit.resolve(url,'nonCycling');return;}

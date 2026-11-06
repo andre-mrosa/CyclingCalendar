@@ -39,11 +39,24 @@ export function readStopAndGoHeader(html) {
         title, modality, location,
         cycling: CYCLING_MODALITIES.has(modality),
         knownModality: CYCLING_MODALITIES.has(modality) || OTHER_MODALITIES.has(modality),
+        publishedDates:dates.map(date=>date.toISOString().slice(0,10)),
+        publishedDateLabel:dates.map(format).join(' a '),
         sortDate: validDates ? sortDate : null,
         endDate: validDates ? endDate : null,
         year: validDates ? String(sortDate.getUTCFullYear()) : null,
         date: validDates ? format(sortDate) + (endDate > sortDate ? ` a ${format(endDate)}` : '') : null
     };
+}
+
+// Discard irrelevant dated pages before requiring a valid single-race range.
+// Old records and a season-wide series must not become misleading parser failures.
+export function stopAndGoEarlyExclusion(header,years,today){
+    const days=header?.publishedDates||[];
+    if(!days.length)return null;
+    const first=Math.min(...years.map(Number)),last=Math.max(...years.map(Number));
+    if(days.every(day=>Number(day.slice(0,4))<first)||days.every(day=>Number(day.slice(0,4))>last))return 'outsideYears';
+    if(days.every(day=>day<today))return 'past';
+    return null;
 }
 
 export function stopAndGoWithinYears(header, years) {

@@ -15,6 +15,7 @@ import FlagIcon from '../components/FlagIcon';
 import PageHeading from '../components/PageHeading';
 import ColorPalettePicker from '../components/ColorPalettePicker';
 import FavoritePushSettings from '../components/FavoritePushSettings';
+import EmailTestSettings from '../components/EmailTestSettings';
 import styles from '../components/site.module.css';
 import {CALENDAR_SOURCE_OPTIONS} from '../lib/calendarSources';
 
@@ -124,6 +125,7 @@ export default function Conta() {
 
             <main className="flex flex-col gap-6">
                 <FavoritePushSettings isSignedIn={isLoaded && isSignedIn} userId={user?.id} />
+                <EmailTestSettings isSignedIn={isLoaded&&isSignedIn}/>
                 {isAdmin && (
                     <section className="bg-brand-soft border border-brand rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in">
                         <div className="flex items-center gap-3.5">
